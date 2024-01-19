@@ -1,0 +1,21 @@
+﻿<Application x:Class="Application"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PolyCut"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+              xmlns:uic="clr-namespace:Wpf.Ui.Converters;assembly=Wpf.Ui"
+             Startup="OnStartup" DispatcherUnhandledException="OnDispatcherUnhandledException"
+             Exit="OnExit">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ControlsDictionary  />
+
+                <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Resources/Theme/Dark.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Resources/Wpf.Ui.xaml" />
+ 
+            </ResourceDictionary.MergedDictionaries>
+            
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

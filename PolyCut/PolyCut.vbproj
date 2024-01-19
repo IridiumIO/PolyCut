@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <RootNamespace>PolyCut</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <Company>IridiumIO</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\CuttingMat.svg" />
+    <None Remove="Resources\gcodeplot.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\CuttingMat.svg" />
+    <EmbeddedResource Include="Resources\gcodeplot.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Import Include="System.Windows" />
+    <Import Include="System.Windows.Controls" />
+    <Import Include="System.Windows.Data" />
+    <Import Include="System.Windows.Documents" />
+    <Import Include="System.Windows.Input" />
+    <Import Include="System.Windows.Media" />
+    <Import Include="System.Windows.Media.Imaging" />
+    <Import Include="System.Windows.Navigation" />
+    <Import Include="System.Windows.Shapes" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Fody" Version="6.8.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+    <PackageReference Include="SharpVectors.Wpf" Version="1.8.2" />
+    <PackageReference Include="spicermicer.ZoomBorder" Version="1.0.0" />
+    <PackageReference Include="Svg" Version="3.4.6" />
+    <PackageReference Include="ValueConverters" Version="3.0.26" />
+    <PackageReference Include="WPF-UI" Version="3.0.0-preview.13">
+      <GeneratePathProperty>True</GeneratePathProperty>
+    </PackageReference>
+    <PackageReference Include="WPF.JoshSmith.Controls.DragCanvas" Version="2.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\PreviewPage.xaml.vb">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>

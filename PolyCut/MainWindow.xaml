@@ -1,0 +1,115 @@
+﻿<ui:FluentWindow x:Class="MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
+                 xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+                 xmlns:local="clr-namespace:PolyCut"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+                 mc:Ignorable="d"
+                 RenderOptions.BitmapScalingMode="HighQuality"
+                 WindowBackdropType="Mica"
+                 Title="PolyCut"
+                 Topmost="True"
+                 Height="700"
+                 Width="1300"
+                 ExtendsContentIntoTitleBar="True"
+                 ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+                 ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+  <Grid>
+
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Grid.RowDefinitions>
+      <RowDefinition Height="auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <ui:TitleBar  Title="PolyCut"
+                  Grid.Row="0"
+                  Grid.ColumnSpan="2"
+                  IsHitTestVisible="False">
+      <ui:TitleBar.Icon>
+        <ui:ImageIcon Source="C:\Users\iridium\Downloads\logo.ico" Margin="-10" />
+
+      </ui:TitleBar.Icon>
+    </ui:TitleBar>
+
+    <ui:NavigationView x:Name="NavigationView"
+                       PaneDisplayMode="Top"
+                       Grid.Row="1"
+                       Grid.ColumnSpan="2"
+                       Grid.RowSpan="2"
+                       PaneTitle="PlotPrint"
+                       IsBackButtonVisible="Collapsed">
+      <ui:NavigationView.MenuItems>
+        <ui:NavigationViewItem Content="Home"
+                               Margin="15,2"
+                               TargetPageType="{x:Type local:SVGPage}"
+                               NavigationCacheMode="Required"
+                               Tag="{Binding}">
+          <ui:NavigationViewItem.Icon>
+            <ui:SymbolIcon Symbol="Home12"
+                           Filled="True"
+                           Foreground="{StaticResource PaletteLightBlueBrush}" />
+          </ui:NavigationViewItem.Icon>
+        </ui:NavigationViewItem>
+        <ui:NavigationViewItem Content="Preview"
+                               Margin="15,2"
+                               TargetPageType="{x:Type local:PreviewPage}"
+                               NavigationCacheMode="Required"
+                               Tag="{Binding}">
+          <ui:NavigationViewItem.Icon>
+            <ui:SymbolIcon Symbol="DrawShape24" />
+          </ui:NavigationViewItem.Icon>
+        </ui:NavigationViewItem>
+        <ui:NavigationViewItem Content="Export"
+                               Margin="15,2"
+                               TargetPageType="{x:Type local:ExportPage}"
+                               NavigationCacheMode="Required"
+                               Tag="{Binding}">
+          <ui:NavigationViewItem.Icon>
+            <ui:SymbolIcon Symbol="SaveArrowRight20" />
+          </ui:NavigationViewItem.Icon>
+        </ui:NavigationViewItem>
+        <ui:NavigationViewItem Content="Monitor"
+                               Margin="15,2"
+                               TargetPageType="{x:Type local:MonitorPage}"
+                               NavigationCacheMode="Required"
+                               Tag="{Binding}">
+          <ui:NavigationViewItem.Icon>
+            <ui:SymbolIcon Symbol="Screenshot20" />
+          </ui:NavigationViewItem.Icon>
+        </ui:NavigationViewItem>
+      </ui:NavigationView.MenuItems>
+
+      <ui:NavigationView.FooterMenuItems>
+        <ui:NavigationViewItem>
+          <ui:Button Content="Generate GCode"
+                     Command="{Binding GenerateGCodeCommand}" />
+        </ui:NavigationViewItem>
+
+      </ui:NavigationView.FooterMenuItems>
+
+      <ui:NavigationView.ContentOverlay>
+        <Grid>
+          <ui:SnackbarPresenter x:Name="SnackbarPresenter" />
+        </Grid>
+      </ui:NavigationView.ContentOverlay>
+    </ui:NavigationView>
+    <ContentPresenter x:Name="RootContentDialog"
+                      Grid.Row="0"
+                      Grid.RowSpan="2"
+                      ClipToBounds="True" />
+    <ui:SnackbarPresenter x:Name="RootSnackbar"
+                          Grid.Row="2"
+                          Grid.ColumnSpan="2"
+                          Grid.Column="0" />
+
+  </Grid>
+</ui:FluentWindow>

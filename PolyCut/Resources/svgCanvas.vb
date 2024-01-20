@@ -13,6 +13,14 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
 
     Public Shared Property SelectedControl As resizableSVGCanvas
     Public Property IsSelected As Boolean
+        Get
+            Return GetValue(IsSelectedProperty)
+        End Get
+        Set(value As Boolean)
+            SetValue(IsSelectedProperty, value)
+
+        End Set
+    End Property
     Public ReadOnly Property DynamicWidth As Double
         Get
             Return Me.DesiredSize.Width * Scale

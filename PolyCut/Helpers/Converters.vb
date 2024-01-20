@@ -232,3 +232,36 @@ Public Class RadioButtonConverter
         Return parameter
     End Function
 End Class
+
+
+Public Class PathTrimmerConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+        If TypeOf value Is String AndAlso targetType Is GetType(String) Then
+            Dim path As String = DirectCast(value, String)
+            Dim maxLength As Integer = 45
+
+            If path.Length > maxLength Then
+                Dim parts() As String = path.Split("\"c)
+                Dim firstPart As String = parts.FirstOrDefault()
+                Dim lastPart As String = parts.LastOrDefault()
+
+                If firstPart.Length + lastPart.Length + 5 < maxLength Then ' 5 for the "...\"
+                    Return $"{firstPart}\...\{lastPart}"
+                Else
+                    Dim ellipsisLength As Integer = maxLength - lastPart.Length - 5
+                    Return $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
+                End If
+            Else
+                Return path
+            End If
+        End If
+
+        Return value
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotImplementedException()
+    End Function
+End Class

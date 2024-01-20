@@ -13,6 +13,7 @@
                  WindowBackdropType="Mica"
                  Title="PolyCut"
                  Topmost="True"
+                 
                  Height="700"
                  Width="1300"
                  ExtendsContentIntoTitleBar="True"

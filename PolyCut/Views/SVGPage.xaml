@@ -16,7 +16,7 @@
       ScrollViewer.CanContentScroll="False"
       d:DesignHeight="800"
       d:DesignWidth="800"
-      Margin="0,5,0,0"
+      Margin="0,5,0,0" AllowDrop="True" Drop="Page_Drop"
       Title="SVGPage">
   <Page.Resources>
     <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />
@@ -26,6 +26,7 @@
     <local:InverseBoolToVisConverter x:Key="InverseBoolToVisConverter" />
     <local:NullableIntConverter x:Key="NullableIntConverter" />
     <local:RadioButtonConverter x:Key="RadioButtonConverter" />
+    <local:PathTrimmerConverter x:Key="PathTrimmerConverter" />
     <Style x:Key="CustomCardExpanderStyle"
            TargetType="{x:Type ui:CardExpander}"
            BasedOn="{StaticResource DefaultUiCardExpanderStyle}">
@@ -384,7 +385,7 @@
             <!-- Fill the offset outside space -->
             <Path Canvas.Left="0"
                   Canvas.Bottom="0"
-                  ClipToBounds="True"
+                  ClipToBounds="True" 
                   IsHitTestVisible="False"
                   StrokeThickness="0.5"
                   Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -403,14 +404,14 @@
                                      StartPoint="0 0"
                                      EndPoint="0.01 0.01">
                   <GradientStop Offset="0.5"
-                                Color="#30000000" />
+                                Color="#30FFFFFF" />
                   <GradientStop Offset="0.5"
-                                Color="#40000000" />
+                                Color="#40FFFFFF" />
                 </LinearGradientBrush>
                 <!--<SolidColorBrush Color="#40000000"/>-->
               </Path.Fill>
               <Path.Stroke>
-                <SolidColorBrush Color="#606060" />
+                <SolidColorBrush Color="Transparent" />
               </Path.Stroke>
 
               <Path.Effect>
@@ -470,33 +471,6 @@
 
     </local:ZoomBorder>
 
-    <ui:Card VerticalAlignment="Top"
-             HorizontalAlignment="Left"
-             Panel.ZIndex="50" x:Name="SVGFileBox"
-             Background="#14FFFFFF" Margin="5">
-      <ui:CardExpander Background="Transparent"
-                       BorderBrush="Transparent"
-                       FlowDirection="RightToLeft"
-                       IsExpanded="False" 
-                       Padding="-5, -10"
-                       Style="{StaticResource CustomCardExpanderStyle}">
-        <ui:CardExpander.Header>
-          <Button FlowDirection="LeftToRight" ClipToBounds="True" Margin="-10,-6,-25,-6"   Command="{Binding BrowseSVGCommand}" MinWidth="200" BorderThickness="0" >
-            <ui:TextBox FlowDirection="LeftToRight" Margin="10,0,0,0" 
-                     Background="Transparent" BorderThickness="0"
-                     Text="{Binding SVGSource}" PlaceholderText="Browse..."
-                      IsReadOnly="True" IsHitTestVisible="False" />
-          </Button>
-
-        </ui:CardExpander.Header>
-
-        
-
-      </ui:CardExpander>
-      <ui:Card.Effect>
-        <DropShadowEffect  BlurRadius="6" ShadowDepth="4" Opacity="0" />
-      </ui:Card.Effect>
-    </ui:Card>
     
     
     
@@ -533,10 +507,193 @@
       </ui:Card.Background>
       <TabControl  Margin="0"
                    BorderBrush="Transparent">
+        <TabItem IsSelected="True"
+                  Style="{StaticResource CustomTabStyle}">
+          <TabItem.Header>
+            <StackPanel Orientation="Horizontal"
+                        Margin="10,0">
+              <ui:SymbolIcon Margin="0,0,6,0"
+                             Symbol="PuzzlePiece24"  />
+              <TextBlock Text="Elements" />
+            </StackPanel>
+          </TabItem.Header>
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="auto" />
+              <RowDefinition />
+            </Grid.RowDefinitions>
+            <Separator Margin="5"
+                       Grid.Row="0" />
+            <ScrollViewer Grid.Row="1"
+                          CanContentScroll="True"
+                          VerticalScrollBarVisibility="Visible"
+                          Padding="25,0,25,0"
+                          Margin="-14,10,-14,0">
+              <DockPanel>
 
+                <StackPanel DockPanel.Dock="Bottom"
+                            Background="Transparent">
+
+                  <StackPanel Orientation="Horizontal">
+                    
+                    <ui:Button Padding="6" Margin="5" Command="{Binding BrowseSVGCommand}">
+                      <ui:SymbolIcon Symbol="Add12" />
+                    </ui:Button>
+                    <TextBlock Text="Import SVG" Margin="10,0"
+                               VerticalAlignment="Center" />
+                  </StackPanel>
+
+                  <Separator Margin="0,5" />
+
+                  <ListView ItemsSource="{Binding SVGFiles}"  >
+                    <ListView.ItemContainerStyle>
+                      <Style TargetType="ListViewItem">
+                        <Setter Property="Template">
+                          <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                              <Border Background="{TemplateBinding Background}">
+                                <ContentPresenter />
+                              </Border>
+                            </ControlTemplate>
+                          </Setter.Value>
+                        </Setter>
+                      </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                      <DataTemplate>
+
+                        <ui:CardExpander Background="Transparent"
+                                         BorderBrush="Transparent"
+                                         FlowDirection="RightToLeft"
+                                         IsExpanded="True"
+                                         ContentPadding="0"
+                                         Margin="-10,0" Padding="10,5"
+                                         Style="{StaticResource CustomCardExpanderStyle}">
+                          <ui:CardExpander.Header>
+                            <Grid FlowDirection="LeftToRight">
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="32"/>
+                              </Grid.ColumnDefinitions>
+                              <TextBlock 
+                                         Text="{Binding FilePath, Converter={StaticResource PathTrimmerConverter}}"
+                                         TextTrimming="WordEllipsis"
+                                         Margin="10,-1,10,0" VerticalAlignment="Center"
+                                         MaxWidth="260" />
+                              <ui:Button Grid.Column="1"
+                                         Background="Transparent"
+                                         Padding="6" CommandParameter="{Binding}"
+                                         Command="{Binding DataContext.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}">
+                                <ui:SymbolIcon Symbol="Dismiss48"
+                                               Foreground="{StaticResource PaletteRedBrush}" />
+                              </ui:Button>
+                              <Grid.ToolTip>
+                                <TextBlock Text="{Binding FilePath}" />
+                              </Grid.ToolTip>
+                            </Grid>
+                           
+
+                          </ui:CardExpander.Header>
+
+                          <StackPanel FlowDirection="LeftToRight"
+                                      Margin="15,0,15,0">
+                            <ListView ItemsSource="{Binding SVGComponents}" 
+                                       >
+                              <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                  <Setter Property="Template">
+                                    <Setter.Value>
+                                      <ControlTemplate TargetType="ListViewItem">
+                                        <Border  Padding="4">
+                                          <ContentPresenter />
+                                        </Border>
+                                      </ControlTemplate>
+                                    </Setter.Value>
+                                  </Setter>
+                                  <Setter Property="IsSelected"
+                                          Value="{Binding ECanvas.IsSelected, Mode=TwoWay}" />
+                                </Style>
+                              </ListView.ItemContainerStyle>
+                              <ListView.ItemTemplate>
+                                <DataTemplate>
+                                  <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="5" />
+                                      <ColumnDefinition Width="32" />
+                                      <ColumnDefinition Width="5" />
+                                      <ColumnDefinition />
+                                      <ColumnDefinition Width="5" />
+                                      <ColumnDefinition Width="32" />
+
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding VisualName}" Grid.Column="3" VerticalAlignment="Center"/>
+
+                                    <Border Grid.Column="0"
+                                            Width="2"  Margin="-10,0,0,0" CornerRadius="2"
+                                            Height="20" Background="{StaticResource PaletteBlueBrush}" Visibility="{Binding ECanvas.IsSelected,Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}"/>
+
+                                    <ToggleButton x:Name="WorkingAreaVisibilityToggle"
+                                                  IsChecked="{Binding isHidden}" Grid.Column="1" >
+                                      <ToggleButton.Template>
+                                        <ControlTemplate>
+                                          <ContentControl>
+                                            <ContentControl.Style>
+                                              <Style TargetType="ContentControl">
+                                                <Style.Triggers>
+                                                  <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
+                                                               Value="True">
+                                                    <Setter Property="Content">
+                                                      <Setter.Value>
+                                                        <ui:Card BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
+                                                                 Padding="5,4,5,0"
+                                                                 Background="Transparent">
+                                                          <ui:SymbolIcon Symbol="EyeOff24" Filled="True" />
+                                                        </ui:Card>
+                                                      </Setter.Value>
+                                                    </Setter>
+
+                                                  </DataTrigger>
+                                                  <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
+                                                               Value="False">
+                                                    <Setter Property="Content">
+                                                      <Setter.Value>
+                                                        <ui:Card BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
+                                                                 Padding="5,4,5,0"
+                                                                 Background="Transparent">
+                                                          <!-- Replace with your unchecked icon -->
+                                                          <ui:SymbolIcon Symbol="Eye48" Filled="True" />
+                                                        </ui:Card>
+                                                      </Setter.Value>
+                                                    </Setter>
+                                                  </DataTrigger>
+                                                </Style.Triggers>
+                                              </Style>
+                                            </ContentControl.Style>
+                                          </ContentControl>
+                                        </ControlTemplate>
+                                      </ToggleButton.Template>
+                                    </ToggleButton>
+
+                                  </Grid>
+                                </DataTemplate>
+                              </ListView.ItemTemplate>
+                            </ListView>
+                          </StackPanel>
+                        </ui:CardExpander>
+                      </DataTemplate>
+                    </ListView.ItemTemplate>
+                  </ListView>
+                   
+                  
+                </StackPanel>
+              </DockPanel>
+            </ScrollViewer>
+          </Grid>
+        </TabItem>
         <TabItem  
                   Style="{StaticResource CustomTabStyle}"
-                  IsSelected="True">
+                  >
           <TabItem.Header>
             <StackPanel Orientation="Horizontal" Margin="10,0">
               <ui:SymbolIcon Margin="0,0,6,0"
@@ -561,9 +718,9 @@
                 <StackPanel DockPanel.Dock="Bottom">
 
                   <Label Content="Input SVG"
-                         Grid.Row="0" />
+                         Grid.Row="0" Visibility="Collapsed"/>
 
-                  <Grid Margin="0,5,0,15">
+                  <Grid Margin="0,5,0,15" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="5" />
@@ -575,12 +732,12 @@
                                Command="{Binding BrowseSVGCommand}" />
                   </Grid>
 
-                  <CheckBox Content="Ignore Hidden"
+                  <CheckBox Content="Ignore Hidden" Visibility="Collapsed"
                             IsChecked="{Binding Configuration.IgnoreHidden, Mode=TwoWay}" />
-                  <CheckBox Content="Ignore Locked"
+                  <CheckBox Content="Ignore Locked" Visibility="Collapsed"
                             IsChecked="{Binding Configuration.IgnoreLocked, Mode=TwoWay}" />
 
-                  <Separator Margin="0,10" />
+                  <Separator Margin="0,10" Visibility="Collapsed"/>
 
                   <ui:CardExpander Background="Transparent"
                                    BorderBrush="Transparent"
@@ -941,7 +1098,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem 
+        <TabItem
                   Style="{StaticResource CustomTabStyle}">
           <TabItem.Header>
             <StackPanel Orientation="Horizontal"
@@ -1461,161 +1618,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem 
-                  Style="{StaticResource CustomTabStyle}">
-          <TabItem.Header>
-            <StackPanel Orientation="Horizontal"
-                        Margin="10,0">
-              <ui:SymbolIcon Margin="0,0,6,0"
-                             Symbol="PuzzlePiece24"  />
-              <TextBlock Text="Elements" />
-            </StackPanel>
-          </TabItem.Header>
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="auto" />
-              <RowDefinition />
-            </Grid.RowDefinitions>
-            <Separator Margin="5"
-                       Grid.Row="0" />
-            <ScrollViewer Grid.Row="1"
-                          CanContentScroll="True"
-                          VerticalScrollBarVisibility="Visible"
-                          Padding="25,0,25,0"
-                          Margin="-14,10,-14,0">
-              <DockPanel>
-
-                <StackPanel DockPanel.Dock="Bottom"
-                            Background="Transparent">
-
-                  <ListView ItemsSource="{Binding SVGFiles}" >
-                    <ListView.ItemContainerStyle>
-                      <Style TargetType="ListViewItem">
-                        <Setter Property="Template">
-                          <Setter.Value>
-                            <ControlTemplate TargetType="ListViewItem">
-                              <Border Background="{TemplateBinding Background}">
-                                <ContentPresenter />
-                              </Border>
-                            </ControlTemplate>
-                          </Setter.Value>
-                        </Setter>
-                      </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                      <DataTemplate>
-
-                        <ui:CardExpander Background="Transparent"
-                                         BorderBrush="Transparent"
-                                         FlowDirection="RightToLeft"
-                                         IsExpanded="True"
-                                         ContentPadding="0"
-                                         Margin="-10,0" Padding="10,5"
-                                         Style="{StaticResource CustomCardExpanderStyle}">
-                          <ui:CardExpander.Header>
-                            <TextBlock FlowDirection="LeftToRight"
-                                       Text="{Binding FilePath}"
-                                       TextTrimming="WordEllipsis"
-                                       Margin="10,0"
-                                       MaxWidth="260" />
-
-                          </ui:CardExpander.Header>
-
-                          <StackPanel FlowDirection="LeftToRight"
-                                      Margin="15,0,15,0">
-                            <ListView ItemsSource="{Binding SVGComponents}"
-                                      ItemTemplateSelector="{x:Null}" >
-                              <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                  <Setter Property="Template">
-                                    <Setter.Value>
-                                      <ControlTemplate TargetType="ListViewItem">
-                                        <Border  Padding="4">
-                                          <ContentPresenter />
-                                        </Border>
-                                      </ControlTemplate>
-                                    </Setter.Value>
-                                  </Setter>
-                                </Style>
-                              </ListView.ItemContainerStyle>
-                              <ListView.ItemTemplate>
-                                <DataTemplate>
-                                  <Grid>
-
-                                    <Grid.ColumnDefinitions>
-                                      <ColumnDefinition Width="32" />
-                                      <ColumnDefinition Width="5" />
-                                      <ColumnDefinition />
-                                      <ColumnDefinition Width="5" />
-                                      <ColumnDefinition Width="32" />
-
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding VisualName}" Grid.Column="2" VerticalAlignment="Center"/>
-
-                                    <ToggleButton x:Name="WorkingAreaVisibilityToggle"
-                                                  IsChecked="{Binding isHidden}" Grid.Column="0" >
-                                      <ToggleButton.Template>
-                                        <ControlTemplate>
-                                          <ContentControl>
-                                            <ContentControl.Style>
-                                              <Style TargetType="ContentControl">
-                                                <Style.Triggers>
-                                                  <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
-                                                               Value="True">
-                                                    <Setter Property="Content">
-                                                      <Setter.Value>
-                                                        <ui:Card BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
-                                                                 Padding="5,4,5,0"
-                                                                 Background="Transparent">
-                                                          <ui:SymbolIcon Symbol="Eye48" Filled="True" />
-                                                        </ui:Card>
-                                                      </Setter.Value>
-                                                    </Setter>
-
-                                                  </DataTrigger>
-                                                  <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
-                                                               Value="False">
-                                                    <Setter Property="Content">
-                                                      <Setter.Value>
-                                                        <ui:Card BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
-                                                                 Padding="5,4,5,0"
-                                                                 Background="Transparent">
-                                                          <!-- Replace with your unchecked icon -->
-                                                          <ui:SymbolIcon Symbol="EyeOff24" Filled="True" />
-                                                        </ui:Card>
-                                                      </Setter.Value>
-                                                    </Setter>
-                                                  </DataTrigger>
-                                                </Style.Triggers>
-                                              </Style>
-                                            </ContentControl.Style>
-                                          </ContentControl>
-                                        </ControlTemplate>
-                                      </ToggleButton.Template>
-                                    </ToggleButton>
-
-                                    <ui:Button Grid.Column="4"
-                                               Background="Transparent"
-                                               Padding="6">
-                                      <ui:SymbolIcon Symbol="Dismiss48"
-                                                     Foreground="{StaticResource PaletteRedBrush}" />
-                                    </ui:Button>
-                                  </Grid>
-                                </DataTemplate>
-                              </ListView.ItemTemplate>
-                            </ListView>
-                          </StackPanel>
-                        </ui:CardExpander>
-                      </DataTemplate>
-                    </ListView.ItemTemplate>
-                  </ListView>
-                   
-                  
-                </StackPanel>
-              </DockPanel>
-            </ScrollViewer>
-          </Grid>
-        </TabItem>
+      
 
       </TabControl>
 

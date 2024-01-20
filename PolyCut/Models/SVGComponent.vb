@@ -10,18 +10,32 @@ Public Class SVGComponent : Inherits ObservableObject
 
     Public ReadOnly Property IsVisualElement As Boolean
         Get
+
+            If SVGElement.GetType Is GetType(SvgGroup) Then
+                If Not SVGElement.HasChildren Then Return False
+            End If
+
             Return If(TryCast(SVGElement, SvgVisualElement) Is Nothing, False, True)
         End Get
     End Property
 
     Public ReadOnly Property VisualName As String
         Get
-            Return TryCast(SVGElement, SvgPathBasedElement)?.ID
+            Dim id = TryCast(SVGElement, SvgPathBasedElement)?.ID
+            If id IsNot Nothing Then Return id
+
+            Dim g = TryCast(SVGElement, SvgGroup)?.ID
+            If g IsNot Nothing Then Return g
+
+            Dim rss = SVGElement.GetType()
+
+            Return rss.Name.Replace("Svg", "")
         End Get
     End Property
 
     Public ReadOnly Property Renderable As SvgDocument
         Get
+
 
             Dim ele = TryCast(SVGElement, SvgVisualElement)
 
@@ -48,7 +62,17 @@ Public Class SVGComponent : Inherits ObservableObject
 
     Public Property Children As IEnumerable(Of SVGComponent)
 
-    Public Property isHidden As Boolean = False
+    Private _isHidden As Boolean = False
+    Public Property isHidden As Boolean
+        Get
+            Return _isHidden
+        End Get
+        Set(value As Boolean)
+            _isHidden = value
+            If ECanvas Is Nothing OrElse Not IsVisualElement Then Return
+            ECanvas.Visibility = If(_isHidden, Visibility.Collapsed, Visibility.Visible)
+        End Set
+    End Property
     Public ReadOnly Property Parent As SVGFile
 
     Private Sub Initialise()
@@ -89,6 +113,7 @@ Public Class SVGComponent : Inherits ObservableObject
 
         _ECanvas = New resizableSVGCanvas(svgC)
 
+        If isHidden Then ECanvas.Visibility = Visibility.Collapsed
 
         Canvas.SetLeft(_Ecanvas, SVGLeft)
         Canvas.SetTop(_Ecanvas, SVGTop)

@@ -23,7 +23,6 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
     Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
-    Public Property SVGSource As Uri = Nothing
 
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
 
@@ -35,6 +34,8 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) GenerateSnackbar("Saved Preset", x, ControlAppearance.Success))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
+    Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
+
 
 
     Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
@@ -78,16 +79,42 @@ Public Class MainViewModel : Inherits ObservableObject
         If fs.ShowDialog Then
 
             Dim fl = fs.FileName
-            SVGSource = New Uri(fl)
 
-            SVGComponents.ForEach(Sub(x) x.SaveState())
+            ModifySVGFiles(New SVGFile(fl))
 
-            SVGFiles.Add(New SVGFile(fl))
-            OnPropertyChanged(NameOf(SVGComponents))
-
-            SVGComponents.ForEach(Sub(x) x.LoadState())
 
         End If
+
+    End Sub
+
+    Public Sub ModifySVGFiles(file As SVGFile, Optional removeSVG As Boolean = False)
+
+        SVGComponents.ForEach(Sub(x) x.SaveState())
+
+
+        If removeSVG Then
+            SVGFiles.Remove(file)
+        Else
+            SVGFiles.Add(file)
+        End If
+        OnPropertyChanged(NameOf(SVGComponents))
+
+        SVGComponents.ForEach(Sub(x) x.LoadState())
+
+
+    End Sub
+
+
+    Public Sub DragSVGs(x As String())
+
+        For Each file In x
+            Dim finfo As New FileInfo(file)
+
+            If finfo.Exists AndAlso finfo.Extension = ".svg" Then
+                ModifySVGFiles(New SVGFile(file))
+            End If
+
+        Next
 
     End Sub
 

@@ -159,7 +159,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
 
 
-    Private Sub svgElementContextMenu(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.PreviewMouseRightButtonUp
+    Private Sub svgElementContextMenu(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseRightButtonUp
 
         If TypeOf (e.Source) Is resizableSVGCanvas AndAlso e.Source.Parent Is svgDrawing Then
             e.Handled = True
@@ -167,55 +167,13 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         End If
     End Sub
 
+    Private Sub Page_Drop(sender As Object, e As DragEventArgs)
+        If e.Data.GetDataPresent(DataFormats.FileDrop) Then
 
+            Dim files() As String = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
 
-
-    Private Sub BoundsCheck()
-
-        If DoControlsOverlap(SVGFileBox, mainCanvas) Then
-            If DirectCast(SVGFileBox.Background, SolidColorBrush).Color.A = 255 Then Return
-
-            SVGFileBox.Background = New SolidColorBrush(Color.FromArgb(255, 48, 54, 62))
-        Else
-            If DirectCast(SVGFileBox.Background, SolidColorBrush).Color = Color.FromArgb(20, 255, 255, 255) Then Return
-            SVGFileBox.Background = New SolidColorBrush(Color.FromArgb(20, 255, 255, 255))
+            ViewModel.DragSVGs(files)
 
         End If
-
     End Sub
-
-    Private Sub ZBMouseMove(sender As Object, e As MouseEventArgs) Handles zoomPanControl.MouseMove
-        If Not e.MiddleButton = MouseButtonState.Pressed Then Return
-        BoundsCheck()
-    End Sub
-    Private Sub ZBMouseWheel(sender As Object, e As EventArgs) Handles zoomPanControl.ScaleChanged
-        If Not Me.IsLoaded Then
-            Return
-        End If
-        BoundsCheck()
-    End Sub
-
-    Function DoControlsOverlap(control1 As FrameworkElement, control2 As FrameworkElement) As Boolean
-        Dim rect1 As Rect = GetControlBounds(control1)
-        Dim rect2 As Rect = GetControlBounds(control2)
-
-        Return rect1.IntersectsWith(rect2)
-    End Function
-
-    ' Get the bounding box of a control in screen coordinates
-    Function GetControlBounds(control As FrameworkElement) As Rect
-        Dim transformToDevice As Matrix = PresentationSource.FromVisual(control).CompositionTarget.TransformToDevice
-        Dim topLeft As Point = control.PointToScreen(New Point(0, 0))
-        Dim bottomRight As Point = control.PointToScreen(New Point(control.ActualWidth, control.ActualHeight))
-
-        ' Convert points to device-independent pixels
-        topLeft = transformToDevice.Transform(topLeft)
-        bottomRight = transformToDevice.Transform(bottomRight)
-
-        ' Create a Rect using the screen coordinates
-        Return New Rect(topLeft, bottomRight)
-    End Function
-
-
-
 End Class

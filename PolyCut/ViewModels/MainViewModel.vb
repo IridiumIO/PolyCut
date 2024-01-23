@@ -28,6 +28,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Private ReadOnly _snackbarService As ISnackbarService
     Private ReadOnly _navigationService As INavigationService
+    Private ReadOnly _argsService As CommandLineArgsService
 
     Public Property SavePrinterCommand As ICommand = New RelayCommand(AddressOf SavePrinter)
     Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
@@ -35,7 +36,14 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) GenerateSnackbar("Saved Preset", x, ControlAppearance.Success))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
-
+    Public Property NetworkUploadCommand As ICommand = New RelayCommand(Sub()
+                                                                            Configuration.NetworkPrinter.SendGcode(GCode)
+                                                                        End Sub)
+    Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub()
+                                                                             If _argsService.Args.Length > 0 Then
+                                                                                 DragSVGs(_argsService.Args)
+                                                                             End If
+                                                                         End Sub)
 
 
     Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
@@ -44,14 +52,16 @@ Public Class MainViewModel : Inherits ObservableObject
         End Get
     End Property
 
-    Public Sub New(snackbarService As ISnackbarService, navigationService As INavigationService)
+    Public Sub New(snackbarService As ISnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
         SettingsHandler.InitialiseSettings()
         Initialise()
         _snackbarService = snackbarService
         _navigationService = navigationService
-    End Sub
+        _argsService = argsService
 
+
+    End Sub
 
     Private Async Sub Initialise()
         Printers = Await SettingsHandler.GetPrinters

@@ -2,7 +2,7 @@
 
 Public Class Configuration : Inherits ObservableObject
 
-    Public Property ToolMode As Integer = 1
+    Public Property ToolMode As Integer = 0
     Public Property TravelSpeed As Double = 45
     Public Property DrawSpeed As Double = 35
     Public Property ZSpeed As Double = 10
@@ -33,6 +33,9 @@ Public Class Configuration : Inherits ObservableObject
     Public Property Area As String
     Public Property IgnoreLocked As Boolean = False
     Public Property IgnoreHidden As Boolean = True
+
+    Public Property NetworkPrinter As INetworkPrinter = New Moonraker
+
 
     Private ReadOnly Mappings As New Dictionary(Of String, String)() From {
     {NameOf(ToolMode), "tool-mode"},

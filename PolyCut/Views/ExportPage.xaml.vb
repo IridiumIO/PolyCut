@@ -1,9 +1,14 @@
 ﻿Class ExportPage
 
+    Public Property ViewModel As MainViewModel
+    Sub New(_viewmodel As MainViewModel)
+        ViewModel = _viewmodel
 
-    Sub OnNavigatedTo(e As NavigationEventArgs)
+        Me.DataContext = ViewModel
 
-        Me.DataContext = e.ExtraData
+        ' This call is required by the designer.
+        InitializeComponent()
+
 
     End Sub
 

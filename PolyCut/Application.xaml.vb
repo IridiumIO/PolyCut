@@ -15,6 +15,8 @@ Partial Public Class Application
 
                                services.AddHostedService(Of ApplicationHostService)()
 
+                               services.AddSingleton(Of CommandLineArgsService)()
+
                                ' Theme manipulation
                                services.AddSingleton(Of IThemeService, ThemeService)()
 

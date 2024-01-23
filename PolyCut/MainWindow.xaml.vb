@@ -20,8 +20,6 @@ Class MainWindow : Implements INavigationWindow
 
     Public Sub New(mainviewmodel As MainViewModel, navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As ISnackbarService)
 
-        ' This call is required by the designer.
-
 
         ViewModel = mainviewmodel
         DataContext = ViewModel
@@ -31,6 +29,8 @@ Class MainWindow : Implements INavigationWindow
         navigationService.SetNavigationControl(NavigationView)
         NavigationView.SetServiceProvider(serviceProvider)
         snackbarService.SetSnackbarPresenter(RootSnackbar)
+
+
 
     End Sub
 

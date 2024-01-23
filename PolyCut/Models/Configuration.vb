@@ -34,7 +34,7 @@ Public Class Configuration : Inherits ObservableObject
     Public Property IgnoreLocked As Boolean = False
     Public Property IgnoreHidden As Boolean = True
 
-    Public Property NetworkPrinter As INetworkPrinter = New Moonraker
+    'Public Property NetworkPrinter As INetworkPrinter = New Moonraker
 
 
     Private ReadOnly Mappings As New Dictionary(Of String, String)() From {

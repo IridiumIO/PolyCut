@@ -11,11 +11,13 @@
   <ItemGroup>
     <None Remove="Resources\CuttingMat.svg" />
     <None Remove="Resources\gcodeplot.exe" />
+    <None Remove="Resources\logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\CuttingMat.svg" />
     <EmbeddedResource Include="Resources\gcodeplot.exe" />
+    <Resource Include="Resources\logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,9 +53,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PolyCut.Core\PolyCut.Core.vbproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Views\PreviewPage.xaml.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\SettingsPage.xaml.vb">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\Controls\" />
   </ItemGroup>
 
 </Project>

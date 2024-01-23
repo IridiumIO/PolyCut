@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.ComponentModel
 Imports CommunityToolkit.Mvvm.ComponentModel
+Imports Svg.Transforms
 
 Public Class SVGFile : Inherits ObservableObject
 
@@ -17,6 +18,17 @@ Public Class SVGFile : Inherits ObservableObject
         FilePath = path
 
         Dim inDoc As Svg.SvgDocument = Svg.SvgDocument.Open(FilePath)
+
+        If inDoc.Height.Type = Svg.SvgUnitType.Inch Then
+            For Each child In inDoc.Children
+                If child.Transforms?.Count > 0 Then
+                    child.Transforms.Insert(0, New SvgScale(25.4, 25.4))
+                Else
+                    child.Transforms = New SvgTransformCollection
+                    child.Transforms.Add(New SvgScale(25.4, 25.4))
+                End If
+            Next
+        End If
 
         For Each child In inDoc.Children
             SVGComponents.Add(New SVGComponent(child, Me))

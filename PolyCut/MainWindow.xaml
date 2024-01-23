@@ -36,7 +36,7 @@
                   Grid.ColumnSpan="2"
                   IsHitTestVisible="False">
       <ui:TitleBar.Icon>
-        <ui:ImageIcon Source="C:\Users\iridium\Downloads\logo.ico" Margin="-10" />
+        <ui:ImageIcon Source="/PolyCut;component/Resources/logo.ico" Margin="-15,-12,-10,-15"/>
 
       </ui:TitleBar.Icon>
     </ui:TitleBar>
@@ -46,7 +46,7 @@
                        Grid.Row="1"
                        Grid.ColumnSpan="2"
                        Grid.RowSpan="2"
-                       PaneTitle="PlotPrint"
+                       PaneTitle="PlotPrint" 
                        IsBackButtonVisible="Collapsed">
       <ui:NavigationView.MenuItems>
         <ui:NavigationViewItem Content="Home"
@@ -90,11 +90,19 @@
       </ui:NavigationView.MenuItems>
 
       <ui:NavigationView.FooterMenuItems>
+        
         <ui:NavigationViewItem>
           <ui:Button Content="Generate GCode"
                      Command="{Binding GenerateGCodeCommand}" />
         </ui:NavigationViewItem>
-
+        <ui:NavigationViewItem Margin="-5,0,15,1" 
+                               TargetPageType="{x:Type local:SettingsPage}"
+                               NavigationCacheMode="Required"
+                               Tag="{Binding}">
+          
+            <ui:SymbolIcon Symbol="Settings48" FontSize="16" Margin="0,0,-3,0"/>
+        
+        </ui:NavigationViewItem>
       </ui:NavigationView.FooterMenuItems>
 
       <ui:NavigationView.ContentOverlay>

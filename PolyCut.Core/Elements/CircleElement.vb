@@ -5,20 +5,23 @@ Imports Svg
 
 Public Class CircleElement : Implements IPathBasedElement
 
-    Public Property Lines As List(Of Line) Implements IPathBasedElement.Lines
+    Public ReadOnly Property FlattenedLines As List(Of Line) Implements IPathBasedElement.FlattenedLines
+        Get
+            Return Figures.SelectMany(Of Line)(Function(x) x).ToList
+        End Get
+    End Property
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
+    Public Property Figures As List(Of List(Of Line)) Implements IPathBasedElement.Figures
 
-    Public Sub CompileElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileElement
+    Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim circleElement = DirectCast(element, SvgCircle)
         Config = cfg
 
-        Dim eGeo As EllipseGeometry = New EllipseGeometry(New Point(circleElement.CenterX, circleElement.CenterY), circleElement.Radius, circleElement.Radius)
+        Dim eGeo As New EllipseGeometry(New Point(circleElement.CenterX, circleElement.CenterY), circleElement.Radius, circleElement.Radius)
         Geo = eGeo.GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
 
-        Lines = BuildLinesFromGeometry(Geo, Config.Tolerance)
-        Lines = TransformLines(Lines, element.Transforms.GetMatrix)
-        Lines = OffsetProcessor.ProcessOffsets(Lines, Config.Offset, Config.Overcut)
-
+        Figures = BuildLinesFromGeometry(Geo, Config.Tolerance)
+        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
     End Sub
 End Class

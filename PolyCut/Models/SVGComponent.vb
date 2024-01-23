@@ -44,7 +44,7 @@ Public Class SVGComponent : Inherits ObservableObject
             Dim doc As New SvgDocument
 
             doc.Transforms = New Transforms.SvgTransformCollection
-            doc.Transforms.Add(New Transforms.SvgTranslate(-ele.Bounds.X, -ele.Bounds.Y))
+            doc.Transforms.Insert(0, New Transforms.SvgTranslate(-ele.Bounds.X, -ele.Bounds.Y))
 
             doc.Children.Add(SVGElement)
 
@@ -157,17 +157,17 @@ Public Class SVGComponent : Inherits ObservableObject
         If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
 
         Dim scaleTF As New Transforms.SvgScale(ECanvas.Scale)
-        component.Transforms.Add(scaleTF)
+        component.Transforms.Insert(0, scaleTF)
 
         'Need to recheck the bounds because the scaling affects the children and translates the parent. 
         Dim newBounds = component.Bounds
 
         'For some ghastly reason, all translations are ALSO scaled by the scale value so this needs to be undone
-        Dim scaledXTranslate = (-SVGLeft + Canvas.GetLeft(ECanvas) - (newBounds.X - originalBounds.X)) / ECanvas.Scale
-        Dim scaledYTranslate = (-SVGTop + Canvas.GetTop(ECanvas) - (newBounds.Y - originalBounds.Y)) / ECanvas.Scale
+        Dim scaledXTranslate = (-SVGLeft + Canvas.GetLeft(ECanvas) - (newBounds.X - originalBounds.X))
+        Dim scaledYTranslate = (-SVGTop + Canvas.GetTop(ECanvas) - (newBounds.Y - originalBounds.Y))
 
         Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
-        component.Transforms.Add(translateTF)
+        component.Transforms.Insert(0, translateTF)
 
         Return component
 

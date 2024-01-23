@@ -1,61 +1,10 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.Text.RegularExpressions
+
 Imports CommunityToolkit.Mvvm.ComponentModel
 
-Public Class GCode : Inherits ObservableObject
+Imports PolyCut.Core
 
-    Public Enum LinearMove
-        G0
-        G1
-    End Enum
-
-    Public Property Code As Integer?
-
-    Public Property F As Double?
-    Public Property E As Double?
-    Public Property X As Double?
-    Public Property Y As Double?
-    Public Property Z As Double?
-
-    Public Property OriginalString As String = Nothing
-
-    Public Sub New(line As String)
-        line = line.Trim
-        If String.IsNullOrWhiteSpace(line) Then
-            Return
-        End If
-
-        OriginalString = line
-
-        ParseGCode(line)
-
-    End Sub
-
-    Public Sub ParseGCode(line As String)
-        Dim matches = Regex.Matches(line, "([A-Z])(-?\d+(\.\d+)?)")
-
-        For Each match As Match In matches
-            Dim parameterType As Char = match.Groups(1).Value(0)
-            Dim parameterValue As Double = CDbl(match.Groups(2).Value)
-
-            Select Case parameterType
-                Case "F"
-                    F = parameterValue
-                Case "E"
-                    E = parameterValue
-                Case "X"
-                    X = parameterValue
-                Case "Y"
-                    Y = parameterValue
-                Case "Z"
-                    Z = parameterValue
-                Case "G"
-                    Code = parameterValue
-            End Select
-        Next
-    End Sub
-
-End Class
 
 Public Class GCodeGeometry : Inherits ObservableObject
 
@@ -73,7 +22,7 @@ Public Class GCodeGeometry : Inherits ObservableObject
     Public Sub New(instr As String)
 
         For Each line As String In instr.Split(Environment.NewLine)
-            GCode.Add(New GCode(line))
+            GCode.Add(Core.GCode.Parse(line))
         Next
 
         BuildLines()
@@ -81,11 +30,20 @@ Public Class GCodeGeometry : Inherits ObservableObject
 
     End Sub
 
+    Public Sub New(gcodeCollection As List(Of GCode))
+        GCode.AddRange(gcodeCollection)
+
+        BuildLines()
+    End Sub
+
     Public Sub BuildLines()
 
         Dim isFirstLine As Boolean = True
 
         For i As Integer = 0 To GCode.Count - 2
+
+
+            If GCode(i).Mode <> "G" Then Continue For
 
             'We only care about G0 and G1 moves
             If GCode(i).Code <> 0 AndAlso GCode(i).Code <> 1 Then

@@ -3,22 +3,30 @@ Imports System.ComponentModel
 Imports System.IO
 Imports System.Reflection
 Imports System.Xml
+
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
+
+Imports PolyCut.Core
+
 Imports SharpVectors.Dom.Svg
 Imports SharpVectors.Renderers.Utils
 Imports SharpVectors.Renderers.Wpf
+
 Imports Svg
+
 Imports WPF.Ui
 Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
+    Public Property UsingGCodePlot As Boolean = False
+
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
     Public Property CuttingMats As ObservableCollection(Of CuttingMat)
     Public Property CuttingMat As CuttingMat
-    Public Property Configuration As New Configuration
+    Public Property Configuration As New ProcessorConfiguration
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
@@ -37,7 +45,8 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
     Public Property NetworkUploadCommand As ICommand = New RelayCommand(Sub()
-                                                                            Configuration.NetworkPrinter.SendGcode(GCode)
+                                                                            Dim MoonrakerExporter As New MoonrakerExporter(Configuration)
+
                                                                         End Sub)
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub()
                                                                              If _argsService.Args.Length > 0 Then
@@ -68,7 +77,7 @@ Public Class MainViewModel : Inherits ObservableObject
         CuttingMats = Await SettingsHandler.GetCuttingMats
         Printer = Printers.First
         CuttingMat = CuttingMats.First
-        Configuration = New Configuration
+        Configuration = New ProcessorConfiguration
     End Sub
     Public Sub SavePrinter()
         SettingsHandler.WritePrinter(Printer)
@@ -140,39 +149,28 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
+    Private Async Sub GenerateGcode()
+        Configuration.WorkAreaHeight = Printer.BedHeight
+        Configuration.WorkAreaWidth = Printer.BedWidth
 
-    Private Sub GenerateGCode()
+        Dim generator As IGenerator = If(UsingGCodePlot,
+            New GCodePlotGenerator(Configuration, Printer, GenerateSVGText),
+            New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
 
 
-        Configuration.SetArea(Printer.WorkingOffsetX, Printer.WorkingOffsetY, Printer.WorkingOffsetX + Printer.WorkingWidth, Printer.WorkingOffsetY + Printer.WorkingHeight)
+        Dim retcode = Await generator.GenerateGcodeAsync
 
-        Dim args = Configuration.BuildGCPArgs()
-
-        Dim generatedSVGPath = GenerateSVG()
-
-        args = args & " """ & generatedSVGPath & """"
-
-        Dim ret As (String, String) = RunEmbeddedExecutable("gcodeplot.exe", args)
-        Dim output = ret.Item1
-        Dim eroutput = ret.Item2
-
-        If output?.Length = 0 Then
-            GenerateSnackbar("Error", eroutput, ControlAppearance.Caution, SymbolRegular.ErrorCircle24, 5)
+        If retcode.StatusCode = 1 Then
+            GenerateSnackbar("Error", retcode.Message, ControlAppearance.Danger, SymbolRegular.ErrorCircle24, 5)
             Return
         End If
 
-        Dim lOut As String = ""
+        Dim generatedGCodes = generator.GetGCode
 
-        Dim lines() As String = output.Split(Environment.NewLine)
-        For Each line In lines
-            Dim index = line.IndexOf(";"c)
-            If index >= 0 Then
-                lOut &= $"{line.Substring(0, index).Trim}{Environment.NewLine}"
-            End If
-        Next
-
-        GCode = lOut & Environment.NewLine
-        GCodeGeometry = New GCodeGeometry(GCode)
+        'Maybe I should use Aggregate in other places as well?
+        Dim compiledGCodeString = generatedGCodes.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        GCode = compiledGCodeString
+        GCodeGeometry = New GCodeGeometry(generatedGCodes)
         OnPropertyChanged(NameOf(GCode))
         _navigationService.Navigate(GetType(PreviewPage))
 
@@ -180,14 +178,11 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
+    Function GenerateSVGText() As String
 
-    Function GenerateSVG()
-
-        Dim coll = SVGComponents.Where(Function(c) c.IsVisualElement AndAlso c.IsWithinBounds(Printer.BedWidth, Printer.BedHeight))
-
-        If Configuration.IgnoreHidden Then
-            coll = coll.Where(Function(c) c.isHidden = False)
-        End If
+        Dim coll = SVGComponents.Where(Function(c) c.IsVisualElement _
+            AndAlso c.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) _
+            AndAlso Not c.isHidden)
 
         Dim outDoc As New Svg.SvgDocument With {
             .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),
@@ -196,53 +191,10 @@ Public Class MainViewModel : Inherits ObservableObject
 
         outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
 
-        Dim rx = SVGComponent.SVGDocumentToSVGString(outDoc)
-        Dim tempFilePath As String = Path.GetTempFileName()
-        IO.File.WriteAllText(tempFilePath, rx)
-
-        Return tempFilePath
+        Return SVGComponent.SVGDocumentToSVGString(outDoc)
 
     End Function
 
 
-    Function RunEmbeddedExecutable(executableName As String, args As String) As (String, String)
-        Dim executingAssembly As Assembly = Assembly.GetExecutingAssembly()
-
-        Dim executablePath As String = Path.Combine(SettingsHandler.DataFolder.FullName, executableName)
-
-        If Not File.Exists(executablePath) Then
-            Using stream As Stream = executingAssembly.GetManifestResourceStream(executingAssembly.GetName().Name & "." & executableName)
-                If stream IsNot Nothing Then
-                    Dim exeBytes(CInt(stream.Length) - 1) As Byte
-                    stream.Read(exeBytes, 0, exeBytes.Length)
-
-                    Using tempFileStream As FileStream = File.Create(executablePath)
-                        tempFileStream.Write(exeBytes, 0, exeBytes.Length)
-                    End Using
-                End If
-            End Using
-        End If
-
-
-        ' Run the extracted executable
-        Dim process As New Process()
-        process.StartInfo.FileName = executablePath
-        process.StartInfo.Arguments = args
-        process.StartInfo.RedirectStandardOutput = True
-        process.StartInfo.RedirectStandardError = True
-        process.StartInfo.UseShellExecute = False
-        process.StartInfo.CreateNoWindow = True
-        process.Start()
-        Dim output As String = process.StandardOutput.ReadToEnd()
-        Dim outputER As String = process.StandardError.ReadToEnd()
-
-        ' Optionally, wait for the process to exit
-        process.WaitForExit()
-
-
-        Return (output, outputER)
-
-
-    End Function
 
 End Class

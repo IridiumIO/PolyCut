@@ -36,6 +36,7 @@ Partial Public Class Application
                                services.AddSingleton(Of MonitorPage)()
                                services.AddSingleton(Of ExportPage)()
                                services.AddSingleton(Of PreviewPage)()
+                               services.AddSingleton(Of SettingsPage)()
 
                            End Sub) _
         .Build()

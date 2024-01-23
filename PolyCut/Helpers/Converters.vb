@@ -2,6 +2,8 @@
 Imports System.Globalization
 Imports System.Text.RegularExpressions
 
+Imports PolyCut.Core
+
 Public Class ZoomFactorToThicknessConverter
     Implements IMultiValueConverter
 
@@ -170,6 +172,24 @@ Public Class InverseBoolToVisConverter
 
 End Class
 
+
+
+Public Class InverseBoolConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+        Dim vx = CBool(value)
+        Return Not vx
+    End Function
+
+    Public Function ConvertBack(value As Object, targetTypes As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotImplementedException
+    End Function
+
+End Class
+
+
+
 Public Class ToolModeToVisConverter
     Implements IValueConverter
 
@@ -210,8 +230,13 @@ Public Class NullableIntConverter
             Return Nothing
         End If
 
+        Dim int As Integer = Nothing
 
-        Return CInt(value)
+        If Integer.TryParse(value, int) Then
+            Return CInt(value)
+        End If
+
+        Return Nothing
 
     End Function
 
@@ -221,15 +246,13 @@ Public Class RadioButtonConverter
     Implements IValueConverter
 
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
-        If TypeOf value Is Integer AndAlso parameter IsNot Nothing Then
-            Return CInt(value) = CInt(parameter)
-        End If
+        Return CType(value, ProcessorConfiguration.ToolMode).HasFlag(CType(parameter, ProcessorConfiguration.ToolMode))
 
         Return False
     End Function
 
     Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
-        Return parameter
+        Return If(value.Equals(True), parameter, Binding.DoNothing)
     End Function
 End Class
 
@@ -247,11 +270,18 @@ Public Class PathTrimmerConverter
                 Dim firstPart As String = parts.FirstOrDefault()
                 Dim lastPart As String = parts.LastOrDefault()
 
-                If firstPart.Length + lastPart.Length + 5 < maxLength Then ' 5 for the "...\"
+
+                If lastPart.Length > maxLength - firstPart.Length - 5 Then
+                    lastPart = lastPart.Substring(0, maxLength - firstPart.Length - 10)
+
+                End If
+
+                If firstPart.Length + lastPart.Length + 5 <= maxLength Then ' 5 for the "...\"
                     Return $"{firstPart}\...\{lastPart}"
                 Else
-                    Dim ellipsisLength As Integer = maxLength - lastPart.Length - 5
-                    Return $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
+                    Dim ellipsisLength As Integer = Math.Max(0, maxLength - lastPart.Length - 5)
+                    Dim ret = $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
+                    Return $"fuck"
                 End If
             Else
                 Return path

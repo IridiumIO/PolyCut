@@ -6,18 +6,23 @@ Imports System.Windows.Shapes
 Public Class RectangleElement : Implements IPathBasedElement
 
 
-    Public Property Lines As List(Of Line) Implements IPathBasedElement.Lines
+    Public ReadOnly Property FlattenedLines As List(Of Line) Implements IPathBasedElement.FlattenedLines
+        Get
+            Return Figures.SelectMany(Of Line)(Function(x) x).ToList
+        End Get
+    End Property
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
+    Public Property Figures As New List(Of List(Of Line)) Implements IPathBasedElement.Figures
 
-    Public Sub CompileElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileElement
+    Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim rect = DirectCast(element, SvgRectangle)
         Config = cfg
         If rect.CornerRadiusX <> 0 OrElse rect.CornerRadiusY <> 0 Then
             Throw New NotImplementedException("Rounded corners not implemented for rectangle objects. Convert to a path")
         End If
 
-        Lines = New List(Of Line) From {
+        Figures.Add(New List(Of Line) From {
                     New Line With {
                         .X1 = rect.X,
                         .Y1 = rect.Y,
@@ -42,11 +47,9 @@ Public Class RectangleElement : Implements IPathBasedElement
                         .X2 = rect.X,
                         .Y2 = rect.Y
                     }
-                }
+                })
 
-        Lines = TransformLines(Lines, element.Transforms.GetMatrix)
-        Lines = OffsetProcessor.ProcessOffsets(Lines, Config.Offset, Config.Overcut)
-
+        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
 
     End Sub
 

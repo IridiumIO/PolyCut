@@ -22,6 +22,8 @@ Public Class MoonrakerExporter : Implements INetworkExporter
 
     Public Async Function Export(gcodes As List(Of GCode), fileName As String) As Task(Of Integer) Implements INetworkExporter.Export
 
+        If gcodes Is Nothing OrElse gcodes.Count = 0 Then Return 418
+
         Dim flattenedGCode As String = ""
         For Each gcode In gcodes
             flattenedGCode &= gcode.ToString & Environment.NewLine
@@ -32,13 +34,19 @@ Public Class MoonrakerExporter : Implements INetworkExporter
         Using client As New HttpClient With {.BaseAddress = BuildURI(DestinationHost, DestinationPort)}
 
             Using formdata As New MultipartFormDataContent
+                Try
+                    formdata.Add(New StreamContent(virtualFile), "file", $"{fileName}")
+                    formdata.Add(New StringContent(AutoPrint.ToString.ToLower), "print")
+                    Dim response As HttpResponseMessage = Await client.PostAsync(UploadEndpoint, formdata)
+                    If response.StatusCode = HttpStatusCode.Created Then
+                        Return 0
+                    Else
+                        Return response.StatusCode
+                    End If
+                Catch ex As HttpRequestException
+                    Return -1
+                End Try
 
-                formdata.Add(New StreamContent(virtualFile), "file", $"{fileName}")
-                formdata.Add(New StringContent(AutoPrint.ToString.ToLower), "print")
-                Dim response As HttpResponseMessage = Await client.PostAsync(UploadEndpoint, formdata)
-                If response.StatusCode = HttpStatusCode.Created Then
-                    Return 0
-                End If
 
             End Using
 

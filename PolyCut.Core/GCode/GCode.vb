@@ -12,7 +12,7 @@ Public Class GCode
     Public Property E As Double? = Nothing
     Public Property F As Double? = Nothing
     Public Property Comment As String = Nothing
-
+    Public Property BlankLine As Boolean = False
 
     Public Sub New()
     End Sub
@@ -90,9 +90,15 @@ Public Class GCode
 
     End Function
 
+    Public Shared Function Blank() As GCode
+        Return New GCode With {.BlankLine = True, .Mode = Nothing}
+
+    End Function
 
     Public Overrides Function ToString() As String
         Dim GcodeLine As String = ""
+
+        If BlankLine Then Return ""
 
         GcodeLine += Mode
         If Code IsNot Nothing Then

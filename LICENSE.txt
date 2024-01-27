@@ -1,3 +1,9 @@
+Additional Components:
+  - GCodePlot.exe based on GCodePlot by @arpruss https://github.com/arpruss/gcodeplot
+
+===================================================================================
+
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

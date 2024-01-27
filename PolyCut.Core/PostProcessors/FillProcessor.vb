@@ -23,10 +23,10 @@ Public Class FillProcessor : Implements IProcessor
         Next
 
         'We fudge the bounding box by a fraction of a pixel to ensure the centerpoint doesn't intersect the exact corner of squares. 
-        Dim boundingBox As New Rect(New Point(minX, minY), New Point(maxX, maxY - 0.0001))
-        Dim centerP As New Point(boundingBox.X + boundingBox.Width / 2, boundingBox.Y + boundingBox.Height / 2)
+        Dim boundingBox As New Rect(New Point(minX, minY), New Point(maxX, maxY))
+        Dim centerP As New Point(boundingBox.X + boundingBox.Width / 2 + 0.001, boundingBox.Y + boundingBox.Height / 2 + 0.001)
 
-        Dim safeLength As Double = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2) / 2
+        Dim safeLength As Double = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
 
         Dim traverseangle = Math.PI * fillangle / 180 + (Math.PI / 2)
         fillangle = Math.PI * fillangle / 180
@@ -103,8 +103,82 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
+    <MeasurePerformance>
+    Public Shared Function OptimiseFills(lines As List(Of Line))
+
+        Dim fractionalPaths As Integer = 0
+
+        Dim workingLines As New List(Of Line)(lines)
+
+        Dim currentPoint As New Point(0, 0)
+
+        Dim optimisedLines As New List(Of Line)
+
+
+        While workingLines.Count > 0
+
+            Dim nearestLine As Line = Nothing
+            Dim nearestDistance As Double = Double.MaxValue
+
+            For Each line In workingLines
+
+                Dim startDistance As Double = currentPoint.DistanceTo(line.StartPoint)
+                Dim endDistance As Double = currentPoint.DistanceTo(line.EndPoint)
+
+                If startDistance < nearestDistance Or endDistance < nearestDistance Then
+                    nearestLine = line
+                    nearestDistance = Math.Min(startDistance, endDistance)
+                End If
+            Next
+
+            If currentPoint.DistanceTo(nearestLine.StartPoint) < currentPoint.DistanceTo(nearestLine.EndPoint) Then
+
+                If currentPoint.DistanceTo(nearestLine.StartPoint) < 1 Then
+                    Dim nl As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1}
+                    optimisedLines.Add(nl)
+                    fractionalPaths += 1
+                End If
+
+                optimisedLines.Add(nearestLine)
+                currentPoint = nearestLine.EndPoint
+            Else
+
+                If currentPoint.DistanceTo(nearestLine.EndPoint) < 1 Then
+                    Dim nl As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = nearestLine.X2, .Y2 = nearestLine.Y2}
+                    optimisedLines.Add(nl)
+                    fractionalPaths += 1
+                End If
+                optimisedLines.Add(New Line() With {.X1 = nearestLine.X2, .Y1 = nearestLine.Y2, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1})
+                currentPoint = nearestLine.StartPoint
+            End If
+
+            workingLines.Remove(nearestLine)
+
+        End While
+
+        Debug.WriteLine(fractionalPaths)
+
+        Return optimisedLines
+
+    End Function
+
+    Public Function IsShapeClosed(lines As List(Of Line)) As Boolean
+
+        For i = 0 To lines.Count - 1
+            For j = i To lines.Count - 1
+                If i = j Then Continue For
+                If lines(i).StartPoint = lines(j).EndPoint Then Return True
+            Next
+        Next
+        Return False
+    End Function
+
 
     Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
+
+        If Not IsShapeClosed(lines) Then
+            Return lines
+        End If
 
         Dim processedLines As New List(Of Line)
         processedLines.AddRange(FillLines(lines, cfg.DrawingConfig.MinStrokeWidth, cfg.DrawingConfig.ShadingAngle))
@@ -112,6 +186,8 @@ Public Class FillProcessor : Implements IProcessor
         If cfg.DrawingConfig.CrossHatch Then
             processedLines.AddRange(FillLines(lines, cfg.DrawingConfig.MinStrokeWidth, cfg.DrawingConfig.ShadingAngle + 90))
         End If
+
+        processedLines = OptimiseFills(processedLines)
 
         If cfg.DrawingConfig.KeepOutlines Then
             processedLines.InsertRange(0, lines)

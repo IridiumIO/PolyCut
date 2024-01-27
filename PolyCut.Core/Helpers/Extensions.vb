@@ -180,6 +180,10 @@ Partial Public Module Extensions
         Return False
     End Function
 
+    <Extension>
+    Public Function DistanceTo(point1 As Point, point2 As Point) As Double
+        Return Math.Sqrt((point1.X - point2.X) ^ 2 + (point1.Y - point2.Y) ^ 2)
+    End Function
 
 End Module
 

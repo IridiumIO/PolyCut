@@ -104,7 +104,7 @@ Public Class OffsetProcessor : Implements IProcessor
             geom.Figures.Add(pfig)
 
             Dim flattened = geom.GetFlattenedPathGeometry(0.01, ToleranceType.Absolute)
-            Dim builtLines = BuildLinesFromGeometry(flattened, 0.1).SelectMany(Of Line)(Function(x) x).ToList()
+            Dim builtLines = BuildLinesFromGeometry(flattened, 0.01).SelectMany(Of Line)(Function(x) x).ToList()
 
             'Ensure after arc is built that the first line of the arc is continuous with l1
             builtLines(0).X1 = l1.X2

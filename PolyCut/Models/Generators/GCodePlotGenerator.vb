@@ -104,7 +104,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
     {NameOf(Configuration.Tolerance), "tolerance"},
     {NameOf(Configuration.ExtractOneColour), "boolean-extract-color"},
     {NameOf(Configuration.ExtractionColor), "extract-color"},
-    {NameOf(Configuration.CuttingConfig.ToolDiameter), "tool-offset"},
+    {NameOf(Configuration.CuttingConfig.ToolRadius), "tool-offset"},
     {NameOf(Configuration.CuttingConfig.Overcut), "overcut"},
     {NameOf(Configuration.InsideOutCuttingOrder), "boolean-sort"},
     {NameOf(Configuration.DrawingConfig.DrawingDirection), "direction"},
@@ -174,13 +174,10 @@ Public Class GCodePlotGenerator : Implements IGenerator
     End Function
 
 
-    Public Sub New(cfg As ProcessorConfiguration, printer As Printer, svg As String)
+    Public Sub New(ByRef cfg As ProcessorConfiguration, printer As Printer, svg As String)
         Configuration = cfg
         Me.Printer = printer
         Me.SVGFile = svg
-
-        'GCodePlot uses a tool diameter, not a tool radius
-        Configuration.CuttingConfig.ToolDiameter /= 2
 
     End Sub
 

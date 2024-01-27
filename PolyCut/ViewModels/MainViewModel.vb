@@ -20,19 +20,38 @@ Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
-    Public Property UsingGCodePlot As Boolean = False
+    'Private _UsingGcodePlot As Boolean = False
+    Public Property UsingGCodePlot As Boolean
+    '    Get
+    '        Return _UsingGcodePlot
+    '    End Get
+    '    Set(value As Boolean)
+    '        _UsingGcodePlot = value
+    '        Debug.WriteLine(value)
+    '        OnPropertyChanged(NameOf(UsingGCodePlot))
+    '    End Set
+    'End Property
 
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
     Public Property CuttingMats As ObservableCollection(Of CuttingMat)
     Public Property CuttingMat As CuttingMat
-    Public Property Configuration As New ProcessorConfiguration
+    Public Property Configuration As ProcessorConfiguration
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
     Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
 
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
+    Public ReadOnly Property PolyCutDocumentName As String
+        Get
+            If SVGFiles.Count <> 0 Then
+                Return SVGFiles.First.ShortFileName.Replace(".svg", ".gcode")
+            Else
+                Return "PolyCut1.gcode"
+            End If
+        End Get
+    End Property
 
     Private ReadOnly _snackbarService As ISnackbarService
     Private ReadOnly _navigationService As INavigationService
@@ -44,16 +63,13 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) GenerateSnackbar("Saved Preset", x, ControlAppearance.Success))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
-    Public Property NetworkUploadCommand As ICommand = New RelayCommand(Sub()
-                                                                            Dim MoonrakerExporter As New MoonrakerExporter(Configuration)
 
-                                                                        End Sub)
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub()
                                                                              If _argsService.Args.Length > 0 Then
                                                                                  DragSVGs(_argsService.Args)
                                                                              End If
                                                                          End Sub)
-
+    Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
     Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
         Get
@@ -69,7 +85,6 @@ Public Class MainViewModel : Inherits ObservableObject
         _navigationService = navigationService
         _argsService = argsService
 
-
     End Sub
 
     Private Async Sub Initialise()
@@ -77,8 +92,10 @@ Public Class MainViewModel : Inherits ObservableObject
         CuttingMats = Await SettingsHandler.GetCuttingMats
         Printer = Printers.First
         CuttingMat = CuttingMats.First
-        Configuration = New ProcessorConfiguration
+        Configuration = (Await SettingsHandler.GetConfigurations).First
     End Sub
+
+
     Public Sub SavePrinter()
         SettingsHandler.WritePrinter(Printer)
         GenerateSnackbar("Saved Preset", Printer.Name, ControlAppearance.Success)
@@ -117,7 +134,8 @@ Public Class MainViewModel : Inherits ObservableObject
             SVGFiles.Add(file)
         End If
         OnPropertyChanged(NameOf(SVGComponents))
-
+        OnPropertyChanged(NameOf(SVGFiles))
+        OnPropertyChanged(NameOf(PolyCutDocumentName))
         SVGComponents.ForEach(Sub(x) x.LoadState())
 
 
@@ -138,7 +156,7 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Private Sub GenerateSnackbar(Title As String,
+    Friend Sub GenerateSnackbar(Title As String,
                                  Subtitle As String,
                                  Optional ControlAppearance As ControlAppearance = ControlAppearance.Primary,
                                  Optional Icon As SymbolRegular = SymbolRegular.Info24,
@@ -148,13 +166,13 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Sub
 
-
+    Public Property GeneratedGCode As List(Of GCode)
     Private Async Sub GenerateGcode()
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
 
         Dim generator As IGenerator = If(UsingGCodePlot,
-            New GCodePlotGenerator(Configuration, Printer, GenerateSVGText),
+            New GCodePlotGenerator((Configuration), Printer, GenerateSVGText),
             New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
 
 
@@ -165,12 +183,12 @@ Public Class MainViewModel : Inherits ObservableObject
             Return
         End If
 
-        Dim generatedGCodes = generator.GetGCode
+        GeneratedGCode = generator.GetGCode
 
         'Maybe I should use Aggregate in other places as well?
-        Dim compiledGCodeString = generatedGCodes.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        Dim compiledGCodeString = GeneratedGCode.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
         GCode = compiledGCodeString
-        GCodeGeometry = New GCodeGeometry(generatedGCodes)
+        GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
         _navigationService.Navigate(GetType(PreviewPage))
 

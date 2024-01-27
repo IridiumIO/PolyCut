@@ -4,7 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:local="clr-namespace:PolyCut"
-      d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+      d:DataContext="{d:DesignInstance Type=local:ExportViewModel}"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       mc:Ignorable="d" Margin="42"
       d:DesignHeight="700" d:DesignWidth="800"
@@ -16,13 +16,13 @@
                   VerticalAlignment="Top">
 
         <Button Height="200"
-                Width="220">
+                Width="220" Command="{Binding SaveFileCommand}">
 
           <Grid Height="170">
 
             <ui:SymbolIcon Symbol="Save20"
                            FontSize="70" />
-            <TextBlock Text="Save GCode..."
+            <TextBlock Text="Save GCode"
                        Grid.Row="1"
                        VerticalAlignment="Bottom"
                        Margin="0,0,0,15" SnapsToDevicePixels="True"/>
@@ -33,7 +33,7 @@
 
         <Button Height="200"
                 Width="220"
-                Margin="50,0" Command="{Binding NetworkUploadCommand}">
+                Margin="50,0,0,0" Command="{Binding NetworkUploadCommand}">
 
           <Grid Height="170">
 
@@ -49,7 +49,16 @@
         </Button>
 
       </StackPanel>
+      
+      <StackPanel Orientation="horizontal" VerticalAlignment="Center" Width="490" Margin="0,20,0,0">
+        <Label Content="File name: " VerticalAlignment="Center" Width="80">
 
+        </Label>
+        <ui:TextBox x:Name="OutputFileName"
+                    Width="410"
+                    Text="{Binding MainVM.PolyCutDocumentName, Mode=OneWay}" />
+      </StackPanel>
+      
       <Separator Margin="0,20" />
 
       <TextBlock Text="Printer Configuration" Margin="0,-10,0,20" FontSize="20" Foreground="{StaticResource CardForeground}"/>
@@ -62,9 +71,11 @@
 
       <Label Content="Host Address" Margin="0,10,0,0" />
       <ui:TextBox x:Name="HostAddress"
-               Text="{Binding Configuration.NetworkPrinter.UploadURL, Mode=TwoWay}" PlaceholderText="Enter URL or IP Address"/>
+                  Text="{Binding MainVM.Configuration.ExportConfig.DestinationIP, Mode=TwoWay}" PlaceholderText="Enter URL or IP Address"/>
 
-      <CheckBox Margin="0,10,0,0" Content="Automatically Begin Printing" IsChecked="{Binding Configuration.NetworkPrinter.AutoPrint, Mode=TwoWay}" />
+      <CheckBox Margin="0,10,0,0"
+                Content="Automatically Begin Printing"
+                IsChecked="{Binding MainVM.Configuration.ExportConfig.AutoPrint, Mode=TwoWay}" />
 
     </StackPanel>
     

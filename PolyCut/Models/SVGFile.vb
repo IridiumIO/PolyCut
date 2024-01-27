@@ -8,6 +8,11 @@ Public Class SVGFile : Inherits ObservableObject
     Public Property FilePath As String
 
     Public ReadOnly Property ShortFileName As String
+        Get
+            Return FilePath.Replace("/", "\").Substring(FilePath.LastIndexOf("\") + 1)
+
+        End Get
+    End Property
 
     Public Property SVGComponents As New ObservableCollection(Of SVGComponent)
 

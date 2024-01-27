@@ -1,10 +1,8 @@
 ﻿Class ExportPage
 
-    Public Property ViewModel As MainViewModel
-    Sub New(_viewmodel As MainViewModel)
-        ViewModel = _viewmodel
+    Sub New(_viewmodel As ExportViewModel)
 
-        Me.DataContext = ViewModel
+        Me.DataContext = _viewmodel
 
         ' This call is required by the designer.
         InitializeComponent()

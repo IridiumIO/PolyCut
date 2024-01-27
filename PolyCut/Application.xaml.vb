@@ -35,6 +35,7 @@ Partial Public Class Application
                                services.AddSingleton(Of SVGPage)()
                                services.AddSingleton(Of MonitorPage)()
                                services.AddSingleton(Of ExportPage)()
+                               services.AddSingleton(Of ExportViewModel)()
                                services.AddSingleton(Of PreviewPage)()
                                services.AddSingleton(Of SettingsPage)()
 
@@ -45,11 +46,12 @@ Partial Public Class Application
         Return TryCast(_host.Services.GetService(GetType(T)), T)
     End Function
 
-    Private Async Sub OnStartup(sender As Object, e As StartupEventArgs)
+    Private Shadows Async Sub OnStartup(sender As Object, e As StartupEventArgs)
         Await _host.StartAsync()
     End Sub
 
-    Private Async Sub OnExit(sender As Object, e As ExitEventArgs)
+    Private Shadows Async Sub OnExit(sender As Object, e As ExitEventArgs)
+
         Await _host.StopAsync()
         _host.Dispose()
     End Sub

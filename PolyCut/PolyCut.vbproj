@@ -2,22 +2,29 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>PolyCut</RootNamespace>
     <UseWPF>true</UseWPF>
     <Company>IridiumIO</Company>
+    <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\banner_dark.svg" />
+    <None Remove="Resources\banner_light.svg" />
     <None Remove="Resources\CuttingMat.svg" />
     <None Remove="Resources\gcodeplot.exe" />
     <None Remove="Resources\logo.ico" />
+    <None Remove="Resources\logo.svg" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\CuttingMat.svg" />
     <EmbeddedResource Include="Resources\gcodeplot.exe" />
+    <Resource Include="Resources\banner_dark.svg" />
+    <Resource Include="Resources\banner_light.svg" />
     <Resource Include="Resources\logo.ico" />
+    <Resource Include="Resources\logo.svg" />
   </ItemGroup>
 
   <ItemGroup>

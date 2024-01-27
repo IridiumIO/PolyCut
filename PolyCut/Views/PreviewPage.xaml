@@ -34,8 +34,15 @@
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="380" />
+      <ColumnDefinition Width="380"
+                        MinWidth="380"
+                        MaxWidth="800" />
     </Grid.ColumnDefinitions>
+    <GridSplitter Width="5"
+                  Background="Transparent"
+                  IsTabStop="False"
+                  ResizeDirection="Columns"
+                  Panel.ZIndex="1" />
 
     <local:ZoomBorder  x:Name="zoomPanControl"
                           Background="Transparent"

@@ -6,11 +6,15 @@ Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
 Class SVGPage : Implements INavigableView(Of MainViewModel)
-    Protected Sub OnNavigatedTo(e As NavigationEventArgs)
+    'Protected Sub OnNavigatedTo(e As NavigationEventArgs)
 
-        Me.DataContext = e.ExtraData
+    '    Me.DataContext = e.ExtraData
 
-    End Sub
+    'End Sub
+
+    Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
+
+
 
     Sub New(viewmodel As MainViewModel)
 
@@ -44,6 +48,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
                 End If
             Next
+
         End If
     End Sub
 
@@ -54,7 +59,6 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             NameOf(ViewModel.CuttingMat.SelectedHorizontalAlignment),
             NameOf(ViewModel.CuttingMat.SelectedRotation),
             NameOf(ViewModel.CuttingMat)}
-
 
         If alignmentPropertyNames.Contains(e.PropertyName) Then
             Transform()
@@ -130,8 +134,6 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
 
     Dim translation As Point
-    Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
-
 
     Private Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles cuttingMat_AlignmentBoxes.MouseEnter, cuttingMat_AlignmentBoxes.MouseLeave
 

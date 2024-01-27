@@ -2,7 +2,11 @@
 Imports System.IO
 Imports System.Reflection
 Imports System.Text.Json
+
 Imports CommunityToolkit.Mvvm.ComponentModel
+
+Imports PolyCut.Core
+
 Imports SharpVectors.Renderers
 
 Public Class SettingsHandler : Inherits ObservableObject
@@ -10,6 +14,7 @@ Public Class SettingsHandler : Inherits ObservableObject
     Public Shared Property DataFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", "PolyCut"))
     Public Shared Property PrintersFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(DataFolder.FullName, "Printers"))
     Public Shared Property CuttingMatsFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(DataFolder.FullName, "Cutting Mats"))
+    Public Shared Property ConfigurationFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(DataFolder.FullName, "Configurations"))
 
     Public Shared Property SettingsJSONFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(DataFolder.FullName, "settings.json"))
 
@@ -19,6 +24,7 @@ Public Class SettingsHandler : Inherits ObservableObject
         If Not DataFolder.Exists Then DataFolder.Create()
         If Not PrintersFolder.Exists Then PrintersFolder.Create()
         If Not CuttingMatsFolder.Exists Then CuttingMatsFolder.Create()
+        If Not ConfigurationFolder.Exists Then ConfigurationFolder.Create()
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
 
 
@@ -51,6 +57,10 @@ Public Class SettingsHandler : Inherits ObservableObject
 
     End Sub
 
+
+
+
+
     Shared Async Function GetCuttingMats() As Task(Of ObservableCollection(Of CuttingMat))
         Dim allCuttingMats As New ObservableCollection(Of CuttingMat)
         Dim files = CuttingMatsFolder.GetFiles("*.json")
@@ -76,6 +86,42 @@ Public Class SettingsHandler : Inherits ObservableObject
         Dim output = JsonSerializer.Serialize(cuttingmat, New JsonSerializerOptions With {.IncludeFields = True, .IgnoreReadOnlyProperties = True, .WriteIndented = True})
         Await IO.File.WriteAllTextAsync(IO.Path.Combine(CuttingMatsFolder.FullName, filename), output)
     End Sub
+
+
+
+
+
+
+    Shared Async Function GetConfigurations() As Task(Of ObservableCollection(Of ProcessorConfiguration))
+        Dim allConfigurations As New ObservableCollection(Of ProcessorConfiguration)
+        Dim files = ConfigurationFolder.GetFiles("*.json")
+
+        If files.Length = 0 Then
+            Dim p = New ProcessorConfiguration
+            WriteConfiguration(p)
+            allConfigurations.Add(p)
+
+        Else
+            For Each file In files
+                Dim p = JsonSerializer.Deserialize(Of ProcessorConfiguration)(IO.File.ReadAllText(file.FullName), New JsonSerializerOptions With {.IncludeFields = True})
+                allConfigurations.Add(p)
+            Next
+        End If
+
+        Return allConfigurations
+
+    End Function
+
+    Shared Async Sub WriteConfiguration(Configuration As ProcessorConfiguration)
+        Dim filename = "configuration" & ".json"
+        Dim output = JsonSerializer.Serialize(Configuration, New JsonSerializerOptions With {.IncludeFields = True, .IgnoreReadOnlyProperties = True, .WriteIndented = True})
+        Await IO.File.WriteAllTextAsync(IO.Path.Combine(ConfigurationFolder.FullName, filename), output)
+    End Sub
+
+
+
+
+
 
     Private Shared Sub WriteDefaultCuttingMat()
 

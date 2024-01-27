@@ -1,4 +1,4 @@
-﻿<ui:FluentWindow x:Class="MainWindow"
+﻿<ui:FluentWindow x:Class="MainWindow" x:Name="MainWindowView"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,18 +8,23 @@
                  xmlns:local="clr-namespace:PolyCut"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-                 mc:Ignorable="d"
+                 mc:Ignorable="d" 
                  RenderOptions.BitmapScalingMode="HighQuality"
                  WindowBackdropType="Mica"
                  Title="PolyCut"
-                 Topmost="True"
-                 
+                 xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
                  Height="700"
                  Width="1300"
                  ExtendsContentIntoTitleBar="True"
                  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
                  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                  Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+  <i:Interaction.Triggers>
+    <i:EventTrigger EventName="Closing"
+                    SourceObject="{Binding ElementName=MainWindowView}">
+      <i:InvokeCommandAction Command="{Binding MainViewClosingCommand}" />
+    </i:EventTrigger>
+  </i:Interaction.Triggers>
   <Grid>
 
     <Grid.ColumnDefinitions>
@@ -36,7 +41,7 @@
                   Grid.ColumnSpan="2"
                   IsHitTestVisible="False">
       <ui:TitleBar.Icon>
-        <ui:ImageIcon Source="/PolyCut;component/Resources/logo.ico" Margin="-15,-12,-10,-15"/>
+        <ui:ImageIcon Source="/PolyCut;component/Resources/logo.ico" Margin="-4,-2,-6,-3"/>
 
       </ui:TitleBar.Icon>
     </ui:TitleBar>

@@ -287,13 +287,37 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="380" />
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800"/>
     </Grid.ColumnDefinitions>
+    <GridSplitter Width="10" Background="Transparent" Margin="0,0,-10,0" IsTabStop="False"
+                  ResizeDirection="Columns"
+                  Panel.ZIndex="1" />
 
+    <StackPanel Grid.Column="0"
+          Grid.Row="0"
+          Margin="0,0,0,0" Orientation="Horizontal"
+          VerticalAlignment="Bottom"
+          HorizontalAlignment="Left"
+          Background="Transparent">
+      <svgc:SvgViewbox Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg"
+                       Panel.ZIndex="-2"
+                       Opacity="0.05"
+                       Height="50"
+                       Margin="5" />
+      <TextBlock VerticalAlignment="Bottom"
+                 Margin="5,10"
+                 FontSize="20"
+                 Foreground="White"
+                 Opacity="0.05">
+        <Run Text="v" />
+        <Run Text="{x:Static pc:ProcessorConfiguration.Version}" />
+      </TextBlock>
+    </StackPanel>
+   
     <local:ZoomBorder x:Name="zoomPanControl"
                       Background="Transparent"
-                      RightButtonAction="Reset"
+                      RightButtonAction="Reset" 
                       LeftButtonAction="None" ScaleMin="0.01"
                       ScaleMax="40" ScaleAmount="0.002"
                       MiddleButtonAction="Move"
@@ -338,7 +362,7 @@
                     ClipToBounds="True" 
                     Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                     Height="{Binding Printer.BedHeight, Mode=TwoWay}">
-              <svgc:SvgCanvas x:Name="CuttingMat" EnsureViewboxSize="False"
+              <svgc:SvgCanvas x:Name="CuttingMat" EnsureViewboxSize="False" 
                               HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
                               VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
                               Source="{Binding CuttingMat.QualifiedSVGSource}"

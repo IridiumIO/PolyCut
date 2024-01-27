@@ -1,28 +1,20 @@
-﻿Imports SharpVectors.Renderers.Utils
+﻿Imports System.Xml
+
+Imports SharpVectors.Renderers.Utils
 Imports SharpVectors.Renderers.Wpf
 
-Imports SharpVectors.Dom.Svg
-Imports SharpVectors.Renderers
-Imports CommunityToolkit.Mvvm.ComponentModel
-Imports System.Xml
-Imports Wpf.Ui
+Imports WPF.Ui
 Imports Wpf.Ui.Controls
 Class MainWindow : Implements INavigationWindow
 
 
-    Private _wpfWindow As WpfSvgWindow
-    Private _wpfRenderer As WpfDrawingRenderer
-    Private _wpfSettings As WpfDrawingSettings
+    'Public Property ViewModel As MainViewModel
 
-    Public Property ViewModel As MainViewModel
+    'Public Property svgXML As XmlDocument
 
-    Public Property svgXML As XmlDocument
+    Public Sub New(navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As ISnackbarService)
 
-    Public Sub New(mainviewmodel As MainViewModel, navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As ISnackbarService)
-
-
-        ViewModel = mainviewmodel
-        DataContext = ViewModel
+        DataContext = Application.GetService(Of MainViewModel)()
 
         InitializeComponent()
 

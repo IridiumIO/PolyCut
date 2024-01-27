@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
-   sodipodi:docname="logo.svg"
+   sodipodi:docname="banner_dark.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -33,7 +33,7 @@
      inkscape:window-x="1912"
      inkscape:window-y="141"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g18">
+     inkscape:current-layer="layer2">
     <inkscape:grid
        type="axonomgrid"
        id="grid1"
@@ -269,20 +269,12 @@
        id="layer2"
        inkscape:label="Layer 2"
        transform="translate(11.632997,-7.0809545)">
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:104.074px;line-height:246.088px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code weight=450';font-variant-ligatures:no-common-ligatures;text-align:center;letter-spacing:0.21px;word-spacing:14.5875px;text-anchor:middle;fill:#bfbfbf;fill-opacity:1;stroke:none;stroke-width:7.37528;stroke-linecap:round"
-         x="361.93521"
-         y="168.22191"
+      <path
+         style="font-weight:bold;font-size:104.074px;line-height:246.088px;font-family:'Open Sans';-inkscape-font-specification:'Open Sans Bold';font-variant-ligatures:no-common-ligatures;text-align:center;letter-spacing:0.21px;word-spacing:14.5875px;text-anchor:middle;fill:#c6c6c6;stroke-width:7.37528;stroke-linecap:round"
+         d="m 215.1832,128.88926 h 5.18337 q 7.26688,0 10.87492,-2.84578 3.60803,-2.89659 3.60803,-8.38487 0,-5.53909 -3.04904,-8.18159 -2.99823,-2.64251 -9.45203,-2.64251 h -7.16525 z m 35.57216,-11.78964 q 0,11.9929 -7.52097,18.34508 -7.47015,6.35217 -21.29248,6.35217 h -6.75871 v 26.42504 H 199.42981 V 93.926897 h 23.73171 q 13.51743,0 20.53023,5.843999 7.06361,5.793184 7.06361,17.328724 z m 25.3646,22.61374 q 0,8.43568 2.74414,12.75516 2.79496,4.31948 9.0455,4.31948 6.19972,0 8.89304,-4.26866 2.74414,-4.31948 2.74414,-12.80598 0,-8.43569 -2.74414,-12.65353 -2.74414,-4.21784 -8.99468,-4.21784 -6.19972,0 -8.94386,4.21784 -2.74414,4.16702 -2.74414,12.65353 z m 39.28184,0 q 0,13.87314 -7.3177,21.69902 -7.31771,7.82588 -20.37777,7.82588 -8.1816,0 -14.43214,-3.55722 -6.25054,-3.60803 -9.60448,-10.31593 -3.35395,-6.70789 -3.35395,-15.65175 0,-13.92397 7.26688,-21.64821 7.26689,-7.72424 20.42859,-7.72424 8.1816,0 14.43214,3.55722 6.25054,3.55721 9.60448,10.21429 3.35395,6.65708 3.35395,15.60094 z m 28.51529,28.50855 h -15.4993 V 89.150063 h 15.4993 z m 8.34077,-56.81383 h 16.97301 l 10.72246,31.96413 q 1.37207,4.16702 1.88025,9.85857 h 0.3049 q 0.55899,-5.23419 2.18515,-9.85857 l 10.5192,-31.96413 h 16.61728 l -24.03662,64.08071 q -3.30313,8.89305 -9.45203,13.31416 -6.09809,4.42111 -14.27969,4.42111 -4.01457,0 -7.87669,-0.8639 v -12.2978 q 2.79495,0.66062 6.09808,0.66062 4.11621,0 7.16525,-2.54086 3.09986,-2.49006 4.82766,-7.57179 l 0.91471,-2.79496 z m 90.61412,57.83018 q -26.52667,0 -26.52667,-29.11836 0,-14.48296 7.21606,-22.10556 7.21607,-7.67343 20.68268,-7.67343 9.85857,0 17.68445,3.86212 l -4.57357,11.9929 q -3.65885,-1.4737 -6.80953,-2.38841 -3.15067,-0.96553 -6.30135,-0.96553 -12.09454,0 -12.09454,17.17627 0,16.6681 12.09454,16.6681 4.47193,0 8.28323,-1.1688 3.81131,-1.21961 7.62261,-3.76048 v 13.26333 q -3.76049,2.38842 -7.62261,3.30313 -3.8113,0.91472 -9.6553,0.91472 z m 70.89698,-1.01635 -2.08351,-7.26689 h -0.81308 q -2.49005,3.96376 -7.06362,6.14891 -4.57356,2.13433 -10.41756,2.13433 -10.01103,0 -15.09276,-5.33583 -5.08174,-5.38664 -5.08174,-15.44848 v -37.04587 h 15.4993 v 33.18375 q 0,6.1489 2.18515,9.24876 2.18514,3.04904 6.96198,3.04904 6.50462,0 9.40121,-4.31947 2.89659,-4.3703 2.89659,-14.43214 v -26.72994 h 15.49931 v 56.81383 z"
          id="text1"
-         transform="scale(0.94199923,1.061572)"><tspan
-           sodipodi:role="line"
-           id="tspan1"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'Open Sans';-inkscape-font-specification:'Open Sans Bold';letter-spacing:0.21px;word-spacing:14.5875px;fill:#bfbfbf;fill-opacity:1;stroke:none;stroke-width:7.37528"
-           x="362.04022"
-           y="168.22191"><tspan
-   style="fill:#d0d0d0;fill-opacity:1"
-   id="tspan20">Poly</tspan>cu</tspan></text>
+         transform="scale(0.94199923,1.061572)"
+         aria-label="Polycu" />
       <g
          id="g18"
          transform="matrix(1.1641551,0,0,1.1641551,-105.48481,74.905308)"

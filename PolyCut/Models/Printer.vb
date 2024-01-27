@@ -83,10 +83,10 @@ Public Class Printer : Inherits ObservableObject
 
     Private _BedWidth As Decimal = 235
     Private _BedHeight As Decimal = 235
-    Private _WorkingWidth As Decimal = 200
-    Private _WorkingHeight As Decimal = 200
-    Private _WorkingOffsetX As Decimal = 0.5 * 25.4
-    Private _WorkingOffsetY As Decimal = 25.4
+    Private _WorkingWidth As Decimal = 235
+    Private _WorkingHeight As Decimal = 235
+    Private _WorkingOffsetX As Decimal = 0
+    Private _WorkingOffsetY As Decimal = 0
 
 
 

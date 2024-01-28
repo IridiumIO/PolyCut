@@ -18,7 +18,6 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
         End Get
         Set(value As Boolean)
             SetValue(IsSelectedProperty, value)
-
         End Set
     End Property
     Public ReadOnly Property DynamicWidth As Double
@@ -71,9 +70,22 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
         ScaleProperty = DependencyProperty.Register(NameOf(Scale), GetType(Double), GetType(resizableSVGCanvas), New PropertyMetadata(1.0))
         DynamicWidthProperty = DependencyProperty.Register(NameOf(DynamicWidth), GetType(Double), GetType(resizableSVGCanvas), New PropertyMetadata(Double.NaN))
         DynamicHeightProperty = DependencyProperty.Register(NameOf(DynamicHeight), GetType(Double), GetType(resizableSVGCanvas), New PropertyMetadata(Double.NaN))
-        IsSelectedProperty = DependencyProperty.Register(NameOf(IsSelected), GetType(Boolean), GetType(resizableSVGCanvas), New PropertyMetadata(False))
+        IsSelectedProperty = DependencyProperty.Register(NameOf(IsSelected), GetType(Boolean), GetType(resizableSVGCanvas), New PropertyMetadata(False, AddressOf OnIsSelectedChanged))
     End Sub
 
+
+    Private Shared Sub OnIsSelectedChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
+
+        Dim canvas = DirectCast(d, resizableSVGCanvas)
+        If e.NewValue = True Then
+            canvas.IsSelected = True
+            SelectedControl = canvas
+        Else
+            canvas.IsSelected = False
+
+        End If
+        canvas.UpdateAppearance()
+    End Sub
 
     Public Sub New(svgC As SvgCanvas)
         SvgCanvas = svgC

@@ -632,7 +632,7 @@
 
                           <StackPanel FlowDirection="LeftToRight"
                                       Margin="15,0,15,0">
-                            <ListView ItemsSource="{Binding SVGComponents}" 
+                            <ListView ItemsSource="{Binding SVGComponents}" SelectionMode="Single"
                                        >
                               <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
@@ -651,7 +651,7 @@
                               </ListView.ItemContainerStyle>
                               <ListView.ItemTemplate>
                                 <DataTemplate>
-                                  <Grid>
+                                  <Grid >
 
                                     <Grid.ColumnDefinitions>
                                       <ColumnDefinition Width="5" />

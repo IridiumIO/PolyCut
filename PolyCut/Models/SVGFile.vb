@@ -75,13 +75,7 @@ Public Class SVGFile : Inherits ObservableObject
 
         SVGVisualComponents = CollectionViewSource.GetDefaultView(SVGComponents)
         SVGVisualComponents.Filter = Function(item As Object)
-
-                                         If TypeOf item Is SVGComponent Then
-                                             Return DirectCast(item, SVGComponent).IsVisualElement = True
-                                         Else
-                                             Return False
-                                         End If
-
+                                         Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement = True
                                      End Function
         OnPropertyChanged(NameOf(SVGVisualComponents))
 

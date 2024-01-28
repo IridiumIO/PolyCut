@@ -82,6 +82,8 @@ Public Class SVGComponent : Inherits ObservableObject
             SVGElement.Display = "inline"
         End If
 
+        UnhideChildren(SVGElement)
+
         If Renderable IsNot Nothing Then
             SVGString = SVGDocumentToSVGString(Renderable)
         End If
@@ -98,6 +100,13 @@ Public Class SVGComponent : Inherits ObservableObject
         SVGTop = ele.Bounds.Y
     End Sub
 
+
+    Private Sub UnhideChildren(element As SvgElement)
+        For Each child In element.Children
+            If child.Display = "none" Then child.Display = "inline"
+            UnhideChildren(child)
+        Next
+    End Sub
 
 
     Public Sub New(svgele As SvgElement, ByRef parentFile As SVGFile)

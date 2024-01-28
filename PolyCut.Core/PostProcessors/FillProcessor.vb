@@ -24,7 +24,7 @@ Public Class FillProcessor : Implements IProcessor
 
         'We fudge the bounding box by a fraction of a pixel to ensure the centerpoint doesn't intersect the exact corner of squares. 
         Dim boundingBox As New Rect(New Point(minX, minY), New Point(maxX, maxY))
-        Dim centerP As New Point(boundingBox.X + boundingBox.Width / 2 + 0.001, boundingBox.Y + boundingBox.Height / 2 + 0.001)
+        Dim centerP As New Point(boundingBox.X + boundingBox.Width / 2 + 0.1, boundingBox.Y + boundingBox.Height / 2 + 0.1)
 
         Dim safeLength As Double = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
 
@@ -46,7 +46,7 @@ Public Class FillProcessor : Implements IProcessor
 
 
         'Resent the centerpoint, and offset it by the density in the opposite direction
-        centerP = New Point(boundingBox.X + boundingBox.Width / 2, boundingBox.Y + boundingBox.Height / 2)
+        centerP = New Point(boundingBox.X + boundingBox.Width / 2 + 0.1, boundingBox.Y + boundingBox.Height / 2 + 0.1)
         centerP.X -= (density * Math.Cos(traverseangle))
         centerP.Y -= (density * Math.Sin(traverseangle))
 

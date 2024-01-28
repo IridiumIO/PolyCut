@@ -123,7 +123,16 @@ Partial Public Class ExportConfiguration : Inherits ObservableObject
 
     Public Property Type As ExporterType = ExporterType.Network
     Public Property FileDestination As String = Nothing
-    Public Property DestinationIP As String = "klipper.local"
+    Private _DestinationIP As String = "http://klipper.local"
+    Public Property DestinationIP As String
+        Get
+            Return _DestinationIP
+        End Get
+        Set(value As String)
+            Dim uri = BuildURI(value, Nothing)
+            _DestinationIP = uri.ToString
+        End Set
+    End Property
     Public Property DestinationPort As Integer = 7125
     Public Property AutoPrint As Boolean = True
 

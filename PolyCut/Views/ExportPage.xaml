@@ -56,7 +56,7 @@
         </Label>
         <ui:TextBox x:Name="OutputFileName"
                     Width="410"
-                    Text="{Binding MainVM.PolyCutDocumentName, Mode=OneWay}" />
+                    Text="{Binding FilePath, Mode=TwoWay}" />
       </StackPanel>
       
       <Separator Margin="0,20" />

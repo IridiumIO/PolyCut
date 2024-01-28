@@ -29,7 +29,7 @@
                    
                    Foreground="#80FFFFFF">
             <Run Text="version" />
-            <Run Text="{x:Static pc:ProcessorConfiguration.Version }" />
+            <Run Text="{x:Static local:SettingsHandler.Version }" />
         </TextBlock>
       </StackPanel>
 

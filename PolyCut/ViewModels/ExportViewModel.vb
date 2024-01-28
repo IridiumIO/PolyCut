@@ -1,14 +1,11 @@
-﻿Imports CommunityToolkit.Mvvm.ComponentModel
+﻿Imports System.Net
+
+Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
 Imports Microsoft.Win32
 
 Imports PolyCut.Core
-
-Imports WPF.Ui.Controls
-
-Imports WPF.Ui
-Imports System.Net
 
 Public Class ExportViewModel : Inherits ObservableObject
 
@@ -39,9 +36,9 @@ Public Class ExportViewModel : Inherits ObservableObject
         If fsd.ShowDialog() Then
             Dim ret = Await diskexporter.Export(MainVM.GeneratedGCode, fsd.FileName)
             If ret = 0 Then
-                MainVM.GenerateSnackbar("File Saved", $"Saved to: {fsd.FileName}", ControlAppearance.Success, SymbolRegular.CheckmarkCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateSuccess("File Saved", $"Saved to: {fsd.FileName}")
             Else
-                MainVM.GenerateSnackbar("Error Saving File", $"An unknown error occurred", ControlAppearance.Danger, SymbolRegular.DismissCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateError("Error Saving File", $"An unknown error occurred")
             End If
         End If
 
@@ -53,15 +50,15 @@ Public Class ExportViewModel : Inherits ObservableObject
 
         Select Case ret
             Case 0
-                MainVM.GenerateSnackbar("Sent to Printer", $"Sucessfully uploaded {FilePath} to Moonraker", ControlAppearance.Success, SymbolRegular.CheckmarkCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateSuccess("Sent to Printer", $"Sucessfully uploaded {FilePath} to Moonraker")
             Case 1
-                MainVM.GenerateSnackbar("Error uploading to Moonraker", $"An unknown error occurred", ControlAppearance.Danger, SymbolRegular.DismissCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateError("Error uploading to Moonraker", $"An unknown error occurred")
             Case -1
-                MainVM.GenerateSnackbar("Error uploading to Moonraker", $"The host could not be found", ControlAppearance.Caution, SymbolRegular.DismissCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateError("Error uploading to Moonraker", $"The host could not be found")
             Case Else
                 Dim codeText = New Http.HttpResponseMessage(ret)
                 codeText.ReasonPhrase = If(ret = 418, "I'm a teapot (you don't have any GCode to upload)", codeText.ReasonPhrase)
-                MainVM.GenerateSnackbar("Error uploading to Moonraker", $"{ret}: {codeText.ReasonPhrase}", ControlAppearance.Danger, SymbolRegular.DismissCircle32, 4)
+                Application.GetService(Of SnackbarService).GenerateError("Error uploading to Moonraker", $"{ret}: {codeText.ReasonPhrase}")
         End Select
     End Sub
 

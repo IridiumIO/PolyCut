@@ -12,7 +12,7 @@ Class MainWindow : Implements INavigationWindow
 
     'Public Property svgXML As XmlDocument
 
-    Public Sub New(navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As ISnackbarService)
+    Public Sub New(navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As SnackbarService)
 
         DataContext = Application.GetService(Of MainViewModel)()
 

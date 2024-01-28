@@ -36,6 +36,8 @@ Public Class ApplicationHostService
     Private Async Function HandleActivationAsync() As Task
         Await Task.CompletedTask
 
+        Await SettingsHandler.InitialiseSettings
+
         If Not Application.Current.Windows.OfType(Of MainWindow)().Any() Then
             Dim navigationWindow = _serviceProvider.GetRequiredService(Of MainWindow)()
             AddHandler navigationWindow.Loaded, AddressOf OnNavigationWindowLoaded

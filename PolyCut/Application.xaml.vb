@@ -24,7 +24,7 @@ Partial Public Class Application
                                services.AddSingleton(Of ITaskBarService, TaskBarService)()
                                ' Service containing navigation, same as INavigationWindow... but without window
                                services.AddSingleton(Of INavigationService, NavigationService)()
-                               services.AddSingleton(Of ISnackbarService, SnackbarService)()
+                               services.AddSingleton(Of SnackbarService)()
 
                                ' Main window with navigation
                                services.AddSingleton(Of INavigationWindow, MainWindow)()

@@ -1,17 +1,11 @@
 ﻿Imports System.Collections.ObjectModel
-Imports System.ComponentModel
 Imports System.IO
-Imports System.Reflection
-Imports System.Xml
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
-Imports PolyCut.Core
 
-Imports SharpVectors.Dom.Svg
-Imports SharpVectors.Renderers.Utils
-Imports SharpVectors.Renderers.Wpf
+Imports PolyCut.Core
 
 Imports Svg
 
@@ -20,17 +14,7 @@ Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
-    'Private _UsingGcodePlot As Boolean = False
     Public Property UsingGCodePlot As Boolean
-    '    Get
-    '        Return _UsingGcodePlot
-    '    End Get
-    '    Set(value As Boolean)
-    '        _UsingGcodePlot = value
-    '        Debug.WriteLine(value)
-    '        OnPropertyChanged(NameOf(UsingGCodePlot))
-    '    End Set
-    'End Property
 
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
@@ -53,22 +37,18 @@ Public Class MainViewModel : Inherits ObservableObject
         End Get
     End Property
 
-    Private ReadOnly _snackbarService As ISnackbarService
+    Private ReadOnly _snackbarService As SnackbarService
     Private ReadOnly _navigationService As INavigationService
     Private ReadOnly _argsService As CommandLineArgsService
 
     Public Property SavePrinterCommand As ICommand = New RelayCommand(AddressOf SavePrinter)
     Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
     Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
-    Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) GenerateSnackbar("Saved Preset", x, ControlAppearance.Success))
-    Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
+    Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
+    Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
 
-    Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub()
-                                                                             If _argsService.Args.Length > 0 Then
-                                                                                 DragSVGs(_argsService.Args)
-                                                                             End If
-                                                                         End Sub)
+    Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
     Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
@@ -77,32 +57,33 @@ Public Class MainViewModel : Inherits ObservableObject
         End Get
     End Property
 
-    Public Sub New(snackbarService As ISnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
-        SettingsHandler.InitialiseSettings()
-        Initialise()
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
+        Initialise()
 
     End Sub
 
     Private Async Sub Initialise()
-        Printers = Await SettingsHandler.GetPrinters
-        CuttingMats = Await SettingsHandler.GetCuttingMats
+
+        Printers = SettingsHandler.GetPrinters
         Printer = Printers.First
+        CuttingMats = SettingsHandler.GetCuttingMats
         CuttingMat = CuttingMats.First
-        Configuration = (Await SettingsHandler.GetConfigurations).First
+        Configuration = (SettingsHandler.GetConfigurations).First
+
     End Sub
 
 
     Public Sub SavePrinter()
         SettingsHandler.WritePrinter(Printer)
-        GenerateSnackbar("Saved Preset", Printer.Name, ControlAppearance.Success)
+        _snackbarService.GenerateSuccess("Saved Preset", Printer.Name)
     End Sub
     Public Sub SaveCuttingMat()
         SettingsHandler.WriteCuttingMat(CuttingMat)
-        GenerateSnackbar("Saved Preset", CuttingMat.Name, ControlAppearance.Success)
+        _snackbarService.GenerateSuccess("Saved Preset", CuttingMat.Name)
     End Sub
 
 
@@ -156,16 +137,6 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Friend Sub GenerateSnackbar(Title As String,
-                                 Subtitle As String,
-                                 Optional ControlAppearance As ControlAppearance = ControlAppearance.Primary,
-                                 Optional Icon As SymbolRegular = SymbolRegular.Info24,
-                                 Optional Duration As Integer = 3)
-
-        _snackbarService.Show(Title, Subtitle, ControlAppearance, New SymbolIcon(Icon), TimeSpan.FromSeconds(Duration))
-
-    End Sub
-
     Public Property GeneratedGCode As List(Of GCode)
     Private Async Sub GenerateGcode()
         Configuration.WorkAreaHeight = Printer.BedHeight
@@ -179,14 +150,16 @@ Public Class MainViewModel : Inherits ObservableObject
         Dim retcode = Await generator.GenerateGcodeAsync
 
         If retcode.StatusCode = 1 Then
-            GenerateSnackbar("Error", retcode.Message, ControlAppearance.Danger, SymbolRegular.ErrorCircle24, 5)
+            _snackbarService.GenerateError("Error", retcode.Message, 5)
             Return
         End If
 
         GeneratedGCode = generator.GetGCode
 
         'Maybe I should use Aggregate in other places as well?
-        Dim compiledGCodeString = GeneratedGCode.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        'Dim compiledGCodeString = GeneratedGCode.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        Dim compiledGCodeString = BuildStringFromGCodes(GeneratedGCode)
+
         GCode = compiledGCodeString
         GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
@@ -194,6 +167,16 @@ Public Class MainViewModel : Inherits ObservableObject
 
 
     End Sub
+
+
+    Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
+
+        Dim stringBuilder As New Text.StringBuilder()
+        For Each gc In GeneratedGCode
+            stringBuilder.AppendLine(gc.ToString())
+        Next
+        Return stringBuilder.ToString()
+    End Function
 
 
     Function GenerateSVGText() As String

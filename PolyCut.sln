@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "PolyCut", "PolyCut\PolyCut.vbproj", "{B487ABA5-2D84-4D9A-A6D0-3835361EEF1C}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "PolyCut.Core", "PolyCut.Core\PolyCut.Core.vbproj", "{E0C38FEC-C886-490A-A4BC-9EA3DD2029CC}"
+Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "PolyCut.Core", "PolyCut.Core\PolyCut.Core.vbproj", "{E0C38FEC-C886-490A-A4BC-9EA3DD2029CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

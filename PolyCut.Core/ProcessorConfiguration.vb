@@ -2,9 +2,10 @@
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
-Partial Public Class ProcessorConfiguration : Inherits ObservableObject
+Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implements ISaveable
 
-    Public Shared Property Version As String = "0.1"
+    Public Property Version As Single = 0.1 Implements ISaveable.Version
+    Public Property Name As String = "Configuration" Implements ISaveable.Name
 
     Public Enum ToolMode
         Cut
@@ -65,16 +66,16 @@ End Class
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject
 
-    Public Property MinStrokeWidth As Double = 0.5
+    Public Property MinStrokeWidth As Double = 1
     Public Property CrossHatch As Boolean = True
-    Public Property ShadingAngle As Double = -45
+    Public Property ShadingAngle As Double = 45
     Public Property KeepOutlines As Boolean = True
 
 
     ''' Currently only supported by GCodePlot
     Public Property MaxStrokeWidth As Double = 1
-    Public Property DrawingDirection As Object
-    Public Property ShadingThreshold As Object
+    Public Property DrawingDirection As Integer? = Nothing
+    Public Property ShadingThreshold As Double = 1
 
 End Class
 
@@ -87,7 +88,7 @@ Partial Public Class GCodeConfiguration : Inherits ObservableObject
         GCode.Parse("G28")}
 
     Private Property EndGCode As New List(Of GCode) From {
-        GCode.CommentLine($" OrcaSlicer PolyCut {ProcessorConfiguration.Version} on_"),
+        GCode.CommentLine($" OrcaSlicer PolyCut 0.1 on_"),
         GCode.CommentLine($" estimated printing time = 0"),
         GCode.CommentLine($" filament used [mm] = 0")}
 

@@ -38,8 +38,87 @@ Public Class GCodePlotGenerator : Implements IGenerator
         Next
 
         If GCodes.Count = 0 Then Return (1, "No GCodes generated")
+        ProcessGcodes()
 
         Return (0, Nothing)
+
+    End Function
+
+    Private Function ProcessGcodes()
+
+        GCodes.ForEach(Sub(gc) gc.Comment = Nothing)
+
+        Dim cumulativeTime As Double = 0
+
+        For i = 1 To GCodes.Count - 1
+            cumulativeTime += CalculateDuration(GCodes(i))
+        Next
+
+
+
+
+        Dim InitialMeta As New List(Of GCode) From {
+            GCode.CommentLine($"  Created using PolyCut v {Configuration.Version}"),
+            GCode.CommentLine($"  "),
+            GCode.CommentLine($"  Estimated Time: {PolyCut.Core.GCodeGenerator.SecondsToReadable(cumulativeTime),20}"),
+            GCode.CommentLine($"  Total Length:   {PolyCut.Core.GCodeGenerator.MillimetresToReadable(totalLineLength),20}"),
+            GCode.CommentLine($"  Generator:                 GCodePlot"),
+            GCode.Blank(),
+            GCode.CommentLine($"######################################"),
+            GCode.Blank(),
+            GCode.Parse("G0 E0"),
+            GCode.Parse("G21"),
+            GCode.Parse("G28")}
+
+        Dim EndMeta As New List(Of GCode) From {
+            GCode.Blank(),
+            GCode.CommentLine($"######################################"),
+            GCode.CommentLine($" Klipper MetaData"),
+            GCode.Blank(),
+            GCode.CommentLine($" OrcaSlicer PolyCut {Configuration.Version} on_"),
+            GCode.CommentLine($" estimated printing time = {CInt(cumulativeTime)}s"),
+            GCode.CommentLine($" filament used [mm] = {totalLineLength:F1}"),
+            GCode.Blank(),
+            GCode.CommentLine($"######################################")
+            }
+
+        GCodes.InsertRange(0, InitialMeta)
+        GCodes.AddRange(EndMeta)
+
+    End Function
+
+    Dim currentX As Double = 0
+    Dim currentY As Double = 0
+    Dim currentZ As Double = 0
+
+    Private totalLineLength As Double = 0
+
+    Private Function CalculateDuration(gc As GCode) As Double
+
+        If gc.Mode <> "G" Then Return 0
+        If gc.Code <> 0 AndAlso gc.Code <> 1 Then Return 0
+
+
+        Dim x? As Double = If(gc.X IsNot Nothing, gc.X - currentX, 0)
+        Dim y? As Double = If(gc.Y IsNot Nothing, gc.Y - currentY, 0)
+        Dim z? As Double = If(gc.Z IsNot Nothing, gc.Z - currentZ, 0)
+
+        currentX = If(gc.X IsNot Nothing, gc.X, currentX)
+        currentY = If(gc.Y IsNot Nothing, gc.Y, currentY)
+        currentZ = If(gc.Z IsNot Nothing, gc.Z, currentZ)
+
+        If x = 0 AndAlso y = 0 AndAlso z = 0 Then
+            Return 0
+        End If
+
+        Dim dist = Math.Sqrt(x.Value ^ 2 + y.Value ^ 2 + z.Value ^ 2)
+        Dim speed = gc.F.Value / 60
+
+        If gc.Code = 1 Then
+            totalLineLength += dist
+        End If
+
+        Return dist / speed
 
 
     End Function

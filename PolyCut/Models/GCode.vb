@@ -80,6 +80,7 @@ Public Class GCodeGeometry : Inherits ObservableObject
 
     End Sub
 
+
     Private Function DrawLine(x1 As Double, y1 As Double, x2 As Double, y2 As Double, Optional isRapidMove As Boolean = False) As Line
 
         Dim line As New Line With {
@@ -87,9 +88,10 @@ Public Class GCodeGeometry : Inherits ObservableObject
                            .Y1 = Math.Round(y1, 2),
                            .X2 = Math.Round(x2, 2),
                            .Y2 = Math.Round(y2, 2),
-                           .Stroke = New SolidColorBrush(DirectCast(ColorConverter.ConvertFromString("#bbbbff"), Color)),
-                           .StrokeThickness = 0.2
-}
+                           .Stroke = New SolidColorBrush(DirectCast(ColorConverter.ConvertFromString("#ccccff"), Color)),
+                           .StrokeThickness = 0.2,
+                           .StrokeEndLineCap = PenLineCap.Round,
+                           .StrokeStartLineCap = PenLineCap.Round}
 
         ' If it's a rapid move, change the stroke color
         If isRapidMove Then

@@ -6,6 +6,7 @@ Imports System.Threading
 Imports System.Windows.Threading
 Imports SharpVectors.Runtime
 Imports Wpf.Ui.Controls
+Imports PolyCut.Core.Extensions
 
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
@@ -152,6 +153,16 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Private Function DrawToolPaths()
         Dim gc = compileGCodes(ViewModel.GCode)
+
+        For Each line In gc.Paths
+            line.Visibility = Visibility.Visible
+            If Not TravelMovesVisibilityToggle.IsChecked Then
+                If line.Stroke Is Brushes.OrangeRed Then
+                    line.Visibility = Visibility.Collapsed
+                End If
+            End If
+        Next
+
         ViewModel.GCodePaths = gc.Paths
         Return 0
     End Function
@@ -160,15 +171,25 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
         ViewModel.GCodePaths.Clear()
 
+
+
         For Each line In ViewModel.GCodeGeometry.Paths
 
             If cToken.IsCancellationRequested Then
                 Return 1
             End If
 
+            line.Visibility = Visibility.Visible
+            If Not TravelMovesVisibilityToggle.IsChecked Then
+                If line.Stroke Is Brushes.OrangeRed Then
+                    line.Visibility = Visibility.Collapsed
+                End If
+            End If
+
             ViewModel.GCodePaths.Add(line)
-            Dim lnlength = Math.Sqrt((line.X2 - line.X1) ^ 2 + (line.Y2 - line.Y1) ^ 2)
-            Await Task.Delay(20 * lnlength / 10)
+            Await Task.Delay(20 * line.Length / 10)
+
+
 
         Next
 

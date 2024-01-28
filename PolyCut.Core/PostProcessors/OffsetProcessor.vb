@@ -68,7 +68,7 @@ Public Class OffsetProcessor : Implements IProcessor
             Dim bzc = BezierArcApproximation(arcStartP, arcEndP, arcCenterP, toolRadius)
             pfig.Segments.Add(bzc)
 
-            While lines(rollingIndex Mod lines.Count).Length < toolRadius
+            While lines(rollingIndex Mod lines.Count).Length < toolRadius AndAlso lines(rollingIndex Mod lines.Count).IsContinuousWith(lines((rollingIndex + 1) Mod lines.Count))
 
                 Dim l = lines(rollingIndex Mod lines.Count)
                 Dim ltheta = l.AngleR
@@ -93,7 +93,7 @@ Public Class OffsetProcessor : Implements IProcessor
 
                 rollingIndex += 1
 
-                If rollingIndex = lines.Count Then
+                If rollingIndex >= lines.Count Then
                     rollingIndex = 0
                     outerlooped = True
                     Exit While

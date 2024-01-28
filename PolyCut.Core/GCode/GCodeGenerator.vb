@@ -93,7 +93,7 @@ Public Class GCodeGenerator
         Dim GCodeData = Generate(lines, cfg)
 
         Dim InitialMeta As New List(Of GCode) From {
-            GCode.CommentLine($"  Created using PolyCut v {ProcessorConfiguration.Version}"),
+            GCode.CommentLine($"  Created using PolyCut v {cfg.Version}"),
             GCode.CommentLine($"  "),
             GCode.CommentLine($"  Estimated Time: {SecondsToReadable(GCodeData.EstimatedTime),20}"),
             GCode.CommentLine($"  Total Length:   {MillimetresToReadable(GCodeData.TotalLength),20}"),
@@ -110,7 +110,7 @@ Public Class GCodeGenerator
             GCode.CommentLine($"######################################"),
             GCode.CommentLine($" Klipper MetaData"),
             GCode.Blank(),
-            GCode.CommentLine($" OrcaSlicer PolyCut {ProcessorConfiguration.Version} on_"),
+            GCode.CommentLine($" OrcaSlicer PolyCut {cfg.Version} on_"),
             GCode.CommentLine($" estimated printing time = {CInt(GCodeData.EstimatedTime)}s"),
             GCode.CommentLine($" filament used [mm] = {GCodeData.TotalLength:F1}"),
             GCode.Blank(),
@@ -124,7 +124,8 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Function SecondsToReadable(seconds As Double) As String
+    'TODO: Break these out into global so they can be used in other places
+    Public Shared Function SecondsToReadable(seconds As Double) As String
         Dim ts As TimeSpan = TimeSpan.FromSeconds(seconds)
         If ts.TotalMinutes < 1 Then Return $"{ts.Seconds}s"
         If ts.TotalHours < 1 Then Return $"{ts.Minutes}m {ts.Seconds}s"
@@ -133,7 +134,7 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Function MillimetresToReadable(distance As Double) As String
+    Public Shared Function MillimetresToReadable(distance As Double) As String
 
         If distance < 100 Then Return $"{CInt(distance)} mm"
         If distance < 1000 Then Return $"{distance / 10:F2} cm"

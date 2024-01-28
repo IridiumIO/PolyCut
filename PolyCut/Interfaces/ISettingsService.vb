@@ -8,7 +8,7 @@ Public Interface ISettingsService
     Sub SetValue(settingName As String, setting As Object)
 
     <Pure>
-    Sub GetValue(settingName As String)
+    Function GetValue(settingName As String) As Object
 
     Sub InitialiseSettings(appName As String)
 

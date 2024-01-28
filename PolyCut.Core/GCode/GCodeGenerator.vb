@@ -124,7 +124,8 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Function SecondsToReadable(seconds As Double) As String
+    'TODO: Break these out into global so they can be used in other places
+    Public Shared Function SecondsToReadable(seconds As Double) As String
         Dim ts As TimeSpan = TimeSpan.FromSeconds(seconds)
         If ts.TotalMinutes < 1 Then Return $"{ts.Seconds}s"
         If ts.TotalHours < 1 Then Return $"{ts.Minutes}m {ts.Seconds}s"
@@ -133,7 +134,7 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Function MillimetresToReadable(distance As Double) As String
+    Public Shared Function MillimetresToReadable(distance As Double) As String
 
         If distance < 100 Then Return $"{CInt(distance)} mm"
         If distance < 1000 Then Return $"{distance / 10:F2} cm"

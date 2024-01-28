@@ -20,9 +20,9 @@ Public Class PrinterSettings : Implements ISettingsService
 
     End Sub
 
-    Public Sub GetValue(settingName As String) Implements ISettingsService.GetValue
+    Public Function GetValue(settingName As String) Implements ISettingsService.GetValue
         Throw New NotImplementedException()
-    End Sub
+    End Function
 
     Public Sub InitialiseSettings(appName As String) Implements ISettingsService.InitialiseSettings
         Dim DataFolder = IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", appName)

@@ -29,6 +29,8 @@ Public Class SVGFile : Inherits ObservableObject
                 Return 1
             Case Svg.SvgUnitType.Pixel
                 Return 0.264583333333333
+            Case Svg.SvgUnitType.Percentage
+                Return 0.264583333333333
             Case Svg.SvgUnitType.Point
                 Return 0.352777777777778
             Case Svg.SvgUnitType.Pica
@@ -50,7 +52,7 @@ Public Class SVGFile : Inherits ObservableObject
 
             For Each child In inDoc.Children
                 If child.Transforms?.Count > 0 Then
-                    child.Transforms.Insert(0, New SvgScale(ConvertSVGScaleToMM(widthScale), heighScale))
+                    child.Transforms.Insert(0, New SvgScale(widthScale, heighScale))
                 Else
                     child.Transforms = New SvgTransformCollection
                     child.Transforms.Add(New SvgScale(widthScale, heighScale))
@@ -60,14 +62,19 @@ Public Class SVGFile : Inherits ObservableObject
 
         Dim vbH = inDoc.ViewBox.Height
         Dim vbW = inDoc.ViewBox.Width
-        For Each child In inDoc.Children
-            If child.Transforms?.Count > 0 Then
-                child.Transforms.Insert(0, New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
-            Else
-                child.Transforms = New SvgTransformCollection
-                child.Transforms.Add(New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
-            End If
-        Next
+
+        If Not inDoc.Height.Type = Svg.SvgUnitType.Percentage AndAlso Not inDoc.Width.Type = Svg.SvgUnitType.Percentage Then
+            For Each child In inDoc.Children
+                If child.Transforms?.Count > 0 Then
+                    child.Transforms.Insert(0, New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
+                Else
+                    child.Transforms = New SvgTransformCollection
+                    child.Transforms.Add(New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
+                End If
+            Next
+        End If
+
+
 
         For Each child In inDoc.Children
             SVGComponents.Add(New SVGComponent(child, Me))

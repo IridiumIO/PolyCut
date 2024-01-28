@@ -311,7 +311,7 @@
                  Foreground="White"
                  Opacity="0.05">
         <Run Text="v" />
-        <Run Text="{x:Static pc:ProcessorConfiguration.Version}" />
+        <Run Text="{x:Static local:SettingsHandler.Version}" />
       </TextBlock>
     </StackPanel>
    
@@ -1035,7 +1035,7 @@
                           </Grid.ColumnDefinitions>
                           <ComboBox SelectedItem="{Binding CuttingMat}"
                                     ItemsSource="{Binding CuttingMats}"
-                                    DisplayMemberPath="Name"
+                                    DisplayMemberPath="DisplayName"
                                     Grid.Column="0"
                                     Background="Transparent"
                                     Padding="10,8,30,8">

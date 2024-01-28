@@ -2,9 +2,11 @@
 Imports System.Text.RegularExpressions
 Imports CommunityToolkit.Mvvm.ComponentModel
 
-Public Class Printer : Inherits ObservableObject
+Imports PolyCut.Core
 
-    Public Property Name As String = "Ender 3 S1"
+Public Class Printer : Inherits ObservableObject : Implements ISaveable
+    Public Property Version As Single = 0.1 Implements ISaveable.Version
+    Public Property Name As String = "Ender 3 S1" Implements ISaveable.Name
 
     Public Property BedWidth As Decimal
         Get

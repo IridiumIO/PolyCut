@@ -93,7 +93,7 @@ Public Class GCodeGenerator
         Dim GCodeData = Generate(lines, cfg)
 
         Dim InitialMeta As New List(Of GCode) From {
-            GCode.CommentLine($"  Created using PolyCut v {ProcessorConfiguration.Version}"),
+            GCode.CommentLine($"  Created using PolyCut v {cfg.Version}"),
             GCode.CommentLine($"  "),
             GCode.CommentLine($"  Estimated Time: {SecondsToReadable(GCodeData.EstimatedTime),20}"),
             GCode.CommentLine($"  Total Length:   {MillimetresToReadable(GCodeData.TotalLength),20}"),
@@ -110,7 +110,7 @@ Public Class GCodeGenerator
             GCode.CommentLine($"######################################"),
             GCode.CommentLine($" Klipper MetaData"),
             GCode.Blank(),
-            GCode.CommentLine($" OrcaSlicer PolyCut {ProcessorConfiguration.Version} on_"),
+            GCode.CommentLine($" OrcaSlicer PolyCut {cfg.Version} on_"),
             GCode.CommentLine($" estimated printing time = {CInt(GCodeData.EstimatedTime)}s"),
             GCode.CommentLine($" filament used [mm] = {GCodeData.TotalLength:F1}"),
             GCode.Blank(),

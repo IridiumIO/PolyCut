@@ -59,20 +59,21 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
-        SettingsHandler.InitialiseSettings()
-        Initialise()
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
+        Initialise()
 
     End Sub
 
     Private Async Sub Initialise()
-        Printers = Await SettingsHandler.GetPrinters
-        CuttingMats = Await SettingsHandler.GetCuttingMats
+
+        Printers = SettingsHandler.GetPrinters
         Printer = Printers.First
+        CuttingMats = SettingsHandler.GetCuttingMats
         CuttingMat = CuttingMats.First
-        Configuration = (Await SettingsHandler.GetConfigurations).First
+        Configuration = (SettingsHandler.GetConfigurations).First
+
     End Sub
 
 

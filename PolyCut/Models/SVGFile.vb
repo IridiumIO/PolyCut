@@ -34,7 +34,7 @@ Public Class SVGFile : Inherits ObservableObject
             Case Svg.SvgUnitType.Pica
                 Return 4.23333333333333
             Case Else
-                Application.GetService(Of WPF.Ui.ISnackbarService).Show("Unknown SVG Unit Type: " & unitType.ToString, "Scaling may not be correct", WPF.Ui.Controls.ControlAppearance.Caution, Nothing, TimeSpan.FromSeconds(5))
+                Application.GetService(Of SnackbarService).GenerateCaution("Unknown SVG Unit Type: " & unitType.ToString, "Scaling may not be correct")
                 Return 1
         End Select
     End Function

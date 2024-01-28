@@ -44,7 +44,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property SavePrinterCommand As ICommand = New RelayCommand(AddressOf SavePrinter)
     Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
     Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
-    Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.Generate("Saved Preset", x, ControlAppearance.Success))
+    Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
 

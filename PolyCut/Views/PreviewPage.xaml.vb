@@ -6,6 +6,7 @@ Imports System.Threading
 Imports System.Windows.Threading
 Imports SharpVectors.Runtime
 Imports Wpf.Ui.Controls
+Imports PolyCut.Core.Extensions
 
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
@@ -167,8 +168,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             End If
 
             ViewModel.GCodePaths.Add(line)
-            Dim lnlength = Math.Sqrt((line.X2 - line.X1) ^ 2 + (line.Y2 - line.Y1) ^ 2)
-            Await Task.Delay(20 * lnlength / 10)
+            Await Task.Delay(20 * line.Length / 10)
 
         Next
 

@@ -7,6 +7,7 @@ Imports System.Xml
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
+
 Imports PolyCut.Core
 
 Imports SharpVectors.Dom.Svg
@@ -61,7 +62,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
     Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) GenerateSnackbar("Saved Preset", x, ControlAppearance.Success))
-    Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGCode)
+    Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
     Public Property RemoveSVGCommand As ICommand = New RelayCommand(Of SVGFile)(Sub(x) ModifySVGFiles(x, removeSVG:=True))
 
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub()
@@ -186,7 +187,9 @@ Public Class MainViewModel : Inherits ObservableObject
         GeneratedGCode = generator.GetGCode
 
         'Maybe I should use Aggregate in other places as well?
-        Dim compiledGCodeString = GeneratedGCode.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        'Dim compiledGCodeString = GeneratedGCode.Select(Function(x) x.ToString).Aggregate(Function(a, b) a & Environment.NewLine & b)
+        Dim compiledGCodeString = BuildStringFromGCodes(GeneratedGCode)
+
         GCode = compiledGCodeString
         GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
@@ -194,6 +197,16 @@ Public Class MainViewModel : Inherits ObservableObject
 
 
     End Sub
+
+
+    Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
+
+        Dim stringBuilder As New Text.StringBuilder()
+        For Each gc In GeneratedGCode
+            stringBuilder.AppendLine(gc.ToString())
+        Next
+        Return stringBuilder.ToString()
+    End Function
 
 
     Function GenerateSVGText() As String

@@ -120,7 +120,7 @@ Public Class SVGComponent : Inherits ObservableObject
 
         Dim svgC As New SharpVectors.Converters.SvgCanvas With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN}
 
-        _ECanvas = New resizableSVGCanvas(svgC)
+        ECanvas = New resizableSVGCanvas(svgC)
 
         If isHidden Then ECanvas.Visibility = Visibility.Collapsed
 

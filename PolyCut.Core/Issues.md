@@ -2,16 +2,16 @@
 
 ## PolyCut 
 - [ ] The visual indicator for the imported Elements list does not keep up with the actual list
-- [ ] The toggle button to hide travel moves needs to be toggled twice to take effect
+- [X] The toggle button to hide travel moves needs to be toggled twice to take effect
 - [ ] Significant lag when trying to copy GCode from the preview window when it has a lot of lines
 - [ ] Touchscreen scrolling/panning does not work
 - [ ] Monitor tab won't open if the URL on the Export tab is not prefixed with `http://` or `https://`
-- [ ] Nested hidden elements are not visible in the editor but are still exported
+- [x] Nested hidden elements are not visible in the editor but are still exported
 
 ## PolyCut.Core 
-- [ ] Fills don't ignore open paths and will attempt to fill them regardless, using a naive algorithm
+- [x] Fills don't ignore open paths and will attempt to fill them regardless, using a naive algorithm
 - [ ] Tool diameter offset paths have a fixed resolution and do not take into account the precision setting
-
+- [ ] Shape drawing does not take into account whether the shape is filled or not, and will always fill closed shapes
 
 
 # Pending Features 
@@ -26,6 +26,7 @@
 - [ ] Allow saving copies of printers/cutting mats 
 - [ ] Add additional default cutting mats
 - [ ] Add additional default printers
+- [ ] Add selectable Pen to preview to adjust drawing width/color
 
 ### Editor
 - [ ] Manipulation features
@@ -57,6 +58,7 @@
 	- [X] Hatch
 	- [X] Crosshatch
 - [X] Optimised fill paths
+    - [ ] Toggle optimisation
 - [ ] Boolean Modes
     - [ ] Union
 	- [ ] Intersection
@@ -73,3 +75,4 @@
 ### Ambitious
 - [ ] Klipper Configuration Generator
 - [ ] Export over serial
+- [ ] Switch to Avalonia for Linux/Mac compatibility

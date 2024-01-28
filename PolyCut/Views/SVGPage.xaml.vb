@@ -1,16 +1,12 @@
 ﻿Imports System.ComponentModel
 Imports System.Data.SqlTypes
 Imports System.Xml
-Imports Wpf.Ui.Controls
+Imports WPF.Ui.Controls
 Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
+Imports CommunityToolkit.Mvvm.ComponentModel
 Class SVGPage : Implements INavigableView(Of MainViewModel)
-    'Protected Sub OnNavigatedTo(e As NavigationEventArgs)
-
-    '    Me.DataContext = e.ExtraData
-
-    'End Sub
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
 
@@ -48,6 +44,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
                 End If
             Next
+
 
         End If
     End Sub

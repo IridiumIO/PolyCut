@@ -66,7 +66,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Sub
 
-    Private Async Sub Initialise()
+    Private Sub Initialise()
 
         Printers = SettingsHandler.GetPrinters
         Printer = Printers.First
@@ -92,12 +92,15 @@ Public Class MainViewModel : Inherits ObservableObject
         Dim fs As New Microsoft.Win32.OpenFileDialog
 
         fs.Filter = "*.svg|*.svg"
+        fs.Multiselect = True
 
         If fs.ShowDialog Then
 
-            Dim fl = fs.FileName
+            For Each fl In fs.FileNames
 
-            ModifySVGFiles(New SVGFile(fl))
+                ModifySVGFiles(New SVGFile(fl))
+
+            Next
 
 
         End If

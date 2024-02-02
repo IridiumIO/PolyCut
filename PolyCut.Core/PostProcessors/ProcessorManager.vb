@@ -26,7 +26,13 @@ Public Class ProcessorManager
         Dim overcutProcessedFigures As New List(Of List(Of Line))
 
         For Each figure In figures
-            overcutProcessedFigures.Add(New OvercutProcessor().Process(figure, ProcessorConfiguration))
+
+            Dim closedLoops = GetClosedPaths(figure)
+            For Each closedloop In closedLoops
+                overcutProcessedFigures.Add(New OvercutProcessor().Process(closedloop, ProcessorConfiguration))
+
+            Next
+
         Next
 
         Dim offsetProcessedFigures As New List(Of List(Of Line))
@@ -58,4 +64,38 @@ Public Class ProcessorManager
     End Function
 
 
+    Public Function GetClosedPaths(figures As List(Of Line)) As List(Of List(Of Line))
+        Dim closedPaths As New List(Of List(Of Line))
+
+        Dim workingPath As New List(Of Line)
+
+        Dim currentLoopStartPoint As Windows.Point = figures.First.StartPoint
+        Dim workingEndPoint As Windows.Point = figures.First.EndPoint
+
+        workingPath.Add(figures(0))
+
+        For Each line In figures
+
+            If line.StartPoint = workingEndPoint Then
+                workingPath.Add(line)
+                workingEndPoint = line.EndPoint
+            Else
+                If workingEndPoint = currentLoopStartPoint Then
+                    closedPaths.Add(workingPath)
+                    workingPath = New List(Of Line)
+                    currentLoopStartPoint = line.StartPoint
+                    workingEndPoint = line.EndPoint
+                    workingPath.Add(line)
+                End If
+
+            End If
+        Next
+
+        If workingPath.Count > 0 Then
+            closedPaths.Add(workingPath)
+        End If
+
+        Return closedPaths
+
+    End Function
 End Class

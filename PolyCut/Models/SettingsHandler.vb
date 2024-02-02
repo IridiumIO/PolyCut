@@ -5,6 +5,8 @@ Imports System.Text.Json
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
+Imports MeasurePerformance.IL.Weaver
+
 Imports PolyCut.Core
 
 Imports SharpVectors.Renderers
@@ -30,7 +32,36 @@ Public Class SettingsHandler : Inherits ObservableObject
         Await ConfigurationSettings.InitialiseSettings(Of ProcessorConfiguration)("PolyCut", $"{NameOf(ProcessorConfiguration)}s")
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
 
+        GenerateEV()
+
     End Function
+
+    <MeasurePerformance>
+    Private Shared Async Sub GenerateEV()
+
+
+        Dim exepath As String = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
+
+        If Not exepath = IO.Path.Combine(DataFolder.FullName, "PolyCut.exe") Then
+
+            IO.File.Copy(exepath, IO.Path.Combine(DataFolder.FullName, "PolyCut.exe"), True)
+
+        End If
+
+
+        Dim EV1 = Environment.GetEnvironmentVariable("IridiumIO", EnvironmentVariableTarget.User)
+        Dim EV2 = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User)
+
+        If EV1 Is Nothing Then
+            Await Task.Run(Sub() Environment.SetEnvironmentVariable("IridiumIO", IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO"), EnvironmentVariableTarget.User))
+        End If
+
+        If Not EV2.Contains(DataFolder.FullName) Then
+            EV2 += ";" + DataFolder.FullName
+            Await Task.Run(Sub() Environment.SetEnvironmentVariable("Path", EV2, EnvironmentVariableTarget.User))
+        End If
+
+    End Sub
 
     Private Shared Function GetCollection(Of T)(handler As ISettingsService) As ObservableCollection(Of T)
         Dim collection As New ObservableCollection(Of T)

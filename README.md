@@ -73,7 +73,9 @@ But then I got ambitious...
 [Klipper Setup.md](https://github.com/IridiumIO/PolyCut/blob/master/Klipper%20Setup.md#klipper-setup)
 
 ### 3D-printable mount for holding swivel blade/pens
-Coming soon...For now, have a look on Printables/Thingiverse. I *strongly* recommend using one that has a spring in it, because a 3D printer bed is nowhere near level enough for the accuracy needed to consistently cut through vinyl. A spring will allow a bit of flexibility and pressure to keep the blade in contact with the cutting mat. 
+If you have an Ender 3 S1 or other printer that can take [this hotswap mount](https://properprinting.pro/product/creality-ender3s1-simpletoolchanger/), then you can [get my current vinyl cutter holder here](https://www.printables.com/model/741765). 
+
+Otherwise, you'll find vinyl cutters on Printables/Thingiverse. I *strongly* recommend using one that has a spring in it, because a 3D printer bed is nowhere near level enough for the accuracy needed to consistently cut through vinyl. A spring will allow a bit of flexibility and pressure to keep the blade in contact with the cutting mat. 
 
 # Issues and Planned Features
 [See the document here](https://github.com/IridiumIO/PolyCut/blob/master/PolyCut.Core/Issues.md#issues)

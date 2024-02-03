@@ -1,8 +1,8 @@
-<p align="center"><img src="https://github.com/IridiumIO/PolyCut/blob/master/PolyCut/Resources/banner_light.svg" width="450"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IridiumIO/PolyCut/ac993f8824416a01a3d201cd3b27ee47d56aceee/PolyCut/Resources/banner_light.svg" width="450"></p>
 
 <p align="center"><b>If you've already got a 3D Printer (or any machine that can process GCode), you don't need to buy a separate Cricut or Silhouette machine.</b></p> 
 
-<p align="center">Polycut is (yet another tool) designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives attached. But it looks nicer. It also directly supports uploading and monitoring the print via Klipper. 
+<p align="center">Polycut is yet another tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives attached. But it looks nicer. It also directly supports uploading and monitoring the print via Klipper. 
 </p> 
 
 &nbsp;

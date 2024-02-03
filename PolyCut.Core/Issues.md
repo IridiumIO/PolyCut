@@ -46,7 +46,7 @@
 
 ## PolyCut.Core
 ### Parity Features
-- [ ] Extract single colour
+- [X] Extract single colour
 - [ ] Shading threshold
 - [ ] Shading density based on colour
 - [ ] Shading density based on brightness?

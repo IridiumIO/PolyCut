@@ -1361,12 +1361,10 @@
 
                           <CheckBox x:Name="extractSingleColor"
                                     Grid.Row="2"
-                                    IsEnabled="{Binding UsingGCodePlot}"
                                     Content="Extract one colour"
                                     IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}" />
                           <ui:TextBox Grid.Row="2"
                                       Grid.Column="1"
-                                      IsEnabled="{Binding UsingGCodePlot}"
                                       Text="{Binding Configuration.ExtractionColor, Mode=TwoWay}"
                                       Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
 

@@ -7,17 +7,46 @@ Imports System.Windows.Shapes
 Public Class SVGProcessor
 
 
+    Shared Function colourToHex(colour As Drawing.Color) As String
+        If colour = Nothing Then Return Nothing
+        Return "#" & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
+    End Function
+
+
     Shared Function CompileElementAndGetFigures(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of List(Of Line))
 
-        element.CompileFromSVGElement(svgVisualElement, cfg)
-        Return element.Figures
+
+        Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
+
+        Dim flc = TryCast(svgVisualElement.Fill, SvgColourServer)?.Colour
+        Dim slc = TryCast(svgVisualElement.Stroke, SvgColourServer)?.Colour
+
+        Dim fillcolour = If(flc.HasValue, colourToHex(flc), Nothing)
+        Dim strokecolour = If(slc.HasValue, colourToHex(slc), Nothing)
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+            element.CompileFromSVGElement(svgVisualElement, cfg)
+            Return element.Figures
+        End If
+
+        Return New List(Of List(Of Line))
 
     End Function
 
     Shared Function CompileElementAndGetFiguresFlattened(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of Line)
 
-        element.CompileFromSVGElement(svgVisualElement, cfg)
-        Return element.Figures.SelectMany(Of Line)(Function(x) x).ToList
+
+        Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
+
+        Dim flc = TryCast(svgVisualElement.Fill, SvgColourServer)?.Colour
+        Dim slc = TryCast(svgVisualElement.Stroke, SvgColourServer)?.Colour
+
+        Dim fillcolour = If(flc.HasValue, colourToHex(flc), Nothing)
+        Dim strokecolour = If(slc.HasValue, colourToHex(slc), Nothing)
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+            element.CompileFromSVGElement(svgVisualElement, cfg)
+            Return element.Figures.SelectMany(Of Line)(Function(x) x).ToList
+        End If
+        Return New List(Of Line)
 
     End Function
 
@@ -36,6 +65,7 @@ Public Class SVGProcessor
                 generatedLines.AddRange(CompileElementAndGetFigures(New CircleElement, element, processorConfiguration))
 
             'For SVGPath and SVGText we need to flatten the lines so that the fillprocessor can correctly remove internal elements
+            'Unfortunately this means it needs to be undone in the overcut processor; need to find a better way to do this.
             Case GetType(SvgPath)
                 generatedLines.Add(CompileElementAndGetFiguresFlattened(New PathElement, element, processorConfiguration))
 
@@ -73,7 +103,7 @@ Public Class SVGProcessor
             compiledLines.AddRange(Await LoopElements(element, cfg))
         Next
 
-
+        compiledLines.RemoveAll(Function(lset) lset.Count = 0)
         Return compiledLines
 
     End Function

@@ -74,7 +74,7 @@
                     Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                           Height="{Binding Printer.BedHeight, Mode=TwoWay}">
 
-                    <svgc:SvgCanvas x:Name="CuttingMat"
+                    <svgc:SvgCanvas x:Name="CuttingMat" 
                                     Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}"
                                     HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
                                     VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
@@ -296,13 +296,13 @@
         <Border CornerRadius="5" BorderThickness="2" BorderBrush="{StaticResource CardBorderBrush}" Background="{StaticResource CardBackground}"
                 Grid.Row="4">
             <TextBox Text="{Binding GCode}" BorderThickness="0"
-                     FontFamily="Consolas" Style="{x:Null}" Background="Transparent" Foreground="{StaticResource TextControlForeground}"
+            FontFamily="Consolas" Style="{x:Null}" Background="Transparent" Foreground="{StaticResource TextControlForeground}"
                      Grid.Row="4" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                     Opacity="0.8"
-                     IsReadOnly="True" 
-                     IsReadOnlyCaretVisible="False"
-                     Padding="10,10,8,10"
-                   Margin="0" />
+            Opacity="0.8"
+            IsReadOnly="True" 
+            IsReadOnlyCaretVisible="False"
+            Padding="10,10,8,10"
+          Margin="0" />
         </Border>
         <!--</ScrollViewer>-->
 

@@ -199,6 +199,48 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Function
 
+    Function CreateGCodeDocument(gcodes As List(Of GCode)) As FlowDocument
+
+        Dim document As New FlowDocument
+        document.FontFamily = New FontFamily("Consolas")
+        document.FontSize = 14
+        document.LineHeight = 1
+        'Dim lines As String() = GCode.Split(Environment.NewLine)
+
+        For Each line In gcodes
+            Dim paragraph As New Paragraph
+
+            If line.ToString.StartsWith(";") Then
+                paragraph.Inlines.Add(New Run(line.ToString) With {.Foreground = New SolidColorBrush(Color.FromArgb(128, 255, 255, 255))})
+                document.Blocks.Add(paragraph)
+                Continue For
+            End If
+
+            Dim words As String() = line.ToString.Split(" "c)
+            For Each word In words
+
+                Dim run As New Run(word)
+                If word.StartsWith("G0") Then
+                    run.Foreground = Brushes.OrangeRed
+                ElseIf word.StartsWith("G1") Then
+                    run.Foreground = Brushes.CornflowerBlue
+                End If
+
+                If String.IsNullOrWhiteSpace(word) Then Continue For
+
+                paragraph.Inlines.Add(run)
+                paragraph.Inlines.Add(" ")
+
+
+            Next
+
+            document.Blocks.Add(paragraph)
+
+        Next
+
+        Return document
+
+    End Function
 
 
 End Class

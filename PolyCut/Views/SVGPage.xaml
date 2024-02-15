@@ -338,7 +338,7 @@
                    Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                    Height="{Binding Printer.BedHeight, Mode=TwoWay}">
             <Border x:Name="DupCuttingMatBounds"
-                    Opacity="0"
+                    Opacity="0" Panel.ZIndex="20" IsHitTestVisible="False"
                     Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                     Height="{Binding Printer.BedHeight, Mode=TwoWay}">
 
@@ -357,12 +357,14 @@
 
             </Border>
             <Border x:Name="CuttingMatBounds"
-                    Background="{StaticResource LayerFillColorDefaultBrush}"
-                    CornerRadius="8,0,0,0"
+                    Background="#2e2e2e"
+                    CornerRadius="0,0,0,0"
                     ClipToBounds="True" 
                     Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                     Height="{Binding Printer.BedHeight, Mode=TwoWay}">
-              <svgc:SvgCanvas x:Name="CuttingMat" EnsureViewboxSize="False" 
+              <svgc:SvgCanvas x:Name="CuttingMat"
+                              EnsureViewboxSize="False"
+                              Visibility="{Binding IsChecked, ElementName=CuttingMatVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}"
                               HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
                               VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
                               Source="{Binding CuttingMat.QualifiedSVGSource}"
@@ -1022,14 +1024,56 @@
                             Margin="10,0">
                         <Grid.ColumnDefinitions>
                           <ColumnDefinition Width="auto" />
+                          <ColumnDefinition Width="auto" />
                           <ColumnDefinition Width="*" />
-                          <ColumnDefinition Width="240" />
+                          <ColumnDefinition Width="220" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Mat"
                                    VerticalAlignment="Center"
-                                   Padding="1,2,0,0" />
+                                   Padding="1,2,10,0"  />
+                        <ToggleButton x:Name="CuttingMatVisibilityToggle"
+                                      IsChecked="True" Grid.Column="1">
+                          <ToggleButton.Template>
+                            <ControlTemplate>
+                              <ContentControl>
+                                <ContentControl.Style>
+                                  <Style TargetType="ContentControl">
+                                    <Style.Triggers>
+                                      <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
+                                                   Value="True">
+                                        <Setter Property="Content">
+                                          <Setter.Value>
+                                            <ui:Card BorderBrush="{StaticResource PaletteBlueBrush}"
+                                                     Padding="8,4"
+                                                     Background="Transparent">
+                                              <ui:SymbolIcon Symbol="Eye24" />
+                                            </ui:Card>
+                                          </Setter.Value>
+                                        </Setter>
 
-                        <Grid Grid.Column="2"
+                                      </DataTrigger>
+                                      <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}"
+                                                   Value="False">
+                                        <Setter Property="Content">
+                                          <Setter.Value>
+                                            <ui:Card BorderBrush="{StaticResource ControlFillColorSecondaryBrush}"
+                                                     Padding="8,4"
+                                                     Background="Transparent">
+                                              <!-- Replace with your unchecked icon -->
+                                              <ui:SymbolIcon Symbol="EyeOff24" />
+                                            </ui:Card>
+                                          </Setter.Value>
+                                        </Setter>
+                                      </DataTrigger>
+                                    </Style.Triggers>
+                                  </Style>
+                                </ContentControl.Style>
+                              </ContentControl>
+                            </ControlTemplate>
+                          </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <Grid Grid.Column="3"
                               Margin="10,0,0,0">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />

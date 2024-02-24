@@ -173,7 +173,10 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
         End If
     End Sub
 
-
+    Public Shared Sub DeSelectAll()
+        SelectedControl = Nothing
+        RaiseEvent SelectedControlChanged(Nothing, EventArgs.Empty)
+    End Sub
 
     Private Shared Function FindAncestor(Of T As Class)(dependencyObject As DependencyObject) As T
         Dim parent = VisualTreeHelper.GetParent(dependencyObject)

@@ -71,7 +71,8 @@ Public Class SVGProcessor
 
             Case GetType(SvgText)
                 generatedLines.Add(CompileElementAndGetFiguresFlattened(New TextElement, element, processorConfiguration))
-
+            Case GetType(SvgLine)
+                generatedLines.AddRange(CompileElementAndGetFigures(New LineElement, element, processorConfiguration))
             Case Else
                 Debug.WriteLine(element.GetType.ToString)
 

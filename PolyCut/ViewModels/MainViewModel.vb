@@ -16,11 +16,31 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property UsingGCodePlot As Boolean
 
+    Private Property CanvasColor As Brush = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+    Public Property CanvasThemeColor As String
+        Get
+            Return CanvasColor.ToString
+        End Get
+        Set(value As String)
+            If value = "Light" Then
+                CanvasColor = Brushes.White
+            Else
+                CanvasColor = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+            End If
+        End Set
+    End Property
+
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
     Public Property CuttingMats As ObservableCollection(Of CuttingMat)
     Public Property CuttingMat As CuttingMat
     Public Property Configuration As ProcessorConfiguration
+
+    Public Property CanvasToolMode As CanvasMode
+
+    Public Property CanvasFontFamily As FontFamily = New FontFamily("Calibri")
+
+    Public Property CanvasFontSize As String = 14
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
@@ -125,6 +145,11 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Sub
 
+    Public Sub UpdateSVGFiles()
+        OnPropertyChanged(NameOf(SVGComponents))
+        OnPropertyChanged(NameOf(SVGFiles))
+        OnPropertyChanged(NameOf(PolyCutDocumentName))
+    End Sub
 
     Public Sub DragSVGs(x As String())
 
@@ -241,6 +266,9 @@ Public Class MainViewModel : Inherits ObservableObject
         Return document
 
     End Function
+
+
+
 
 
 End Class

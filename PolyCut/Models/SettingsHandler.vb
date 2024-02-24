@@ -13,7 +13,7 @@ Imports SharpVectors.Renderers
 
 Public Class SettingsHandler : Inherits ObservableObject
 
-    Public Shared Property Version As String = "0.2"
+    Public Shared Property Version As String = "0.3"
 
     Public Shared Property DataFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", "PolyCut"))
 

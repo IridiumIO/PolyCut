@@ -12,7 +12,7 @@ Public Class CuttingMat : Inherits ObservableObject : Implements ISaveable
     Public Property SelectedVerticalAlignment As String = "Top"
     Public Property SelectedHorizontalAlignment As String = "Left"
     Public Property SelectedRotation As Double = 0
-    Public Property SVGSource As String = "CuttingMat.svg"
+    Public Property SVGSource As String = "CuttingMat.Dark.svg"
 
     Public Shared ReadOnly Property VerticalAlignment As ObservableCollection(Of String) = New ObservableCollection(Of String)({"Top", "Bottom"})
     Public Shared ReadOnly Property HorizontalAlignment As ObservableCollection(Of String) = New ObservableCollection(Of String)({"Left", "Right"})

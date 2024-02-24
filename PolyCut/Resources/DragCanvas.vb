@@ -10,7 +10,13 @@ Imports System.Windows.Media
 Imports System.Windows.Media.Media3D
 
 
-
+Public Enum CanvasMode
+    Selection
+    Line
+    Rectangle
+    Ellipse
+    Text
+End Enum
 
 
 ''' <summary>
@@ -40,7 +46,7 @@ Public Class DragCanvas
     ' Dependency Properties
     Public Shared ReadOnly AllowDraggingProperty As DependencyProperty
     Public Shared ReadOnly AllowDragOutOfViewProperty As DependencyProperty
-
+    Public Shared ReadOnly CanvasSelectedModeProperty As DependencyProperty
     ' Attached Property
     Public Shared ReadOnly CanBeDraggedProperty As DependencyProperty
 
@@ -49,11 +55,21 @@ Public Class DragCanvas
         AllowDraggingProperty = DependencyProperty.Register("AllowDragging", GetType(Boolean), GetType(DragCanvas), New PropertyMetadata(True))
         AllowDragOutOfViewProperty = DependencyProperty.Register("AllowDragOutOfView", GetType(Boolean), GetType(DragCanvas), New UIPropertyMetadata(False))
         CanBeDraggedProperty = DependencyProperty.RegisterAttached("CanBeDragged", GetType(Boolean), GetType(DragCanvas), New UIPropertyMetadata(True))
+        CanvasSelectedModeProperty = DependencyProperty.RegisterAttached("CanvasSelectedMode", GetType(CanvasMode), GetType(DragCanvas), New UIPropertyMetadata(CanvasMode.Selection))
     End Sub
 
     ' Constructor
     Public Sub New()
     End Sub
+
+    Public Property CanvasSelectedMode As CanvasMode
+        Get
+            Return CType(GetValue(CanvasSelectedModeProperty), CanvasMode)
+        End Get
+        Set(value As CanvasMode)
+            SetValue(CanvasSelectedModeProperty, value)
+        End Set
+    End Property
 
     ' AllowDragging Property
     Public Property AllowDragging As Boolean
@@ -78,11 +94,7 @@ Public Class DragCanvas
     ' ElementBeingDragged Property
     Public Property ElementBeingDragged As UIElement
         Get
-            If Not AllowDragging Then
-                Return Nothing
-            Else
-                Return _elementBeingDragged
-            End If
+            Return If(Not AllowDragging, Nothing, _elementBeingDragged)
         End Get
         Protected Set(value As UIElement)
             If ElementBeingDragged IsNot Nothing Then
@@ -121,6 +133,10 @@ Public Class DragCanvas
     ' OnMouseLeftButtonDown Event
     Protected Overrides Sub OnMouseLeftButtonDown(e As MouseButtonEventArgs)
         MyBase.OnMouseLeftButtonDown(e)
+
+        If Not CanvasSelectedMode = CanvasMode.Selection Then Return
+
+
 
         IsDragInProgress = False
 

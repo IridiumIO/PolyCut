@@ -295,3 +295,49 @@ Public Class PathTrimmerConverter
         Throw New NotImplementedException()
     End Function
 End Class
+
+
+Public Class ComparisonConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.Convert
+        Return value?.Equals(parameter)
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.ConvertBack
+        If value?.Equals(True) Then
+            Return parameter
+        Else
+            Return Binding.DoNothing
+        End If
+    End Function
+End Class
+
+
+Public Class CanvasToolModeCursorConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.Convert
+        Dim toolMode As CanvasMode = CType(value, CanvasMode)
+        Dim cursor As String = "Arrow"
+
+        Select Case toolMode
+            Case CanvasMode.Selection
+                cursor = "Arrow"
+            Case CanvasMode.Rectangle
+                cursor = "Cross"
+            Case CanvasMode.Line
+                cursor = "Cross"
+            Case CanvasMode.Ellipse
+                cursor = "Cross"
+            Case CanvasMode.Text
+                cursor = "IBeam"
+        End Select
+
+        Return cursor
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotImplementedException()
+    End Function
+End Class

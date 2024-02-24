@@ -46,6 +46,15 @@ Public Class SVGFile : Inherits ObservableObject
 
         Dim inDoc As Svg.SvgDocument = Svg.SvgDocument.Open(FilePath)
 
+        ParseSVG(inDoc)
+
+    End Sub
+
+    Public Sub New(svgDoc As Svg.SvgDocument)
+        ParseSVG(svgDoc)
+    End Sub
+
+    Private Sub ParseSVG(inDoc As Svg.SvgDocument)
         If inDoc.Height.Type <> Svg.SvgUnitType.Millimeter OrElse inDoc.Width.Type <> Svg.SvgUnitType.Millimeter Then
             Dim heighScale As Double = ConvertSVGScaleToMM(inDoc.Height.Type)
             Dim widthScale As Double = ConvertSVGScaleToMM(inDoc.Width.Type)
@@ -89,6 +98,18 @@ Public Class SVGFile : Inherits ObservableObject
 
     End Sub
 
+    Public Sub New(comp As Svg.SvgVisualElement, flName As String)
+        FilePath = flName
+        AddComponent(New SVGComponent(comp, Me))
+    End Sub
 
+    Public Sub AddComponent(svgcomp As SVGComponent)
+        SVGComponents.Add(svgcomp)
+        SVGVisualComponents = CollectionViewSource.GetDefaultView(SVGComponents)
+        SVGVisualComponents.Filter = Function(item As Object)
+                                         Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement = True
+                                     End Function
+        OnPropertyChanged(NameOf(SVGVisualComponents))
+    End Sub
 
 End Class

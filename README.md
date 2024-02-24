@@ -2,7 +2,7 @@
 
 <p align="center"><b>If you've already got a 3D Printer (or any machine that can process GCode), you don't need to buy a separate Cricut or Silhouette machine.</b></p> 
 
-<p align="center">Polycut is yet another tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives attached. But it looks nicer. It also directly supports uploading and monitoring the print via Klipper. 
+<p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives/foil stampers or other tools attached. It also directly supports uploading to a networked 3D Printer via Klipper. 
 </p> 
 
 &nbsp;
@@ -67,7 +67,7 @@ There are other features that are supported by one or the other; these are appro
 </p>
 
 # Background
-I have a 3D printer. I wanted to get into bookbinding, which utilises a lot of vinyl designs that typically require a Cricut or Cricut-like vinyl cutter that costs as much as a 3D printer - which is already a perfectly good 3-axis system, capable of ~200 micron cutting precision if you set up your toolhead properly. 
+I have a 3D printer. I wanted to get into bookbinding, which utilises a lot of vinyl designs that typically require a Cricut, Silhouette or similar vinyl cutter that costs as much as a 3D printer. A 3D printer is already a perfectly good 3-axis system, capable of <200 micron cutting/drawing precision.
 General solutions do exist for creating GCode from SVG files already - You can convert SVGs to GCode from within Cura, but it doesn't account for the diameter of a swivel blade, and thus corners are never crisp; Inkscape has its own inbuilt GCodeTools but it is extremely kludgy; InkCut looks to be nice, but it refuses to run on my PC. 
 
 GCodePlot by @arpruss is an excellent extension to Inkscape - by far the best I found (and in fact, you can use it from within Polycut) but on its own, it isn't quite *smooth* enough. You have to chop up a 12" cutting mat to fit on a standard 3d printer bed, and you never quite know where to line everything up. First I created a [template](https://github.com/IridiumIO/PolyCut/assets/1491536/dd7d9973-3343-4935-85e9-bdc71f112550) for Inkscape that had a [pre-chopped cutting mat in it](https://github.com/IridiumIO/PolyCut/assets/1491536/623fe8d8-3cfd-4ae9-a5e2-e2841f8a1561). Then modified GCodePlot to allow exporting from Inkscape's export menu, added support for ignoring hidden/locked layers, and added Moonraker upload support. That should have been enough for me.

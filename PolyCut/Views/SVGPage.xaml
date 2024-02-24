@@ -17,7 +17,7 @@
       xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
       ScrollViewer.CanContentScroll="False"
       d:DesignHeight="1000"
-      d:DesignWidth="800" 
+      d:DesignWidth="1000" 
       Margin="0,5,0,0" AllowDrop="True" Drop="Page_Drop"
       Title="SVGPage">
   <i:Interaction.Triggers>
@@ -354,13 +354,112 @@
         <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Ellipse}, Mode=TwoWay}">
             <ui:SymbolIcon Symbol="Circle12" />
         </RadioButton>
-        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Text}, Mode=TwoWay}">
+        <RadioButton x:Name="CanvasTextTool" Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Text}, Mode=TwoWay}">
             <ui:SymbolIcon Symbol="Text12" />
         </RadioButton>
       </StackPanel>
 
     </ui:Card>
 
+    <ui:Card Grid.Column="1"
+             VerticalAlignment="Top"
+             HorizontalAlignment="Left"
+             Margin="5"
+             Height="50"
+             Padding="8"
+             Panel.ZIndex="20"
+             Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+      <StackPanel Orientation="Horizontal">
+        <Label Content="Font" VerticalAlignment="Center" Margin="0,2,10,0" />
+        <ComboBox Width="200" SelectedValue="{Binding CanvasFontFamily, Mode=TwoWay}"
+                  xmlns:ComponentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                  Background="Transparent"
+                  ItemTemplate="{DynamicResource FontTemplate}" ScrollViewer.VerticalScrollBarVisibility="Visible">
+          <ComboBox.Resources>
+
+            <CollectionViewSource x:Key="myFonts"
+                                  Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}">
+              <CollectionViewSource.SortDescriptions>
+                <ComponentModel:SortDescription PropertyName="Source" />
+              </CollectionViewSource.SortDescriptions>
+            </CollectionViewSource>
+
+            <Style x:Key="FontStyle">
+              <Setter Property="Control.FontFamily"
+                      Value="{Binding Source}" />
+              <Setter Property="Control.FontSize"
+                      Value="13" />
+            </Style>
+            <Style x:Key="FontStyle2">
+              <Setter Property="Control.FontFamily"
+                      Value="Segoe UI" />
+              <Setter Property="Control.FontSize"
+                      Value="13" />
+            </Style>
+
+            <DataTemplate x:Key="FontTemplate">
+              <StackPanel VirtualizingStackPanel.IsVirtualizing="True" Orientation="Horizontal">
+                <Grid Width="300"
+                      Height="16"
+                      VerticalAlignment="Center">
+                  <Grid.ToolTip>
+                    <StackPanel>
+                      <TextBlock Text="The Quick Brown Fox Jumps Over The Lazy Dog."
+                                 Style="{StaticResource FontStyle}"
+                                 FontSize="15" />
+                      <TextBlock Text="1234567890 !@#$%^&amp;*()-+[]{};:'/?"
+                                 Style="{StaticResource FontStyle}"
+                                 FontSize="15" />
+                    </StackPanel>
+                  </Grid.ToolTip>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Style="{StaticResource FontStyle2}"
+                             Text="{Binding Source}"
+                             
+                             Margin="0,0,10,0" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" Style="{StaticResource FontStyle}"
+                             Text="{Binding Source}"
+                             VerticalAlignment="Center" />
+                </Grid>
+              </StackPanel>
+            </DataTemplate>
+
+          </ComboBox.Resources>
+
+          <ComboBox.ItemsSource>
+            <Binding Source="{StaticResource myFonts}" />
+          </ComboBox.ItemsSource>
+        </ComboBox>
+        <Separator Margin="5,0"/>
+        <Label Content="Size (pt)"
+               VerticalAlignment="Center"
+               Margin="0,2,10,0" />
+        <ComboBox IsEditable="True" SelectedIndex="6"
+                  Width="80" Text="{Binding CanvasFontSize, Mode=OneWayToSource}"
+                  Background="Transparent" Padding="7">
+          <ComboBoxItem Content="3" />
+          <ComboBoxItem Content="4" />
+          <ComboBoxItem Content="6" />
+          <ComboBoxItem Content="8" />
+          <ComboBoxItem Content="10" />
+          <ComboBoxItem Content="12" />
+          <ComboBoxItem Content="14" />
+          <ComboBoxItem Content="16" />
+          <ComboBoxItem Content="18" />
+          <ComboBoxItem Content="20" />
+          <ComboBoxItem Content="24" />
+          <ComboBoxItem Content="28" />
+          <ComboBoxItem Content="32" />
+          <ComboBoxItem Content="36" />
+          <ComboBoxItem Content="48" />
+          <ComboBoxItem Content="72" />
+        </ComboBox>
+      </StackPanel>
+    </ui:Card>
+    
       <local:ZoomBorder x:Name="zoomPanControl"
                       Background="Transparent" Grid.Column="1"
                       RightButtonAction="Reset" 

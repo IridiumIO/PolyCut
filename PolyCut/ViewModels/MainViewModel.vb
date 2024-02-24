@@ -33,6 +33,10 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property CanvasToolMode As CanvasMode
 
+    Public Property CanvasFontFamily As FontFamily = New FontFamily("Calibri")
+
+    Public Property CanvasFontSize As String = 14
+
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
     Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()

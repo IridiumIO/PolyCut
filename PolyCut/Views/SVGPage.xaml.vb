@@ -183,9 +183,15 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     Private _drawingLine As Line
     Private _drawingRect As Rectangle
     Private _drawingEllipse As Ellipse
+    Private _drawingTextbox As TextBox
 
     Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseDown
         StartPos = e.GetPosition(mainCanvas)
+
+        If _drawingTextbox IsNot Nothing Then
+            ViewModel.CanvasToolMode = CanvasMode.Selection
+            _drawingTextbox.MoveFocus(New TraversalRequest(FocusNavigationDirection.Next))
+        End If
 
         Select Case ViewModel.CanvasToolMode
             Case CanvasMode.Line
@@ -198,6 +204,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             Case CanvasMode.Ellipse
                 _drawingEllipse = CreateEllipse(e.GetPosition(mainCanvas))
                 mainCanvas.Children.Add(_drawingEllipse)
+
 
         End Select
 
@@ -247,6 +254,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
         Return elp
     End Function
+
 
     Private Sub drawingCanvas_MouseMove(sender As Object, e As MouseEventArgs) Handles mainCanvas.MouseMove
         If Not e.LeftButton = MouseButtonState.Pressed Then Return
@@ -314,6 +322,38 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
+
+    Private Function CreateTextBox(p As Point) As TextBox
+        Dim tb As New TextBox With {
+            .Width = Double.NaN,
+            .Height = Double.NaN,
+            .Background = Brushes.Transparent,
+            .BorderBrush = Brushes.Transparent,
+            .Foreground = Brushes.Black,
+            .BorderThickness = New Thickness(1),
+            .Style = Nothing,
+            .Text = "",
+            .AcceptsReturn = True,
+            .AcceptsTab = True,
+            .FontSize = ViewModel.CanvasFontSize,
+            .FontFamily = ViewModel.CanvasFontFamily
+        }
+
+        Canvas.SetLeft(tb, p.X)
+        Canvas.SetTop(tb, p.Y)
+
+        Return tb
+
+    End Function
+
+    Private Sub tb_LostFocus()
+        mainCanvas.Children.Remove(_drawingTextbox)
+        GenerateSVGFromText(_drawingTextbox)
+        _drawingTextbox = Nothing
+
+    End Sub
+
+
     Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseUp
 
         Select Case ViewModel.CanvasToolMode
@@ -331,14 +371,20 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
                 mainCanvas.Children.Remove(_drawingEllipse)
                 If _drawingEllipse.Width = 0 AndAlso _drawingEllipse.Height = 0 Then Return
                 GenerateSVGFromEllipse(_drawingEllipse)
+
+            Case CanvasMode.Text
+                If TypeOf (e.OriginalSource) Is TextBlock Then Return
+                _drawingTextbox = CreateTextBox(e.GetPosition(mainCanvas))
+                mainCanvas.Children.Add(_drawingTextbox)
+                _drawingTextbox.Focus()
+                AddHandler _drawingTextbox.LostFocus, AddressOf tb_LostFocus
+
+
         End Select
 
 
     End Sub
 
-    Private Sub DrawLine()
-
-    End Sub
 
     Dim svgfl As SVGFile
     Private Sub GenerateSVGFromLine(l As Line)
@@ -393,6 +439,20 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
+    Private Sub GenerateSVGFromText(t As TextBox)
+
+        Dim svgText As New Svg.SvgText With {
+            .X = New SvgUnitCollection From {Canvas.GetLeft(t)},
+            .Y = New SvgUnitCollection From {Canvas.GetTop(t) + t.FontSize},
+            .Text = t.Text,
+            .FontFamily = t.FontFamily.Source,
+            .FontSize = t.FontSize,
+            .Fill = New Svg.SvgColourServer(System.Drawing.Color.Black)
+        }
+
+        AddSVGToCollection(svgText)
+
+    End Sub
 
     Private Sub AddSVGToCollection(svisElement As SvgVisualElement)
 
@@ -409,6 +469,15 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         End If
 
 
+    End Sub
+
+
+
+    Private Sub SVGCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles svgDrawing.MouseDown
+        'If Not e.LeftButton = MouseButtonState.Pressed Then Return
+        'If TryCast(e.OriginalSource.Parent, resizableSVGCanvas) IsNot Nothing Then
+        '    ViewModel.CanvasToolMode = CanvasMode.Selection
+        'End If
     End Sub
 
 

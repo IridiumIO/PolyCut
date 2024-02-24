@@ -6,6 +6,7 @@ Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
 Imports CommunityToolkit.Mvvm.ComponentModel
+Imports Svg
 Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
@@ -175,4 +176,240 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
         End If
     End Sub
+
+
+
+    Private StartPos As Point
+    Private _drawingLine As Line
+    Private _drawingRect As Rectangle
+    Private _drawingEllipse As Ellipse
+
+    Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseDown
+        StartPos = e.GetPosition(mainCanvas)
+
+        Select Case ViewModel.CanvasToolMode
+            Case CanvasMode.Line
+                _drawingLine = CreateLine(e.GetPosition(mainCanvas))
+                mainCanvas.Children.Add(_drawingLine)
+            Case CanvasMode.Rectangle
+                _drawingRect = CreateRectangle(e.GetPosition(mainCanvas))
+                mainCanvas.Children.Add(_drawingRect)
+
+            Case CanvasMode.Ellipse
+                _drawingEllipse = CreateEllipse(e.GetPosition(mainCanvas))
+                mainCanvas.Children.Add(_drawingEllipse)
+
+        End Select
+
+
+    End Sub
+
+    Private Function CreateLine(p As Point) As Line
+        Return New Line With {
+            .Stroke = Brushes.Black,
+            .StrokeThickness = 1,
+            .X1 = StartPos.X,
+            .Y1 = StartPos.Y,
+            .X2 = StartPos.X,
+            .Y2 = StartPos.Y
+        }
+
+    End Function
+
+    Private Function CreateRectangle(p As Point) As Rectangle
+
+        Dim rct As New Rectangle With {
+            .Stroke = Brushes.Black,
+            .StrokeThickness = 1,
+            .Width = 0,
+            .Height = 0,
+            .Fill = Brushes.Transparent
+        }
+
+        Canvas.SetLeft(rct, p.X)
+        Canvas.SetTop(rct, p.Y)
+
+        Return rct
+
+    End Function
+
+    Private Function CreateEllipse(p As Point) As Ellipse
+        Dim elp As New Ellipse With {
+            .Stroke = Brushes.Black,
+            .StrokeThickness = 1,
+            .Width = 0,
+            .Height = 0,
+            .Fill = Brushes.Transparent
+        }
+
+        Canvas.SetLeft(elp, p.X)
+        Canvas.SetTop(elp, p.Y)
+
+        Return elp
+    End Function
+
+    Private Sub drawingCanvas_MouseMove(sender As Object, e As MouseEventArgs) Handles mainCanvas.MouseMove
+        If Not e.LeftButton = MouseButtonState.Pressed Then Return
+
+        Dim squareAspect = Keyboard.IsKeyDown(Key.LeftShift)
+        Dim p = e.GetPosition(mainCanvas)
+
+        Select Case ViewModel.CanvasToolMode
+
+            Case CanvasMode.Line
+                If squareAspect Then
+                    Dim dx = (p.X - StartPos.X)
+                    Dim dy = (p.Y - StartPos.Y)
+                    Dim angle = Math.Atan2(dy, dx) * (180 / Math.PI)
+                    Dim snappedAngle = Math.Round(angle / 45) * 45
+                    Dim length = Math.Sqrt(dx * dx + dy * dy)
+                    Dim snappedDx = Math.Cos(snappedAngle * (Math.PI / 180)) * length
+                    Dim snappedDy = Math.Sin(snappedAngle * (Math.PI / 180)) * length
+                    _drawingLine.X2 = StartPos.X + snappedDx
+                    _drawingLine.Y2 = StartPos.Y + snappedDy
+                Else
+                    _drawingLine.X2 = p.X
+                    _drawingLine.Y2 = p.Y
+                End If
+
+            Case CanvasMode.Rectangle
+                Dim x = Math.Min(p.X, StartPos.X)
+                Dim y = Math.Min(p.Y, StartPos.Y)
+                Dim w = Math.Abs(p.X - StartPos.X)
+                Dim h = Math.Abs(p.Y - StartPos.Y)
+
+                If squareAspect Then
+                    Dim size = Math.Max(w, h)
+                    _drawingRect.Width = size
+                    _drawingRect.Height = size
+                    Canvas.SetLeft(_drawingRect, If(p.X < StartPos.X, StartPos.X - size, StartPos.X))
+                    Canvas.SetTop(_drawingRect, If(p.Y < StartPos.Y, StartPos.Y - size, StartPos.Y))
+                Else
+                    _drawingRect.Width = w
+                    _drawingRect.Height = h
+                    Canvas.SetLeft(_drawingRect, x)
+                    Canvas.SetTop(_drawingRect, y)
+                End If
+
+            Case CanvasMode.Ellipse
+                Dim x = Math.Min(p.X, StartPos.X)
+                Dim y = Math.Min(p.Y, StartPos.Y)
+                Dim w = Math.Abs(p.X - StartPos.X)
+                Dim h = Math.Abs(p.Y - StartPos.Y)
+
+                If squareAspect Then
+                    Dim size = Math.Max(w, h)
+                    _drawingEllipse.Width = size
+                    _drawingEllipse.Height = size
+                    Canvas.SetLeft(_drawingEllipse, If(p.X < StartPos.X, StartPos.X - size, StartPos.X))
+                    Canvas.SetTop(_drawingEllipse, If(p.Y < StartPos.Y, StartPos.Y - size, StartPos.Y))
+                Else
+                    _drawingEllipse.Width = w
+                    _drawingEllipse.Height = h
+                    Canvas.SetLeft(_drawingEllipse, x)
+                    Canvas.SetTop(_drawingEllipse, y)
+                End If
+
+        End Select
+
+    End Sub
+
+    Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseUp
+
+        Select Case ViewModel.CanvasToolMode
+            Case CanvasMode.Line
+                mainCanvas.Children.Remove(_drawingLine)
+                If _drawingLine.X1 = _drawingLine.X2 AndAlso _drawingLine.Y1 = _drawingLine.Y2 Then Return
+                GenerateSVGFromLine(_drawingLine)
+
+            Case CanvasMode.Rectangle
+                mainCanvas.Children.Remove(_drawingRect)
+                If _drawingRect.Width = 0 AndAlso _drawingRect.Height = 0 Then Return
+                GenerateSVGFromRect(_drawingRect)
+
+            Case CanvasMode.Ellipse
+                mainCanvas.Children.Remove(_drawingEllipse)
+                If _drawingEllipse.Width = 0 AndAlso _drawingEllipse.Height = 0 Then Return
+                GenerateSVGFromEllipse(_drawingEllipse)
+        End Select
+
+
+    End Sub
+
+    Private Sub DrawLine()
+
+    End Sub
+
+    Dim svgfl As SVGFile
+    Private Sub GenerateSVGFromLine(l As Line)
+
+        Dim svgLine As New Svg.SvgLine With {
+            .StartX = l.X1,
+            .StartY = l.Y1,
+            .EndX = l.X2,
+            .EndY = l.Y2,
+            .Color = New Svg.SvgColourServer(System.Drawing.Color.Black),
+            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
+            .StrokeWidth = 1,
+            .FillOpacity = 1,
+            .StrokeLineCap = SvgStrokeLineCap.Round
+        }
+
+        AddSVGToCollection(svgLine)
+
+    End Sub
+
+
+    Private Sub GenerateSVGFromRect(r As Rectangle)
+        Dim svgRect As New Svg.SvgRectangle With {
+            .X = Canvas.GetLeft(r),
+            .Y = Canvas.GetTop(r),
+            .Width = r.Width,
+            .Height = r.Height,
+            .FillOpacity = 0.001,
+            .Fill = New Svg.SvgColourServer(System.Drawing.Color.White),
+            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
+            .StrokeLineCap = SvgStrokeLineCap.Round
+        }
+
+        AddSVGToCollection(svgRect)
+    End Sub
+
+
+    Private Sub GenerateSVGFromEllipse(e As Ellipse)
+        Dim svgEllipse As New Svg.SvgEllipse With {
+            .CenterX = Canvas.GetLeft(e) + e.Width / 2,
+            .CenterY = Canvas.GetTop(e) + e.Height / 2,
+            .RadiusX = e.Width / 2,
+            .RadiusY = e.Height / 2,
+            .FillOpacity = 0.001,
+            .Fill = New Svg.SvgColourServer(System.Drawing.Color.White),
+            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
+            .StrokeWidth = 1,
+            .StrokeLineCap = SvgStrokeLineCap.Round
+        }
+
+        AddSVGToCollection(svgEllipse)
+
+    End Sub
+
+
+    Private Sub AddSVGToCollection(svisElement As SvgVisualElement)
+
+        If svgfl Is Nothing OrElse Not ViewModel.SVGFiles.Contains(svgfl) Then
+            svgfl = New SVGFile(svisElement, "Drawing Group")
+            ViewModel.ModifySVGFiles(svgfl)
+
+        Else
+            ViewModel.SVGComponents.ForEach(Sub(x) x.SaveState())
+
+            svgfl.AddComponent(New SVGComponent(svisElement, svgfl))
+            ViewModel.UpdateSVGFiles()
+            ViewModel.SVGComponents.ForEach(Sub(x) x.LoadState())
+        End If
+
+
+    End Sub
+
+
 End Class

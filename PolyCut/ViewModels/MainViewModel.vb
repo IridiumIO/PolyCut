@@ -14,13 +14,24 @@ Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
+    Private _UsingGCodePlot As Boolean
     Public Property UsingGCodePlot As Boolean
+        Get
+            Return _UsingGCodePlot
+        End Get
+        Set(value As Boolean)
+            _UsingGCodePlot = value
+            CanvasToolMode = CanvasMode.Selection
+        End Set
+    End Property
 
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
     Public Property CuttingMats As ObservableCollection(Of CuttingMat)
     Public Property CuttingMat As CuttingMat
     Public Property Configuration As ProcessorConfiguration
+
+    Public Property CanvasToolMode As CanvasMode
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
@@ -125,6 +136,11 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Sub
 
+    Public Sub UpdateSVGFiles()
+        OnPropertyChanged(NameOf(SVGComponents))
+        OnPropertyChanged(NameOf(SVGFiles))
+        OnPropertyChanged(NameOf(PolyCutDocumentName))
+    End Sub
 
     Public Sub DragSVGs(x As String())
 
@@ -241,6 +257,9 @@ Public Class MainViewModel : Inherits ObservableObject
         Return document
 
     End Function
+
+
+
 
 
 End Class

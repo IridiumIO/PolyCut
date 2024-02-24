@@ -36,6 +36,7 @@
     <local:RadioButtonConverter x:Key="RadioButtonConverter" />
     <local:PathTrimmerConverter x:Key="PathTrimmerConverter" />
     <local:InverseBoolConverter x:Key="InverseBoolConverter" />
+    <local:ComparisonConverter x:Key="ComparisonConverter" />
     <Style x:Key="CustomCardExpanderStyle"
            TargetType="{x:Type ui:CardExpander}"
            BasedOn="{StaticResource DefaultUiCardExpanderStyle}">
@@ -278,7 +279,25 @@
         </Setter.Value>
       </Setter>
     </Style>
-
+    <Style x:Key="MyRadioButtonStyle"
+           TargetType="RadioButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Style.Triggers>
+        <Trigger Property="IsChecked"
+                 Value="False">
+          <Setter Property="Background"
+                  Value="Transparent" />
+        </Trigger>
+        <Trigger Property="IsChecked"
+                 Value="True">
+          <Setter Property="Background"
+                  Value="#20FFFFFF" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
   </Page.Resources>
 
   <Grid  Margin="5,5,10,5">
@@ -287,36 +306,63 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="55" />
+      <ColumnDefinition Width="*" />
       <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800"/>
     </Grid.ColumnDefinitions>
     <GridSplitter Width="10" Background="Transparent" Margin="0,0,-10,0" IsTabStop="False"
                   ResizeDirection="Columns"
                   Panel.ZIndex="1" />
 
-    <StackPanel Grid.Column="0"
-          Grid.Row="0"
+    <!--<StackPanel Grid.Column="1"
+          Grid.Row="0" 
           Margin="0,0,0,0" Orientation="Horizontal"
           VerticalAlignment="Bottom"
-          HorizontalAlignment="Left"
+          HorizontalAlignment="Right"
           Background="Transparent">
       <svgc:SvgViewbox Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg"
                        Panel.ZIndex="-2"
                        Opacity="0.05"
-                       Height="50"
+                       Height="30"
                        Margin="5" />
       <TextBlock VerticalAlignment="Bottom"
-                 Margin="5,10"
-                 FontSize="20"
+                 Margin="5,7"
+                 FontSize="15"
                  Foreground="White"
                  Opacity="0.05">
         <Run Text="v" />
         <Run Text="{x:Static local:SettingsHandler.Version}" />
       </TextBlock>
-    </StackPanel>
-   
-    <local:ZoomBorder x:Name="zoomPanControl"
-                      Background="Transparent"
+    </StackPanel>-->
+
+    <ui:Card Grid.Column="0"
+             Margin="5,5,0,5"
+             VerticalAlignment="Stretch" Panel.ZIndex="100"
+             VerticalContentAlignment="Top" Padding="0" HorizontalContentAlignment="Center">
+
+      <StackPanel >
+        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Selection}, Mode=TwoWay}" >
+          <ui:SymbolIcon Symbol="Cursor24" Filled="True" />
+        </RadioButton>
+        <Separator Margin="0,0,0,0"/>
+        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Line}, Mode=TwoWay}">
+            <ui:SymbolIcon Symbol="Line20" Filled="True" />
+        </RadioButton>
+        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Rectangle}, Mode=TwoWay}">
+            <ui:SymbolIcon Symbol="RectangleLandscape12" />
+        </RadioButton>
+        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Ellipse}, Mode=TwoWay}">
+            <ui:SymbolIcon Symbol="Circle12" />
+        </RadioButton>
+        <RadioButton Width="35" Height="30" Padding="5" Margin="0,5" Style="{StaticResource MyRadioButtonStyle}" IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Text}, Mode=TwoWay}">
+            <ui:SymbolIcon Symbol="Text12" />
+        </RadioButton>
+      </StackPanel>
+
+    </ui:Card>
+
+      <local:ZoomBorder x:Name="zoomPanControl"
+                      Background="Transparent" Grid.Column="1"
                       RightButtonAction="Reset" 
                       LeftButtonAction="None" ScaleMin="0.01"
                       ScaleMax="40" ScaleAmount="0.002"
@@ -389,7 +435,7 @@
               <Grid>
                 <local:DragCanvas  x:Name="svgDrawing"
                                    Background="Transparent"
-                                   AllowDragOutOfView="True">
+                                   AllowDragOutOfView="True" CanvasSelectedMode="{Binding CanvasToolMode}">
 
                 </local:DragCanvas>
    
@@ -533,14 +579,19 @@
     
     
 
-    <ui:Card Grid.Column="1"
+    <ui:Card Grid.Column="2"
              Margin="5,5,0,5"
              VerticalAlignment="Stretch"
-             VerticalContentAlignment="Top">
+             VerticalContentAlignment="Stretch">
       <ui:Card.Background>
         <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
       </ui:Card.Background>
-      <TabControl  Margin="0"
+      <Grid VerticalAlignment="Stretch" >
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*"/>
+          <!--<RowDefinition  Height="50"/>-->
+        </Grid.RowDefinitions>
+        <TabControl  Margin="0" VerticalAlignment="Stretch"
                    BorderBrush="Transparent">
         <TabItem IsSelected="True"
                   Style="{StaticResource CustomTabStyle}">
@@ -1716,10 +1767,53 @@
             </ScrollViewer>
           </Grid>
         </TabItem>
-
+ </TabControl>
+        <Separator Visibility="Collapsed" Grid.Row="1" VerticalAlignment="Top" Margin="0"/>
+        <StackPanel Visibility="Collapsed" Orientation="Horizontal" Grid.Row="1"  Margin="-15, 0, -15, -15" HorizontalAlignment="Center">
+          <RadioButton Width="35"
+                       Height="30"
+                       Padding="5"
+                       Margin="5,0"
+                       Style="{StaticResource MyRadioButtonStyle}">
+            <ui:SymbolIcon Symbol="Cursor24"
+                           Filled="True" />
+          </RadioButton>
+          <Separator Margin="5"/>
+          <RadioButton Width="35"
+                       Height="30"
+                       Padding="5"
+                       Margin="5,0"
+                       Style="{StaticResource MyRadioButtonStyle}">
+            <ui:SymbolIcon Symbol="Line20"
+                           Filled="True" />
+          </RadioButton>
+          <RadioButton Width="35"
+                       Height="30"
+                       Padding="5"
+                       Margin="5,0"
+                       Style="{StaticResource MyRadioButtonStyle}">
+            <ui:SymbolIcon Symbol="RectangleLandscape12" />
+          </RadioButton>
+          <RadioButton Width="35"
+                       Height="30"
+                       Padding="5"
+                       Margin="5,0"
+                       Style="{StaticResource MyRadioButtonStyle}">
+            <ui:SymbolIcon Symbol="Circle12" />
+          </RadioButton>
+          <RadioButton Width="35"
+                       Height="30"
+                       Padding="5"
+                       Margin="5,0"
+                       Style="{StaticResource MyRadioButtonStyle}">
+            <ui:SymbolIcon Symbol="Text12" />
+          </RadioButton>
+        </StackPanel>
+      </Grid>
+      
       
 
-      </TabControl>
+     
 
     </ui:Card>
 

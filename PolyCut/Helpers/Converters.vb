@@ -295,3 +295,20 @@ Public Class PathTrimmerConverter
         Throw New NotImplementedException()
     End Function
 End Class
+
+
+Public Class ComparisonConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.Convert
+        Return value?.Equals(parameter)
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.ConvertBack
+        If value?.Equals(True) Then
+            Return parameter
+        Else
+            Return Binding.DoNothing
+        End If
+    End Function
+End Class

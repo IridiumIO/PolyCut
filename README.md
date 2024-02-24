@@ -8,10 +8,8 @@
 &nbsp;
 
 <p align="center">
-  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/3f5e241f-5f84-44ab-b0b7-dcccdb3f9be1" width="1000"/>
-  </br>
-  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/02859a84-3cf9-4209-a509-c2031e9bf6f4" width="200"/>
-  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/cb2b29de-e527-42ba-9b35-a3a55a4881b2" width="200"/>
+  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/4e607626-e387-4719-8142-c19fb7bac342" width="1000"/>
+  </br> 
 </p>
 
 &nbsp;
@@ -20,9 +18,10 @@
 
 # Features
 
-### Canvas:
+### Drawing Canvas:
 - Import multiple SVGs, arrange and scale them (currently you need to have them grouped how you want in advance as groups can't be separated yet) with a resizable/rotatable cutting mat to help line things up
     - (Technically) support for any size 3D printer bed since all we really need is the bed dimensions; right now the default is named `Ender 3 S1` at 235x235mm but you can adjust and save the dimensions; proper adding/editing names is planned.
+- Draw basic shapes (line, ellipse, rectangle) and text elements directly onto the canvas (best used for creating cutout lines for easier weeding of vinyl)
 
 ### Tool Modes:
 - Cutting mode - generates outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter); importantly, has configurable swivels at sharp corners to account for the blade diameter
@@ -59,6 +58,13 @@ There are other features that are supported by one or the other; these are appro
     - Technically it could work as far back as Windows 7 but I haven't tested it.  
 
 &nbsp;
+
+# Additional Screenshots
+
+<p>
+   <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/77c7abfc-bef7-4a34-a558-ab1c78c9ff5f" width="1000"/>
+  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/cb2b29de-e527-42ba-9b35-a3a55a4881b2" width="1000"/>
+</p>
 
 # Background
 I have a 3D printer. I wanted to get into bookbinding, which utilises a lot of vinyl designs that typically require a Cricut or Cricut-like vinyl cutter that costs as much as a 3D printer - which is already a perfectly good 3-axis system, capable of ~200 micron cutting precision if you set up your toolhead properly. 

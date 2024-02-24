@@ -185,9 +185,18 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     Private _drawingEllipse As Ellipse
     Private _drawingTextbox As TextBox
 
+    Private Sub MainView_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
+
+        Debug.WriteLine(e.OriginalSource.Parent)
+
+        If TypeOf (e.OriginalSource.Parent) IsNot resizableSVGCanvas Then
+            resizableSVGCanvas.DeSelectAll()
+        End If
+
+    End Sub
+
     Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseDown
         StartPos = e.GetPosition(mainCanvas)
-
         If _drawingTextbox IsNot Nothing Then
             ViewModel.CanvasToolMode = CanvasMode.Selection
             _drawingTextbox.MoveFocus(New TraversalRequest(FocusNavigationDirection.Next))

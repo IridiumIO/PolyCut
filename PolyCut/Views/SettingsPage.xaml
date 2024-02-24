@@ -41,7 +41,14 @@
         <ComboBoxItem Content="Polycut.Core" />
         <ComboBoxItem Content="GCodePlot" />
       </ComboBox>
-
+      <Separator Margin="0,10" />
+      <Label Content="Canvas Color" />
+      <ComboBox Text="{Binding CanvasThemeColor, Mode=OneWayToSource}" SelectedIndex="1"
+                HorizontalAlignment="Left"
+                MinWidth="300">
+        <ComboBoxItem Content="Light" />
+        <ComboBoxItem Content="Dark" />
+      </ComboBox>
     </StackPanel>
 
   </Grid>

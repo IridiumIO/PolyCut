@@ -14,14 +14,19 @@ Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
-    Private _UsingGCodePlot As Boolean
     Public Property UsingGCodePlot As Boolean
+
+    Private Property CanvasColor As Brush = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+    Public Property CanvasThemeColor As String
         Get
-            Return _UsingGCodePlot
+            Return CanvasColor.ToString
         End Get
-        Set(value As Boolean)
-            _UsingGCodePlot = value
-            CanvasToolMode = CanvasMode.Selection
+        Set(value As String)
+            If value = "Light" Then
+                CanvasColor = Brushes.White
+            Else
+                CanvasColor = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+            End If
         End Set
     End Property
 

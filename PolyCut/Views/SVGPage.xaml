@@ -37,6 +37,7 @@
     <local:PathTrimmerConverter x:Key="PathTrimmerConverter" />
     <local:InverseBoolConverter x:Key="InverseBoolConverter" />
     <local:ComparisonConverter x:Key="ComparisonConverter" />
+    <local:CanvasToolModeCursorConverter x:Key="CanvasToolModeCursorConverter" />
     <Style x:Key="CustomCardExpanderStyle"
            TargetType="{x:Type ui:CardExpander}"
            BasedOn="{StaticResource DefaultUiCardExpanderStyle}">
@@ -466,7 +467,7 @@
                       LeftButtonAction="None" ScaleMin="0.01"
                       ScaleMax="40" ScaleAmount="0.002"
                       MiddleButtonAction="Move"
-                      ClipToBounds="True">
+                      ClipToBounds="True" Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}">
 
       <StackPanel HorizontalAlignment="Center"
                   VerticalAlignment="Center">
@@ -479,7 +480,7 @@
         <Grid>
 
           <Canvas  Margin="0,0,0,0"
-                   x:Name="mainCanvas"
+                   x:Name="mainCanvas" 
                    Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                    Height="{Binding Printer.BedHeight, Mode=TwoWay}">
             <Border x:Name="DupCuttingMatBounds"
@@ -502,7 +503,7 @@
 
             </Border>
             <Border x:Name="CuttingMatBounds"
-                    Background="#2e2e2e"
+                    Background="{Binding CanvasThemeColor}"
                     CornerRadius="0,0,0,0"
                     ClipToBounds="True" 
                     Width="{Binding Printer.BedWidth, Mode=TwoWay}"

@@ -357,7 +357,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Private Sub tb_LostFocus()
         mainCanvas.Children.Remove(_drawingTextbox)
-        GenerateSVGFromText(_drawingTextbox)
+        If Not _drawingTextbox.Text = "" Then GenerateSVGFromText(_drawingTextbox)
         _drawingTextbox = Nothing
 
     End Sub
@@ -373,12 +373,12 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
             Case CanvasMode.Rectangle
                 mainCanvas.Children.Remove(_drawingRect)
-                If _drawingRect.Width = 0 AndAlso _drawingRect.Height = 0 Then Return
+                If _drawingRect.Width < 1 AndAlso _drawingRect.Height < 1 Then Return
                 GenerateSVGFromRect(_drawingRect)
 
             Case CanvasMode.Ellipse
                 mainCanvas.Children.Remove(_drawingEllipse)
-                If _drawingEllipse.Width = 0 AndAlso _drawingEllipse.Height = 0 Then Return
+                If _drawingEllipse.Width < 1 AndAlso _drawingEllipse.Height < 1 Then Return
                 GenerateSVGFromEllipse(_drawingEllipse)
 
             Case CanvasMode.Text

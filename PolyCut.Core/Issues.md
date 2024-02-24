@@ -7,6 +7,9 @@
 - [ ] Touchscreen scrolling/panning does not work
 - [ ] Monitor tab won't open if the URL on the Export tab is not prefixed with `http://` or `https://`
 - [x] Nested hidden elements are not visible in the editor but are still exported
+- [ ] Shapes drawn on canvas directly are buggy
+    - [ ] creating a shape so that it extends beyond the canvas edges will cause it to get stuck and can leave a ghost element behind
+    - [ ] Text cannot be edited after it is created
 
 ## PolyCut.Core 
 - [x] Fills don't ignore open paths and will attempt to fill them regardless, using a naive algorithm
@@ -41,8 +44,8 @@
 	- [ ] Group/Ungroup	
 	- [ ] Multiple selection
 - [ ] Allow grouping/ungrouping elements, and editing nested elements
-- [ ] Hide cutting mat
-- [ ] Basic tools: Line/Rectangle/Circle. Text?
+- [X] Hide cutting mat
+- [X] Basic tools: Line/Rectangle/Circle/Text
 
 ## PolyCut.Core
 ### Parity Features

@@ -169,7 +169,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Private Async Sub GenerateGcode()
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
-
+        Configuration.SoftwareVersion = SettingsHandler.Version
         Dim generator As IGenerator = If(UsingGCodePlot,
             New GCodePlotGenerator((Configuration), Printer, GenerateSVGText),
             New PolyCutGenerator(Configuration, Printer, GenerateSVGText))

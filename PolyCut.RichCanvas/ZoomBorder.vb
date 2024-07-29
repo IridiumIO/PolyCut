@@ -157,13 +157,13 @@ Public Class ZoomBorder
     End Sub
 
 
-    Private ReadOnly Property TranslateTransform As TranslateTransform
+    Public ReadOnly Property TranslateTransform As TranslateTransform
         Get
             Return Child.RenderTransform.CastAs(Of TransformGroup).Children.First(Function(tr) TypeOf tr Is TranslateTransform).CastAs(Of TranslateTransform)
         End Get
     End Property
 
-    Private ReadOnly Property ScaleTransform As ScaleTransform
+    Public ReadOnly Property ScaleTransform As ScaleTransform
         Get
             Return Child.RenderTransform.CastAs(Of TransformGroup).Children.First(Function(tr) TypeOf tr Is ScaleTransform).CastAs(Of ScaleTransform)
         End Get

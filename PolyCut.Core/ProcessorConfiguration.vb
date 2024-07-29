@@ -11,6 +11,7 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     Public Enum ToolMode
         Cut
         Draw
+        Foil
         Deboss
         Engrave
 

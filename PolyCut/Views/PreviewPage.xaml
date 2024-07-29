@@ -10,6 +10,7 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
       xmlns:system="clr-namespace:System;assembly=mscorlib"
+      xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
       mc:Ignorable="d"
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
       ScrollViewer.CanContentScroll="False"
@@ -44,7 +45,7 @@
                   ResizeDirection="Columns"
                   Panel.ZIndex="1" />
 
-    <local:ZoomBorder  x:Name="zoomPanControl"
+    <rc:ZoomBorder  x:Name="zoomPanControl"
                           Background="Transparent"
                            RightButtonAction="Reset"
                        LeftButtonAction="None"
@@ -158,7 +159,7 @@
 
           </Grid>
 
-        </local:ZoomBorder>
+        </rc:ZoomBorder>
 
   
 

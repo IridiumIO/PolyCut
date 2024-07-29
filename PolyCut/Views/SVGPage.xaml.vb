@@ -20,8 +20,8 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
         InitializeComponent()
         zoomPanControl.Scale = 2
-        zoomPanControl._translateTransform.X = -viewmodel.Printer.BedWidth / 2
-        zoomPanControl._translateTransform.Y = -viewmodel.Printer.BedHeight / 2
+        zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
+        zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
         AddHandler viewmodel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler viewmodel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler viewmodel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler

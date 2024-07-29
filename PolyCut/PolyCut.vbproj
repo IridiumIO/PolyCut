@@ -64,6 +64,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PolyCut.Core\PolyCut.Core.vbproj" />
+    <ProjectReference Include="..\PolyCut.RichCanvas\PolyCut.RichCanvas.vbproj" />
   </ItemGroup>
 
   <ItemGroup>

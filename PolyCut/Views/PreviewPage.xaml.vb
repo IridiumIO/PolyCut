@@ -19,8 +19,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         DataContext = viewmodel
         InitializeComponent()
         zoomPanControl.Scale = 2
-        zoomPanControl._translateTransform.X = -viewmodel.Printer.BedWidth / 2
-        zoomPanControl._translateTransform.Y = -viewmodel.Printer.BedHeight / 2
+        zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
+        zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
 
         AddHandler viewmodel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler viewmodel.PropertyChanged, AddressOf PropertyChangedHandler

@@ -11,6 +11,7 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:system="clr-namespace:System;assembly=mscorlib"
       xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
+      xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
       d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
       mc:Ignorable="d"
@@ -461,7 +462,7 @@
       </StackPanel>
     </ui:Card>
     
-      <local:ZoomBorder x:Name="zoomPanControl"
+      <rc:ZoomBorder x:Name="zoomPanControl"
                       Background="Transparent" Grid.Column="1"
                       RightButtonAction="Reset" 
                       LeftButtonAction="None" ScaleMin="0.01"
@@ -650,7 +651,7 @@
 
       </StackPanel>
 
-    </local:ZoomBorder>
+    </rc:ZoomBorder>
 
     
     

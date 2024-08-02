@@ -1,6 +1,11 @@
 ﻿Imports System.IO
+Imports System.Windows.Controls.Primitives
 Imports System.Xml
+
 Imports CommunityToolkit.Mvvm.ComponentModel
+
+Imports SharpVectors.Converters
+
 Imports Svg
 
 Public Class SVGComponent : Inherits ObservableObject
@@ -15,7 +20,7 @@ Public Class SVGComponent : Inherits ObservableObject
                 If Not SVGElement.HasChildren Then Return False
             End If
 
-            Return If(TryCast(SVGElement, SvgVisualElement) Is Nothing, False, True)
+            Return TryCast(SVGElement, SvgVisualElement) IsNot Nothing
         End Get
     End Property
 
@@ -53,8 +58,6 @@ Public Class SVGComponent : Inherits ObservableObject
         End Get
     End Property
 
-    Public Property ECanvas As resizableSVGCanvas
-
 
     Public Property SVGElement As SvgElement
     Public Property SVGLeft As Double
@@ -62,23 +65,43 @@ Public Class SVGComponent : Inherits ObservableObject
 
     Public Property Children As IEnumerable(Of SVGComponent)
 
-    Private _isHidden As Boolean = False
-    Public Property isHidden As Boolean
+    Private _IsHidden As Boolean = False
+    Public Property IsHidden As Boolean
         Get
-            Return _isHidden
+            Return _IsHidden
         End Get
         Set(value As Boolean)
-            _isHidden = value
-            If ECanvas Is Nothing OrElse Not IsVisualElement Then Return
-            ECanvas.Visibility = If(_isHidden, Visibility.Collapsed, Visibility.Visible)
+            _IsHidden = value
+
+            If value Then
+                SVGViewBox.Visibility = Visibility.Collapsed
+                Selector.SetIsSelected(SVGViewBox.Parent, False)
+            Else
+                SVGViewBox.Visibility = Visibility.Visible
+            End If
+
+            OnPropertyChanged(NameOf(IsHidden))
         End Set
     End Property
+
+
+    Public Property IsSelected As Boolean
+        Get
+            If SVGViewBox?.Parent Is Nothing Then Return False
+            Return Selector.GetIsSelected(SVGViewBox.Parent)
+        End Get
+        Set(value As Boolean)
+            Selector.SetIsSelected(SVGViewBox?.Parent, value)
+        End Set
+    End Property
+
+
     Public ReadOnly Property Parent As SVGFile
 
     Private Sub Initialise()
 
         If SVGElement.Display = "none" Then
-            isHidden = True
+            IsHidden = True
             SVGElement.Display = "inline"
         End If
 
@@ -98,6 +121,7 @@ Public Class SVGComponent : Inherits ObservableObject
 
         SVGLeft = ele.Bounds.X
         SVGTop = ele.Bounds.Y
+        SetCanvas()
     End Sub
 
 
@@ -115,17 +139,41 @@ Public Class SVGComponent : Inherits ObservableObject
         Initialise()
     End Sub
 
+    Public Property SVGViewBox As SharpVectors.Converters.SvgViewbox
 
     Public Sub SetCanvas()
 
-        Dim svgC As New SharpVectors.Converters.SvgCanvas With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN}
+        SVGViewBox = New SharpVectors.Converters.SvgViewbox With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN}
 
-        ECanvas = New resizableSVGCanvas(svgC)
+        Dim svgVisEle = TryCast(SVGElement, SvgVisualElement)
 
-        If isHidden Then ECanvas.Visibility = Visibility.Collapsed
+        Dim bounds = TryCast(SVGElement, SvgVisualElement)?.Bounds
 
-        Canvas.SetLeft(_Ecanvas, SVGLeft)
-        Canvas.SetTop(_Ecanvas, SVGTop)
+        If bounds IsNot Nothing Then
+
+            Dim strokeWidth As Single = If(svgVisEle.StrokeWidth.Value <> 0, svgVisEle.StrokeWidth.Value, 0)
+
+
+            SVGViewBox.Width = bounds.Value.Width - strokeWidth
+            SVGViewBox.Height = bounds.Value.Height - strokeWidth
+            Canvas.SetLeft(SVGViewBox, bounds.Value.X + strokeWidth / 2)
+            Canvas.SetTop(SVGViewBox, bounds.Value.Y + strokeWidth / 2)
+
+            If bounds.Value.Width < 5 Then
+                Canvas.SetLeft(SVGViewBox, Canvas.GetLeft(SVGViewBox) - 2.5)
+            End If
+
+            If bounds.Value.Height < 5 Then
+                Canvas.SetTop(SVGViewBox, Canvas.GetTop(SVGViewBox) - 2.5)
+            End If
+        Else
+
+            Canvas.SetLeft(SVGViewBox, SVGLeft)
+            Canvas.SetTop(SVGViewBox, SVGTop)
+        End If
+
+        If IsHidden Then SVGViewBox.Visibility = Visibility.Collapsed
+
     End Sub
 
     Public Shared Function SVGDocumentToSVGString(svgdocument As SvgDocument)
@@ -146,57 +194,57 @@ Public Class SVGComponent : Inherits ObservableObject
             Return False
         End If
 
-        Dim cxLeft = Canvas.GetLeft(ECanvas)
-        Dim cxTop = Canvas.GetTop(ECanvas)
+        Dim cxLeft = Canvas.GetLeft(SVGViewBox)
+        Dim cxTop = Canvas.GetTop(SVGViewBox)
 
-        If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso ele.Bounds.Width * ECanvas.Scale + cxLeft < x AndAlso ele.Bounds.Height * ECanvas.Scale + cxTop < y Then
-            Return True
-        End If
+        'If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso ele.Bounds.Width * ECanvas.Scale + cxLeft < x AndAlso ele.Bounds.Height * ECanvas.Scale + cxTop < y Then
+        '    Return True
+        'End If
 
         Return False
 
     End Function
 
 
-    Public Function GetTransformedSVGElement() As SvgVisualElement
+    'Public Function GetTransformedSVGElement() As SvgVisualElement
 
-        Dim component As SvgVisualElement = SVGElement.DeepCopy
-        Dim originalBounds = component.Bounds
+    '    Dim component As SvgVisualElement = SVGElement.DeepCopy
+    '    Dim originalBounds = component.Bounds
 
-        If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
+    '    If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
 
-        Dim scaleTF As New Transforms.SvgScale(ECanvas.Scale)
-        component.Transforms.Insert(0, scaleTF)
+    '    Dim scaleTF As New Transforms.SvgScale(ECanvas.Scale)
+    '    component.Transforms.Insert(0, scaleTF)
 
-        'Need to recheck the bounds because the scaling affects the children and translates the parent. 
-        Dim newBounds = component.Bounds
+    '    'Need to recheck the bounds because the scaling affects the children and translates the parent. 
+    '    Dim newBounds = component.Bounds
 
-        'For some ghastly reason, all translations are ALSO scaled by the scale value so this needs to be undone
-        Dim scaledXTranslate = (-SVGLeft + Canvas.GetLeft(ECanvas) - (newBounds.X - originalBounds.X))
-        Dim scaledYTranslate = (-SVGTop + Canvas.GetTop(ECanvas) - (newBounds.Y - originalBounds.Y))
+    '    'For some ghastly reason, all translations are ALSO scaled by the scale value so this needs to be undone
+    '    Dim scaledXTranslate = (-SVGLeft + Canvas.GetLeft(ECanvas) - (newBounds.X - originalBounds.X))
+    '    Dim scaledYTranslate = (-SVGTop + Canvas.GetTop(ECanvas) - (newBounds.Y - originalBounds.Y))
 
-        Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
-        component.Transforms.Insert(0, translateTF)
+    '    Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
+    '    component.Transforms.Insert(0, translateTF)
 
-        Return component
+    '    Return component
 
-    End Function
+    'End Function
 
 
-    Private State As Nullable(Of (Double, Double, Double))
-    Public Sub SaveState()
-        If Not IsVisualElement Then Return
+    'Private State As Nullable(Of (Double, Double, Double))
+    'Public Sub SaveState()
+    '    If Not IsVisualElement Then Return
 
-        State = (Canvas.GetLeft(ECanvas), Canvas.GetTop(ECanvas), ECanvas.Scale)
+    '    State = (Canvas.GetLeft(ECanvas), Canvas.GetTop(ECanvas), ECanvas.Scale)
 
-    End Sub
+    'End Sub
 
-    Public Sub LoadState()
-        If State Is Nothing Then Return
+    'Public Sub LoadState()
+    '    If State Is Nothing Then Return
 
-        Canvas.SetLeft(ECanvas, State.Value.Item1)
-        Canvas.SetTop(ECanvas, State.Value.Item2)
-        ECanvas.Scale = State.Value.Item3
-    End Sub
+    '    Canvas.SetLeft(ECanvas, State.Value.Item1)
+    '    Canvas.SetTop(ECanvas, State.Value.Item2)
+    '    ECanvas.Scale = State.Value.Item3
+    'End Sub
 
 End Class

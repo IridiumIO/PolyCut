@@ -99,9 +99,10 @@ Public Class DesignerItemDecorator : Inherits Control
             Selector.SetIsSelected(_currentSelected, False)
         End If
 
+        If ThisControl.Content.Visibility <> Visibility.Visible Then Return
+
         Selector.SetIsSelected(ThisControl, True)
         _currentSelected = ThisControl
-        Debug.WriteLine(ParentScale)
         adorner.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
         e.Handled = True
     End Sub

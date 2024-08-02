@@ -245,6 +245,10 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_MouseDown(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
+
+        EventAggregator.Publish(New ScaleChangedMessage(Scale))
+        EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
+
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
     End Sub
 

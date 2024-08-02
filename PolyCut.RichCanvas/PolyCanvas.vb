@@ -74,10 +74,19 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
             ' Wrap it in a ContentControl
             Dim wrapper As New ContentControl With {
                 .Content = child,
-                .Width = child.Width,
-                .Height = child.Height,
-                .Tag = (child.Width, child.Height)
+                .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
+                .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight)
             }
+            If TypeOf child Is Line Then
+                Dim line As Line = CType(child, Line)
+                wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
+                wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
+            End If
+
+            wrapper.Tag = (wrapper.Width, wrapper.Height, If(TypeOf child Is Line, New Point(CType(child, Line).X2, CType(child, Line).Y2), Nothing))
+
+
+            wrapper.ClipToBounds = False
             child.Width = Double.NaN
             child.Height = Double.NaN
             Canvas.SetLeft(wrapper, If(Double.IsNaN(Canvas.GetLeft(child)), 0, Canvas.GetLeft(child)))
@@ -109,6 +118,38 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
 
 
     Private Sub DesignerItem_SizeChanged(sender As Object, e As SizeChangedEventArgs)
+
+        Dim wrapper As ContentControl = CType(sender, ContentControl)
+
+        Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
+
+        Dim originalWidth As Double = CType(wrapper.Tag, (Double, Double, Point)).Item1
+        Dim originalHeight As Double = CType(wrapper.Tag, (Double, Double, Point)).Item2
+        Dim originalEndPoint As Point? = CType(wrapper.Tag, (Double, Double, Point)).Item3
+
+
+
+        Dim scaleX As Double = e.NewSize.Width / originalWidth
+        Dim scaleY As Double = e.NewSize.Height / originalHeight
+
+        If TypeOf content Is Line AndAlso originalEndPoint.HasValue Then
+            Dim line As Line = CType(content, Line)
+            'line.X2 = (originalEndPoint.Value.X + line.StrokeThickness / 2) * scaleX
+            'line.Y2 = (originalEndPoint.Value.Y + line.StrokeThickness / 2) * scaleY
+
+            line.X2 = wrapper.Width - line.StrokeThickness / 2
+            If line.Y1 < line.Y2 Then
+                line.Y2 = wrapper.Height - line.StrokeThickness / 2
+            Else
+                line.Y1 = wrapper.Height - line.StrokeThickness / 2
+            End If
+
+        End If
+
+        InvalidateMeasure()
+
+
+
         'Dim wrapper As ContentControl = CType(sender, ContentControl)
 
         'Dim originalWidth As Double = CType(wrapper.Tag, (Double, Double)).Item1

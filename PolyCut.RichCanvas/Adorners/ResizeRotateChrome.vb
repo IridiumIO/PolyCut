@@ -17,7 +17,7 @@ Public Class ResizeRotateChrome
     Private Shared ReadOnly DefaultAdornedStrokeWidth As Double = 1.0
 
     Private Shared ReadOnly DefaultCardinalThumbSize As Double = 14.0
-    Private Shared ReadOnly DefaultCardinalThumbMargin As Thickness = New Thickness(-DefaultCardinalThumbSize / 2)
+    Private Shared ReadOnly DefaultCardinalThumbMargin As Thickness = New Thickness(-DefaultCardinalThumbSize)
 
     Public Shared ReadOnly ThumbSizeProperty As DependencyProperty = RegisterDependencyProperty(NameOf(ThumbSize), DefaultThumbSize)
     Public Shared ReadOnly ThumbStrokeThicknessProperty As DependencyProperty = RegisterDependencyProperty(NameOf(ThumbStrokeThickness), DefaultThumbStrokeThickness)
@@ -54,7 +54,7 @@ Public Class ResizeRotateChrome
         AdornedStrokeWidth = 1 / newScale
 
         CardinalThumbSize = 14 / newScale
-        CardinalThumbMargin = New Thickness(-CardinalThumbSize / 2)
+        CardinalThumbMargin = New Thickness(-CardinalThumbSize)
 
         InvalidateArrange()
 

@@ -1,6 +1,8 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.ComponentModel
+
 Imports CommunityToolkit.Mvvm.ComponentModel
+
 Imports Svg.Transforms
 
 Public Class SVGFile : Inherits ObservableObject
@@ -72,7 +74,7 @@ Public Class SVGFile : Inherits ObservableObject
         Dim vbH = inDoc.ViewBox.Height
         Dim vbW = inDoc.ViewBox.Width
 
-        If Not inDoc.Height.Type = Svg.SvgUnitType.Percentage AndAlso Not inDoc.Width.Type = Svg.SvgUnitType.Percentage Then
+        If inDoc.Height.Type <> Svg.SvgUnitType.Percentage AndAlso inDoc.Width.Type <> Svg.SvgUnitType.Percentage Then
             For Each child In inDoc.Children
                 If child.Transforms?.Count > 0 Then
                     child.Transforms.Insert(0, New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
@@ -110,6 +112,7 @@ Public Class SVGFile : Inherits ObservableObject
                                          Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement = True
                                      End Function
         OnPropertyChanged(NameOf(SVGVisualComponents))
+        OnPropertyChanged(NameOf(SVGComponents))
     End Sub
 
 End Class

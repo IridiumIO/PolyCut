@@ -1218,6 +1218,12 @@
 
                                                 </StackPanel>
 
+                                                <RadioButton.ToolTip>
+                                                    <TextBlock TextWrapping="Wrap">
+                                                        Settings designed for cutting objects out using a drag-knife. 
+                                                    </TextBlock>
+                                                </RadioButton.ToolTip>
+
                                             </RadioButton>
                                             <RadioButton x:Name="modeDraw"
                                                          Width="80" Height="60"
@@ -1231,7 +1237,11 @@
                                                                FontWeight="SemiBold" />
 
                                                 </StackPanel>
-
+                                                <RadioButton.ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                        Settings designed for drawing using a pen, marker, or even a foil stamping pen.
+                                                    </TextBlock>
+                                                </RadioButton.ToolTip>
                                             </RadioButton>
 
                                         </StackPanel>
@@ -1258,6 +1268,11 @@
                                                    Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
                                                    VerticalAlignment="Center"
                                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                            <Grid.ToolTip>
+                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                    Speed of the toolhead when the tool is raised and not actively cutting/drawing. 
+                                                </TextBlock>
+                                            </Grid.ToolTip>
                                         </Grid>
                                         <Label Content="Draw Speed" Margin="0,20,0,-5" />
 
@@ -1267,7 +1282,11 @@
                                                 <ColumnDefinition Width="10" />
                                                 <ColumnDefinition Width="100" />
                                             </Grid.ColumnDefinitions>
-
+                                            <Grid.ToolTip>
+                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                    Speed of the toolhead when the tool is down and cutting/drawing.<LineBreak/><LineBreak/> Slower is usually better
+                                                </TextBlock>
+                                            </Grid.ToolTip>
                                             <Slider x:Name="drawSpeed"
                                                     Margin="0,5,0,0" VerticalAlignment="Center"
                                                     IsSnapToTickEnabled="True" Maximum="60" Minimum="5" TickFrequency="1"
@@ -1295,7 +1314,11 @@
                                                 <ColumnDefinition />
 
                                             </Grid.ColumnDefinitions>
-
+                                            <Grid.ToolTip>
+                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                    How high above the workpiece the toolhead should be positioned when travelling or drawing.<LineBreak/><LineBreak/> Positive values are offset above the bed surface. <LineBreak/><LineBreak/>This value is affected by your printer's Z-Offset.  
+                                                </TextBlock>
+                                            </Grid.ToolTip>
                                             <Label Content="Draw"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding Configuration.WorkZ}"
@@ -1350,10 +1373,16 @@
                                                         </Grid.RowDefinitions>
 
                                                         <Label Content="Curve-fitting Precision"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" >
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.Tolerance}"
                                                                     Grid.Column="1"
-                                                                    ClearButtonEnabled="False" />
+                                                                    ClearButtonEnabled="False"/>
                                                         <Label Content="mm"
                                                                Grid.Column="1"
                                                                Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1363,7 +1392,13 @@
                                                         <CheckBox x:Name="extractSingleColor"
                                                                   Content="Extract one colour"
                                                                   Grid.Row="2"
-                                                                  IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}" />
+                                                                  IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}" >
+                                                            <CheckBox.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Processes only objects with the specified colour, and ignores all others.
+                                                                </TextBlock>
+                                                            </CheckBox.ToolTip>
+                                                        </CheckBox>
                                                         <ui:TextBox Text="{Binding Configuration.ExtractionColor, Mode=TwoWay}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -1403,7 +1438,13 @@
                                                         </Grid.RowDefinitions>
 
                                                         <Label Content="Tool Diameter"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Diameter of the swivelling part of the cutting blade.<LineBreak/>Most blades are ~0.25mm in diameter. 
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.CuttingConfig.ToolDiameter}"
                                                                     Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
@@ -1415,7 +1456,13 @@
 
                                                         <Label Content="Overcut"
                                                                Grid.Row="2"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Extends cuts by the specified amount to compensate for the fact most blade tips are off center.<LineBreak/>Without overcut, sharp corners may not meet correctly or may appear curved due to blade swiveling.<LineBreak/><LineBreak/>Enabling Overcut adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.CuttingConfig.Overcut}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
@@ -1428,7 +1475,13 @@
                                                         <Label Content="Cutting order"
                                                                Grid.Row="4"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}" />
+                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    For each object, whether outer features or inner features are cut first. 
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
 
                                                         <ComboBox Grid.Row="4" Grid.Column="2"
                                                                   IsEnabled="{Binding UsingGCodePlot}"
@@ -1477,7 +1530,13 @@
                                                         <Label Content="Drawing Angle"
                                                                Grid.Row="0"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}" />
+                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                   Specifies the preferred drawing direction for shape outlines.<LineBreak/><LineBreak/>0° represents East, with positive values rotating counterclockwise.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
 
                                                         <ui:TextBox Text="{Binding Configuration.DrawingConfig.DrawingDirection, Converter={StaticResource NullableIntConverter}}"
                                                                     Grid.Row="0" Grid.Column="1"
@@ -1492,7 +1551,13 @@
                                                         <Label Content="Optimisation Timeout"
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}" />
+                                                               IsEnabled="{Binding UsingGCodePlot}" >
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    How long to allow GCodePlot to spend optimising travel paths and drawing directions. 
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.OptimisationTimeout}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     ClearButtonEnabled="False"
@@ -1507,7 +1572,13 @@
                                                                   Content="Keep Outlines"
                                                                   Grid.Row="4"
                                                                   IsChecked="{Binding Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
-                                                                  IsEnabled="{Binding UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}" />
+                                                                  IsEnabled="{Binding UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}" >
+                                                            <CheckBox.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Whether shape outlines should be drawn, or ignored.<LineBreak/><LineBreak/>Disable this if you want to shade in an area without the area being outlined. 
+                                                                </TextBlock>
+                                                            </CheckBox.ToolTip>
+                                                        </CheckBox>
 
 
                                                     </Grid>
@@ -1547,12 +1618,24 @@
                                                             <RowDefinition Height="5" />
                                                             <RowDefinition />
                                                         </Grid.RowDefinitions>
-                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}" />
+                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}" >
+                                                            <CheckBox.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Add a second shading pass at 90° to the first, creating a cross-hatch pattern.
+                                                                </TextBlock>
+                                                            </CheckBox.ToolTip>
+                                                        </CheckBox>
 
                                                         <Label Content="Shading Threshold"
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}" />
+                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Range = 0 to 1<LineBreak/><LineBreak/>How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects. 
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:NumberBox Grid.Row="2" Grid.Column="1"
                                                                       ClearButtonEnabled="False"
                                                                       IsEnabled="{Binding UsingGCodePlot}"
@@ -1561,7 +1644,13 @@
 
                                                         <Label Content="Lightest shading spacing"
                                                                Grid.Row="4"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    How far apart drawn lines should be when shading the lightest parts of the image.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.DrawingConfig.MaxStrokeWidth}"
                                                                     Grid.Row="4" Grid.Column="1"
                                                                     ClearButtonEnabled="False"
@@ -1574,7 +1663,13 @@
 
                                                         <Label Content="Darkest shading spacing"
                                                                Grid.Row="6"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    How far apart drawn lines should be when shading the darkest parts of the image.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.DrawingConfig.MinStrokeWidth}"
                                                                     Grid.Row="6" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
@@ -1586,7 +1681,13 @@
 
                                                         <Label Content="Shading angle"
                                                                Grid.Row="8"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                                            <Label.ToolTip>
+                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                    Which Direction to draw when shading objects.<LineBreak/><LineBreak/>0° represents East, with positive values rotating counterclockwise.
+                                                                </TextBlock>
+                                                            </Label.ToolTip>
+                                                        </Label>
                                                         <ui:TextBox Text="{Binding Configuration.DrawingConfig.ShadingAngle}"
                                                                     Grid.Row="8" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />

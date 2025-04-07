@@ -559,32 +559,14 @@
 
                     <Grid Width="{Binding Printer.BedWidth, Mode=TwoWay, FallbackValue=235}"
                           Height="{Binding Printer.BedHeight, Mode=TwoWay, FallbackValue=235}"
-                          Margin="0,0,0,0" Panel.ZIndex="-1"
-                          Background="Transparent">
+                          Margin="0,0,0,0" Panel.ZIndex="-11"
+                          Background="#FF000000">
 
                         <Grid.Effect>
-                            <BlurEffect Radius="3" RenderingBias="Quality" />
+                            <DropShadowEffect  RenderingBias="Quality" BlurRadius="5" ShadowDepth="2"/>
                         </Grid.Effect>
 
-                        <Border Height="4"
-                                Margin="0,0,-2,-4" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0.5, 0" EndPoint="0.5,1">
-                                    <GradientStop Offset="0" Color="#FF000000" />
-                                    <GradientStop Offset="0.8" Color="#00000000" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-
-                        </Border>
-                        <Border Width="4"
-                                Margin="0,0,-4,0" HorizontalAlignment="Right" VerticalAlignment="Stretch">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0, 0.5" EndPoint="1,0.5">
-                                    <GradientStop Offset="0" Color="#FF000000" />
-                                    <GradientStop Offset="1" Color="#00000000" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
+                        
                     </Grid>
                 </Grid>
 

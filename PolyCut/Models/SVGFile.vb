@@ -3,6 +3,8 @@ Imports System.ComponentModel
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
+Imports PolyCut.RichCanvas
+
 Imports Svg.Transforms
 
 Public Class SVGFile : Inherits ObservableObject
@@ -114,5 +116,6 @@ Public Class SVGFile : Inherits ObservableObject
         OnPropertyChanged(NameOf(SVGVisualComponents))
         OnPropertyChanged(NameOf(SVGComponents))
     End Sub
+
 
 End Class

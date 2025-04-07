@@ -125,5 +125,5 @@
                           Grid.ColumnSpan="2"
                           Grid.Column="0" />
 
-  </Grid>
+    </Grid>
 </ui:FluentWindow>

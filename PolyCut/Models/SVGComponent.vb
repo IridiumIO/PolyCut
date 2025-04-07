@@ -1,8 +1,11 @@
-﻿Imports System.IO
+﻿Imports System.ComponentModel
+Imports System.IO
 Imports System.Windows.Controls.Primitives
 Imports System.Xml
 
 Imports CommunityToolkit.Mvvm.ComponentModel
+
+Imports PolyCut.RichCanvas
 
 Imports SharpVectors.Converters
 
@@ -75,7 +78,7 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
 
             If value Then
                 SVGViewBox.Visibility = Visibility.Collapsed
-                Selector.SetIsSelected(SVGViewBox.Parent, False)
+                IsSelected = False
             Else
                 SVGViewBox.Visibility = Visibility.Visible
             End If
@@ -85,18 +88,42 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
     End Property
 
 
+    Private Shared _currentlySelectedComponent As SVGComponent
+
+
     Public Property IsSelected As Boolean Implements IDrawable.IsSelected
         Get
+
             If SVGViewBox?.Parent Is Nothing Then Return False
-            Return Selector.GetIsSelected(SVGViewBox.Parent)
+            '  Return Selector.GetIsSelected(SVGViewBox.Parent)
+            Return _currentlySelectedComponent Is Me
         End Get
         Set(value As Boolean)
-            Selector.SetIsSelected(SVGViewBox?.Parent, value)
+            If value Then
+                ' Deselect the currently selected component
+                If _currentlySelectedComponent IsNot Nothing AndAlso _currentlySelectedComponent IsNot Me Then
+                    _currentlySelectedComponent.IsSelected = False
+                End If
+
+                ' Update the currently selected component
+                _currentlySelectedComponent = Me
+            Else
+                ' Clear the currently selected component if this component is being deselected
+                If _currentlySelectedComponent Is Me Then
+                    _currentlySelectedComponent = Nothing
+                End If
+            End If
+
+            If Selector.GetIsSelected(SVGViewBox?.Parent) <> value Then
+                Selector.SetIsSelected(SVGViewBox?.Parent, value)
+            End If
+            OnPropertyChanged(NameOf(IsSelected))
         End Set
     End Property
 
 
     Public ReadOnly Property Parent As SVGFile
+
 
     Private Sub Initialise()
 

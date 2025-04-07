@@ -7,6 +7,7 @@ Imports CommunityToolkit.Mvvm.Input
 
 
 Imports PolyCut.Core
+Imports PolyCut.RichCanvas
 
 Imports Svg
 
@@ -120,7 +121,7 @@ Public Class MainViewModel : Inherits ObservableObject
         CuttingMats = SettingsHandler.GetCuttingMats
         CuttingMat = CuttingMats.First
         Configuration = (SettingsHandler.GetConfigurations).First
-
+        AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
     End Sub
 
 
@@ -216,6 +217,22 @@ Public Class MainViewModel : Inherits ObservableObject
                 ModifySVGFiles(New SVGFile(file))
             End If
 
+        Next
+
+    End Sub
+
+
+    Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
+        ' Handle the change to the CurrentSelected property
+        Dim currentSelected = DesignerItemDecorator.CurrentSelected
+        For Each svgFile In SVGFiles
+            For Each child In svgFile.SVGComponents
+                If currentSelected IsNot Nothing AndAlso child.SVGViewBox Is currentSelected.Content Then
+                    child.IsSelected = True
+                Else
+                    child.IsSelected = False
+                End If
+            Next
         Next
 
     End Sub

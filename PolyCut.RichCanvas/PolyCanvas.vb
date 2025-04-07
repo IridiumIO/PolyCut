@@ -116,7 +116,7 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
         For Each child In Me.Children
             Selector.SetIsSelected(child, False)
         Next
-
+        DesignerItemDecorator.CurrentSelected = Nothing
     End Sub
 
 

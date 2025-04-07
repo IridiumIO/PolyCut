@@ -1,4 +1,5 @@
-﻿Imports System.Windows.Controls.Primitives
+﻿Imports System.ComponentModel
+Imports System.Windows.Controls.Primitives
 
 Public Class DesignerItemDecorator : Inherits Control
 
@@ -6,12 +7,26 @@ Public Class DesignerItemDecorator : Inherits Control
     Private Shared _currentSelected As ContentControl
     Private Shared ParentScale As Double = 1
     Public Shared ReadOnly ShowDecoratorProperty As DependencyProperty = DependencyProperty.Register("ShowDecorator", GetType(Boolean), GetType(DesignerItemDecorator), New FrameworkPropertyMetadata(False, AddressOf ShowDecoratorProperty_Changed))
+
+    Public Shared Event CurrentSelectedChanged As EventHandler
+
     Public Property ShowDecorator As Boolean
         Get
             Return CBool(GetValue(ShowDecoratorProperty))
         End Get
         Set(value As Boolean)
             SetValue(ShowDecoratorProperty, value)
+        End Set
+    End Property
+
+    Public Shared Property CurrentSelected As ContentControl
+        Get
+            Return _currentSelected
+        End Get
+        Set(value As ContentControl)
+            _currentSelected = value
+            RaiseEvent CurrentSelectedChanged(Nothing, EventArgs.Empty)
+
         End Set
     End Property
 
@@ -76,7 +91,6 @@ Public Class DesignerItemDecorator : Inherits Control
         Dim adornerLayer As AdornerLayer = AdornerLayer.GetAdornerLayer(Me)
         adornerLayer?.Remove(adorner)
         adorner = Nothing
-
     End Sub
 
 
@@ -94,17 +108,29 @@ Public Class DesignerItemDecorator : Inherits Control
     Private Sub DesignerItemDecorator_MouseDown(sender As Object, e As MouseButtonEventArgs)
 
         Dim ThisControl As ContentControl = TryCast(DataContext, ContentControl)
+        Debug.WriteLine(e.OriginalSource.ToString)
 
-        If _currentSelected IsNot Nothing AndAlso _currentSelected IsNot ThisControl Then
-            Selector.SetIsSelected(_currentSelected, False)
+        ' Deselect all other controls
+        Dim parent As Panel = TryCast(ThisControl.Parent, Panel)
+        If parent IsNot Nothing Then
+            For Each child As UIElement In parent.Children
+                If TypeOf child Is ContentControl AndAlso child IsNot ThisControl Then
+                    Selector.SetIsSelected(child, False)
+                End If
+            Next
         End If
 
+        ' Check if the current control's content is visible
         If ThisControl.Content.Visibility <> Visibility.Visible Then Return
 
+        ' Select the current control
         Selector.SetIsSelected(ThisControl, True)
-        _currentSelected = ThisControl
+        CurrentSelected = ThisControl
         adorner?.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
         e.Handled = True
+
+
+
     End Sub
 
 

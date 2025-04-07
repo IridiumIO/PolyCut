@@ -12,7 +12,7 @@
       xmlns:system="clr-namespace:System;assembly=mscorlib"
       xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      x:Name="SVGPageView" Title="SVGPage"
+      x:Name="SVGPageView" Title="SVGPage" Unloaded="SVGPageView_Unloaded"
       Margin="0,5,0,0"
       d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
       d:DesignHeight="1000" d:DesignWidth="1000" AllowDrop="True"

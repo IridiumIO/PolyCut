@@ -455,4 +455,9 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         ViewModel.AddDrawableElement(t)
     End Sub
 
+    Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
+        For Each child In mainCanvas.Children
+            Selector.SetIsSelected(child, False)
+        Next
+    End Sub
 End Class

@@ -21,7 +21,7 @@ Public Class LineElement : Implements IPathBasedElement
                     .X2 = ln.EndX.Value,
                     .Y2 = ln.EndY.Value
                     }})
-        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
+        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms?.GetMatrix).ToList).ToList()
 
 
     End Sub

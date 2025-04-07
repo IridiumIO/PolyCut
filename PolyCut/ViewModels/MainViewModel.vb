@@ -90,11 +90,19 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
-    'Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
-    '    Get
-    '        Return New ObservableCollection(Of SVGComponent)(SVGFiles.SelectMany(Function(f) f.SVGComponents))
-    '    End Get
-    'End Property
+    Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub()
+                                                                                    Dim itemsToRemove As New List(Of FrameworkElement)
+                                                                                    For Each child In DrawableCollection
+                                                                                        If Selector.GetIsSelected(child.Parent) Then
+                                                                                            itemsToRemove.Add(child)
+                                                                                        End If
+                                                                                    Next
+
+                                                                                    For Each item In itemsToRemove
+                                                                                        DrawableCollection.Remove(item)
+                                                                                    Next
+
+                                                                                End Sub)
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
@@ -266,7 +274,39 @@ Public Class MainViewModel : Inherits ObservableObject
             .Height = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedHeight),
             .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)}
 
-        ' outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
+        outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
+
+        For Each shp In DrawableCollection
+            Dim drawableL As IDrawable
+            If TypeOf (shp) Is Line Then
+                drawableL = New DrawableLine(shp)
+            ElseIf TypeOf (shp) Is Rectangle Then
+                drawableL = New DrawableRectangle(shp)
+            ElseIf TypeOf (shp) Is Ellipse Then
+                drawableL = New DrawableEllipse(shp)
+            ElseIf TypeOf (shp) Is TextBox Then
+                drawableL = New DrawableText(shp)
+            Else 'If TypeOf (shp) Is SharpVectors.Converters.SvgViewbox Then
+
+                Dim asSVGViewbox = CType(shp, SharpVectors.Converters.SvgViewbox)
+
+                'Dim existingSVG = SVGFiles.SelectMany(Of SVGComponent)(Function(f) f.SVGVisualComponents).FirstOrDefault(Function(g) g.SVGViewBox Is asSVGViewbox, Nothing)
+
+                'If existingSVG IsNot Nothing Then
+                drawableL = Nothing
+                'Else
+
+                'End If
+
+            End If
+
+            Dim finalElement = drawableL?.GetTransformedSVGElement
+
+            If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
+                outDoc.Children.Add(finalElement)
+            End If
+
+        Next
 
         Return SVGComponent.SVGDocumentToSVGString(outDoc)
 

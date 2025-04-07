@@ -1,17 +1,17 @@
-﻿Public Interface IDrawable
+﻿Imports Svg
+
+Public Interface IDrawable
 
     Property Name As String
 
-    Property Children As IObservable(Of IDrawable)
+    Property DrawableElement As FrameworkElement
 
-    Property IsHidden
-    Property IsSelected
+    Property Children As IEnumerable(Of IDrawable)
 
+    Property IsHidden As Boolean
+    Property IsSelected As Boolean
 
-    Function GetShapes()
-
-    Function IsWithinBounds(x As Double, y As Double)
-
+    Function GetTransformedSVGElement() As SvgVisualElement
 
 
 End Interface

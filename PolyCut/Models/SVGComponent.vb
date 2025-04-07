@@ -8,7 +8,7 @@ Imports SharpVectors.Converters
 
 Imports Svg
 
-Public Class SVGComponent : Inherits ObservableObject
+Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
 
 
     Public Property SVGString As String
@@ -63,10 +63,10 @@ Public Class SVGComponent : Inherits ObservableObject
     Public Property SVGLeft As Double
     Public Property SVGTop As Double
 
-    Public Property Children As IEnumerable(Of SVGComponent)
+    Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
 
     Private _IsHidden As Boolean = False
-    Public Property IsHidden As Boolean
+    Public Property IsHidden As Boolean Implements IDrawable.IsHidden
         Get
             Return _IsHidden
         End Get
@@ -85,7 +85,7 @@ Public Class SVGComponent : Inherits ObservableObject
     End Property
 
 
-    Public Property IsSelected As Boolean
+    Public Property IsSelected As Boolean Implements IDrawable.IsSelected
         Get
             If SVGViewBox?.Parent Is Nothing Then Return False
             Return Selector.GetIsSelected(SVGViewBox.Parent)
@@ -139,11 +139,29 @@ Public Class SVGComponent : Inherits ObservableObject
         Initialise()
     End Sub
 
+    Public Sub New(svgviewbox As SharpVectors.Converters.SvgViewbox, ByRef parentFile As SVGFile)
+        DrawableElement = svgviewbox
+        Parent = parentFile
+
+
+    End Sub
+
+
     Public Property SVGViewBox As SharpVectors.Converters.SvgViewbox
+    Public Property Name As String Implements IDrawable.Name
+    Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
+        Get
+            Return SVGViewBox
+        End Get
+        Set(value As FrameworkElement)
+            SVGViewBox = value
+        End Set
+    End Property
+
 
     Public Sub SetCanvas()
 
-        SVGViewBox = New SharpVectors.Converters.SvgViewbox With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN}
+        SVGViewBox = New SharpVectors.Converters.SvgViewbox With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN, .Stretch = Stretch.Fill}
 
         Dim svgVisEle = TryCast(SVGElement, SvgVisualElement)
 
@@ -152,8 +170,7 @@ Public Class SVGComponent : Inherits ObservableObject
         If bounds IsNot Nothing Then
 
             Dim strokeWidth As Single = If(svgVisEle.StrokeWidth.Value <> 0, svgVisEle.StrokeWidth.Value, 0)
-
-
+            strokeWidth = 0
             SVGViewBox.Width = bounds.Value.Width - strokeWidth
             SVGViewBox.Height = bounds.Value.Height - strokeWidth
             Canvas.SetLeft(SVGViewBox, bounds.Value.X + strokeWidth / 2)
@@ -173,6 +190,7 @@ Public Class SVGComponent : Inherits ObservableObject
         End If
 
         If IsHidden Then SVGViewBox.Visibility = Visibility.Collapsed
+
 
     End Sub
 
@@ -194,41 +212,25 @@ Public Class SVGComponent : Inherits ObservableObject
             Return False
         End If
 
-        Dim cxLeft = Canvas.GetLeft(SVGViewBox)
-        Dim cxTop = Canvas.GetTop(SVGViewBox)
+        Dim cxLeft = Canvas.GetLeft(SVGViewBox.Parent)
+        Dim cxTop = Canvas.GetTop(SVGViewBox.Parent)
 
-        'If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso ele.Bounds.Width * ECanvas.Scale + cxLeft < x AndAlso ele.Bounds.Height * ECanvas.Scale + cxTop < y Then
-        '    Return True
-        'End If
+        If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso SVGViewBox.ActualWidth + cxLeft < x AndAlso SVGViewBox.ActualHeight + cxTop < y Then
+            Return True
+        End If
 
         Return False
 
     End Function
 
 
-    'Public Function GetTransformedSVGElement() As SvgVisualElement
+    Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
 
-    '    Dim component As SvgVisualElement = SVGElement.DeepCopy
-    '    Dim originalBounds = component.Bounds
+        Dim component As SvgVisualElement = SVGElement.DeepCopy
 
-    '    If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
+        Return component.BakeTransforms(SVGViewBox, SVGLeft, SVGTop)
 
-    '    Dim scaleTF As New Transforms.SvgScale(ECanvas.Scale)
-    '    component.Transforms.Insert(0, scaleTF)
-
-    '    'Need to recheck the bounds because the scaling affects the children and translates the parent. 
-    '    Dim newBounds = component.Bounds
-
-    '    'For some ghastly reason, all translations are ALSO scaled by the scale value so this needs to be undone
-    '    Dim scaledXTranslate = (-SVGLeft + Canvas.GetLeft(ECanvas) - (newBounds.X - originalBounds.X))
-    '    Dim scaledYTranslate = (-SVGTop + Canvas.GetTop(ECanvas) - (newBounds.Y - originalBounds.Y))
-
-    '    Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
-    '    component.Transforms.Insert(0, translateTF)
-
-    '    Return component
-
-    'End Function
+    End Function
 
 
     'Private State As Nullable(Of (Double, Double, Double))

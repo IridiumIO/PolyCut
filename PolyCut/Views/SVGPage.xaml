@@ -23,6 +23,9 @@
         <i:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=SVGPageView}">
             <i:InvokeCommandAction Command="{Binding MainViewLoadedCommand}" />
         </i:EventTrigger>
+        <i:KeyTrigger Key="Delete" SourceObject="{Binding ElementName=zoomPanControl}">
+            <i:InvokeCommandAction Command="{Binding DeleteDrawableElementCommand}" />
+        </i:KeyTrigger>
     </i:Interaction.Triggers>
     <Page.Resources>
         <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />
@@ -417,7 +420,7 @@
                        Background="Transparent" ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset"
-                       ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01">
+                       ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01" >
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 

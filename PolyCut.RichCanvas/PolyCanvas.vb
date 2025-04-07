@@ -87,6 +87,10 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
 
 
             wrapper.ClipToBounds = False
+            ' Bind the child's Width and Height to the wrapper's Width and Height
+
+            child.HorizontalAlignment = HorizontalAlignment.Stretch
+
             child.Width = Double.NaN
             child.Height = Double.NaN
             Canvas.SetLeft(wrapper, If(Double.IsNaN(Canvas.GetLeft(child)), 0, Canvas.GetLeft(child)))

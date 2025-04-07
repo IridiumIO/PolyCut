@@ -417,7 +417,6 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
         Dim negativeDirection As Boolean = l.X2 < l.X1 OrElse (l.X1 = l.X2 AndAlso l.Y2 < l.Y1)
 
-
         If negativeDirection Then
             Dim tempX As Double = l.X1 * 1
             Dim tempY As Double = l.Y1 * 1
@@ -432,7 +431,6 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         Dim offsetX As Double = l.X1 - l.StrokeThickness / 2
         Dim offsetY As Double = Math.Min(l.Y1, l.Y2) - l.StrokeThickness / 2
 
-
         l.X1 -= offsetX
         l.X2 -= offsetX
         l.Y1 -= offsetY
@@ -441,68 +439,20 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         Canvas.SetLeft(l, offsetX)
         Canvas.SetTop(l, offsetY)
 
-
-
         ViewModel.AddDrawableElement(l)
     End Sub
 
 
     Private Sub GenerateSVGFromRect(r As Rectangle)
-
         ViewModel.AddDrawableElement(r)
     End Sub
 
-
     Private Sub GenerateSVGFromEllipse(e As Ellipse)
-        Dim svgEllipse As New Svg.SvgEllipse With {
-            .CenterX = Canvas.GetLeft(e) + e.Width / 2,
-            .CenterY = Canvas.GetTop(e) + e.Height / 2,
-            .RadiusX = e.Width / 2,
-            .RadiusY = e.Height / 2,
-            .FillOpacity = 0.001,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.White),
-            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .StrokeWidth = 1,
-            .StrokeLineCap = SvgStrokeLineCap.Round
-        }
-
         ViewModel.AddDrawableElement(e)
-
     End Sub
 
     Private Sub GenerateSVGFromText(t As TextBox)
-
-        Dim svgText As New Svg.SvgText With {
-            .X = New SvgUnitCollection From {Canvas.GetLeft(t)},
-            .Y = New SvgUnitCollection From {Canvas.GetTop(t) + t.FontSize},
-            .Text = t.Text,
-            .FontFamily = t.FontFamily.Source,
-            .FontSize = t.FontSize,
-            .FontWeight = SvgFontWeight.Normal,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.Black)
-        }
-
-        Dim doc As New SvgDocument
-
-        doc.Transforms = New Transforms.SvgTransformCollection
-        doc.Children.Add(svgText)
-
-        Dim svgviewbox As New SharpVectors.Converters.SvgViewbox With {
-            .SvgSource = SVGComponent.SVGDocumentToSVGString(doc),
-            .Width = t.ExtentWidth,
-            .Height = t.ExtentHeight
-        }
-
-        ' Calculate the correct position for the SVG element
-        Dim leftPosition As Double = Canvas.GetLeft(t) + (t.ActualWidth - svgviewbox.Width) / 2
-        Dim topPosition As Double = Canvas.GetTop(t) + (t.ActualHeight - svgviewbox.Height) / 2
-
-        ' Set the position of the SVG element on the canvas
-        Canvas.SetLeft(svgviewbox, leftPosition)
-        Canvas.SetTop(svgviewbox, topPosition)
-        ViewModel.AddDrawableElement(svgviewbox)
-
+        ViewModel.AddDrawableElement(t)
     End Sub
-
 
 End Class

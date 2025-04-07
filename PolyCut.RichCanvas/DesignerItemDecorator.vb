@@ -103,7 +103,7 @@ Public Class DesignerItemDecorator : Inherits Control
 
         Selector.SetIsSelected(ThisControl, True)
         _currentSelected = ThisControl
-        adorner.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
+        adorner?.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
         e.Handled = True
     End Sub
 

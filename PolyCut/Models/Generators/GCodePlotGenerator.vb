@@ -231,6 +231,11 @@ Public Class GCodePlotGenerator : Implements IGenerator
                 Continue For
             End If
 
+            'Force decimal separator to use a point instead of a comma
+            If TypeOf val Is Double Then
+                val = val.ToString().Replace(",", ".")
+            End If
+
             If prop.Name = NameOf(Configuration.SelectedToolMode) Then
                 If val = 0 Then
                     args.Add($"--{Mappings(prop.Name)}=cut")

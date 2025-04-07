@@ -57,7 +57,7 @@ Public Class GCode
 
         For Each match As Match In matches
             Dim parameterType As Char = match.Groups(1).Value(0)
-            Dim parameterValue As Double? = CDbl(match.Groups(2).Value)
+            Dim parameterValue As Double? = Double.Parse(match.Groups(2).Value, New Globalization.NumberFormatInfo With {.NumberDecimalSeparator = "."})
 
             Select Case parameterType
                 Case "F"
@@ -105,19 +105,19 @@ Public Class GCode
             GcodeLine += Code.ToString
         End If
         If X IsNot Nothing Then
-            GcodeLine += " X" + Math.Round(X.Value, 3).ToString
+            GcodeLine += " X" + Math.Round(X.Value, 3).ToString(System.Globalization.CultureInfo.InvariantCulture)
         End If
         If Y IsNot Nothing Then
-            GcodeLine += " Y" + Math.Round(Y.Value, 3).ToString
+            GcodeLine += " Y" + Math.Round(Y.Value, 3).ToString(System.Globalization.CultureInfo.InvariantCulture)
         End If
         If Z IsNot Nothing Then
-            GcodeLine += " Z" + Math.Round(Z.Value, 3).ToString
+            GcodeLine += " Z" + Math.Round(Z.Value, 3).ToString(System.Globalization.CultureInfo.InvariantCulture)
         End If
         If E IsNot Nothing Then
-            GcodeLine += " E" + Math.Round(E.Value, 3).ToString
+            GcodeLine += " E" + Math.Round(E.Value, 3).ToString(System.Globalization.CultureInfo.InvariantCulture)
         End If
         If F IsNot Nothing Then
-            GcodeLine += " F" + Math.Round(F.Value, 3).ToString
+            GcodeLine += " F" + Math.Round(F.Value, 3).ToString(System.Globalization.CultureInfo.InvariantCulture)
         End If
         If Comment IsNot Nothing Then
             GcodeLine += " ;" + Comment

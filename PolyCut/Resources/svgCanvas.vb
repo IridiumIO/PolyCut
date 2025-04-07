@@ -56,7 +56,7 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
         End Set
     End Property
     Private Property ZoomBorderScaling As Double = 2
-    Private Property ZoomBorder As ZoomBorder
+    Private Property ZoomBorder As RichCanvas.ZoomBorder
 
 
     Public Shared Event SelectedControlChanged As EventHandler(Of EventArgs)
@@ -96,13 +96,13 @@ Public Class resizableSVGCanvas : Inherits Grid : Implements INotifyPropertyChan
     End Sub
 
 
-    Public Sub SubscribeToZoomBorderScaling(zB As ZoomBorder)
+    Public Sub SubscribeToZoomBorderScaling(zB As RichCanvas.ZoomBorder)
         ZoomBorder = zB
         AddHandler ZoomBorder.ScaleChanged, AddressOf ZoomBorder_ScaleChanged
     End Sub
 
 
-    Private Sub ZoomBorder_ScaleChanged(sender As ZoomBorder, e As PropertyChangedEventArgs)
+    Private Sub ZoomBorder_ScaleChanged(sender As RichCanvas.ZoomBorder, e As RoutedPropertyChangedEventArgs(Of Double))
         ZoomBorderScaling = sender.Scale
         UpdateAppearance()
         'selectionRectangle.StrokeThickness = 2 / Scale / ZoomBorderScaling

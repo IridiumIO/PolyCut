@@ -5,11 +5,13 @@ Imports CommunityToolkit.Mvvm.ComponentModel
 Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implements ISaveable
 
     Public Property Version As Single = 0.1 Implements ISaveable.Version
+    Public Property SoftwareVersion As String = "0.1"
     Public Property Name As String = "Configuration" Implements ISaveable.Name
 
     Public Enum ToolMode
         Cut
         Draw
+        Foil
         Deboss
         Engrave
 

@@ -7,6 +7,7 @@ Imports System.Windows.Media.Animation
 Imports System.IO
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports Svg
+Imports System.Windows.Controls.Primitives
 Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
@@ -20,12 +21,12 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
         InitializeComponent()
         zoomPanControl.Scale = 2
-        zoomPanControl._translateTransform.X = -viewmodel.Printer.BedWidth / 2
-        zoomPanControl._translateTransform.Y = -viewmodel.Printer.BedHeight / 2
+        zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
+        zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
         AddHandler viewmodel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler viewmodel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler viewmodel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
-        AddHandler viewmodel.PropertyChanged, AddressOf MainVMPropertyChangedHandler
+        'AddHandler viewmodel.PropertyChanged, AddressOf MainVMPropertyChangedHandler
 
 
         Transform()
@@ -34,20 +35,20 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
 
     Private Sub MainVMPropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
-        'Handle SVGComponents being updated
-        If e.PropertyName = NameOf(ViewModel.SVGComponents) Then
-            svgDrawing.Children.Clear()
-            For Each cl In ViewModel.SVGComponents
-                If cl.IsVisualElement Then
-                    cl.SetCanvas()
-                    svgDrawing.Children.Add(cl.ECanvas)
-                    cl.ECanvas.SubscribeToZoomBorderScaling(zoomPanControl)
+        ''Handle SVGComponents being updated
+        'If e.PropertyName = NameOf(ViewModel.SVGComponents) Then
+        '    svgDrawing.Children.Clear()
+        '    For Each cl In ViewModel.SVGComponents
+        '        If cl.IsVisualElement Then
+        '            cl.SetCanvas()
+        '            svgDrawing.Children.Add(cl.ECanvas)
+        '            cl.ECanvas.SubscribeToZoomBorderScaling(zoomPanControl)
 
-                End If
-            Next
+        '        End If
+        '    Next
 
 
-        End If
+        'End If
     End Sub
 
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
@@ -161,10 +162,10 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Private Sub svgElementContextMenu(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseRightButtonUp
 
-        If TypeOf (e.Source) Is resizableSVGCanvas AndAlso e.Source.Parent Is svgDrawing Then
-            e.Handled = True
+        'If TypeOf (e.Source) Is resizableSVGCanvas AndAlso e.Source.Parent Is svgDrawing Then
+        '    e.Handled = True
 
-        End If
+        'End If
     End Sub
 
     Private Sub Page_Drop(sender As Object, e As DragEventArgs)
@@ -187,19 +188,26 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Private Sub MainView_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
 
-        Debug.WriteLine(e.OriginalSource.Parent)
-
         If TypeOf (e.OriginalSource.Parent) IsNot resizableSVGCanvas Then
             resizableSVGCanvas.DeSelectAll()
         End If
 
     End Sub
 
-    Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseDown
+    Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
         StartPos = e.GetPosition(mainCanvas)
         If _drawingTextbox IsNot Nothing Then
             ViewModel.CanvasToolMode = CanvasMode.Selection
             _drawingTextbox.MoveFocus(New TraversalRequest(FocusNavigationDirection.Next))
+        End If
+
+        If ViewModel.CanvasToolMode <> CanvasMode.Selection Then
+            For Each child In ViewModel.DrawableCollection
+                If TypeOf child.Parent Is ContentControl Then
+
+                    Selector.SetIsSelected(child.Parent, False)
+                End If
+            Next
         End If
 
         Select Case ViewModel.CanvasToolMode
@@ -227,7 +235,10 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .X1 = StartPos.X,
             .Y1 = StartPos.Y,
             .X2 = StartPos.X,
-            .Y2 = StartPos.Y
+            .Y2 = StartPos.Y,
+            .StrokeStartLineCap = PenLineCap.Round,
+            .StrokeEndLineCap = PenLineCap.Round,
+            .StrokeDashCap = PenLineCap.Round
         }
 
     End Function
@@ -239,7 +250,10 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .StrokeThickness = 1,
             .Width = 0,
             .Height = 0,
-            .Fill = Brushes.Transparent
+            .Fill = Brushes.Transparent,
+            .StrokeLineJoin = PenLineJoin.Round,
+            .StrokeStartLineCap = PenLineCap.Round,
+            .StrokeEndLineCap = PenLineCap.Round
         }
 
         Canvas.SetLeft(rct, p.X)
@@ -255,7 +269,9 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .StrokeThickness = 1,
             .Width = 0,
             .Height = 0,
-            .Fill = Brushes.Transparent
+            .Fill = Brushes.Transparent,
+            .StrokeStartLineCap = PenLineCap.Round,
+            .StrokeEndLineCap = PenLineCap.Round
         }
 
         Canvas.SetLeft(elp, p.X)
@@ -265,7 +281,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     End Function
 
 
-    Private Sub drawingCanvas_MouseMove(sender As Object, e As MouseEventArgs) Handles mainCanvas.MouseMove
+    Private Sub drawingCanvas_MouseMove(sender As Object, e As MouseEventArgs) Handles zoomPanControl.MouseMove
         If Not e.LeftButton = MouseButtonState.Pressed Then Return
 
         Dim squareAspect = Keyboard.IsKeyDown(Key.LeftShift)
@@ -345,7 +361,9 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .AcceptsReturn = True,
             .AcceptsTab = True,
             .FontSize = ViewModel.CanvasFontSize,
-            .FontFamily = ViewModel.CanvasFontFamily
+            .FontFamily = ViewModel.CanvasFontFamily,
+            .FontWeight = FontWeights.Regular,
+            .Padding = New Thickness(0)
         }
 
         Canvas.SetLeft(tb, p.X)
@@ -363,7 +381,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
-    Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseUp
+    Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseUp
 
         Select Case ViewModel.CanvasToolMode
             Case CanvasMode.Line
@@ -395,99 +413,51 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
-    Dim svgfl As SVGFile
     Private Sub GenerateSVGFromLine(l As Line)
 
-        Dim svgLine As New Svg.SvgLine With {
-            .StartX = l.X1,
-            .StartY = l.Y1,
-            .EndX = l.X2,
-            .EndY = l.Y2,
-            .Color = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .StrokeWidth = 1,
-            .FillOpacity = 1,
-            .StrokeLineCap = SvgStrokeLineCap.Round
-        }
+        Dim negativeDirection As Boolean = l.X2 < l.X1 OrElse (l.X1 = l.X2 AndAlso l.Y2 < l.Y1)
 
-        AddSVGToCollection(svgLine)
+        If negativeDirection Then
+            Dim tempX As Double = l.X1 * 1
+            Dim tempY As Double = l.Y1 * 1
 
+            l.X1 = l.X2
+            l.Y1 = l.Y2
+            l.X2 = tempX
+            l.Y2 = tempY
+
+        End If
+
+        Dim offsetX As Double = l.X1 - l.StrokeThickness / 2
+        Dim offsetY As Double = Math.Min(l.Y1, l.Y2) - l.StrokeThickness / 2
+
+        l.X1 -= offsetX
+        l.X2 -= offsetX
+        l.Y1 -= offsetY
+        l.Y2 -= offsetY
+
+        Canvas.SetLeft(l, offsetX)
+        Canvas.SetTop(l, offsetY)
+
+        ViewModel.AddDrawableElement(l)
     End Sub
 
 
     Private Sub GenerateSVGFromRect(r As Rectangle)
-        Dim svgRect As New Svg.SvgRectangle With {
-            .X = Canvas.GetLeft(r),
-            .Y = Canvas.GetTop(r),
-            .Width = r.Width,
-            .Height = r.Height,
-            .FillOpacity = 0.001,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.White),
-            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .StrokeLineCap = SvgStrokeLineCap.Round
-        }
-
-        AddSVGToCollection(svgRect)
+        ViewModel.AddDrawableElement(r)
     End Sub
 
-
     Private Sub GenerateSVGFromEllipse(e As Ellipse)
-        Dim svgEllipse As New Svg.SvgEllipse With {
-            .CenterX = Canvas.GetLeft(e) + e.Width / 2,
-            .CenterY = Canvas.GetTop(e) + e.Height / 2,
-            .RadiusX = e.Width / 2,
-            .RadiusY = e.Height / 2,
-            .FillOpacity = 0.001,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.White),
-            .Stroke = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .StrokeWidth = 1,
-            .StrokeLineCap = SvgStrokeLineCap.Round
-        }
-
-        AddSVGToCollection(svgEllipse)
-
+        ViewModel.AddDrawableElement(e)
     End Sub
 
     Private Sub GenerateSVGFromText(t As TextBox)
-
-        Dim svgText As New Svg.SvgText With {
-            .X = New SvgUnitCollection From {Canvas.GetLeft(t)},
-            .Y = New SvgUnitCollection From {Canvas.GetTop(t) + t.FontSize},
-            .Text = t.Text,
-            .FontFamily = t.FontFamily.Source,
-            .FontSize = t.FontSize,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.Black)
-        }
-
-        AddSVGToCollection(svgText)
-
+        ViewModel.AddDrawableElement(t)
     End Sub
 
-    Private Sub AddSVGToCollection(svisElement As SvgVisualElement)
-
-        If svgfl Is Nothing OrElse Not ViewModel.SVGFiles.Contains(svgfl) Then
-            svgfl = New SVGFile(svisElement, "Drawing Group")
-            ViewModel.ModifySVGFiles(svgfl)
-
-        Else
-            ViewModel.SVGComponents.ForEach(Sub(x) x.SaveState())
-
-            svgfl.AddComponent(New SVGComponent(svisElement, svgfl))
-            ViewModel.UpdateSVGFiles()
-            ViewModel.SVGComponents.ForEach(Sub(x) x.LoadState())
-        End If
-
-
+    Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
+        For Each child In mainCanvas.Children
+            Selector.SetIsSelected(child, False)
+        Next
     End Sub
-
-
-
-    Private Sub SVGCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles svgDrawing.MouseDown
-        'If Not e.LeftButton = MouseButtonState.Pressed Then Return
-        'If TryCast(e.OriginalSource.Parent, resizableSVGCanvas) IsNot Nothing Then
-        '    ViewModel.CanvasToolMode = CanvasMode.Selection
-        'End If
-    End Sub
-
-
 End Class

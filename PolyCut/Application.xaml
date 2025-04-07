@@ -13,8 +13,9 @@
 
                 <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Resources/Theme/Dark.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Resources/Wpf.Ui.xaml" />
-     
-      </ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PolyCut.RichCanvas;component/Themes/Generic.xaml" />
+
+            </ResourceDictionary.MergedDictionaries>
             
         </ResourceDictionary>
     </Application.Resources>

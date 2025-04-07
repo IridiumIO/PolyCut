@@ -84,6 +84,8 @@ Public Class SVGProcessor
             If element.Transforms IsNot Nothing Then
                 child.Transforms = If(child.Transforms, New Transforms.SvgTransformCollection)
                 child.Transforms.InsertRange(0, element.Transforms)
+                'child.Transforms.AddRange(element.Transforms)
+
             End If
 
             generatedLines.AddRange(Await LoopElements(child, processorConfiguration))
@@ -118,6 +120,7 @@ Public Class SVGProcessor
             If svgDoc.Transforms IsNot Nothing Then
                 child.Transforms = If(child.Transforms, New Transforms.SvgTransformCollection)
                 child.Transforms.InsertRange(0, svgDoc.Transforms)
+                ' child.Transforms.AddRange(svgDoc.Transforms)
             End If
         Next
 

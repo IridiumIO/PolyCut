@@ -1,11 +1,13 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.IO
+Imports System.Windows.Controls.Primitives
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
 
 Imports PolyCut.Core
+Imports PolyCut.RichCanvas
 
 Imports Svg
 
@@ -36,7 +38,23 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property CuttingMat As CuttingMat
     Public Property Configuration As ProcessorConfiguration
 
+    Private _CanvasToolMode As CanvasMode
     Public Property CanvasToolMode As CanvasMode
+        Get
+            Return _CanvasToolMode
+        End Get
+        Set(value As CanvasMode)
+            _CanvasToolMode = value
+            If value <> CanvasMode.Selection Then
+                For Each child In DrawableCollection
+                    If TypeOf child.Parent Is ContentControl Then
+                        Selector.SetIsSelected(child.Parent, False)
+                    End If
+                Next
+
+            End If
+        End Set
+    End Property
 
     Public Property CanvasFontFamily As FontFamily = New FontFamily("Calibri")
 
@@ -45,6 +63,8 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
     Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
+
+    Public Property DrawableCollection As ObservableCollection(Of FrameworkElement) = New ObservableCollection(Of FrameworkElement)
 
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
     Public ReadOnly Property PolyCutDocumentName As String
@@ -71,11 +91,19 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
-    Public ReadOnly Property SVGComponents As ObservableCollection(Of SVGComponent)
-        Get
-            Return New ObservableCollection(Of SVGComponent)(SVGFiles.SelectMany(Function(f) f.SVGComponents))
-        End Get
-    End Property
+    Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub()
+                                                                                    Dim itemsToRemove As New List(Of FrameworkElement)
+                                                                                    For Each child In DrawableCollection
+                                                                                        If Selector.GetIsSelected(child.Parent) Then
+                                                                                            itemsToRemove.Add(child)
+                                                                                        End If
+                                                                                    Next
+
+                                                                                    For Each item In itemsToRemove
+                                                                                        DrawableCollection.Remove(item)
+                                                                                    Next
+
+                                                                                End Sub)
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
@@ -93,7 +121,7 @@ Public Class MainViewModel : Inherits ObservableObject
         CuttingMats = SettingsHandler.GetCuttingMats
         CuttingMat = CuttingMats.First
         Configuration = (SettingsHandler.GetConfigurations).First
-
+        AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
     End Sub
 
 
@@ -129,27 +157,56 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Sub ModifySVGFiles(file As SVGFile, Optional removeSVG As Boolean = False)
 
-        SVGComponents.ForEach(Sub(x) x.SaveState())
+        'SVGComponents.ForEach(Sub(x) x.SaveState())
 
 
         If removeSVG Then
             SVGFiles.Remove(file)
+            For Each child As SVGComponent In file.SVGVisualComponents
+                DrawableCollection.Remove(child.SVGViewBox)
+            Next
         Else
-            SVGFiles.Add(file)
+
+            If Not SVGFiles.Contains(file) Then SVGFiles.Add(file)
+
+            For Each child As SVGComponent In file.SVGVisualComponents
+                If Not DrawableCollection.Contains(child.SVGViewBox) Then
+                    child.SetCanvas()
+                    DrawableCollection.Add(child.SVGViewBox)
+                End If
+
+            Next
         End If
-        OnPropertyChanged(NameOf(SVGComponents))
+
+        'OnPropertyChanged(NameOf(SVGComponents))
         OnPropertyChanged(NameOf(SVGFiles))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
-        SVGComponents.ForEach(Sub(x) x.LoadState())
+        OnPropertyChanged(NameOf(DrawableCollection))
+        'SVGComponents.ForEach(Sub(x) x.LoadState())
 
 
     End Sub
 
     Public Sub UpdateSVGFiles()
-        OnPropertyChanged(NameOf(SVGComponents))
+        'OnPropertyChanged(NameOf(SVGComponents))
+
+        For Each child As SVGComponent In SVGFiles.SelectMany(Function(f) f.SVGComponents).Where(Function(g) g.IsVisualElement)
+            If Not DrawableCollection.Contains(child.SVGViewBox) Then
+                child.SetCanvas()
+                DrawableCollection.Add(child.SVGViewBox)
+            End If
+
+        Next
+
         OnPropertyChanged(NameOf(SVGFiles))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
     End Sub
+
+
+    Public Sub AddDrawableElement(element As FrameworkElement)
+        DrawableCollection.Add(element)
+    End Sub
+
 
     Public Sub DragSVGs(x As String())
 
@@ -165,11 +222,27 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
+    Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
+        ' Handle the change to the CurrentSelected property
+        Dim currentSelected = DesignerItemDecorator.CurrentSelected
+        For Each svgFile In SVGFiles
+            For Each child In svgFile.SVGComponents
+                If currentSelected IsNot Nothing AndAlso child.SVGViewBox Is currentSelected.Content Then
+                    child.IsSelected = True
+                Else
+                    child.IsSelected = False
+                End If
+            Next
+        Next
+
+    End Sub
+
+
     Public Property GeneratedGCode As List(Of GCode)
     Private Async Sub GenerateGcode()
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
-
+        Configuration.SoftwareVersion = SettingsHandler.Version
         Dim generator As IGenerator = If(UsingGCodePlot,
             New GCodePlotGenerator((Configuration), Printer, GenerateSVGText),
             New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
@@ -209,9 +282,9 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Function GenerateSVGText() As String
 
-        Dim coll = SVGComponents.Where(Function(c) c.IsVisualElement _
+        Dim coll = SVGFiles.SelectMany(Function(fl) fl.SVGComponents).Where(Function(c) c.IsVisualElement _
             AndAlso c.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) _
-            AndAlso Not c.isHidden)
+            AndAlso Not c.IsHidden)
 
         Dim outDoc As New Svg.SvgDocument With {
             .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),
@@ -219,6 +292,38 @@ Public Class MainViewModel : Inherits ObservableObject
             .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)}
 
         outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
+
+        For Each shp In DrawableCollection
+            Dim drawableL As IDrawable
+            If TypeOf (shp) Is Line Then
+                drawableL = New DrawableLine(shp)
+            ElseIf TypeOf (shp) Is Rectangle Then
+                drawableL = New DrawableRectangle(shp)
+            ElseIf TypeOf (shp) Is Ellipse Then
+                drawableL = New DrawableEllipse(shp)
+            ElseIf TypeOf (shp) Is TextBox Then
+                drawableL = New DrawableText(shp)
+            Else 'If TypeOf (shp) Is SharpVectors.Converters.SvgViewbox Then
+
+                Dim asSVGViewbox = CType(shp, SharpVectors.Converters.SvgViewbox)
+
+                'Dim existingSVG = SVGFiles.SelectMany(Of SVGComponent)(Function(f) f.SVGVisualComponents).FirstOrDefault(Function(g) g.SVGViewBox Is asSVGViewbox, Nothing)
+
+                'If existingSVG IsNot Nothing Then
+                drawableL = Nothing
+                'Else
+
+                'End If
+
+            End If
+
+            Dim finalElement = drawableL?.GetTransformedSVGElement
+
+            If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
+                outDoc.Children.Add(finalElement)
+            End If
+
+        Next
 
         Return SVGComponent.SVGDocumentToSVGString(outDoc)
 

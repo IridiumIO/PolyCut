@@ -1423,7 +1423,7 @@
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Diameter of the swivelling part of the cutting blade.<LineBreak/>Most blades are ~0.25mm in diameter. 
+                                                                    Diameter of the swivelling part of the cutting blade.<LineBreak/>Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge.<LineBreak/><LineBreak/>Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
@@ -1441,7 +1441,7 @@
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Extends cuts by the specified amount to compensate for the fact most blade tips are off center.<LineBreak/>Without overcut, sharp corners may not meet correctly or may appear curved due to blade swiveling.<LineBreak/><LineBreak/>Enabling Overcut adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.
+                                                                    Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.<LineBreak/> <LineBreak/>Recommended value ~1mm
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>

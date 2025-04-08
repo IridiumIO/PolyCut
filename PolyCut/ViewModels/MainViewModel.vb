@@ -93,14 +93,32 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub()
                                                                                     Dim itemsToRemove As New List(Of FrameworkElement)
+                                                                                    Dim drawableItemsToRemove As New List(Of IDrawable)
+
                                                                                     For Each child In DrawableCollection
                                                                                         If Selector.GetIsSelected(child.Parent) Then
                                                                                             itemsToRemove.Add(child)
+
+                                                                                            ' Find the corresponding IDrawable in SVGFiles
+                                                                                            Dim drawable = SVGFiles.SelectMany(Function(svgFile) svgFile.SVGComponents).
+                                                                                                  FirstOrDefault(Function(c) c.DrawableElement Is child)
+                                                                                            If drawable IsNot Nothing Then
+                                                                                                drawableItemsToRemove.Add(drawable)
+                                                                                            End If
                                                                                         End If
                                                                                     Next
 
+                                                                                    ' Remove selected items from DrawableCollection
                                                                                     For Each item In itemsToRemove
                                                                                         DrawableCollection.Remove(item)
+                                                                                    Next
+
+                                                                                    ' Remove corresponding IDrawables from SVGFiles
+                                                                                    For Each drawable In drawableItemsToRemove
+                                                                                        Dim svgFile = SVGFiles.FirstOrDefault(Function(file) file.SVGComponents.Contains(drawable))
+                                                                                        If svgFile IsNot Nothing Then
+                                                                                            svgFile.SVGComponents.Remove(drawable)
+                                                                                        End If
                                                                                     Next
 
                                                                                 End Sub)

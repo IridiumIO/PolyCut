@@ -9,12 +9,14 @@
 - [x] Nested hidden elements are not visible in the editor but are still exported
 - [ ] Shapes drawn on canvas directly are buggy
     - [ ] creating a shape so that it extends beyond the canvas edges will cause it to get stuck and can leave a ghost element behind
-    - [ ] Text cannot be edited after it is created
+    - [x] Text cannot be edited after it is created
 
 ## PolyCut.Core 
 - [x] Fills don't ignore open paths and will attempt to fill them regardless, using a naive algorithm
 - [ ] Tool diameter offset paths have a fixed resolution and do not take into account the precision setting
 - [ ] Shape drawing does not take into account whether the shape is filled or not, and will always fill closed shapes
+- [ ] When trying to fill text, if there are a lot of spaces in a single textbox the fill will not work properly. For example `ABC       DEF`
+    - *Workaround*: Use separate textboxes if there are large gaps between characters
 
 
 # Pending Features 
@@ -34,12 +36,12 @@
 ### Editor
 - [ ] Manipulation features
 	- [X] Move
-	- [ ] Rotate
+	- [X] Rotate
 	- [X] Scale
 	- [ ] Mirror
 	- [X] Delete
 	- [ ] Duplicate
-	- [X] Undo/Redo
+	- [ ] Undo/Redo
 	- [ ] Align
 	- [ ] Group/Ungroup	
 	- [ ] Multiple selection

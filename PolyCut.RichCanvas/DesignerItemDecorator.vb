@@ -106,9 +106,16 @@ Public Class DesignerItemDecorator : Inherits Control
     End Sub
 
     Private Sub DesignerItemDecorator_MouseDown(sender As Object, e As MouseButtonEventArgs)
-
         Dim ThisControl As ContentControl = TryCast(DataContext, ContentControl)
-        Debug.WriteLine(e.OriginalSource.ToString)
+        If ThisControl Is Nothing Then Return
+
+        Dim childControl As TextBox = TryCast(ThisControl.Content, TextBox)
+        If childControl IsNot Nothing Then
+            If childControl.IsFocused Then
+                e.Handled = True ' If the TextBox is already focused, do nothing
+                Return
+            End If
+        End If
 
         ' Deselect all other controls
         Dim parent As Panel = TryCast(ThisControl.Parent, Panel)
@@ -116,6 +123,7 @@ Public Class DesignerItemDecorator : Inherits Control
             For Each child As UIElement In parent.Children
                 If TypeOf child Is ContentControl AndAlso child IsNot ThisControl Then
                     Selector.SetIsSelected(child, False)
+                    parent.Focus()
                 End If
             Next
         End If
@@ -128,9 +136,6 @@ Public Class DesignerItemDecorator : Inherits Control
         CurrentSelected = ThisControl
         adorner?.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
         e.Handled = True
-
-
-
     End Sub
 
 

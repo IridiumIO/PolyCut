@@ -14,6 +14,50 @@ Public Class MoveThumb
         AddHandler DragDelta, AddressOf Me.MoveThumb_DragDelta
         AddHandler DragCompleted, AddressOf Me.MoveThumb_DragCompleted
         AddHandler Me.MouseWheel, AddressOf Me.MoveThumb_MouseWheel
+        AddHandler Me.MouseDoubleClick, AddressOf Me.MoveThumb_MouseDoubleClick
+    End Sub
+
+    Private _storedDataContext As ContentControl = Nothing
+
+
+    ' Handles double-clicking to edit text boxes
+    ' This really should not be here, but I don't know where else to put it
+    Private Sub MoveThumb_MouseDoubleClick(sender As Object, e As MouseButtonEventArgs)
+
+        Dim childElement As TextBox = TryCast(DataContext.Content, TextBox)
+        If childElement IsNot Nothing Then
+            Selector.SetIsSelected(DataContext, False)
+
+            Dim parentPolyCanvas As PolyCanvas = TryCast(DataContext.Parent, PolyCanvas)
+            _storedDataContext = DataContext
+            parentPolyCanvas.Children.Remove(_storedDataContext)
+            _storedDataContext.Content = Nothing
+            parentPolyCanvas.Children.Add(childElement)
+            Canvas.SetLeft(childElement, Canvas.GetLeft(DataContext))
+            Canvas.SetTop(childElement, Canvas.GetTop(DataContext))
+
+            childElement.Focus()
+            AddHandler childElement.LostFocus, AddressOf OnTextBoxLostFocus
+            e.Handled = True
+
+            Return
+
+        End If
+    End Sub
+
+
+
+    Private Sub OnTextBoxLostFocus(sender As Object, e As RoutedEventArgs)
+        Dim textBox As TextBox = TryCast(sender, TextBox)
+        If textBox IsNot Nothing Then
+
+            Dim parent As PolyCanvas = TryCast(textBox.Parent, PolyCanvas)
+            parent.Children.Remove(textBox)
+            _storedDataContext.Content = textBox
+            parent.ChildrenCollection.Add(_storedDataContext)
+
+            RemoveHandler textBox.LostFocus, AddressOf OnTextBoxLostFocus
+        End If
     End Sub
 
 

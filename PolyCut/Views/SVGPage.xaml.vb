@@ -189,7 +189,9 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     Private Sub MainView_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
 
         If TypeOf (e.OriginalSource.Parent) IsNot resizableSVGCanvas Then
+            Debug.WriteLine("MouseDown")
             resizableSVGCanvas.DeSelectAll()
+            zoomPanControl.MoveFocus(New TraversalRequest(FocusNavigationDirection.Previous))
         End If
 
     End Sub
@@ -358,7 +360,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .BorderThickness = New Thickness(1),
             .Style = Nothing,
             .Text = "",
-            .AcceptsReturn = True,
+            .AcceptsReturn = False,
             .AcceptsTab = True,
             .FontSize = ViewModel.CanvasFontSize,
             .FontFamily = ViewModel.CanvasFontFamily,
@@ -374,9 +376,12 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     End Function
 
     Private Sub tb_LostFocus()
-        mainCanvas.Children.Remove(_drawingTextbox)
-        If Not _drawingTextbox.Text = "" Then GenerateSVGFromText(_drawingTextbox)
-        _drawingTextbox = Nothing
+
+        If mainCanvas.Children.Contains(_drawingTextbox) Then
+            mainCanvas.Children.Remove(_drawingTextbox)
+            If Not _drawingTextbox.Text = "" Then GenerateSVGFromText(_drawingTextbox)
+            _drawingTextbox = Nothing
+        End If
 
     End Sub
 

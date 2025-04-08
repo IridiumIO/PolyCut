@@ -27,6 +27,18 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             1.0
         )
 
+
+        Dim tabWidth As Double = New FormattedText(
+            vbTab, ' 4 spaces
+            System.Globalization.CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
+            tb.FontSize,
+            Brushes.Black
+        ).Width
+
+        Debug.WriteLine($"Tab width: {tabWidth}")
+
         Dim baselineOffset = formattedText.Baseline
 
         Dim svgText As New Svg.SvgText With {
@@ -42,7 +54,46 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         .LengthAdjust = SvgTextLengthAdjust.Spacing
     }
 
+        svgText.Text = Nothing
+
+        Dim substrings As String() = tb.Text.Split(vbTab)
+        Dim currentX As Double = 0
+
+        For i As Integer = 0 To substrings.Length - 1
+            Dim substring As String = substrings(i)
+
+            ' Measure the width of the substring
+            Dim substringWidth As Double = New FormattedText(
+                substring,
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
+                tb.FontSize,
+                Brushes.Black,
+                New NumberSubstitution(),
+                1.0
+            ).Width
+
+            ' Add the substring as a tspan
+            Dim tspan As New Svg.SvgTextSpan With {
+                .Text = substring,
+                .X = New SvgUnitCollection From {CSng(currentX)},
+                .Y = New SvgUnitCollection From {CSng(baselineOffset)}
+            }
+            svgText.Children.Add(tspan)
+
+            ' Update the current X position
+            currentX += substringWidth
+
+            ' If this is not the last substring, move to the next tab stop
+            If i < substrings.Length - 1 Then
+                currentX = Math.Ceiling(currentX / tabWidth) * tabWidth
+            End If
+        Next
+
+
         svgText.CustomAttributes("dominant-baseline") = "alphabetic"
+        svgText.CustomAttributes("xml:space") = "preserve"
 
         Return svgText
     End Function

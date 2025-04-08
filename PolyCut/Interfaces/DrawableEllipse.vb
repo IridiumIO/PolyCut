@@ -1,19 +1,16 @@
 ﻿Imports Svg
 Imports Svg.Transforms
 
-Public Class DrawableEllipse : Implements IDrawable
+Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
 
-    Public Property Name As String Implements IDrawable.Name
-    Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
-    Public Property IsHidden As Boolean Implements IDrawable.IsHidden
-    Public Property IsSelected As Boolean Implements IDrawable.IsSelected
-    Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
+    Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
     Public Sub New(element As Ellipse)
         DrawableElement = element
+        VisualName = "Ellipse"
     End Sub
 
-    Private Function DrawingToSVG() As SvgVisualElement
+    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
 
         Dim rt = CType(DrawableElement, Ellipse)
 
@@ -31,11 +28,9 @@ Public Class DrawableEllipse : Implements IDrawable
 
     End Function
 
-
-    Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
+    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
-
 
         Dim sx = component.BakeTransforms(DrawableElement)
         Return sx

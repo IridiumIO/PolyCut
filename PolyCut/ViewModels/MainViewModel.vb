@@ -162,8 +162,13 @@ Public Class MainViewModel : Inherits ObservableObject
 
         If removeSVG Then
             SVGFiles.Remove(file)
-            For Each child As SVGComponent In file.SVGVisualComponents
-                DrawableCollection.Remove(child.SVGViewBox)
+            For Each child As IDrawable In file.SVGVisualComponents
+                If TypeOf child Is SVGComponent Then
+                    DrawableCollection.Remove(CType(child, SVGComponent).SVGViewBox)
+                Else
+                    DrawableCollection.Remove(child.DrawableElement)
+                End If
+
             Next
         Else
 
@@ -190,7 +195,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Sub UpdateSVGFiles()
         'OnPropertyChanged(NameOf(SVGComponents))
 
-        For Each child As SVGComponent In SVGFiles.SelectMany(Function(f) f.SVGComponents).Where(Function(g) g.IsVisualElement)
+        For Each child As SVGComponent In SVGFiles.SelectMany(Function(f) f.SVGComponents).Where(Function(g) CType(g, SVGComponent).IsVisualElement)
             If Not DrawableCollection.Contains(child.SVGViewBox) Then
                 child.SetCanvas()
                 DrawableCollection.Add(child.SVGViewBox)
@@ -203,8 +208,31 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
+    Private DrawableSVGFile As SVGFile
+
     Public Sub AddDrawableElement(element As FrameworkElement)
+
+        Dim drawableL As IDrawable
+        If TypeOf (element) Is Line Then
+            drawableL = New DrawableLine(element)
+        ElseIf TypeOf (element) Is Rectangle Then
+            drawableL = New DrawableRectangle(element)
+        ElseIf TypeOf (element) Is Ellipse Then
+            drawableL = New DrawableEllipse(element)
+        ElseIf TypeOf (element) Is TextBox Then
+            drawableL = New DrawableText(element)
+
+        End If
+
+        If DrawableSVGFile Is Nothing OrElse Not SVGFiles.Contains(DrawableSVGFile) Then
+            DrawableSVGFile = New SVGFile(drawableL, "Drawing Group")
+            SVGFiles.Add(DrawableSVGFile)
+        Else
+            DrawableSVGFile.SVGComponents.Add(drawableL)
+        End If
+
         DrawableCollection.Add(element)
+
     End Sub
 
 
@@ -227,7 +255,7 @@ Public Class MainViewModel : Inherits ObservableObject
         Dim currentSelected = DesignerItemDecorator.CurrentSelected
         For Each svgFile In SVGFiles
             For Each child In svgFile.SVGComponents
-                If currentSelected IsNot Nothing AndAlso child.SVGViewBox Is currentSelected.Content Then
+                If currentSelected IsNot Nothing AndAlso ((TryCast(child, SVGComponent) IsNot Nothing AndAlso TryCast(child, SVGComponent).SVGViewBox Is currentSelected.Content) OrElse child.DrawableElement Is currentSelected.Content) Then
                     child.IsSelected = True
                 Else
                     child.IsSelected = False
@@ -282,9 +310,12 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Function GenerateSVGText() As String
 
-        Dim coll = SVGFiles.SelectMany(Function(fl) fl.SVGComponents).Where(Function(c) c.IsVisualElement _
-            AndAlso c.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) _
-            AndAlso Not c.IsHidden)
+        Dim coll = SVGFiles.SelectMany(Function(fl) fl.SVGComponents).Where(Function(c)
+                                                                                Dim svgComp = TryCast(c, SVGComponent)
+                                                                                Return svgComp IsNot Nothing AndAlso svgComp.IsVisualElement _
+                                                                                AndAlso svgComp.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) _
+                                                                                AndAlso Not svgComp.IsHidden
+                                                                            End Function).ToList
 
         Dim outDoc As New Svg.SvgDocument With {
             .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),
@@ -304,17 +335,7 @@ Public Class MainViewModel : Inherits ObservableObject
             ElseIf TypeOf (shp) Is TextBox Then
                 drawableL = New DrawableText(shp)
             Else 'If TypeOf (shp) Is SharpVectors.Converters.SvgViewbox Then
-
-                Dim asSVGViewbox = CType(shp, SharpVectors.Converters.SvgViewbox)
-
-                'Dim existingSVG = SVGFiles.SelectMany(Of SVGComponent)(Function(f) f.SVGVisualComponents).FirstOrDefault(Function(g) g.SVGViewBox Is asSVGViewbox, Nothing)
-
-                'If existingSVG IsNot Nothing Then
                 drawableL = Nothing
-                'Else
-
-                'End If
-
             End If
 
             Dim finalElement = drawableL?.GetTransformedSVGElement

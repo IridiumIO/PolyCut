@@ -10,8 +10,9 @@ Public Interface IDrawable
 
     Property IsHidden As Boolean
     Property IsSelected As Boolean
+    ReadOnly Property VisualName As String
 
     Function GetTransformedSVGElement() As SvgVisualElement
-
+    Function DrawingToSVG() As SvgVisualElement
 
 End Interface

@@ -11,7 +11,7 @@ Imports SharpVectors.Converters
 
 Imports Svg
 
-Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
+Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Property SVGString As String
@@ -27,7 +27,7 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
         End Get
     End Property
 
-    Public ReadOnly Property VisualName As String
+    Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
         Get
             Dim id = TryCast(SVGElement, SvgPathBasedElement)?.ID
             If id IsNot Nothing Then Return id
@@ -66,10 +66,10 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
     Public Property SVGLeft As Double
     Public Property SVGTop As Double
 
-    Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
+    Public Overloads Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
 
     Private _IsHidden As Boolean = False
-    Public Property IsHidden As Boolean Implements IDrawable.IsHidden
+    Public Overloads Property IsHidden As Boolean Implements IDrawable.IsHidden
         Get
             Return _IsHidden
         End Get
@@ -88,10 +88,8 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
     End Property
 
 
-    Private Shared _currentlySelectedComponent As SVGComponent
 
-
-    Public Property IsSelected As Boolean Implements IDrawable.IsSelected
+    Public Overloads Property IsSelected As Boolean Implements IDrawable.IsSelected
         Get
 
             If SVGViewBox?.Parent Is Nothing Then Return False
@@ -257,6 +255,10 @@ Public Class SVGComponent : Inherits ObservableObject : Implements IDrawable
 
         Return component.BakeTransforms(SVGViewBox, SVGLeft, SVGTop)
 
+    End Function
+
+    Public Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+        Throw New NotImplementedException()
     End Function
 
 

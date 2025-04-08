@@ -4,73 +4,17 @@ Imports Svg
 Imports Svg.Pathing
 Imports Svg.Transforms
 
-Public Class DrawableText : Implements IDrawable
+Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
-    Public Property Name As String Implements IDrawable.Name
-    Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
-    Public Property IsHidden As Boolean Implements IDrawable.IsHidden
-    Public Property IsSelected As Boolean Implements IDrawable.IsSelected
-    Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
 
+    Public ReadOnly Property VisualName As String Implements IDrawable.VisualName
     Public Sub New(element As TextBox)
         DrawableElement = element
+        VisualName = "Text"
     End Sub
 
-    Private Function DrawingToSVGViewBox(t As TextBox) As FrameworkElement
 
-        Dim formattedText As New FormattedText(
-      t.Text,
-      System.Globalization.CultureInfo.CurrentCulture,
-      FlowDirection.LeftToRight,
-      New Typeface(t.FontFamily, t.FontStyle, t.FontWeight, t.FontStretch),
-      t.FontSize,
-      Brushes.Black,
-      New NumberSubstitution(),
-      1.0
-  )
-
-        Dim pathGeometry = formattedText.BuildGeometry(New Point(0, 0))
-
-
-        Dim svgText As New Svg.SvgText With {
-            .X = New SvgUnitCollection From {0},
-            .Y = New SvgUnitCollection From {pathGeometry.Bounds.Height},
-            .Text = t.Text,
-            .FontFamily = t.FontFamily.Source,
-            .FontSize = t.FontSize,
-            .FontWeight = SvgFontWeight.Normal,
-            .Fill = New Svg.SvgColourServer(System.Drawing.Color.Black),
-            .TextAnchor = SvgTextAnchor.Start,
-            .TextLength = pathGeometry.Bounds.Width,
-            .FontStyle = SvgFontStyle.Normal,
-            .LengthAdjust = SvgTextLengthAdjust.Spacing
-        }
-
-        Dim doc As New SvgDocument
-        doc.Transforms = New Transforms.SvgTransformCollection
-        doc.Children.Add(svgText)
-
-        Dim svgviewbox As New SharpVectors.Converters.SvgViewbox With {
-            .SvgSource = SVGComponent.SVGDocumentToSVGString(doc),
-            .Width = t.ActualWidth,
-            .Height = pathGeometry.Bounds.Height + pathGeometry.Bounds.Y,
-            .Stretch = Stretch.None
-        }
-
-        ' Calculate the correct position for the SVG element
-        Dim leftPosition As Double = Canvas.GetLeft(t) + pathGeometry.Bounds.X
-        Dim topPosition As Double = Canvas.GetTop(t) + pathGeometry.Bounds.Y
-
-        ' Set the position of the SVG element on the canvas
-        Canvas.SetLeft(svgviewbox, leftPosition)
-        Canvas.SetTop(svgviewbox, topPosition)
-
-        Return svgviewbox
-
-    End Function
-
-
-    Private Function DrawingToSVG() As SvgVisualElement
+    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim tb As TextBox = CType(DrawableElement, TextBox)
         Dim formattedText As New FormattedText(
             tb.Text,
@@ -158,7 +102,7 @@ Public Class DrawableText : Implements IDrawable
         Return segmentList
     End Function
 
-    Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
+    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
 
@@ -167,7 +111,7 @@ Public Class DrawableText : Implements IDrawable
     End Function
 
 
-    Public Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
+    Private Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
         Dim component As SvgVisualElement = SVGelement.DeepCopy()
         If component.Transforms Is Nothing Then component.Transforms = New SvgTransformCollection()
 

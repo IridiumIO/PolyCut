@@ -18,7 +18,7 @@ Public Class SVGFile : Inherits ObservableObject
         End Get
     End Property
 
-    Public Property SVGComponents As New ObservableCollection(Of SVGComponent)
+    Public Property SVGComponents As New ObservableCollection(Of IDrawable)
 
     Public Property SVGVisualComponents As ICollectionView
 
@@ -107,11 +107,18 @@ Public Class SVGFile : Inherits ObservableObject
         AddComponent(New SVGComponent(comp, Me))
     End Sub
 
-    Public Sub AddComponent(svgcomp As SVGComponent)
+    Public Sub New(IDrawable As IDrawable, flName As String)
+        FilePath = flName
+        AddComponent(IDrawable)
+    End Sub
+
+    Public Sub AddComponent(svgcomp As IDrawable)
         SVGComponents.Add(svgcomp)
         SVGVisualComponents = CollectionViewSource.GetDefaultView(SVGComponents)
         SVGVisualComponents.Filter = Function(item As Object)
-                                         Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement = True
+                                         Dim svgcompX = TypeOf item Is SVGComponent
+                                         Dim isVisual = (TypeOf item Is IDrawable) OrElse (svgcompX AndAlso item.IsVisualElement)
+                                         Return isVisual
                                      End Function
         OnPropertyChanged(NameOf(SVGVisualComponents))
         OnPropertyChanged(NameOf(SVGComponents))

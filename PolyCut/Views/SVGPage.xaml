@@ -26,6 +26,12 @@
         <i:KeyTrigger Key="Delete" SourceObject="{Binding ElementName=zoomPanControl}">
             <i:InvokeCommandAction Command="{Binding DeleteDrawableElementCommand}" />
         </i:KeyTrigger>
+        <i:KeyTrigger Key="OemCloseBrackets" SourceObject="{Binding ElementName=zoomPanControl}">
+            <i:InvokeCommandAction Command="{Binding PreviewKeyDownCommand}" CommandParameter="]" />
+        </i:KeyTrigger>
+        <i:KeyTrigger Key="OemOpenBrackets" SourceObject="{Binding ElementName=zoomPanControl}">
+            <i:InvokeCommandAction Command="{Binding PreviewKeyDownCommand}" CommandParameter="[" />
+        </i:KeyTrigger>
     </i:Interaction.Triggers>
     <Page.Resources>
         <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />

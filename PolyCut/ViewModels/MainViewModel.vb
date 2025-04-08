@@ -118,10 +118,35 @@ Public Class MainViewModel : Inherits ObservableObject
                                                                                         Dim svgFile = SVGFiles.FirstOrDefault(Function(file) file.SVGComponents.Contains(drawable))
                                                                                         If svgFile IsNot Nothing Then
                                                                                             svgFile.SVGComponents.Remove(drawable)
+                                                                                            If svgFile.SVGVisualComponents.IsEmpty Then
+                                                                                                ModifySVGFiles(svgFile, removeSVG:=True)
+                                                                                            End If
                                                                                         End If
                                                                                     Next
 
                                                                                 End Sub)
+
+    Public Property PreviewKeyDownCommand As ICommand = New RelayCommand(Of String)(Sub(key)
+
+
+                                                                                        If (key = "]") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
+                                                                                            Dim currentSelected = DesignerItemDecorator.CurrentSelected
+                                                                                            If currentSelected Is Nothing Then Return
+                                                                                            Dim textbox As TextBox = TryCast(currentSelected.Content, TextBox)
+                                                                                            If textbox Is Nothing Then Return
+                                                                                            Dim currentFontSize As Double = textbox.FontSize
+                                                                                            textbox.FontSize = currentFontSize + 1
+
+                                                                                        ElseIf (key = "[") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
+                                                                                            Dim currentSelected = DesignerItemDecorator.CurrentSelected
+                                                                                            If currentSelected Is Nothing Then Return
+                                                                                            Dim textbox As TextBox = TryCast(currentSelected.Content, TextBox)
+                                                                                            If textbox Is Nothing Then Return
+                                                                                            Dim currentFontSize As Double = textbox.FontSize
+                                                                                            textbox.FontSize = currentFontSize - 1
+
+                                                                                        End If
+                                                                                    End Sub)
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 

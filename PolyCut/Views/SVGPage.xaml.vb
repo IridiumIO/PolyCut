@@ -202,7 +202,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             ViewModel.CanvasToolMode = CanvasMode.Selection
             _drawingTextbox.MoveFocus(New TraversalRequest(FocusNavigationDirection.Next))
         End If
-
+        Debug.WriteLine(ViewModel.DrawableCollection.Count)
         If ViewModel.CanvasToolMode <> CanvasMode.Selection Then
             For Each child In ViewModel.DrawableCollection
                 If TypeOf child.Parent Is ContentControl Then
@@ -385,6 +385,10 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
+    Private Sub tb_GotFocus(sender As Object, e As RoutedEventArgs)
+        Debug.WriteLine(sender.GetHashCode)
+    End Sub
+
 
     Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseUp
 
@@ -410,12 +414,13 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
                 mainCanvas.Children.Add(_drawingTextbox)
                 _drawingTextbox.Focus()
                 AddHandler _drawingTextbox.LostFocus, AddressOf tb_LostFocus
-
+                AddHandler _drawingTextbox.GotFocus, AddressOf tb_GotFocus
 
         End Select
 
 
     End Sub
+
 
 
     Private Sub GenerateSVGFromLine(l As Line)

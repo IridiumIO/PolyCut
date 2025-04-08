@@ -58,7 +58,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
 
 
         Dim InitialMeta As New List(Of GCode) From {
-            GCode.CommentLine($"  Created using PolyCut v {Configuration.Version}"),
+            GCode.CommentLine($"  Created using PolyCut v {Configuration.SoftwareVersion}"),
             GCode.CommentLine($"  "),
             GCode.CommentLine($"  Estimated Time: {PolyCut.Core.GCodeGenerator.SecondsToReadable(cumulativeTime),20}"),
             GCode.CommentLine($"  Total Length:   {PolyCut.Core.GCodeGenerator.MillimetresToReadable(totalLineLength),20}"),
@@ -75,7 +75,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
             GCode.CommentLine($"######################################"),
             GCode.CommentLine($" Klipper MetaData"),
             GCode.Blank(),
-            GCode.CommentLine($" OrcaSlicer PolyCut {Configuration.Version} on_"),
+            GCode.CommentLine($" OrcaSlicer PolyCut {Configuration.SoftwareVersion} on_"),
             GCode.CommentLine($" estimated printing time = {CInt(cumulativeTime)}s"),
             GCode.CommentLine($" filament used [mm] = {totalLineLength:F1}"),
             GCode.Blank(),

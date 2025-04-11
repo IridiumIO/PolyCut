@@ -36,6 +36,7 @@ Public Class DesignerItemDecorator : Inherits Control
         AddHandler Me.MouseLeftButtonDown, AddressOf DesignerItemDecorator_MouseDown
         EventAggregator.Subscribe(AddressOf OnScaleChanged)
         EventAggregator.Subscribe(AddressOf OnTranslationChanged)
+        OnScaleChanged(New ScaleChangedMessage(ScaleChangedMessage.LastScale))
     End Sub
 
 
@@ -110,11 +111,9 @@ Public Class DesignerItemDecorator : Inherits Control
         If ThisControl Is Nothing Then Return
 
         Dim childControl As TextBox = TryCast(ThisControl.Content, TextBox)
-        If childControl IsNot Nothing Then
-            If childControl.IsFocused Then
-                e.Handled = True ' If the TextBox is already focused, do nothing
-                Return
-            End If
+        If childControl IsNot Nothing AndAlso childControl.IsFocused Then
+            e.Handled = True ' If the TextBox is already focused, do nothing
+            Return
         End If
 
         ' Deselect all other controls

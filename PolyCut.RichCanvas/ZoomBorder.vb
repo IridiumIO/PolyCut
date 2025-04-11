@@ -154,6 +154,7 @@ Public Class ZoomBorder
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown
         AddHandler Me.MouseUp, AddressOf ZoomBorder_MouseUp
         AddHandler Me.MouseMove, AddressOf ZoomBorder_MouseMove
+        AddHandler Me.Loaded, AddressOf ZoomBorder_Loaded
     End Sub
 
 
@@ -321,6 +322,14 @@ Public Class ZoomBorder
         TranslateTransform.Y = origin.Y - (start.Y - currentPosition.Y)
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
     End Sub
+
+
+    Private Async Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
+        Debug.WriteLine("ZoomBorder Loaded")
+        EventAggregator.Publish(New ScaleChangedMessage(Scale))
+    End Sub
+
+
 End Class
 
 Module ExtensionMethods

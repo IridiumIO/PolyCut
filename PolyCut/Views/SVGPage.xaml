@@ -13,18 +13,18 @@
       xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       x:Name="SVGPageView" Title="SVGPage" Unloaded="SVGPageView_Unloaded"
-      Margin="0,5,0,0"
-      d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+      Margin="0,5,0,0" Drop="Page_Drop"
+      d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
       d:DesignHeight="1000" d:DesignWidth="1000" AllowDrop="True"
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
-      Drop="Page_Drop" ScrollViewer.CanContentScroll="False"
+      ScrollViewer.CanContentScroll="False"
       mc:Ignorable="d">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=SVGPageView}">
-            <i:InvokeCommandAction Command="{Binding MainViewLoadedCommand}" />
+            <i:InvokeCommandAction Command="{Binding MainVM.MainViewLoadedCommand}" />
         </i:EventTrigger>
         <i:KeyTrigger Key="Delete" SourceObject="{Binding ElementName=zoomPanControl}">
-            <i:InvokeCommandAction Command="{Binding DeleteDrawableElementCommand}" />
+            <i:InvokeCommandAction Command="{Binding MainVM.DeleteDrawableElementCommand}" />
         </i:KeyTrigger>
         <i:KeyTrigger Key="OemCloseBrackets" SourceObject="{Binding ElementName=zoomPanControl}">
             <i:InvokeCommandAction Command="{Binding PreviewKeyDownCommand}" CommandParameter="]" />
@@ -251,7 +251,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid Margin="5,5,10,5">
+    <Grid Margin="5,5,10,5" DataContext="{Binding MainVM}">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -265,28 +265,8 @@
                       Margin="0,0,-10,0" Panel.ZIndex="1"
                       Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
 
-        <!--<StackPanel Grid.Column="1"
-          Grid.Row="0"
-          Margin="0,0,0,0" Orientation="Horizontal"
-          VerticalAlignment="Bottom"
-          HorizontalAlignment="Right"
-          Background="Transparent">
-      <svgc:SvgViewbox Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg"
-                       Panel.ZIndex="-2"
-                       Opacity="0.05"
-                       Height="30"
-                       Margin="5" />
-      <TextBlock VerticalAlignment="Bottom"
-                 Margin="5,7"
-                 FontSize="15"
-                 Foreground="White"
-                 Opacity="0.05">
-        <Run Text="v" />
-        <Run Text="{x:Static local:SettingsHandler.Version}" />
-      </TextBlock>
-    </StackPanel>-->
 
-        <ui:Card Grid.Column="0"
+        <ui:Card Grid.Column="0" 
                  Margin="5,5,0,5" Padding="0" VerticalAlignment="Stretch"
                  HorizontalContentAlignment="Center" VerticalContentAlignment="Top" Panel.ZIndex="100">
 

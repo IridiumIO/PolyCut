@@ -8,24 +8,24 @@ Imports System.IO
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports Svg
 Imports System.Windows.Controls.Primitives
-Class SVGPage : Implements INavigableView(Of MainViewModel)
+Class SVGPage
 
-    Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
+    Public ReadOnly Property MainViewModel As MainViewModel
 
+    Public ReadOnly Property SVGPageViewModel As SVGPageViewModel
 
-
-    Sub New(viewmodel As MainViewModel)
-
-        Me.ViewModel = viewmodel
-        DataContext = viewmodel
+    Sub New(viewmodel As SVGPageViewModel)
+        Me.SVGPageViewModel = viewmodel
+        Me.MainViewModel = viewmodel.MainVM
+        Me.DataContext = viewmodel
 
         InitializeComponent()
         zoomPanControl.Scale = 2
-        zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
-        zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
-        AddHandler viewmodel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        AddHandler viewmodel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
-        AddHandler viewmodel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
+        zoomPanControl.TranslateTransform.X = -MainViewModel.Printer.BedWidth / 2
+        zoomPanControl.TranslateTransform.Y = -MainViewModel.Printer.BedHeight / 2
+        AddHandler MainViewModel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+        AddHandler MainViewModel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
+        AddHandler MainViewModel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
         'AddHandler viewmodel.PropertyChanged, AddressOf MainVMPropertyChangedHandler
 
 
@@ -33,42 +33,24 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
-
-    Private Sub MainVMPropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
-        ''Handle SVGComponents being updated
-        'If e.PropertyName = NameOf(ViewModel.SVGComponents) Then
-        '    svgDrawing.Children.Clear()
-        '    For Each cl In ViewModel.SVGComponents
-        '        If cl.IsVisualElement Then
-        '            cl.SetCanvas()
-        '            svgDrawing.Children.Add(cl.ECanvas)
-        '            cl.ECanvas.SubscribeToZoomBorderScaling(zoomPanControl)
-
-        '        End If
-        '    Next
-
-
-        'End If
-    End Sub
-
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
 
         Dim alignmentPropertyNames = {
-            NameOf(ViewModel.CuttingMat.SelectedVerticalAlignment),
-            NameOf(ViewModel.CuttingMat.SelectedHorizontalAlignment),
-            NameOf(ViewModel.CuttingMat.SelectedRotation),
-            NameOf(ViewModel.CuttingMat)}
+            NameOf(MainViewModel.CuttingMat.SelectedVerticalAlignment),
+            NameOf(MainViewModel.CuttingMat.SelectedHorizontalAlignment),
+            NameOf(MainViewModel.CuttingMat.SelectedRotation),
+            NameOf(MainViewModel.CuttingMat)}
 
         If alignmentPropertyNames.Contains(e.PropertyName) Then
             Transform()
         End If
-        ViewModel.GCodePaths.Clear()
-        ViewModel.GCode = ""
+        MainViewModel.GCodePaths.Clear()
+        MainViewModel.GCode = ""
 
     End Sub
 
     Private Sub Transform()
-        Dim ret = CalculateOutputs(ViewModel.CuttingMat.SelectedRotation, ViewModel.CuttingMat.SelectedHorizontalAlignment, ViewModel.CuttingMat.SelectedVerticalAlignment)
+        Dim ret = CalculateOutputs(MainViewModel.CuttingMat.SelectedRotation, MainViewModel.CuttingMat.SelectedHorizontalAlignment, MainViewModel.CuttingMat.SelectedVerticalAlignment)
 
 
         CuttingMat_RenderTransform.X = ret.Item1
@@ -79,8 +61,8 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         Dim x As Double = 0
         Dim y As Double = 0
 
-        Dim CuttingMatWidth = ViewModel.CuttingMat.Width
-        Dim CuttingMatHeight = ViewModel.CuttingMat.Height
+        Dim CuttingMatWidth = MainViewModel.CuttingMat.Width
+        Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
 
         Select Case rotation
             Case 0
@@ -160,22 +142,9 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
 
 
-    Private Sub svgElementContextMenu(sender As Object, e As MouseButtonEventArgs) Handles mainCanvas.MouseRightButtonUp
-
-        'If TypeOf (e.Source) Is resizableSVGCanvas AndAlso e.Source.Parent Is svgDrawing Then
-        '    e.Handled = True
-
-        'End If
-    End Sub
-
     Private Sub Page_Drop(sender As Object, e As DragEventArgs)
-        If e.Data.GetDataPresent(DataFormats.FileDrop) Then
-
-            Dim files() As String = TryCast(e.Data.GetData(DataFormats.FileDrop), String())
-
-            ViewModel.DragSVGs(files)
-
-        End If
+        If Not e.Data.GetDataPresent(DataFormats.FileDrop) Then Return
+        SVGPageViewModel.ProcessDroppedFiles(TryCast(e.Data.GetData(DataFormats.FileDrop), String()))
     End Sub
 
 
@@ -199,12 +168,12 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
     Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
         StartPos = e.GetPosition(mainCanvas)
         If _drawingTextbox IsNot Nothing Then
-            ViewModel.CanvasToolMode = CanvasMode.Selection
+            MainViewModel.CanvasToolMode = CanvasMode.Selection
             _drawingTextbox.MoveFocus(New TraversalRequest(FocusNavigationDirection.Next))
         End If
-        Debug.WriteLine(ViewModel.DrawableCollection.Count)
-        If ViewModel.CanvasToolMode <> CanvasMode.Selection Then
-            For Each child In ViewModel.DrawableCollection
+        Debug.WriteLine(MainViewModel.DrawableCollection.Count)
+        If MainViewModel.CanvasToolMode <> CanvasMode.Selection Then
+            For Each child In MainViewModel.DrawableCollection
                 If TypeOf child.Parent Is ContentControl Then
 
                     Selector.SetIsSelected(child.Parent, False)
@@ -212,7 +181,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             Next
         End If
 
-        Select Case ViewModel.CanvasToolMode
+        Select Case MainViewModel.CanvasToolMode
             Case CanvasMode.Line
                 _drawingLine = CreateLine(e.GetPosition(mainCanvas))
                 mainCanvas.Children.Add(_drawingLine)
@@ -289,7 +258,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         Dim squareAspect = Keyboard.IsKeyDown(Key.LeftShift)
         Dim p = e.GetPosition(mainCanvas)
 
-        Select Case ViewModel.CanvasToolMode
+        Select Case MainViewModel.CanvasToolMode
 
             Case CanvasMode.Line
                 If squareAspect Then
@@ -362,8 +331,8 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
             .Text = "",
             .AcceptsReturn = False,
             .AcceptsTab = True,
-            .FontSize = ViewModel.CanvasFontSize,
-            .FontFamily = ViewModel.CanvasFontFamily,
+            .FontSize = MainViewModel.CanvasFontSize,
+            .FontFamily = MainViewModel.CanvasFontFamily,
             .FontWeight = FontWeights.Regular,
             .Padding = New Thickness(0)
         }
@@ -392,7 +361,7 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
 
     Private Sub DrawingCanvas_MouseUp(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseUp
 
-        Select Case ViewModel.CanvasToolMode
+        Select Case MainViewModel.CanvasToolMode
             Case CanvasMode.Line
                 mainCanvas.Children.Remove(_drawingLine)
                 If _drawingLine.X1 = _drawingLine.X2 AndAlso _drawingLine.Y1 = _drawingLine.Y2 Then Return
@@ -449,20 +418,20 @@ Class SVGPage : Implements INavigableView(Of MainViewModel)
         Canvas.SetLeft(l, offsetX)
         Canvas.SetTop(l, offsetY)
 
-        ViewModel.AddDrawableElement(l)
+        MainViewModel.AddDrawableElement(l)
     End Sub
 
 
     Private Sub GenerateSVGFromRect(r As Rectangle)
-        ViewModel.AddDrawableElement(r)
+        MainViewModel.AddDrawableElement(r)
     End Sub
 
     Private Sub GenerateSVGFromEllipse(e As Ellipse)
-        ViewModel.AddDrawableElement(e)
+        MainViewModel.AddDrawableElement(e)
     End Sub
 
     Private Sub GenerateSVGFromText(t As TextBox)
-        ViewModel.AddDrawableElement(t)
+        MainViewModel.AddDrawableElement(t)
     End Sub
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)

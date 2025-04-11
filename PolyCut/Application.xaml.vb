@@ -33,9 +33,13 @@ Partial Public Class Application
 
                                ' Views and ViewModels
                                services.AddSingleton(Of SVGPage)()
+                               services.AddSingleton(Of SVGPageViewModel)()
+
                                services.AddSingleton(Of MonitorPage)()
+
                                services.AddSingleton(Of ExportPage)()
                                services.AddSingleton(Of ExportViewModel)()
+
                                services.AddSingleton(Of PreviewPage)()
                                services.AddSingleton(Of SettingsPage)()
 

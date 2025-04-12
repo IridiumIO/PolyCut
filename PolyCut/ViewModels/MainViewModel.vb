@@ -8,6 +8,7 @@ Imports CommunityToolkit.Mvvm.Input
 
 Imports PolyCut.Core
 Imports PolyCut.RichCanvas
+Imports PolyCut.Shared
 
 Imports Svg
 
@@ -45,6 +46,8 @@ Public Class MainViewModel : Inherits ObservableObject
         End Get
         Set(value As CanvasMode)
             _CanvasToolMode = value
+            Debug.WriteLine($"CanvasToolMode: {value}")
+            OnPropertyChanged(NameOf(CanvasToolMode))
             If value <> CanvasMode.Selection Then
                 For Each child In DrawableCollection
                     If TypeOf child.Parent Is ContentControl Then
@@ -242,7 +245,7 @@ Public Class MainViewModel : Inherits ObservableObject
             drawableL = New DrawableRectangle(element)
         ElseIf TypeOf (element) Is Ellipse Then
             drawableL = New DrawableEllipse(element)
-        ElseIf TypeOf (element) Is TextBox Then
+        ElseIf TypeOf (element) Is System.Windows.Controls.TextBox Then
             drawableL = New DrawableText(element)
 
         End If
@@ -355,7 +358,7 @@ Public Class MainViewModel : Inherits ObservableObject
                 drawableL = New DrawableRectangle(shp)
             ElseIf TypeOf (shp) Is Ellipse Then
                 drawableL = New DrawableEllipse(shp)
-            ElseIf TypeOf (shp) Is TextBox Then
+            ElseIf TypeOf (shp) Is System.Windows.Controls.TextBox Then
                 drawableL = New DrawableText(shp)
             Else 'If TypeOf (shp) Is SharpVectors.Converters.SvgViewbox Then
                 drawableL = Nothing

@@ -3,6 +3,7 @@ Imports System.Globalization
 Imports System.Text.RegularExpressions
 
 Imports PolyCut.Core
+Imports PolyCut.Shared
 
 Public Class ZoomFactorToThicknessConverter
     Implements IMultiValueConverter

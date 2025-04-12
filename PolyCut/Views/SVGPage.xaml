@@ -4,6 +4,7 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
+      xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
       xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
@@ -273,33 +274,33 @@
             <StackPanel>
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Selection}, Mode=TwoWay}"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Filled="True" Symbol="Cursor24" />
                 </RadioButton>
                 <Separator Margin="0,0,0,0" />
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Line}, Mode=TwoWay}"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Line}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Filled="True" Symbol="Line20" />
                 </RadioButton>
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Rectangle}, Mode=TwoWay}"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Rectangle}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Symbol="RectangleLandscape12" />
                 </RadioButton>
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Ellipse}, Mode=TwoWay}"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Ellipse}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Symbol="Circle12" />
                 </RadioButton>
                 <RadioButton x:Name="CanvasTextTool"
                              Width="35" Height="30"
                              Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Text}, Mode=TwoWay}"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Text}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Symbol="Text12" />
                 </RadioButton>
@@ -402,18 +403,14 @@
         </ui:Card>
 
         <rc:ZoomBorder x:Name="zoomPanControl"
-                       Grid.Column="1"
+                       Grid.Column="1" CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
                        Background="Transparent" ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset"
-                       ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01" >
+                       ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01">
 
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                <TextBlock Text="{Binding Printer.Name}"
-                           Margin="5"
-                           FontSize="10" FontWeight="SemiBold" Foreground="#20FFFFFF" Visibility="Collapsed" />
-                <Grid>
+                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                     <AdornerDecorator>
                         <rc:PolyCanvas x:Name="mainCanvas"
                                        Width="{Binding Printer.BedWidth, Mode=TwoWay}"
@@ -421,7 +418,7 @@
                                        Margin="0,0,0,0"
                                        Background="Transparent"
                                        ChildrenCollection="{Binding DrawableCollection}"
-                                       ClipToBounds="False" IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:CanvasMode.Selection}}"/>
+                                       ClipToBounds="False" IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}"/>
                     </AdornerDecorator>
 
 
@@ -556,7 +553,6 @@
                     </Grid>
                 </Grid>
 
-            </StackPanel>
 
         </rc:ZoomBorder>
 

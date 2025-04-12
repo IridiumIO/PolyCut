@@ -1,6 +1,8 @@
 ﻿Imports System.Runtime.CompilerServices
 Imports System.Windows.Media.Animation
 
+Imports PolyCut.Shared
+
 Public Enum ZoomBorderMouseAction
     None
     Move
@@ -144,6 +146,26 @@ Public Class ZoomBorder
         [RaiseEvent](New RoutedPropertyChangedEventArgs(Of Double)(GetValue(ScaleProperty), scale, ScaleChangedEvent))
     End Sub
 
+    Public Shared ReadOnly CanvasModeProperty As DependencyProperty = DependencyProperty.Register(NameOf(CanvasMode), GetType(CanvasMode), GetType(ZoomBorder), New PropertyMetadata(CanvasMode.Selection))
+
+    Public Property CanvasMode As CanvasMode
+        Get
+            Return CType(GetValue(CanvasModeProperty), CanvasMode)
+        End Get
+        Set(value As CanvasMode)
+            SetValue(CanvasModeProperty, value)
+        End Set
+    End Property
+
+
+
+
+
+
+
+
+
+
     Private origin As Point
     Private start As Point
 
@@ -245,15 +267,34 @@ Public Class ZoomBorder
         Me.Cursor = Nothing
     End Sub
 
+    Public DrawingManager As New DrawingManager
+
+
     Private Sub ZoomBorder_MouseDown(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
 
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
+        If CanvasMode <> CanvasMode.Selection Then
+
+            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim position As Point = e.GetPosition(polyCanvas)
+            DrawingManager.StartDrawing(CanvasMode, position, PolyCanvas)
+        End If
+
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
     End Sub
 
     Private Sub ZoomBorder_MouseUp(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
+
+        If CanvasMode <> CanvasMode.Selection Then
+            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim position As Point = e.GetPosition(polyCanvas)
+            DrawingManager.FinishDrawing(CanvasMode, polyCanvas)
+            Return
+        End If
+
+
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then : MoveUp()
         ElseIf GetAction(e.ChangedButton) = ZoomBorderMouseAction.Reset Then : Reset()
         End If
@@ -316,8 +357,15 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
-        If Not ZoomEnabled OrElse Child Is Nothing OrElse Not Child.IsMouseCaptured Then Return
         Dim currentPosition As Point = e.GetPosition(Me)
+        If CanvasMode <> CanvasMode.Selection Then
+            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim position As Point = e.GetPosition(polyCanvas)
+            DrawingManager.UpdateDrawing(CanvasMode, position, Keyboard.IsKeyDown(Key.LeftShift))
+            Return
+        End If
+
+        If Not ZoomEnabled OrElse Child Is Nothing OrElse Not Child.IsMouseCaptured Then Return
         TranslateTransform.X = origin.X - (start.X - currentPosition.X)
         TranslateTransform.Y = origin.Y - (start.Y - currentPosition.Y)
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))

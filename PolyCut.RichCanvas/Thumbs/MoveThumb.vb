@@ -54,6 +54,7 @@ Public Class MoveThumb
             Dim parent As PolyCanvas = TryCast(textBox.Parent, PolyCanvas)
             parent.Children.Remove(textBox)
             _storedDataContext.Content = textBox
+            _storedDataContext.Width = textBox.ActualWidth
             parent.Children.Add(_storedDataContext)
 
             RemoveHandler textBox.LostFocus, AddressOf OnTextBoxLostFocus

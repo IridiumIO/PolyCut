@@ -9,14 +9,8 @@ Imports System.Windows.Input
 Imports System.Windows.Media
 Imports System.Windows.Media.Media3D
 
+Imports PolyCut.Shared
 
-Public Enum CanvasMode
-    Selection
-    Line
-    Rectangle
-    Ellipse
-    Text
-End Enum
 
 
 ''' <summary>

@@ -18,4 +18,8 @@
     <Import Include="System.Windows.Shapes" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PolyCut.Shared\PolyCut.Shared.vbproj" />
+  </ItemGroup>
+
 </Project>

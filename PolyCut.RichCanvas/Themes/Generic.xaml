@@ -18,7 +18,7 @@
     </ControlTemplate>
 
     <ControlTemplate x:Key="DesignerItemDecoratorTemplate" TargetType="{x:Type local:DesignerItemDecorator}">
-        <Rectangle Fill="Transparent"/>
+        <Rectangle Fill="Transparent" />
     </ControlTemplate>
 
     <Style x:Key="DesignerItemStyle" TargetType="{x:Type ContentControl}">
@@ -26,7 +26,7 @@
         <Setter Property="MinWidth" Value="1" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
         <Setter Property="SnapsToDevicePixels" Value="true" />
-        <Setter Property="ClipToBounds" Value="False"/>
+        <Setter Property="ClipToBounds" Value="False" />
         <Setter Property="Effect">
             <Setter.Value>
                 <DropShadowEffect x:Name="shadowEffect"
@@ -37,10 +37,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ContentControl}">
-                    <Grid DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}" ClipToBounds="False" >
+                    <Grid ClipToBounds="False" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
                         <ContentPresenter Content="{TemplateBinding ContentControl.Content}"
-                                          Margin="{TemplateBinding Padding}" 
-                                          IsHitTestVisible="False" ClipToBounds="False"/>
+                                          Margin="{TemplateBinding Padding}"
+                                          ClipToBounds="False" IsHitTestVisible="False" />
                         <local:DesignerItemDecorator x:Name="ItemDecorator"
                                                      ClipToBounds="False"
                                                      Template="{StaticResource DesignerItemDecoratorTemplate}" />
@@ -91,14 +91,13 @@
                               Margin="0,0,0,-15" VerticalAlignment="Bottom"
                               Data="M0,0 0,10 M 0,5 100,5 M 100,0 100,10" Stretch="Fill" Stroke="#FF40A0E0"
                               StrokeThickness="1" />
-                        <Canvas HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="-13,0,0,0">
+                        <Canvas Margin="-13,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
 
                             <TextBlock Text="{Binding Path=Width, Converter={StaticResource doubleFormatConverter}}"
-            Margin="0,0,0,-33" HorizontalAlignment="Center" FontSize="11"
-            VerticalAlignment="Bottom"
-            Background="Transparent" Foreground="#FF40A0E0" />
+                                       Margin="0,0,0,-33" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                       Background="Transparent" FontSize="11" Foreground="#FF40A0E0" />
                         </Canvas>
-                       
+
                         <Path Width="10"
                               Margin="0,0,-15,0" HorizontalAlignment="Right"
                               Data="M5,0 5,100 M 0,0 10,0 M 0,100 10,100" Stretch="Fill" Stroke="#FF40A0E0"
@@ -106,8 +105,8 @@
                         <Canvas Margin="0,0,-15,13" HorizontalAlignment="Right" VerticalAlignment="Center"
                                 ClipToBounds="False">
                             <TextBlock Text="{Binding Path=Height, Converter={StaticResource doubleFormatConverter}}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"
-                                       Background="Transparent" Foreground="#FF40A0E0">
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Background="Transparent" FontSize="11" Foreground="#FF40A0E0">
                                 <TextBlock.LayoutTransform>
                                     <RotateTransform Angle="90" CenterX="1" CenterY="0.5" />
                                 </TextBlock.LayoutTransform>

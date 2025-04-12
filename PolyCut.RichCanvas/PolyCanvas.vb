@@ -81,9 +81,13 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
                 Dim line As Line = CType(child, Line)
                 wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
                 wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
+                MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
+
             End If
 
             wrapper.Tag = (wrapper.Width, wrapper.Height, If(TypeOf child Is Line, New Point(CType(child, Line).X2, CType(child, Line).Y2), Nothing))
+            ' Use attached properties for metadata instead of Tag
+            MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
 
 
             wrapper.ClipToBounds = False
@@ -124,27 +128,23 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
     Private Sub DesignerItem_SizeChanged(sender As Object, e As SizeChangedEventArgs)
 
         Dim wrapper As ContentControl = CType(sender, ContentControl)
-
         Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
 
-        Dim originalWidth As Double = CType(wrapper.Tag, (Double, Double, Point)).Item1
-        Dim originalHeight As Double = CType(wrapper.Tag, (Double, Double, Point)).Item2
-        Dim originalEndPoint As Point? = CType(wrapper.Tag, (Double, Double, Point)).Item3
+        Dim originalDimensions = MetadataHelper.GetOriginalDimensions(wrapper)
+        Dim originalEndPoint = MetadataHelper.GetOriginalEndPoint(wrapper)
+        If originalDimensions Is Nothing Then Return
 
-
-
-        Dim scaleX As Double = e.NewSize.Width / originalWidth
-        Dim scaleY As Double = e.NewSize.Height / originalHeight
+        Dim scaleX As Double = e.NewSize.Width / originalDimensions.Value.Width
+        Dim scaleY As Double = e.NewSize.Height / originalDimensions.Value.Height
 
         If TypeOf content Is Line AndAlso originalEndPoint.HasValue Then
             Dim line As Line = CType(content, Line)
-            'line.X2 = (originalEndPoint.Value.X + line.StrokeThickness / 2) * scaleX
-            'line.Y2 = (originalEndPoint.Value.Y + line.StrokeThickness / 2) * scaleY
 
-            line.X2 = wrapper.Width - line.StrokeThickness / 2
-            If line.Y1 < line.Y2 Then
-                line.Y2 = wrapper.Height - line.StrokeThickness / 2
-            Else
+            line.X2 = originalEndPoint.Value.X * scaleX
+            line.Y2 = originalEndPoint.Value.Y * scaleY
+
+            ' Adjust Y1 if necessary to maintain the correct orientation
+            If line.Y1 > line.Y2 Then
                 line.Y1 = wrapper.Height - line.StrokeThickness / 2
             End If
 
@@ -152,30 +152,6 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
 
         InvalidateMeasure()
 
-
-
-        'Dim wrapper As ContentControl = CType(sender, ContentControl)
-
-        'Dim originalWidth As Double = CType(wrapper.Tag, (Double, Double)).Item1
-        'Dim originalHeight As Double = CType(wrapper.Tag, (Double, Double)).Item2
-
-        '' Calculate the scale factors based on the original dimensions
-        'Dim scaleX As Double = e.NewSize.Width / originalWidth
-        'Dim scaleY As Double = e.NewSize.Height / originalHeight
-
-        '' Reset the previous transform before applying a new one to avoid accumulative scaling
-        'Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
-        'If TypeOf content.RenderTransform Is ScaleTransform Then
-        '    Dim currentTransform As ScaleTransform = CType(content.RenderTransform, ScaleTransform)
-        '    scaleX = scaleX / currentTransform.ScaleX
-        '    scaleY = scaleY / currentTransform.ScaleY
-        'End If
-
-        '' Apply the new scale transform
-        'content.RenderTransform = New ScaleTransform(scaleX, scaleY)
-
-        'InvalidateMeasure()
-        'wrapper.Content.InvalidateMeasure()
 
     End Sub
 

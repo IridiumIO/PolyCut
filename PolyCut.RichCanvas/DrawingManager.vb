@@ -278,7 +278,7 @@ Public Class DrawingManager
 
 
     Private Function FinalisePolyline(polyline As Polyline) As Path
-        Dim simplifiedPoints As PointCollection = RamerDouglasPeucker(polyline.Points, epsilon:=2.0)
+        Dim simplifiedPoints As PointCollection = RamerDouglasPeucker(polyline.Points, epsilon:=1.0)
         polyline.Points = simplifiedPoints
 
 

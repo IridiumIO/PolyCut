@@ -370,6 +370,10 @@ Public Class MainViewModel : Inherits ObservableObject
 
             If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
                 outDoc.Children.Add(finalElement)
+            ElseIf TypeOf (drawableL) Is DrawablePath Then
+                If drawableL.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
+                    outDoc.Children.Add(finalElement)
+                End If
             End If
 
         Next

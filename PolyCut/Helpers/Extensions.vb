@@ -79,5 +79,18 @@ Public Module Extensions
 
     End Function
 
+    <Extension()>
+    Public Function IsWithinBounds(drawableElement As IDrawable, x As Double, y As Double) As Boolean
+
+        Dim renderable = drawableElement.DrawableElement
+        Dim cxLeft = Canvas.GetLeft(renderable.Parent)
+        Dim cxTop = Canvas.GetTop(renderable.Parent)
+        Dim cxWidth = renderable.ActualWidth
+        Dim cxHeight = renderable.ActualHeight
+        If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso cxWidth + cxLeft < x AndAlso cxHeight + cxTop < y Then
+            Return True
+        End If
+        Return False
+    End Function
 
 End Module

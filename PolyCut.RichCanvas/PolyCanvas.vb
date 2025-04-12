@@ -82,7 +82,9 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
                 wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
                 wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
                 MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
-
+            ElseIf TypeOf child Is Path Then
+                Dim path As Path = CType(child, Path)
+                path.Stretch = Stretch.Fill
             End If
 
             wrapper.Tag = (wrapper.Width, wrapper.Height, If(TypeOf child Is Line, New Point(CType(child, Line).X2, CType(child, Line).Y2), Nothing))
@@ -94,9 +96,7 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
             ' Bind the child's Width and Height to the wrapper's Width and Height
 
             child.HorizontalAlignment = HorizontalAlignment.Stretch
-            If TypeOf (child) Is Path Then
-                CType(child, Path).Stretch = Stretch.Fill
-            End If
+
 
             child.Width = Double.NaN
             child.Height = Double.NaN

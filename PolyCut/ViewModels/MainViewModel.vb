@@ -46,7 +46,6 @@ Public Class MainViewModel : Inherits ObservableObject
         End Get
         Set(value As CanvasMode)
             _CanvasToolMode = value
-            Debug.WriteLine($"CanvasToolMode: {value}")
             OnPropertyChanged(NameOf(CanvasToolMode))
             If value <> CanvasMode.Selection Then
                 For Each child In DrawableCollection
@@ -247,7 +246,8 @@ Public Class MainViewModel : Inherits ObservableObject
             drawableL = New DrawableEllipse(element)
         ElseIf TypeOf (element) Is System.Windows.Controls.TextBox Then
             drawableL = New DrawableText(element)
-
+        ElseIf TypeOf (element) Is System.Windows.Shapes.Path Then
+            drawableL = New DrawablePath(element)
         End If
 
         If DrawableSVGFile Is Nothing OrElse Not SVGFiles.Contains(DrawableSVGFile) Then
@@ -360,7 +360,9 @@ Public Class MainViewModel : Inherits ObservableObject
                 drawableL = New DrawableEllipse(shp)
             ElseIf TypeOf (shp) Is System.Windows.Controls.TextBox Then
                 drawableL = New DrawableText(shp)
-            Else 'If TypeOf (shp) Is SharpVectors.Converters.SvgViewbox Then
+            ElseIf TypeOf (shp) Is System.Windows.Shapes.Path Then
+                drawableL = New DrawablePath(shp)
+            Else
                 drawableL = Nothing
             End If
 

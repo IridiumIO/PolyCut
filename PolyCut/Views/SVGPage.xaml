@@ -287,6 +287,12 @@
                 </RadioButton>
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
+                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Path}, Mode=TwoWay}"
+                             Style="{StaticResource MyRadioButtonStyle}">
+                    <ui:SymbolIcon Filled="False" Symbol="Pen20" />
+                </RadioButton>
+                <RadioButton Width="35" Height="30"
+                             Margin="0,5" Padding="5"
                              IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Rectangle}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Symbol="RectangleLandscape12" />

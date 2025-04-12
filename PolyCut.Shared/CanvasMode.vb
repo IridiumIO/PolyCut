@@ -4,4 +4,5 @@
     Rectangle
     Ellipse
     Text
+    Path
 End Enum

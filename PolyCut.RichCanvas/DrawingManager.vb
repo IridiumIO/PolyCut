@@ -15,6 +15,8 @@ Public Class DrawingManager
                 _currentShape = CreateRectangle(startPoint)
             Case CanvasMode.Ellipse
                 _currentShape = CreateEllipse(startPoint)
+            Case CanvasMode.Path
+                _currentShape = CreatePen(startPoint)
 
         End Select
 
@@ -29,16 +31,12 @@ Public Class DrawingManager
         Select Case mode
             Case CanvasMode.Line
                 UpdateLine(DirectCast(_currentShape, Line), currentPoint, squareAspect)
-                Dim line As Line = DirectCast(_currentShape, Line)
-                Debug.WriteLine($"Line: X1={line.X1}, Y1={line.Y1}, X2={line.X2}, Y2={line.Y2}")
             Case CanvasMode.Rectangle
                 UpdateRectangle(DirectCast(_currentShape, Rectangle), currentPoint, squareAspect)
-                Dim rect As Rectangle = DirectCast(_currentShape, Rectangle)
-                Debug.WriteLine($"Rectangle: X={Canvas.GetLeft(rect)}, Y={Canvas.GetTop(rect)}, Width={rect.Width}, Height={rect.Height}")
             Case CanvasMode.Ellipse
                 UpdateEllipse(DirectCast(_currentShape, Ellipse), currentPoint, squareAspect)
-                Dim ellipse As Ellipse = DirectCast(_currentShape, Ellipse)
-                Debug.WriteLine($"Ellipse: X={Canvas.GetLeft(ellipse)}, Y={Canvas.GetTop(ellipse)}, Width={ellipse.Width}, Height={ellipse.Height}")
+            Case CanvasMode.Path
+                UpdatePen(DirectCast(_currentShape, Polyline), currentPoint)
         End Select
     End Sub
 
@@ -60,13 +58,15 @@ Public Class DrawingManager
         End If
 
 
-
         If _currentShape Is Nothing Then Return
 
         If mode = CanvasMode.Line Then
             Dim line As Line = DirectCast(_currentShape, Line)
-            line = FinaliseLine(line)
-            _currentShape = line
+            _currentShape = FinaliseLine(line)
+        ElseIf mode = CanvasMode.Path Then
+            Dim polyline As Polyline = DirectCast(_currentShape, Polyline)
+            pCanvas.Children.Remove(polyline)
+            _currentShape = FinalisePolyline(polyline)
         End If
 
         ' Raise the DrawingFinished event
@@ -105,6 +105,19 @@ Public Class DrawingManager
             .StrokeEndLineCap = PenLineCap.Round,
             .StrokeDashCap = PenLineCap.Round
         }
+    End Function
+
+    Private Function CreatePen(startPoint As Point) As Polyline
+        Dim polyline As New Polyline With {
+            .Stroke = Brushes.Black,
+            .StrokeThickness = 1,
+            .StrokeStartLineCap = PenLineCap.Round,
+            .StrokeEndLineCap = PenLineCap.Round,
+            .StrokeDashCap = PenLineCap.Round,
+            .StrokeLineJoin = PenLineJoin.Round,
+            .Points = New PointCollection() From {startPoint}
+        }
+        Return polyline
     End Function
 
     Private Function CreateRectangle(startPoint As Point) As Rectangle
@@ -182,6 +195,17 @@ Public Class DrawingManager
         End If
     End Sub
 
+    Private Sub UpdatePen(polyline As Polyline, currentPoint As Point)
+        If polyline.Points.Count > 0 Then
+            Dim lastPoint = polyline.Points(polyline.Points.Count - 1)
+            If lastPoint <> currentPoint Then
+                polyline.Points.Add(currentPoint)
+            End If
+        Else
+            polyline.Points.Add(currentPoint)
+        End If
+    End Sub
+
     Private Sub UpdateRectangle(rect As Rectangle, currentPoint As Point, squareAspect As Boolean)
         Dim x = Math.Min(currentPoint.X, _startPos.X)
         Dim y = Math.Min(currentPoint.Y, _startPos.Y)
@@ -251,5 +275,184 @@ Public Class DrawingManager
 
     End Function
 
+
+
+    Private Function FinalisePolyline(polyline As Polyline) As Path
+        Dim simplifiedPoints As PointCollection = RamerDouglasPeucker(polyline.Points, epsilon:=2.0)
+        polyline.Points = simplifiedPoints
+
+
+        Dim minX As Double = polyline.Points.Min(Function(p) p.X)
+        Dim minY As Double = polyline.Points.Min(Function(p) p.Y)
+
+        Dim maxX As Double = polyline.Points.Max(Function(p) p.X)
+        Dim maxY As Double = polyline.Points.Max(Function(p) p.Y)
+
+
+        Dim offsetX As Double = minX - polyline.StrokeThickness / 2
+        Dim offsetY As Double = minY - polyline.StrokeThickness / 2
+        For i As Integer = 0 To polyline.Points.Count - 1
+            Dim point As Point = polyline.Points(i)
+            polyline.Points(i) = New Point(point.X - offsetX, point.Y - offsetY)
+        Next
+
+        Dim path As Path = ConvertPolylineToBezierPath(polyline, smoothingFactor:=0.1)
+        If path Is Nothing Then Return Nothing
+
+        Dim bounds As Rect = path.Data.Bounds
+        path.Width = bounds.Width + polyline.StrokeThickness
+        path.Height = bounds.Height + polyline.StrokeThickness
+
+        Canvas.SetLeft(path, offsetX)
+        Canvas.SetTop(path, offsetY)
+
+        Return path
+
+    End Function
+
+    Private Function ConvertPolylineToBezierPath(polyline As Polyline, smoothingFactor As Double) As Path
+        If polyline.Points.Count < 2 Then
+            ' Generate a single-point path
+            Dim singlePoint As Point = polyline.Points(0)
+
+            ' Create a PathFigure with a single point
+            Dim spathFigure As New PathFigure With {
+                .StartPoint = singlePoint,
+                .IsClosed = False
+            }
+
+            ' Create a PathGeometry and add the PathFigure
+            Dim spathGeometry As New PathGeometry()
+            spathGeometry.Figures.Add(spathFigure)
+
+            ' Create the Path and set its geometry
+            Dim singlePointPath As New Path With {
+                .Stroke = polyline.Stroke,
+                .StrokeThickness = polyline.StrokeThickness,
+                .Data = spathGeometry
+            }
+
+            Return singlePointPath
+        End If
+
+        ' Generate Bézier control points
+        Dim bezierSegments = GenerateBezierControlPoints(polyline.Points, smoothingFactor)
+
+        ' Create a PathFigure to hold the segments
+        Dim pathFigure As New PathFigure With {
+            .StartPoint = polyline.Points(0),
+            .IsClosed = False
+        }
+
+        ' Add the Bézier segments to the PathFigure
+        For Each segment In bezierSegments
+            pathFigure.Segments.Add(segment)
+        Next
+
+        ' Create a PathGeometry and add the PathFigure
+        Dim pathGeometry As New PathGeometry()
+        pathGeometry.Figures.Add(pathFigure)
+
+        ' Create the Path and set its geometry
+        Dim path As New Path With {
+            .Stroke = polyline.Stroke,
+            .StrokeThickness = 1,
+            .Data = pathGeometry
+        }
+
+        Return path
+    End Function
+
+    Private Function GenerateBezierControlPoints(points As PointCollection, smoothingFactor As Double) As List(Of BezierSegment)
+        Dim bezierSegments As New List(Of BezierSegment)()
+
+        If points.Count < 2 Then
+            ' Not enough points to create Bézier curves
+            Return bezierSegments
+        End If
+
+        For i As Integer = 0 To points.Count - 2
+            Dim p0 As Point = If(i = 0, points(i), points(i - 1)) ' Previous point or current point for the first segment
+            Dim p1 As Point = points(i) ' Current point
+            Dim p2 As Point = points(i + 1) ' Next point
+            Dim p3 As Point = If(i + 2 < points.Count, points(i + 2), points(i + 1)) ' Next-next point or next point for the last segment
+
+            ' Calculate control points
+            Dim cp1 As Point = New Point(
+                p1.X + (p2.X - p0.X) * smoothingFactor,
+                p1.Y + (p2.Y - p0.Y) * smoothingFactor
+            )
+
+            Dim cp2 As Point = New Point(
+                p2.X - (p3.X - p1.X) * smoothingFactor,
+                p2.Y - (p3.Y - p1.Y) * smoothingFactor
+            )
+
+            ' Create a Bézier segment
+            bezierSegments.Add(New BezierSegment(cp1, cp2, p2, True))
+        Next
+
+        Return bezierSegments
+    End Function
+
+    Private Function RamerDouglasPeucker(points As PointCollection, epsilon As Double) As PointCollection
+        If points.Count < 3 Then
+            ' If there are fewer than 3 points, return the original points
+            Return points
+        End If
+
+        ' Find the point farthest from the line segment between the first and last points
+        Dim firstPoint As Point = points(0)
+        Dim lastPoint As Point = points(points.Count - 1)
+        Dim maxDistance As Double = 0
+        Dim index As Integer = 0
+
+        For i As Integer = 1 To points.Count - 2
+            Dim distance As Double = PerpendicularDistance(points(i), firstPoint, lastPoint)
+            If distance > maxDistance Then
+                maxDistance = distance
+                index = i
+            End If
+        Next
+
+        ' If the maximum distance is greater than the tolerance, recursively simplify
+        If maxDistance > epsilon Then
+            ' Recursively simplify the segments
+            Dim leftSegment As PointCollection = RamerDouglasPeucker(New PointCollection(points.Take(index + 1)), epsilon)
+            Dim rightSegment As PointCollection = RamerDouglasPeucker(New PointCollection(points.Skip(index)), epsilon)
+
+            ' Combine the results, excluding the duplicate point at the junction
+            Dim result As New PointCollection(leftSegment)
+            result.RemoveAt(result.Count - 1)
+            For Each point In rightSegment
+                result.Add(point)
+            Next
+
+            Return result
+        Else
+            ' If the maximum distance is less than the tolerance, return the endpoints
+            Return New PointCollection() From {firstPoint, lastPoint}
+        End If
+    End Function
+
+    Private Function PerpendicularDistance(point As Point, lineStart As Point, lineEnd As Point) As Double
+        Dim dx As Double = lineEnd.X - lineStart.X
+        Dim dy As Double = lineEnd.Y - lineStart.Y
+
+        ' If the line segment is a point, return the distance to the point
+        If dx = 0 AndAlso dy = 0 Then
+            Return Math.Sqrt((point.X - lineStart.X) ^ 2 + (point.Y - lineStart.Y) ^ 2)
+        End If
+
+        ' Calculate the projection of the point onto the line
+        Dim t As Double = ((point.X - lineStart.X) * dx + (point.Y - lineStart.Y) * dy) / (dx * dx + dy * dy)
+        t = Math.Max(0, Math.Min(1, t)) ' Clamp t to the range [0, 1]
+
+        ' Find the closest point on the line
+        Dim closestPoint As New Point(lineStart.X + t * dx, lineStart.Y + t * dy)
+
+        ' Return the distance from the point to the closest point on the line
+        Return Math.Sqrt((point.X - closestPoint.X) ^ 2 + (point.Y - closestPoint.Y) ^ 2)
+    End Function
 
 End Class

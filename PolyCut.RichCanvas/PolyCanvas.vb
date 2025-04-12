@@ -94,6 +94,9 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
             ' Bind the child's Width and Height to the wrapper's Width and Height
 
             child.HorizontalAlignment = HorizontalAlignment.Stretch
+            If TypeOf (child) Is Path Then
+                CType(child, Path).Stretch = Stretch.Fill
+            End If
 
             child.Width = Double.NaN
             child.Height = Double.NaN

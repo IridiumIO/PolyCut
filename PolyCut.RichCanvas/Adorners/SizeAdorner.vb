@@ -1,9 +1,9 @@
 ﻿Public Class SizeAdorner
     Inherits Adorner
 
-    Private chrome As SizeChrome
-    Private visuals As VisualCollection
-    Private designerItem As ContentControl
+    Private ReadOnly chrome As SizeChrome
+    Private ReadOnly visuals As VisualCollection
+    Private ReadOnly designerItem As ContentControl
 
     Protected Overrides ReadOnly Property VisualChildrenCount As Integer
         Get
@@ -15,18 +15,20 @@
         MyBase.New(designerItem)
         Me.SnapsToDevicePixels = True
         Me.designerItem = designerItem
-        Me.chrome = New SizeChrome()
-        Me.chrome.DataContext = designerItem
-        Me.visuals = New VisualCollection(Me)
-        Me.visuals.Add(Me.chrome)
+        Me.chrome = New SizeChrome With {
+            .DataContext = designerItem
+        }
+        Me.visuals = New VisualCollection(Me) From {
+            Me.chrome
+        }
     End Sub
 
     Protected Overrides Function GetVisualChild(index As Integer) As Visual
         Return Me.visuals(index)
     End Function
 
-    Protected Overrides Function ArrangeOverride(arrangeBounds As Size) As Size
-        Me.chrome.Arrange(New Rect(New Point(0.0, 0.0), arrangeBounds))
-        Return arrangeBounds
+    Protected Overrides Function ArrangeOverride(finalSize As Size) As Size
+        Me.chrome.Arrange(New Rect(New Point(0.0, 0.0), finalSize))
+        Return finalSize
     End Function
 End Class

@@ -49,9 +49,9 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
             If ele Is Nothing Then Return Nothing
 
-            Dim doc As New SvgDocument
-
-            doc.Transforms = New Transforms.SvgTransformCollection
+            Dim doc As New SvgDocument With {
+                .Transforms = New Transforms.SvgTransformCollection
+            }
             doc.Transforms.Insert(0, New Transforms.SvgTranslate(-ele.Bounds.X, -ele.Bounds.Y))
 
             doc.Children.Add(SVGElement)
@@ -94,21 +94,21 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
             If SVGViewBox?.Parent Is Nothing Then Return False
             '  Return Selector.GetIsSelected(SVGViewBox.Parent)
-            Return _currentlySelectedComponent Is Me
+            Return _CurrentlySelectedComponent Is Me
         End Get
         Set(value As Boolean)
             If value Then
                 ' Deselect the currently selected component
-                If _currentlySelectedComponent IsNot Nothing AndAlso _currentlySelectedComponent IsNot Me Then
-                    _currentlySelectedComponent.IsSelected = False
+                If _CurrentlySelectedComponent IsNot Nothing AndAlso _CurrentlySelectedComponent IsNot Me Then
+                    _CurrentlySelectedComponent.IsSelected = False
                 End If
 
                 ' Update the currently selected component
-                _currentlySelectedComponent = Me
+                _CurrentlySelectedComponent = Me
             Else
                 ' Clear the currently selected component if this component is being deselected
-                If _currentlySelectedComponent Is Me Then
-                    _currentlySelectedComponent = Nothing
+                If _CurrentlySelectedComponent Is Me Then
+                    _CurrentlySelectedComponent = Nothing
                 End If
             End If
 
@@ -150,7 +150,7 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
     End Sub
 
 
-    Private Sub UnhideChildren(element As SvgElement)
+    Private Shared Sub UnhideChildren(element As SvgElement)
         For Each child In element.Children
             If child.Display = "none" Then child.Display = "inline"
             UnhideChildren(child)
@@ -173,8 +173,8 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Property SVGViewBox As SharpVectors.Converters.SvgViewbox
-    Public Property Name As String Implements IDrawable.Name
-    Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
+    Public Overloads Property Name As String Implements IDrawable.Name
+    Public Overloads Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
         Get
             Return SVGViewBox
         End Get
@@ -188,14 +188,12 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
         SVGViewBox = New SharpVectors.Converters.SvgViewbox With {.SvgSource = SVGString, .Height = Double.NaN, .Width = Double.NaN, .Stretch = Stretch.Fill}
 
-        Dim svgVisEle = TryCast(SVGElement, SvgVisualElement)
-
         Dim bounds = TryCast(SVGElement, SvgVisualElement)?.Bounds
 
         If bounds IsNot Nothing Then
 
-            Dim strokeWidth As Single = If(svgVisEle.StrokeWidth.Value <> 0, svgVisEle.StrokeWidth.Value, 0)
-            strokeWidth = 0
+            'Dim strokeWidth As Single = If(svgVisEle.StrokeWidth.Value <> 0, svgVisEle.StrokeWidth.Value, 0)
+            Dim strokeWidth As Single = 0
             SVGViewBox.Width = bounds.Value.Width - strokeWidth
             SVGViewBox.Height = bounds.Value.Height - strokeWidth
             Canvas.SetLeft(SVGViewBox, bounds.Value.X + strokeWidth / 2)
@@ -249,7 +247,7 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
     End Function
 
 
-    Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
+    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
 
         Dim component As SvgVisualElement = SVGElement.DeepCopy
 
@@ -257,25 +255,10 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
     End Function
 
-    Public Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Throw New NotImplementedException()
     End Function
 
 
-    'Private State As Nullable(Of (Double, Double, Double))
-    'Public Sub SaveState()
-    '    If Not IsVisualElement Then Return
-
-    '    State = (Canvas.GetLeft(ECanvas), Canvas.GetTop(ECanvas), ECanvas.Scale)
-
-    'End Sub
-
-    'Public Sub LoadState()
-    '    If State Is Nothing Then Return
-
-    '    Canvas.SetLeft(ECanvas, State.Value.Item1)
-    '    Canvas.SetTop(ECanvas, State.Value.Item2)
-    '    ECanvas.Scale = State.Value.Item3
-    'End Sub
 
 End Class

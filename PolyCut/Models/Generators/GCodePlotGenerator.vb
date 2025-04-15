@@ -11,14 +11,14 @@ Public Class GCodePlotGenerator : Implements IGenerator
     Private Property Printer As Printer Implements IGenerator.Printer
     Private Property GCodes As New List(Of GCode) Implements IGenerator.GCodes
 
-    Private SVGFile As String
+    Private ReadOnly SVGFile As String
 
     Public Async Function GenerateGcodeAsync() As Task(Of (StatusCode As Integer, Message As String)) Implements IGenerator.GenerateGcodeAsync
 
 
         Dim args = BuildGCPArgs()
 
-        Dim tempFilePath As String = Path.GetTempFileName()
+        Dim tempFilePath As String = Path.GetRandomFileName()
         IO.File.WriteAllText(tempFilePath, SVGFile)
 
         args = args & " """ & tempFilePath & """"
@@ -30,7 +30,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
         File.Delete(tempFilePath)
 
 
-        If output?.Length = 0 Then Return (1, eroutput)
+        If output?.Length = 0 OrElse output Is Nothing Then Return (1, eroutput)
 
 
         For Each line In output.Split(Environment.NewLine)
@@ -44,7 +44,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
 
     End Function
 
-    Private Function ProcessGcodes()
+    Private Sub ProcessGcodes()
 
         GCodes.ForEach(Sub(gc) gc.Comment = Nothing)
 
@@ -85,7 +85,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
         GCodes.InsertRange(0, InitialMeta)
         GCodes.AddRange(EndMeta)
 
-    End Function
+    End Sub
 
     Dim currentX As Double = 0
     Dim currentY As Double = 0
@@ -127,9 +127,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
         Return GCodes
     End Function
 
-
-
-    Async Function RunEmbeddedExecutable(executableName As String, args As String) As Task(Of (String, String))
+    Shared Async Function RunEmbeddedExecutable(executableName As String, args As String) As Task(Of (String, String))
         Dim executingAssembly As Assembly = Assembly.GetExecutingAssembly()
 
         Dim executablePath As String = Path.Combine(SettingsHandler.DataFolder.FullName, executableName)
@@ -250,7 +248,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
                 Continue For
             End If
 
-            args.Add($"--{Mappings(prop.Name)}={val?.ToString.ToLower}")
+            args.Add($"--{Mappings(prop.Name)}={val.ToString.ToLower}")
         Next
 
         Return args

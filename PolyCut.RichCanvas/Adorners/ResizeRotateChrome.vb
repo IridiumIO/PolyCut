@@ -7,17 +7,17 @@ Public Class ResizeRotateChrome
     ' Default values for the properties
     Private Shared ReadOnly DefaultThumbSize As Double = 9.0
     Private Shared ReadOnly DefaultThumbStrokeThickness As Double = 1.0
-    Private Shared ReadOnly DefaultThumbMargin As Thickness = New Thickness(-DefaultThumbSize / 2)
+    Private Shared ReadOnly DefaultThumbMargin As New Thickness(-DefaultThumbSize / 2)
 
     Private Shared ReadOnly DefaultRotateThumbSize As Double = 50.0
-    Private Shared ReadOnly DefaultRotateThumbOffset As Thickness = New Thickness(0, -48, 0, 0)
+    Private Shared ReadOnly DefaultRotateThumbOffset As New Thickness(0, -48, 0, 0)
     Private Shared ReadOnly DefaultRotateThumbSymbolSize As Double = 18.0
     Private Shared ReadOnly DefaultRotateThumbBackSize As Double = 42.0
 
     Private Shared ReadOnly DefaultAdornedStrokeWidth As Double = 1.0
 
     Private Shared ReadOnly DefaultCardinalThumbSize As Double = 14.0
-    Private Shared ReadOnly DefaultCardinalThumbMargin As Thickness = New Thickness(-DefaultCardinalThumbSize)
+    Private Shared ReadOnly DefaultCardinalThumbMargin As New Thickness(-DefaultCardinalThumbSize)
 
     Public Shared ReadOnly ThumbSizeProperty As DependencyProperty = RegisterDependencyProperty(NameOf(ThumbSize), DefaultThumbSize)
     Public Shared ReadOnly ThumbStrokeThicknessProperty As DependencyProperty = RegisterDependencyProperty(NameOf(ThumbStrokeThickness), DefaultThumbStrokeThickness)

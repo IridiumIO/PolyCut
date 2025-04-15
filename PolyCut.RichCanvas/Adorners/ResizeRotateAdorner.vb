@@ -1,15 +1,17 @@
 ﻿Public Class ResizeRotateAdorner : Inherits Adorner
 
-    Private visuals As VisualCollection
+    Private ReadOnly visuals As VisualCollection
     Public chrome As ResizeRotateChrome
 
 
     Public Sub New(designerItem As ContentControl)
         MyBase.New(designerItem)
-        Me.chrome = New ResizeRotateChrome
-        Me.chrome.DataContext = designerItem
-        Me.visuals = New VisualCollection(Me)
-        Me.visuals.Add(Me.chrome)
+        Me.chrome = New ResizeRotateChrome With {
+            .DataContext = designerItem
+        }
+        Me.visuals = New VisualCollection(Me) From {
+            Me.chrome
+        }
 
         AddHandler Me.MouseWheel, AddressOf Me.ResizeRotateAdorner_MouseWheel
         AddHandler Me.PreviewMouseWheel, AddressOf Me.ResizeRotateAdorner_MouseWheel

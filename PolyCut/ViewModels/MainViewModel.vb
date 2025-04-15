@@ -19,7 +19,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property UsingGCodePlot As Boolean
 
-    Private Property CanvasColor As Brush = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+    Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromRgb(50, 50, 50))
     Public Property CanvasThemeColor As String
         Get
             Return CanvasColor.ToString
@@ -58,7 +58,7 @@ Public Class MainViewModel : Inherits ObservableObject
         End Set
     End Property
 
-    Private _CanvasFontFamily As FontFamily = New FontFamily("Calibri")
+    Private _CanvasFontFamily As New FontFamily("Calibri")
     Public Property CanvasFontFamily As FontFamily
         Get
             Return _CanvasFontFamily
@@ -97,7 +97,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
     Public ReadOnly Property PolyCutDocumentName As String
         Get
-            If SVGFiles.Count <> 0 Then
+            If SVGFiles.Count <> 0 AndAlso SVGFiles.First.ShortFileName <> "Drawing Group" Then
                 Return SVGFiles.First.ShortFileName.Replace(".svg", ".gcode")
             Else
                 Return "PolyCut1.gcode"
@@ -187,11 +187,10 @@ Public Class MainViewModel : Inherits ObservableObject
 
 
     Private Sub BrowseSVG()
-
-        Dim fs As New Microsoft.Win32.OpenFileDialog
-
-        fs.Filter = "*.svg|*.svg"
-        fs.Multiselect = True
+        Dim fs As New Microsoft.Win32.OpenFileDialog With {
+            .Filter = "*.svg|*.svg",
+            .Multiselect = True
+        }
 
         If fs.ShowDialog Then
 
@@ -207,8 +206,6 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     Public Sub ModifySVGFiles(file As SVGFile, Optional removeSVG As Boolean = False)
-
-        'SVGComponents.ForEach(Sub(x) x.SaveState())
 
 
         If removeSVG Then
@@ -234,24 +231,19 @@ Public Class MainViewModel : Inherits ObservableObject
             Next
         End If
 
-        'OnPropertyChanged(NameOf(SVGComponents))
         OnPropertyChanged(NameOf(SVGFiles))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
         OnPropertyChanged(NameOf(DrawableCollection))
-        'SVGComponents.ForEach(Sub(x) x.LoadState())
-
 
     End Sub
 
     Public Sub UpdateSVGFiles()
-        'OnPropertyChanged(NameOf(SVGComponents))
 
         For Each child As SVGComponent In SVGFiles.SelectMany(Function(f) f.SVGComponents).Where(Function(g) CType(g, SVGComponent).IsVisualElement)
             If Not DrawableCollection.Contains(child.SVGViewBox) Then
                 child.SetCanvas()
                 DrawableCollection.Add(child.SVGViewBox)
             End If
-
         Next
 
         OnPropertyChanged(NameOf(SVGFiles))
@@ -274,6 +266,8 @@ Public Class MainViewModel : Inherits ObservableObject
             drawableL = New DrawableText(element)
         ElseIf TypeOf (element) Is System.Windows.Shapes.Path Then
             drawableL = New DrawablePath(element)
+        Else
+            drawableL = Nothing
         End If
 
         If DrawableSVGFile Is Nothing OrElse Not SVGFiles.Contains(DrawableSVGFile) Then
@@ -350,7 +344,7 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
+    Private Shared Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
 
         Dim stringBuilder As New Text.StringBuilder()
         For Each gc In GeneratedGCode
@@ -408,12 +402,12 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Function
 
-    Function CreateGCodeDocument(gcodes As List(Of GCode)) As FlowDocument
-
-        Dim document As New FlowDocument
-        document.FontFamily = New FontFamily("Consolas")
-        document.FontSize = 14
-        document.LineHeight = 1
+    Shared Function CreateGCodeDocument(gcodes As List(Of GCode)) As FlowDocument
+        Dim document As New FlowDocument With {
+            .FontFamily = New FontFamily("Consolas"),
+            .FontSize = 14,
+            .LineHeight = 1
+        }
         'Dim lines As String() = GCode.Split(Environment.NewLine)
 
         For Each line In gcodes

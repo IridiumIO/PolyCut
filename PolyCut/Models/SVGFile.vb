@@ -13,7 +13,7 @@ Public Class SVGFile : Inherits ObservableObject
 
     Public ReadOnly Property ShortFileName As String
         Get
-            Return FilePath.Replace("/", "\").Substring(FilePath.LastIndexOf("\") + 1)
+            Return FilePath.Replace("/", "\").Substring(FilePath.LastIndexOf("\"c) + 1)
 
         End Get
     End Property
@@ -23,7 +23,7 @@ Public Class SVGFile : Inherits ObservableObject
     Public Property SVGVisualComponents As ICollectionView
 
 
-    Public Function ConvertSVGScaleToMM(unitType As Svg.SvgUnitType) As Double
+    Public Shared Function ConvertSVGScaleToMM(unitType As Svg.SvgUnitType) As Double
         Select Case unitType
             Case Svg.SvgUnitType.Centimeter
                 Return 10
@@ -58,6 +58,17 @@ Public Class SVGFile : Inherits ObservableObject
         ParseSVG(svgDoc)
     End Sub
 
+    Public Sub New(comp As Svg.SvgVisualElement, flName As String)
+        FilePath = flName
+        AddComponent(New SVGComponent(comp, Me))
+    End Sub
+
+    Public Sub New(IDrawable As IDrawable, flName As String)
+        FilePath = flName
+        AddComponent(IDrawable)
+    End Sub
+
+
     Private Sub ParseSVG(inDoc As Svg.SvgDocument)
         If inDoc.Height.Type <> Svg.SvgUnitType.Millimeter OrElse inDoc.Width.Type <> Svg.SvgUnitType.Millimeter Then
             Dim heighScale As Double = ConvertSVGScaleToMM(inDoc.Height.Type)
@@ -67,8 +78,9 @@ Public Class SVGFile : Inherits ObservableObject
                 If child.Transforms?.Count > 0 Then
                     child.Transforms.Insert(0, New SvgScale(widthScale, heighScale))
                 Else
-                    child.Transforms = New SvgTransformCollection
-                    child.Transforms.Add(New SvgScale(widthScale, heighScale))
+                    child.Transforms = New SvgTransformCollection From {
+                        New SvgScale(widthScale, heighScale)
+                    }
                 End If
             Next
         End If
@@ -81,8 +93,9 @@ Public Class SVGFile : Inherits ObservableObject
                 If child.Transforms?.Count > 0 Then
                     child.Transforms.Insert(0, New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
                 Else
-                    child.Transforms = New SvgTransformCollection
-                    child.Transforms.Add(New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH))
+                    child.Transforms = New SvgTransformCollection From {
+                        New SvgScale(inDoc.Width.Value / vbW, inDoc.Height.Value / vbH)
+                    }
                 End If
             Next
         End If
@@ -95,22 +108,13 @@ Public Class SVGFile : Inherits ObservableObject
 
         SVGVisualComponents = CollectionViewSource.GetDefaultView(SVGComponents)
         SVGVisualComponents.Filter = Function(item As Object)
-                                         Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement = True
+                                         Return (TypeOf item Is SVGComponent) AndAlso DirectCast(item, SVGComponent).IsVisualElement
                                      End Function
         OnPropertyChanged(NameOf(SVGVisualComponents))
 
 
     End Sub
 
-    Public Sub New(comp As Svg.SvgVisualElement, flName As String)
-        FilePath = flName
-        AddComponent(New SVGComponent(comp, Me))
-    End Sub
-
-    Public Sub New(IDrawable As IDrawable, flName As String)
-        FilePath = flName
-        AddComponent(IDrawable)
-    End Sub
 
     Public Sub AddComponent(svgcomp As IDrawable)
         SVGComponents.Add(svgcomp)

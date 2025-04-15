@@ -20,7 +20,7 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
-    Private Async Sub webView_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs) Handles webView.IsVisibleChanged
+    Private Sub WebView_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs) Handles webView.IsVisibleChanged
 
         Dim animation As New DoubleAnimation(-20, TimeSpan.FromSeconds(1))
         Dim storyboard As New Storyboard()

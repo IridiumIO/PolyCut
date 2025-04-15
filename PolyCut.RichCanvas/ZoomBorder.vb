@@ -291,7 +291,6 @@ Public Class ZoomBorder
 
         If CanvasMode <> CanvasMode.Selection Then
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
-            Dim position As Point = e.GetPosition(polyCanvas)
             DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
             Return
         End If
@@ -302,7 +301,7 @@ Public Class ZoomBorder
         End If
     End Sub
 
-    Private Async Sub ZoomBorder_MouseWheel(ByVal sender As Object, ByVal e As MouseWheelEventArgs)
+    Private Sub ZoomBorder_MouseWheel(ByVal sender As Object, ByVal e As MouseWheelEventArgs)
         If Child Is Nothing Then Return
 
         Dim zoomFactor As Double = e.Delta * ScaleAmount
@@ -319,30 +318,6 @@ Public Class ZoomBorder
         Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
         Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
 
-        Dim newTranslateX As Double = absoluteX - (relative.X * targetScale)
-        Dim newTranslateY As Double = absoluteY - (relative.Y * targetScale)
-
-
-        'Dim duration As Integer = 50 ' in milliseconds
-        'Dim frames As Integer = 60
-        'Dim deltaScale = (Scale - targetScale) / frames
-        'Dim deltaTX = (newTranslateX - TranslateTransform.X) / frames
-        'Dim deltaTY = (newTranslateY - TranslateTransform.Y) / frames
-
-        'Dim frame As Integer = 0
-        'RemoveHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
-
-        'While frame < frames
-        '    Scale -= deltaScale
-        '    TranslateTransform.X += deltaTX
-        '    TranslateTransform.Y += deltaTY
-
-        '    ' Use Task.Delay for asynchronous waiting without blocking the UI thread
-        '    Await Task.Delay(duration / frames)
-        '    frame += 1
-        'End While
-
-
 
         ' Apply the new scale
         Scale = targetScale
@@ -352,9 +327,6 @@ Public Class ZoomBorder
         TranslateTransform.Y = absoluteY - (relative.Y * Scale)
 
         e.Handled = False
-
-        'AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
-
 
     End Sub
 
@@ -374,8 +346,7 @@ Public Class ZoomBorder
     End Sub
 
 
-    Private Async Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
-        Debug.WriteLine("ZoomBorder Loaded")
+    Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
 

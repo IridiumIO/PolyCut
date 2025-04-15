@@ -31,7 +31,7 @@ Public Class InputToMillimetresConverter
         Return CDec(value)
     End Function
 
-    Public Function ConvertBack(value As Object, targetTypes As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
 
         Dim input As String = TryCast(value, String)
 
@@ -39,16 +39,15 @@ Public Class InputToMillimetresConverter
             Return DependencyProperty.UnsetValue
         End If
         input = input.Replace(" ", "")
-        Dim operators = {"+", "-", "*", "/"}
+        Dim operators = New List(Of Char) From {"+", "-", "*", "/"}
 
-        If operators.Any(Function(op) input.Contains(op)) Then
+        If operators.Exists(Function(op) input.Contains(op)) Then
 
-            Dim componentStrings() = input.Split(operators, StringSplitOptions.None)
-            Dim resultArray As String() = Regex.Split(input, $"({String.Join("|", {"\+", "-", "\*", "/"})})")
+            Dim resultArray As String() = Regex.Split(input, $"({String.Join("|", "\+", "-", "\*", "/")})")
 
             For i = 0 To resultArray.Length - 1
                 If Not operators.Contains(resultArray(i)) Then
-                    resultArray(i) = CStr(unitConverter(resultArray(i)))
+                    resultArray(i) = CStr(UnitConverter(resultArray(i)))
                 End If
             Next
 
@@ -69,14 +68,14 @@ Public Class InputToMillimetresConverter
 
         End If
 
-        Dim convertedDecimal As Decimal = unitConverter(input)
+        Dim convertedDecimal As Decimal = UnitConverter(input)
         If convertedDecimal <= 0 Then Return 0
         Return convertedDecimal
 
 
     End Function
 
-    Private Shared Function unitConverter(value As String) As Decimal
+    Private Shared Function UnitConverter(value As String) As Decimal
         value = value.ToLower.Trim
         If Not IsNumeric(value) Then
             If value.EndsWith("in") OrElse value.EndsWith("inches") Then
@@ -150,9 +149,8 @@ Public Class InverseBoolToVisConverter
     Implements IValueConverter
 
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
-        Dim vx = CBool(value)
 
-        If vx = True Then
+        If CBool(value) Then
             Return Visibility.Hidden
         End If
 
@@ -160,10 +158,9 @@ Public Class InverseBoolToVisConverter
 
     End Function
 
-    Public Function ConvertBack(value As Object, targetTypes As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
-        Dim vx = CBool(value)
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
 
-        If vx = True Then
+        If CBool(value) Then
             Return Visibility.Hidden
         End If
 
@@ -179,8 +176,8 @@ Public Class InverseBoolConverter
     Implements IValueConverter
 
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
-        Dim vx = CBool(value)
-        Return Not vx
+
+        Return Not CBool(value)
     End Function
 
     Public Function ConvertBack(value As Object, targetTypes As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
@@ -195,9 +192,8 @@ Public Class ToolModeToVisConverter
     Implements IValueConverter
 
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
-        Dim vx = CInt(value)
 
-        If vx = True Then
+        If CInt(value) Then
             Return Visibility.Hidden
         End If
 
@@ -206,9 +202,8 @@ Public Class ToolModeToVisConverter
     End Function
 
     Public Function ConvertBack(value As Object, targetTypes As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
-        Dim vx = CBool(value)
 
-        If vx = True Then
+        If CBool(value) Then
             Return Visibility.Hidden
         End If
 
@@ -281,8 +276,8 @@ Public Class PathTrimmerConverter
                 If firstPart.Length + lastPart.Length + 5 <= maxLength Then ' 5 for the "...\"
                     Return $"{firstPart}\...\{lastPart}"
                 Else
-                    Dim ellipsisLength As Integer = Math.Max(0, maxLength - lastPart.Length - 5)
-                    Dim ret = $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
+                    'Dim ellipsisLength As Integer = Math.Max(0, maxLength - lastPart.Length - 5)
+                    'Dim ret = $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
                     Return $"fuck"
                 End If
             Else

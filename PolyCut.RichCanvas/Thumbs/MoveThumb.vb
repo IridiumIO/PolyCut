@@ -127,9 +127,7 @@ Public Class MoveThumb
 
             ' Raise the event on the underlying element
             Dim underlyingElement As UIElement = TryCast(hitTestResult.VisualHit, UIElement)
-            If underlyingElement IsNot Nothing Then
-                underlyingElement.RaiseEvent(newEventArgs)
-            End If
+            underlyingElement?.RaiseEvent(newEventArgs)
         End If
     End Sub
 

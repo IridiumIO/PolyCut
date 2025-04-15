@@ -7,7 +7,7 @@ Imports Svg.Transforms
 Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
 
-    Public ReadOnly Property VisualName As String Implements IDrawable.VisualName
+    Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
     Public Sub New(element As TextBox)
         DrawableElement = element
         VisualName = "Text"
@@ -101,60 +101,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     End Function
 
 
-    Private Function ConvertPathGeometryToSvgPathSegmentList(geometry As Geometry) As SvgPathSegmentList
-        Dim segmentList As New SvgPathSegmentList()
-
-        If TypeOf geometry Is PathGeometry Then
-            Dim pathGeometry As PathGeometry = CType(geometry, PathGeometry)
-            For Each figure As PathFigure In pathGeometry.Figures
-                ' Move to the start point of the figure
-                segmentList.Add(New SvgMoveToSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y))))
-                For Each segment As PathSegment In figure.Segments
-                    If TypeOf segment Is LineSegment Then
-                        Dim lineSegment As LineSegment = CType(segment, LineSegment)
-                        segmentList.Add(New SvgLineSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(lineSegment.Point.X), CSng(lineSegment.Point.Y))))
-                    ElseIf TypeOf segment Is BezierSegment Then
-                        Dim bezierSegment As BezierSegment = CType(segment, BezierSegment)
-                        segmentList.Add(New SvgCubicCurveSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(bezierSegment.Point1.X), CSng(bezierSegment.Point1.Y)), New System.Drawing.PointF(CSng(bezierSegment.Point2.X), CSng(bezierSegment.Point2.Y)), New System.Drawing.PointF(CSng(bezierSegment.Point3.X), CSng(bezierSegment.Point3.Y))))
-                    ElseIf TypeOf segment Is QuadraticBezierSegment Then
-                        Dim quadraticBezierSegment As QuadraticBezierSegment = CType(segment, QuadraticBezierSegment)
-                        segmentList.Add(New SvgQuadraticCurveSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(quadraticBezierSegment.Point1.X), CSng(quadraticBezierSegment.Point1.Y)), New System.Drawing.PointF(CSng(quadraticBezierSegment.Point2.X), CSng(quadraticBezierSegment.Point2.Y))))
-                    ElseIf TypeOf segment Is ArcSegment Then
-                        Dim arcSegment As ArcSegment = CType(segment, ArcSegment)
-                        segmentList.Add(New SvgArcSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), CSng(arcSegment.Size.Width), CSng(arcSegment.Size.Height), CSng(arcSegment.RotationAngle), If(arcSegment.IsLargeArc, SvgArcSize.Large, SvgArcSize.Small), If(arcSegment.SweepDirection = SweepDirection.Clockwise, SvgArcSweep.Positive, SvgArcSweep.Negative), New System.Drawing.PointF(CSng(arcSegment.Point.X), CSng(arcSegment.Point.Y))))
-                    ElseIf TypeOf segment Is PolyLineSegment Then
-                        Dim polyLineSegment As PolyLineSegment = CType(segment, PolyLineSegment)
-                        For Each point As Windows.Point In polyLineSegment.Points
-                            segmentList.Add(New SvgLineSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(point.X), CSng(point.Y))))
-                        Next
-                    ElseIf TypeOf segment Is PolyBezierSegment Then
-                        Dim polyBezierSegment As PolyBezierSegment = CType(segment, PolyBezierSegment)
-                        For i As Integer = 0 To polyBezierSegment.Points.Count - 1 Step 3
-                            segmentList.Add(New SvgCubicCurveSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(polyBezierSegment.Points(i).X), CSng(polyBezierSegment.Points(i).Y)), New System.Drawing.PointF(CSng(polyBezierSegment.Points(i + 1).X), CSng(polyBezierSegment.Points(i + 1).Y)), New System.Drawing.PointF(CSng(polyBezierSegment.Points(i + 2).X), CSng(polyBezierSegment.Points(i + 2).Y))))
-                        Next
-                    ElseIf TypeOf segment Is PolyQuadraticBezierSegment Then
-                        Dim polyQuadraticBezierSegment As PolyQuadraticBezierSegment = CType(segment, PolyQuadraticBezierSegment)
-                        For i As Integer = 0 To polyQuadraticBezierSegment.Points.Count - 1 Step 2
-                            segmentList.Add(New SvgQuadraticCurveSegment(New System.Drawing.PointF(CSng(figure.StartPoint.X), CSng(figure.StartPoint.Y)), New System.Drawing.PointF(CSng(polyQuadraticBezierSegment.Points(i).X), CSng(polyQuadraticBezierSegment.Points(i).Y)), New System.Drawing.PointF(CSng(polyQuadraticBezierSegment.Points(i + 1).X), CSng(polyQuadraticBezierSegment.Points(i + 1).Y))))
-                        Next
-                    End If
-                Next
-
-                ' Close the figure if it is closed
-                If figure.IsClosed Then
-                    segmentList.Add(New SvgClosePathSegment())
-                End If
-            Next
-        ElseIf TypeOf geometry Is GeometryGroup Then
-            Dim geometryGroup As GeometryGroup = CType(geometry, GeometryGroup)
-            For Each childGeometry As Geometry In geometryGroup.Children
-                segmentList.AddRange(ConvertPathGeometryToSvgPathSegmentList(childGeometry))
-            Next
-        End If
-
-        Return segmentList
-    End Function
-
     Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
@@ -164,7 +110,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     End Function
 
 
-    Private Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
+    Private Shared Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
         Dim component As SvgVisualElement = SVGelement.DeepCopy()
         If component.Transforms Is Nothing Then component.Transforms = New SvgTransformCollection()
 

@@ -34,6 +34,7 @@ Class SVGPage
     End Sub
 
     Private Sub DrawingFinishedHandler(sender As Object, shape As UIElement)
+        If sender Is Nothing Then Return
         MainViewModel.AddDrawableElement(shape)
     End Sub
 
@@ -61,12 +62,13 @@ Class SVGPage
         CuttingMat_RenderTransform.Y = ret.Item2
     End Sub
 
-    Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
+    Shared Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
         Dim x As Double = 0
         Dim y As Double = 0
 
-        Dim CuttingMatWidth = MainViewModel.CuttingMat.Width
-        Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
+        'TODO
+        'Dim CuttingMatWidth = MainViewModel.CuttingMat.Width 
+        'Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
 
         Select Case rotation
             Case 0
@@ -137,8 +139,9 @@ Class SVGPage
             DupCuttingMatBounds.Opacity = op
 
             ' Opacity animation for MouseLeave
-            Dim opacityAnimation As New DoubleAnimation(0, TimeSpan.FromSeconds(1))
-            opacityAnimation.EasingFunction = New ExponentialEase() With {.EasingMode = EasingMode.EaseIn, .Exponent = 4}
+            Dim opacityAnimation As New DoubleAnimation(0, TimeSpan.FromSeconds(1)) With {
+                .EasingFunction = New ExponentialEase() With {.EasingMode = EasingMode.EaseIn, .Exponent = 4}
+            }
             DupCuttingMatBounds.BeginAnimation(UIElement.OpacityProperty, opacityAnimation)
         End If
 
@@ -157,10 +160,8 @@ Class SVGPage
 
     Private Sub MainView_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
 
-        If TypeOf (e.OriginalSource.Parent) IsNot resizableSVGCanvas Then
-            resizableSVGCanvas.DeSelectAll()
-            zoomPanControl.MoveFocus(New TraversalRequest(FocusNavigationDirection.Previous))
-        End If
+        zoomPanControl.MoveFocus(New TraversalRequest(FocusNavigationDirection.Previous))
+
     End Sub
 
     Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown

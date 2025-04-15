@@ -16,7 +16,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         Me.MainVM = mainvm
     End Sub
 
-    Private Sub ShortcutKeyHandler(Key As String)
+    Private Shared Sub ShortcutKeyHandler(Key As String)
 
         If (Key = "]") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
             Dim currentSelected = DesignerItemDecorator.CurrentSelected

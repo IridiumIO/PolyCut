@@ -93,7 +93,7 @@ Public Class DrawingManager
     End Sub
 
 
-    Private Function CreateLine(startPoint As Point) As Line
+    Private Shared Function CreateLine(startPoint As Point) As Line
         Return New Line With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -107,7 +107,7 @@ Public Class DrawingManager
         }
     End Function
 
-    Private Function CreatePen(startPoint As Point) As Polyline
+    Private Shared Function CreatePen(startPoint As Point) As Polyline
         Dim polyline As New Polyline With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -120,7 +120,7 @@ Public Class DrawingManager
         Return polyline
     End Function
 
-    Private Function CreateRectangle(startPoint As Point) As Rectangle
+    Private Shared Function CreateRectangle(startPoint As Point) As Rectangle
         Dim rect As New Rectangle With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -136,7 +136,7 @@ Public Class DrawingManager
         Return rect
     End Function
 
-    Private Function CreateEllipse(startPoint As Point) As Ellipse
+    Private Shared Function CreateEllipse(startPoint As Point) As Ellipse
         Dim ellipse As New Ellipse With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -152,7 +152,7 @@ Public Class DrawingManager
     End Function
 
 
-    Private Function CreateTextBox(p As Point, fontSize As Double, fontFamily As FontFamily) As TextBox
+    Private Shared Function CreateTextBox(p As Point, fontSize As Double, fontFamily As FontFamily) As TextBox
         Dim tb As New TextBox With {
             .Width = Double.NaN,
             .Height = Double.NaN,
@@ -195,7 +195,7 @@ Public Class DrawingManager
         End If
     End Sub
 
-    Private Sub UpdatePen(polyline As Polyline, currentPoint As Point)
+    Private Shared Sub UpdatePen(polyline As Polyline, currentPoint As Point)
         If polyline.Points.Count > 0 Then
             Dim lastPoint = polyline.Points(polyline.Points.Count - 1)
             If lastPoint <> currentPoint Then
@@ -246,7 +246,7 @@ Public Class DrawingManager
         End If
     End Sub
 
-    Private Function FinaliseLine(l As Line) As Line
+    Private Shared Function FinaliseLine(l As Line) As Line
         Dim negativeDirection As Boolean = l.X2 < l.X1 OrElse (l.X1 = l.X2 AndAlso l.Y2 < l.Y1)
 
         If negativeDirection Then
@@ -277,17 +277,13 @@ Public Class DrawingManager
 
 
 
-    Private Function FinalisePolyline(polyline As Polyline) As Path
+    Private Shared Function FinalisePolyline(polyline As Polyline) As Path
         Dim simplifiedPoints As PointCollection = RamerDouglasPeucker(polyline.Points, epsilon:=1.0)
         polyline.Points = simplifiedPoints
 
 
         Dim minX As Double = polyline.Points.Min(Function(p) p.X)
         Dim minY As Double = polyline.Points.Min(Function(p) p.Y)
-
-        Dim maxX As Double = polyline.Points.Max(Function(p) p.X)
-        Dim maxY As Double = polyline.Points.Max(Function(p) p.Y)
-
 
         Dim offsetX As Double = minX - polyline.StrokeThickness / 2
         Dim offsetY As Double = minY - polyline.StrokeThickness / 2
@@ -310,7 +306,7 @@ Public Class DrawingManager
 
     End Function
 
-    Private Function ConvertPolylineToBezierPath(polyline As Polyline, smoothingFactor As Double) As Path
+    Private Shared Function ConvertPolylineToBezierPath(polyline As Polyline, smoothingFactor As Double) As Path
         If polyline.Points.Count < 2 Then
             ' Generate a single-point path
             Dim singlePoint As Point = polyline.Points(0)
@@ -363,7 +359,7 @@ Public Class DrawingManager
         Return path
     End Function
 
-    Private Function GenerateBezierControlPoints(points As PointCollection, smoothingFactor As Double) As List(Of BezierSegment)
+    Private Shared Function GenerateBezierControlPoints(points As PointCollection, smoothingFactor As Double) As List(Of BezierSegment)
         Dim bezierSegments As New List(Of BezierSegment)()
 
         If points.Count < 2 Then
@@ -378,12 +374,12 @@ Public Class DrawingManager
             Dim p3 As Point = If(i + 2 < points.Count, points(i + 2), points(i + 1)) ' Next-next point or next point for the last segment
 
             ' Calculate control points
-            Dim cp1 As Point = New Point(
+            Dim cp1 As New Point(
                 p1.X + (p2.X - p0.X) * smoothingFactor,
                 p1.Y + (p2.Y - p0.Y) * smoothingFactor
             )
 
-            Dim cp2 As Point = New Point(
+            Dim cp2 As New Point(
                 p2.X - (p3.X - p1.X) * smoothingFactor,
                 p2.Y - (p3.Y - p1.Y) * smoothingFactor
             )
@@ -395,7 +391,7 @@ Public Class DrawingManager
         Return bezierSegments
     End Function
 
-    Private Function RamerDouglasPeucker(points As PointCollection, epsilon As Double) As PointCollection
+    Private Shared Function RamerDouglasPeucker(points As PointCollection, epsilon As Double) As PointCollection
         If points.Count < 3 Then
             ' If there are fewer than 3 points, return the original points
             Return points
@@ -435,7 +431,7 @@ Public Class DrawingManager
         End If
     End Function
 
-    Private Function PerpendicularDistance(point As Point, lineStart As Point, lineEnd As Point) As Double
+    Private Shared Function PerpendicularDistance(point As Point, lineStart As Point, lineEnd As Point) As Double
         Dim dx As Double = lineEnd.X - lineStart.X
         Dim dy As Double = lineEnd.Y - lineStart.Y
 

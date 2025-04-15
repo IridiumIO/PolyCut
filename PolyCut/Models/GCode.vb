@@ -81,7 +81,7 @@ Public Class GCodeGeometry : Inherits ObservableObject
     End Sub
 
 
-    Private Function DrawLine(x1 As Double, y1 As Double, x2 As Double, y2 As Double, Optional isRapidMove As Boolean = False) As Line
+    Private Shared Function DrawLine(x1 As Double, y1 As Double, x2 As Double, y2 As Double, Optional isRapidMove As Boolean = False) As Line
 
         Dim line As New Line With {
                            .X1 = Math.Round(x1, 2),

@@ -670,7 +670,7 @@
                                                                 <ui:Button Grid.Column="1"
                                                                            Padding="6"
                                                                            Background="Transparent"
-                                                                           Command="{Binding DataContext.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                           Command="{Binding DataContext.MainVM.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                            CommandParameter="{Binding}">
                                                                     <ui:SymbolIcon Foreground="{StaticResource PaletteRedBrush}" Symbol="Dismiss48" />
                                                                 </ui:Button>

@@ -5,8 +5,9 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
 Imports SharpVectors.Runtime
-Imports Wpf.Ui.Controls
+Imports WPF.Ui.Controls
 Imports PolyCut.Core.Extensions
+Imports WPF.Ui.Abstractions.Controls
 
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
 

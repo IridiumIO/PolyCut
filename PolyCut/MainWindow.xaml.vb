@@ -5,6 +5,7 @@ Imports SharpVectors.Renderers.Wpf
 
 Imports WPF.Ui
 Imports Wpf.Ui.Controls
+Imports WPF.Ui.Abstractions
 Class MainWindow : Implements INavigationWindow
 
 
@@ -39,15 +40,16 @@ Class MainWindow : Implements INavigationWindow
         Throw New NotImplementedException()
     End Sub
 
-    Public Sub SetPageService(pageService As IPageService) Implements INavigationWindow.SetPageService
-        Throw New NotImplementedException()
-    End Sub
 
     Public Sub ShowWindow() Implements INavigationWindow.ShowWindow
         Throw New NotImplementedException()
     End Sub
 
     Public Sub CloseWindow() Implements INavigationWindow.CloseWindow
+        Throw New NotImplementedException()
+    End Sub
+
+    Public Sub SetPageService(navigationViewPageProvider As INavigationViewPageProvider) Implements INavigationWindow.SetPageService
         Throw New NotImplementedException()
     End Sub
 

@@ -318,7 +318,10 @@
                  Height="50"
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top"
                  Panel.ZIndex="20"
-                 Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+                 Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
+                Visibility="Visible">
+            <!--Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">-->
+           
             <StackPanel Orientation="Horizontal">
                 <Label Content="Font"
                        Margin="0,2,10,0" VerticalAlignment="Center" />
@@ -633,8 +636,8 @@
 
                                         <Separator Margin="0,10,0,10" />
 
-                                        <ListView x:Name="FilesList" ItemsSource="{Binding SVGFiles}">
-                                            <ListView.ItemContainerStyle>
+                                        <ui:ListView x:Name="FilesList" ItemsSource="{Binding SVGFiles}">
+                                            <ui:ListView.ItemContainerStyle>
                                                 <Style TargetType="ListViewItem">
                                                     <Setter Property="Template">
                                                         <Setter.Value>
@@ -646,8 +649,8 @@
                                                         </Setter.Value>
                                                     </Setter>
                                                 </Style>
-                                            </ListView.ItemContainerStyle>
-                                            <ListView.ItemTemplate>
+                                            </ui:ListView.ItemContainerStyle>
+                                            <ui:ListView.ItemTemplate>
                                                 <DataTemplate>
 
                                                     <ui:CardExpander Margin="-10,0" Padding="10,5"
@@ -682,8 +685,8 @@
                                                         </ui:CardExpander.Header>
 
                                                         <StackPanel Margin="15,0,15,0" FlowDirection="LeftToRight">
-                                                            <ListView ItemsSource="{Binding SVGComponents}" SelectionMode="Single">
-                                                                <ListView.ItemContainerStyle>
+                                                            <ui:ListView ItemsSource="{Binding SVGComponents}" SelectionMode="Single">
+                                                                <ui:ListView.ItemContainerStyle>
                                                                     <Style TargetType="ListViewItem">
                                                                         <Setter Property="Template">
                                                                             <Setter.Value>
@@ -696,8 +699,8 @@
                                                                         </Setter>
                                                                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                                                                     </Style>
-                                                                </ListView.ItemContainerStyle>
-                                                                <ListView.ItemTemplate>
+                                                                </ui:ListView.ItemContainerStyle>
+                                                                <ui:ListView.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <Grid>
 
@@ -764,13 +767,13 @@
 
                                                                         </Grid>
                                                                     </DataTemplate>
-                                                                </ListView.ItemTemplate>
-                                                            </ListView>
+                                                                </ui:ListView.ItemTemplate>
+                                                            </ui:ListView>
                                                         </StackPanel>
                                                     </ui:CardExpander>
                                                 </DataTemplate>
-                                            </ListView.ItemTemplate>
-                                        </ListView>
+                                            </ui:ListView.ItemTemplate>
+                                        </ui:ListView>
 
 
                                     </StackPanel>

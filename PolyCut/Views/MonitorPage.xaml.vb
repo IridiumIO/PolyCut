@@ -1,5 +1,7 @@
 ﻿Imports System.Windows.Media.Animation
-Imports Wpf.Ui.Controls
+
+Imports WPF.Ui.Abstractions.Controls
+Imports WPF.Ui.Controls
 
 Class MonitorPage : Implements INavigableView(Of MainViewModel)
 
@@ -24,11 +26,11 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
         Dim storyboard As New Storyboard()
 
         ' Set the target property to the Y property of the TranslateTransform
-        storyboard.SetTarget(animation, webViewTranslateTransform)
-        storyboard.SetTargetProperty(animation, New PropertyPath(TranslateTransform.YProperty))
+        Storyboard.SetTarget(animation, webViewTranslateTransform)
+        Storyboard.SetTargetProperty(animation, New PropertyPath(TranslateTransform.YProperty))
 
         ' Create a Storyboard and add the animation
-        Storyboard.Children.Add(animation)
+        storyboard.Children.Add(animation)
 
         ' Begin the animation
         AddHandler CompositionTarget.Rendering, Sub()

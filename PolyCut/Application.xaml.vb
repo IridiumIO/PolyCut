@@ -3,7 +3,8 @@ Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Configuration
 Imports System.IO
 Imports System.Windows.Threading
-Imports Wpf.Ui
+Imports WPF.Ui.DependencyInjection
+Imports WPF.Ui
 
 Partial Public Class Application
     Private Shared ReadOnly _host As IHost = Host.CreateDefaultBuilder() _
@@ -23,10 +24,12 @@ Partial Public Class Application
                                ' TaskBar manipulation
                                services.AddSingleton(Of ITaskBarService, TaskBarService)()
                                ' Service containing navigation, same as INavigationWindow... but without window
+
                                services.AddSingleton(Of INavigationService, NavigationService)()
                                services.AddSingleton(Of SnackbarService)()
 
                                ' Main window with navigation
+                               services.AddNavigationViewPageProvider()
                                services.AddSingleton(Of INavigationWindow, MainWindow)()
                                services.AddSingleton(Of MainViewModel)()
                                services.AddSingleton(Of MainWindow)()
@@ -42,7 +45,6 @@ Partial Public Class Application
 
                                services.AddSingleton(Of PreviewPage)()
                                services.AddSingleton(Of SettingsPage)()
-
                            End Sub) _
         .Build()
 

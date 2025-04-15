@@ -1,10 +1,11 @@
 ﻿Imports System.ComponentModel
 Imports System.Data.SqlTypes
 Imports System.Xml
-Imports Wpf.Ui.Controls
+Imports WPF.Ui.Controls
 Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
+Imports WPF.Ui.Abstractions.Controls
 Class SettingsPage : Implements INavigableView(Of MainViewModel)
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel

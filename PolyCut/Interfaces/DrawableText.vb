@@ -23,7 +23,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
             tb.FontSize,
             Brushes.Black,
-            New NumberSubstitution(),
             1.0
         )
 
@@ -34,7 +33,8 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             FlowDirection.LeftToRight,
             New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
             tb.FontSize,
-            Brushes.Black
+            Brushes.Black,
+            1.0
         ).Width
 
         Debug.WriteLine($"Tab width: {tabWidth}")
@@ -62,17 +62,19 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         For i As Integer = 0 To substrings.Length - 1
             Dim substring As String = substrings(i)
 
-            ' Measure the width of the substring
-            Dim substringWidth As Double = New FormattedText(
-                substring,
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-                tb.FontSize,
-                Brushes.Black,
-                New NumberSubstitution(),
-                1.0
-            ).Width
+            Dim substringWidth As Double = tabWidth
+
+            If Not String.IsNullOrEmpty(substring) Then
+                substringWidth = New FormattedText(
+                    substring,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
+                    tb.FontSize,
+                    Brushes.Black,
+                    1.0
+                ).Width
+            End If
 
             ' Add the substring as a tspan
             Dim tspan As New Svg.SvgTextSpan With {

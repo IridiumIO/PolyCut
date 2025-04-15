@@ -414,7 +414,7 @@
         <rc:ZoomBorder x:Name="zoomPanControl"
                        Grid.Column="1" CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
                        Background="Transparent" ClipToBounds="True"
-                       Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
+                       Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}" CanvasTextBox="{Binding CanvasTextBox}"
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset"
                        ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01">
 

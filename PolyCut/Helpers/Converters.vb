@@ -267,10 +267,11 @@ Public Class PathTrimmerConverter
             Dim maxLength As Integer = 45
 
             If path.Length > maxLength Then
-                Dim parts() As String = path.Split("\"c)
+                Dim parts As String() = path.Split("\"c)
                 Dim firstPart As String = parts.FirstOrDefault()
                 Dim lastPart As String = parts.LastOrDefault()
 
+                If String.IsNullOrEmpty(firstPart) OrElse String.IsNullOrEmpty(lastPart) Then Return path
 
                 If lastPart.Length > maxLength - firstPart.Length - 5 Then
                     lastPart = lastPart.Substring(0, maxLength - firstPart.Length - 10)

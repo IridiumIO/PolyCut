@@ -157,13 +157,15 @@ Public Class ZoomBorder
         End Set
     End Property
 
-
-
-
-
-
-
-
+    Public Shared ReadOnly CanvasTextBoxProperty As DependencyProperty = DependencyProperty.Register(NameOf(CanvasTextBox), GetType(TextBox), GetType(ZoomBorder), New PropertyMetadata(Nothing))
+    Public Property CanvasTextBox As TextBox
+        Get
+            Return CType(GetValue(CanvasTextBoxProperty), TextBox)
+        End Get
+        Set(value As TextBox)
+            SetValue(CanvasTextBoxProperty, value)
+        End Set
+    End Property
 
 
     Private origin As Point
@@ -279,7 +281,7 @@ Public Class ZoomBorder
 
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             Dim position As Point = e.GetPosition(polyCanvas)
-            DrawingManager.StartDrawing(CanvasMode, position, PolyCanvas)
+            DrawingManager.StartDrawing(CanvasMode, position, polyCanvas)
         End If
 
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
@@ -290,7 +292,7 @@ Public Class ZoomBorder
         If CanvasMode <> CanvasMode.Selection Then
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             Dim position As Point = e.GetPosition(polyCanvas)
-            DrawingManager.FinishDrawing(CanvasMode, polyCanvas)
+            DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
             Return
         End If
 

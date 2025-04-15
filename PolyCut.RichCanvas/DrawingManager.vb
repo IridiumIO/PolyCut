@@ -42,11 +42,11 @@ Public Class DrawingManager
 
     Public Event DrawingFinished(sender As Object, element As UIElement)
 
-    Public Sub FinishDrawing(mode As CanvasMode, pCanvas As PolyCanvas)
+    Public Sub FinishDrawing(mode As CanvasMode, pCanvas As PolyCanvas, ctextbox As TextBox)
 
         If mode = CanvasMode.Text Then
-            Dim fontSize As Double = 12
-            Dim fontFamily As FontFamily = New FontFamily("Arial")
+            Dim fontSize As Double = ctextbox.FontSize
+            Dim fontFamily As FontFamily = ctextbox.FontFamily
             Dim textBox = CreateTextBox(_startPos, fontSize, fontFamily)
             Canvas.SetLeft(textBox, _startPos.X)
             Canvas.SetTop(textBox, _startPos.Y)

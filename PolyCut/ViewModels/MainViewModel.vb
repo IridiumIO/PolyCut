@@ -58,9 +58,35 @@ Public Class MainViewModel : Inherits ObservableObject
         End Set
     End Property
 
-    Public Property CanvasFontFamily As FontFamily = New FontFamily("Calibri")
+    Private _CanvasFontFamily As FontFamily = New FontFamily("Calibri")
+    Public Property CanvasFontFamily As FontFamily
+        Get
+            Return _CanvasFontFamily
+        End Get
+        Set(value As FontFamily)
+            _CanvasFontFamily = value
+            CanvasTextBox.FontFamily = value
+            OnPropertyChanged(NameOf(CanvasTextBox))
+        End Set
+    End Property
 
-    Public Property CanvasFontSize As String = 14
+    Private _CanvasFontSize As String = "14"
+    Public Property CanvasFontSize As String
+        Get
+            Return _CanvasFontSize
+        End Get
+        Set(value As String)
+            If String.IsNullOrEmpty(value) Then
+                value = "14"
+            End If
+            _CanvasFontSize = value
+            CanvasTextBox.FontSize = CInt(value)
+            OnPropertyChanged(NameOf(CanvasTextBox))
+
+        End Set
+    End Property
+
+    Public Property CanvasTextBox As TextBox = New TextBox
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
@@ -371,7 +397,7 @@ Public Class MainViewModel : Inherits ObservableObject
             If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
                 outDoc.Children.Add(finalElement)
             ElseIf TypeOf (drawableL) Is DrawablePath Then
-                If drawableL.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
+                If drawableL?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
                     outDoc.Children.Add(finalElement)
                 End If
             End If
@@ -393,7 +419,7 @@ Public Class MainViewModel : Inherits ObservableObject
         For Each line In gcodes
             Dim paragraph As New Paragraph
 
-            If line.ToString.StartsWith(";") Then
+            If line.ToString.StartsWith(";"c) Then
                 paragraph.Inlines.Add(New Run(line.ToString) With {.Foreground = New SolidColorBrush(Color.FromArgb(128, 255, 255, 255))})
                 document.Blocks.Add(paragraph)
                 Continue For

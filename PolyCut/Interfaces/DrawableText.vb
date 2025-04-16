@@ -1,5 +1,7 @@
 ﻿
 
+Imports PolyCut.Shared
+
 Imports Svg
 Imports Svg.Pathing
 Imports Svg.Transforms

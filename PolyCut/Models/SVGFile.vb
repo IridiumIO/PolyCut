@@ -4,6 +4,7 @@ Imports System.ComponentModel
 Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.RichCanvas
+Imports PolyCut.Shared
 
 Imports Svg.Transforms
 

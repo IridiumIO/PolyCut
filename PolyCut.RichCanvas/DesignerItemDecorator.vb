@@ -116,22 +116,20 @@ Public Class DesignerItemDecorator : Inherits Control
             Return
         End If
 
-        ' Deselect all other controls
-        Dim parent As Panel = TryCast(ThisControl.Parent, Panel)
-        If parent IsNot Nothing Then
-            For Each child As UIElement In parent.Children
-                If TypeOf child Is ContentControl AndAlso child IsNot ThisControl Then
-                    Selector.SetIsSelected(child, False)
-                    parent.Focus()
-                End If
-            Next
-        End If
+        '' Deselect all other controls
+        'Dim parent As Panel = TryCast(ThisControl.Parent, Panel)
+        'If parent IsNot Nothing Then
+        '    For Each child As UIElement In parent.Children
+        '        If TypeOf child Is ContentControl AndAlso child IsNot ThisControl Then
+        '            Selector.SetIsSelected(child, False)
+        '            parent.Focus()
+        '        End If
+        '    Next
+        'End If
 
         ' Check if the current control's content is visible
         If ThisControl.Content.Visibility <> Visibility.Visible Then Return
 
-        ' Select the current control
-        Selector.SetIsSelected(ThisControl, True)
         CurrentSelected = ThisControl
         adorner?.chrome.OnScaleChanged(New ScaleChangedMessage(ParentScale))
         e.Handled = True

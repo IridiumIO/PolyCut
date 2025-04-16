@@ -1,4 +1,6 @@
-﻿Imports Svg
+﻿Imports PolyCut.Shared
+
+Imports Svg
 
 Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
 

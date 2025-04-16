@@ -170,9 +170,8 @@ Class SVGPage
         Debug.WriteLine(MainViewModel.DrawableCollection.Count)
         If MainViewModel.CanvasToolMode <> CanvasMode.Selection Then
             For Each child In MainViewModel.DrawableCollection
-                If TypeOf child.Parent Is ContentControl Then
-
-                    Selector.SetIsSelected(child.Parent, False)
+                If TypeOf child.DrawableElement.Parent Is ContentControl Then
+                    child.IsSelected = False
                 End If
             Next
         End If
@@ -185,8 +184,10 @@ Class SVGPage
 
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
-        For Each child In mainCanvas.Children
-            Selector.SetIsSelected(child, False)
+        For Each child In MainViewModel.DrawableCollection
+            child.IsSelected = False
+
         Next
+        MainViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 End Class

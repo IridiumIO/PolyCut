@@ -49,9 +49,8 @@ Public Class MainViewModel : Inherits ObservableObject
             OnPropertyChanged(NameOf(CanvasToolMode))
             If value <> CanvasMode.Selection Then
                 For Each child In DrawableCollection
-                    If TypeOf child.Parent Is ContentControl Then
-                        Selector.SetIsSelected(child.Parent, False)
-                    End If
+                    child.IsSelected = False
+
                 Next
 
             End If
@@ -92,7 +91,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property GCodeGeometry As GCodeGeometry
     Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
 
-    Public Property DrawableCollection As ObservableCollection(Of FrameworkElement) = New ObservableCollection(Of FrameworkElement)
+    Public Property DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
 
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
     Public ReadOnly Property PolyCutDocumentName As String
@@ -120,29 +119,20 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
     Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub()
-                                                                                    Dim itemsToRemove As New List(Of FrameworkElement)
+
                                                                                     Dim drawableItemsToRemove As New List(Of IDrawable)
 
                                                                                     For Each child In DrawableCollection
-                                                                                        If Selector.GetIsSelected(child.Parent) Then
-                                                                                            itemsToRemove.Add(child)
+                                                                                        If child.IsSelected Then
+                                                                                            drawableItemsToRemove.Add(child)
 
-                                                                                            ' Find the corresponding IDrawable in SVGFiles
-                                                                                            Dim drawable = SVGFiles.SelectMany(Function(svgFile) svgFile.SVGComponents).
-                                                                                                  FirstOrDefault(Function(c) c.DrawableElement Is child)
-                                                                                            If drawable IsNot Nothing Then
-                                                                                                drawableItemsToRemove.Add(drawable)
-                                                                                            End If
                                                                                         End If
                                                                                     Next
 
-                                                                                    ' Remove selected items from DrawableCollection
-                                                                                    For Each item In itemsToRemove
-                                                                                        DrawableCollection.Remove(item)
-                                                                                    Next
 
                                                                                     ' Remove corresponding IDrawables from SVGFiles
                                                                                     For Each drawable In drawableItemsToRemove
+                                                                                        DrawableCollection.Remove(drawable)
                                                                                         Dim svgFile = SVGFiles.FirstOrDefault(Function(file) file.SVGComponents.Contains(drawable))
                                                                                         If svgFile IsNot Nothing Then
                                                                                             svgFile.SVGComponents.Remove(drawable)
@@ -211,21 +201,16 @@ Public Class MainViewModel : Inherits ObservableObject
         If removeSVG Then
             SVGFiles.Remove(file)
             For Each child As IDrawable In file.SVGVisualComponents
-                If TypeOf child Is SVGComponent Then
-                    DrawableCollection.Remove(CType(child, SVGComponent).SVGViewBox)
-                Else
-                    DrawableCollection.Remove(child.DrawableElement)
-                End If
-
+                DrawableCollection.Remove(child)
             Next
         Else
 
             If Not SVGFiles.Contains(file) Then SVGFiles.Add(file)
 
             For Each child As SVGComponent In file.SVGVisualComponents
-                If Not DrawableCollection.Contains(child.SVGViewBox) Then
+                If Not DrawableCollection.Contains(child) Then
                     child.SetCanvas()
-                    DrawableCollection.Add(child.SVGViewBox)
+                    DrawableCollection.Add(child)
                 End If
 
             Next
@@ -277,7 +262,7 @@ Public Class MainViewModel : Inherits ObservableObject
             DrawableSVGFile.SVGComponents.Add(drawableL)
         End If
 
-        DrawableCollection.Add(element)
+        DrawableCollection.Add(drawableL)
 
     End Sub
 
@@ -370,21 +355,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
         outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
 
-        For Each shp In DrawableCollection
-            Dim drawableL As IDrawable
-            If TypeOf (shp) Is Line Then
-                drawableL = New DrawableLine(shp)
-            ElseIf TypeOf (shp) Is Rectangle Then
-                drawableL = New DrawableRectangle(shp)
-            ElseIf TypeOf (shp) Is Ellipse Then
-                drawableL = New DrawableEllipse(shp)
-            ElseIf TypeOf (shp) Is System.Windows.Controls.TextBox Then
-                drawableL = New DrawableText(shp)
-            ElseIf TypeOf (shp) Is System.Windows.Shapes.Path Then
-                drawableL = New DrawablePath(shp)
-            Else
-                drawableL = Nothing
-            End If
+        For Each drawableL In DrawableCollection
 
             Dim finalElement = drawableL?.GetTransformedSVGElement
 

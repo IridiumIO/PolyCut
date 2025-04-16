@@ -1,5 +1,7 @@
 ﻿Imports System.Runtime.CompilerServices
 
+Imports PolyCut.Shared
+
 Imports Svg
 
 Public Module Extensions

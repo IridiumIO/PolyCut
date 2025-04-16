@@ -2,6 +2,8 @@
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
+Imports PolyCut.Shared
+
 Imports Svg
 
 Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
@@ -27,7 +29,8 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
             Return _CurrentlySelectedComponent IsNot Nothing AndAlso _CurrentlySelectedComponent.Equals(Me)
         End Get
         Set(value As Boolean)
-            Debug.WriteLine("F")
+            Debug.WriteLine($"Selected {VisualName}")
+            RaiseEvent SelectionChanged(Me, EventArgs.Empty)
             If value Then
                 ' Deselect the currently selected component
                 If _CurrentlySelectedComponent IsNot Nothing AndAlso _CurrentlySelectedComponent IsNot Me Then
@@ -42,10 +45,11 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
                     _CurrentlySelectedComponent = Nothing
                 End If
             End If
-
-            If Selector.GetIsSelected(Me.DrawableElement.Parent) <> value Then
-                Selector.SetIsSelected(Me.DrawableElement.Parent, value)
+            If TypeOf (DrawableElement.Parent) Is ContentControl Then
+                Selector.SetIsSelected(DrawableElement.Parent, value)
             End If
+
+
             OnPropertyChanged(NameOf(IsSelected))
         End Set
     End Property
@@ -53,7 +57,7 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
 
     Public Shared _CurrentlySelectedComponent As IDrawable
 
-
+    Public Event SelectionChanged(sender As Object, e As EventArgs) Implements IDrawable.SelectionChanged
 
     Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
         Throw New NotImplementedException()

@@ -6,6 +6,7 @@ Imports System.Xml
 Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.RichCanvas
+Imports PolyCut.Shared
 
 Imports SharpVectors.Converters
 
@@ -173,15 +174,15 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Property SVGViewBox As SharpVectors.Converters.SvgViewbox
-    Public Overloads Property Name As String Implements IDrawable.Name
-    Public Overloads Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
         Get
-            Return SVGViewBox
+            Return CType(DrawableElement, SharpVectors.Converters.SvgViewbox)
         End Get
-        Set(value As FrameworkElement)
-            SVGViewBox = value
+        Set(value As SharpVectors.Converters.SvgViewbox)
+            DrawableElement = value
         End Set
     End Property
+    Public Overloads Property Name As String Implements IDrawable.Name
+    Public Overloads Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
 
 
     Public Sub SetCanvas()

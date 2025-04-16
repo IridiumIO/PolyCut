@@ -1,5 +1,7 @@
 ﻿Imports CommunityToolkit.Mvvm.ComponentModel
 
+Imports PolyCut.Shared
+
 Imports Svg
 Imports Svg.Transforms
 

@@ -1,4 +1,6 @@
-﻿Imports Svg
+﻿Imports System.Windows
+
+Imports Svg
 
 Public Interface IDrawable
 
@@ -14,5 +16,7 @@ Public Interface IDrawable
 
     Function GetTransformedSVGElement() As SvgVisualElement
     Function DrawingToSVG() As SvgVisualElement
+
+    Event SelectionChanged(sender As Object, e As EventArgs)
 
 End Interface

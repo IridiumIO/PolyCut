@@ -5,6 +5,8 @@ Imports System.ComponentModel
 Imports System.Windows.Controls
 Imports System.Windows.Controls.Primitives
 
+Imports PolyCut.Shared
+
 
 Public Class PolyCanvas : Inherits Controls.Canvas
 
@@ -19,14 +21,14 @@ Public Class PolyCanvas : Inherits Controls.Canvas
     End Sub
 
 
-    Public Shared ReadOnly ChildrenCollectionProperty As DependencyProperty = DependencyProperty.Register(NameOf(ChildrenCollection), GetType(ObservableCollection(Of FrameworkElement)), GetType(PolyCanvas),
-New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf OnChildrenCollectionChanged))
+    Public Shared ReadOnly ChildrenCollectionProperty As DependencyProperty = DependencyProperty.Register(NameOf(ChildrenCollection), GetType(ObservableCollection(Of IDrawable)), GetType(PolyCanvas),
+New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildrenCollectionChanged))
 
-    Public Property ChildrenCollection As ObservableCollection(Of FrameworkElement)
+    Public Property ChildrenCollection As ObservableCollection(Of IDrawable)
         Get
-            Return CType(GetValue(ChildrenCollectionProperty), ObservableCollection(Of FrameworkElement))
+            Return CType(GetValue(ChildrenCollectionProperty), ObservableCollection(Of IDrawable))
         End Get
-        Set(value As ObservableCollection(Of FrameworkElement))
+        Set(value As ObservableCollection(Of IDrawable))
             SetValue(ChildrenCollectionProperty, value)
         End Set
     End Property
@@ -34,8 +36,8 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
 
     Private Shared Sub OnChildrenCollectionChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
         Dim canvas As PolyCanvas = CType(d, PolyCanvas)
-        Dim oldCollection As ObservableCollection(Of FrameworkElement) = CType(e.OldValue, ObservableCollection(Of FrameworkElement))
-        Dim newCollection As ObservableCollection(Of FrameworkElement) = CType(e.NewValue, ObservableCollection(Of FrameworkElement))
+        Dim oldCollection As ObservableCollection(Of IDrawable) = CType(e.OldValue, ObservableCollection(Of IDrawable))
+        Dim newCollection As ObservableCollection(Of IDrawable) = CType(e.NewValue, ObservableCollection(Of IDrawable))
 
         If oldCollection IsNot Nothing Then
             RemoveHandler oldCollection.CollectionChanged, AddressOf canvas.OnCollectionChanged
@@ -54,29 +56,30 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
     Private Sub OnCollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
         Select Case e.Action
             Case NotifyCollectionChangedAction.Add
-                For Each newItem As FrameworkElement In e.NewItems
+                For Each newItem As IDrawable In e.NewItems
                     AddChild(newItem)
                 Next
             Case NotifyCollectionChangedAction.Remove
-                For Each oldItem As FrameworkElement In e.OldItems
+                For Each oldItem As IDrawable In e.OldItems
                     RemoveChild(oldItem)
                 Next
+
             Case NotifyCollectionChangedAction.Reset
                 Me.Children.Clear()
         End Select
     End Sub
 
-    Private Sub AddChild(child As FrameworkElement)
+    Private Sub AddChild(child As FrameworkElement, Optional parentIDrawable As IDrawable = Nothing)
         If TypeOf child Is ContentControl Then
             Me.Children.Add(child)
         Else
 
             ' Wrap it in a ContentControl
             Dim wrapper As New ContentControl With {
-                .Content = child,
-                .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
-                .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight)
-            }
+                    .Content = child,
+                    .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
+                    .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight)
+                }
             If TypeOf child Is Line Then
                 Dim line As Line = CType(child, Line)
                 wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
@@ -109,6 +112,11 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
         End If
     End Sub
 
+    Private Sub AddChild(drawable As IDrawable)
+        Dim child As FrameworkElement = drawable.DrawableElement
+        AddChild(child, drawable)
+    End Sub
+
     Private Sub RemoveChild(child As FrameworkElement)
         If TypeOf child Is ContentControl Then
             Me.Children.Remove(child)
@@ -117,12 +125,13 @@ New PropertyMetadata(New ObservableCollection(Of FrameworkElement), AddressOf On
         End If
 
     End Sub
+    Private Sub RemoveChild(drawable As IDrawable)
+        Dim child As FrameworkElement = drawable.DrawableElement
+        RemoveChild(child)
+    End Sub
 
 
     Private Sub PolyCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs)
-        For Each child In Me.Children
-            Selector.SetIsSelected(child, False)
-        Next
         DesignerItemDecorator.CurrentSelected = Nothing
     End Sub
 

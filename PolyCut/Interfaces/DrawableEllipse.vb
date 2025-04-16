@@ -1,4 +1,6 @@
-﻿Imports Svg
+﻿Imports PolyCut.Shared
+
+Imports Svg
 Imports Svg.Transforms
 
 Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable

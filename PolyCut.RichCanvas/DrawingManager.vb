@@ -331,19 +331,36 @@ Public Class DrawingManager
             Return singlePointPath
         End If
 
+        ' Check if the final segment is nearly at the start point
+        Dim startPoint As Point = polyline.Points(0)
+        Dim endPoint As Point = polyline.Points(polyline.Points.Count - 1)
+        Dim distance As Double = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
+
+        ' Close the path if the distance is below a threshold
+        Dim closeThreshold As Double = 5.0 ' Adjust this value as needed
+        Dim shouldClose = distance <= closeThreshold
+        If shouldClose Then
+            polyline.Points(polyline.Points.Count - 1) = startPoint
+        End If
+
         ' Generate Bézier control points
         Dim bezierSegments = GenerateBezierControlPoints(polyline.Points, smoothingFactor)
 
         ' Create a PathFigure to hold the segments
         Dim pathFigure As New PathFigure With {
             .StartPoint = polyline.Points(0),
-            .IsClosed = False
+            .IsClosed = shouldClose
         }
+
+
+
 
         ' Add the Bézier segments to the PathFigure
         For Each segment In bezierSegments
             pathFigure.Segments.Add(segment)
         Next
+
+
 
         ' Create a PathGeometry and add the PathFigure
         Dim pathGeometry As New PathGeometry()

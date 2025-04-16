@@ -319,8 +319,8 @@
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top"
                  Panel.ZIndex="20"
                  Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
-                Visibility="Visible">
-            <!--Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">-->
+               
+                Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
            
             <StackPanel Orientation="Horizontal">
                 <Label Content="Font"
@@ -614,171 +614,229 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto" />
-                                <RowDefinition />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="0"/>
                             </Grid.RowDefinitions>
                             <Separator Grid.Row="0" Margin="5" />
-                            <ScrollViewer Grid.Row="1"
-                                          Margin="-14,10,-14,0" Padding="25,0,25,0"
+                            <StackPanel Grid.Row="1" Margin="5,0" Orientation="Horizontal">
+
+                                <ui:Button Margin="5" Padding="6" Command="{Binding BrowseSVGCommand}">
+                                    <ui:SymbolIcon Symbol="Add12" />
+                                </ui:Button>
+                                <TextBlock Text="Import SVG" Margin="10,0" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <ScrollViewer Grid.Row="3"
+                                          Margin="-14,0,-14,0" Padding="25,0,25,0"
                                           CanContentScroll="True" VerticalScrollBarVisibility="Visible">
-                                <DockPanel>
+                                <ui:ListView x:Name="FilesList" ItemsSource="{Binding SVGFiles}">
+                                    <ui:ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListViewItem">
+                                                        <Border Background="{TemplateBinding Background}">
+                                                            <ContentPresenter />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ui:ListView.ItemContainerStyle>
+                                    <ui:ListView.ItemTemplate>
+                                        <DataTemplate>
 
-                                    <StackPanel Background="Transparent" DockPanel.Dock="Bottom">
-
-                                        <StackPanel Margin="0,-5,0,-5" Orientation="Horizontal">
-
-                                            <ui:Button Margin="5" Padding="6"
-                                                       Command="{Binding BrowseSVGCommand}">
-                                                <ui:SymbolIcon Symbol="Add12" />
-                                            </ui:Button>
-                                            <TextBlock Text="Import SVG"
-                                                       Margin="10,0" VerticalAlignment="Center" />
-                                        </StackPanel>
-
-                                        <Separator Margin="0,10,0,10" />
-
-                                        <ui:ListView x:Name="FilesList" ItemsSource="{Binding SVGFiles}">
-                                            <ui:ListView.ItemContainerStyle>
-                                                <Style TargetType="ListViewItem">
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="ListViewItem">
-                                                                <Border Background="{TemplateBinding Background}">
-                                                                    <ContentPresenter />
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </ui:ListView.ItemContainerStyle>
-                                            <ui:ListView.ItemTemplate>
-                                                <DataTemplate>
-
-                                                    <ui:CardExpander Margin="-10,0" Padding="10,5"
+                                            <ui:CardExpander Margin="-10,0" Padding="10,5"
                                                                      Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
                                                                      FlowDirection="RightToLeft" IsExpanded="True"
                                                                      Style="{StaticResource CustomCardExpanderStyle}">
-                                                        <ui:CardExpander.Header>
-                                                            <Grid FlowDirection="LeftToRight">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition />
-                                                                    <ColumnDefinition Width="32" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Text="{Binding FilePath, Converter={StaticResource PathTrimmerConverter}}"
+                                                <ui:CardExpander.Header>
+                                                    <Grid FlowDirection="LeftToRight">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition />
+                                                            <ColumnDefinition Width="32" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding FilePath, Converter={StaticResource PathTrimmerConverter}}"
                                                                            MaxWidth="260"
                                                                            Margin="10,-1,10,0" VerticalAlignment="Center"
                                                                            TextTrimming="WordEllipsis" />
-                                                                <ui:Button Grid.Column="1"
+                                                        <ui:Button Grid.Column="1"
                                                                            Padding="6"
                                                                            Background="Transparent"
                                                                            Command="{Binding DataContext.MainVM.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                                                            CommandParameter="{Binding}">
-                                                                    <ui:SymbolIcon Foreground="{StaticResource PaletteRedBrush}" Symbol="Dismiss48" />
-                                                                </ui:Button>
-                                                                <ToolTipService.ToolTip>
-                                                                    <ToolTip MaxWidth="700">
-                                                                        <TextBlock Text="{Binding FilePath}" TextWrapping="Wrap" />
-                                                                    </ToolTip>
-                                                                </ToolTipService.ToolTip>
-                                                            </Grid>
+                                                            <ui:SymbolIcon Foreground="{StaticResource PaletteRedBrush}" Symbol="Dismiss48" />
+                                                        </ui:Button>
+                                                        <ToolTipService.ToolTip>
+                                                            <ToolTip MaxWidth="700">
+                                                                <TextBlock Text="{Binding FilePath}" TextWrapping="Wrap" />
+                                                            </ToolTip>
+                                                        </ToolTipService.ToolTip>
+                                                    </Grid>
 
 
-                                                        </ui:CardExpander.Header>
+                                                </ui:CardExpander.Header>
 
-                                                        <StackPanel Margin="15,0,15,0" FlowDirection="LeftToRight">
-                                                            <ui:ListView ItemsSource="{Binding SVGComponents}" SelectionMode="Single">
-                                                                <ui:ListView.ItemContainerStyle>
-                                                                    <Style TargetType="ListViewItem">
-                                                                        <Setter Property="Template">
-                                                                            <Setter.Value>
-                                                                                <ControlTemplate TargetType="ListViewItem">
-                                                                                    <Border Padding="4">
-                                                                                        <ContentPresenter />
-                                                                                    </Border>
-                                                                                </ControlTemplate>
-                                                                            </Setter.Value>
-                                                                        </Setter>
-                                                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                                                                    </Style>
-                                                                </ui:ListView.ItemContainerStyle>
-                                                                <ui:ListView.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <Grid>
+                                                <StackPanel Margin="15,0,15,0" FlowDirection="LeftToRight">
+                                                    <ui:ListView ItemsSource="{Binding SVGComponents}" SelectionMode="Single">
+                                                        <ui:ListView.ItemContainerStyle>
+                                                            <Style TargetType="ListViewItem">
+                                                                <Setter Property="Template">
+                                                                    <Setter.Value>
+                                                                        <ControlTemplate TargetType="ListViewItem">
+                                                                            <Border Padding="4">
+                                                                                <ContentPresenter />
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                                            </Style>
+                                                        </ui:ListView.ItemContainerStyle>
+                                                        <ui:ListView.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Grid>
 
-                                                                            <Grid.ColumnDefinitions>
-                                                                                <ColumnDefinition Width="5" />
-                                                                                <ColumnDefinition Width="32" />
-                                                                                <ColumnDefinition Width="5" />
-                                                                                <ColumnDefinition />
-                                                                                <ColumnDefinition Width="5" />
-                                                                                <ColumnDefinition Width="32" />
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="5" />
+                                                                        <ColumnDefinition Width="32" />
+                                                                        <ColumnDefinition Width="5" />
+                                                                        <ColumnDefinition />
+                                                                        <ColumnDefinition Width="5" />
+                                                                        <ColumnDefinition Width="32" />
 
-                                                                            </Grid.ColumnDefinitions>
-                                                                            <TextBlock Text="{Binding VisualName}"
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Text="{Binding VisualName}"
                                                                                        Grid.Column="3"
                                                                                        VerticalAlignment="Center" />
 
-                                                                            <Border Grid.Column="0"
+                                                                    <Border Grid.Column="0"
                                                                                     Width="2" Height="20"
                                                                                     Margin="-10,0,0,0"
                                                                                     Background="{StaticResource PaletteBlueBrush}"
                                                                                     CornerRadius="2"
                                                                                     Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}" />
 
-                                                                            <ToggleButton x:Name="WorkingAreaVisibilityToggle"
+                                                                    <ToggleButton x:Name="WorkingAreaVisibilityToggle"
                                                                                           Grid.Column="1"
                                                                                           IsChecked="{Binding IsHidden}">
-                                                                                <ToggleButton.Template>
-                                                                                    <ControlTemplate>
-                                                                                        <ContentControl>
-                                                                                            <ContentControl.Style>
-                                                                                                <Style TargetType="ContentControl">
-                                                                                                    <Style.Triggers>
-                                                                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
-                                                                                                            <Setter Property="Content">
-                                                                                                                <Setter.Value>
-                                                                                                                    <ui:Card Padding="5,4,5,0"
+                                                                        <ToggleButton.Template>
+                                                                            <ControlTemplate>
+                                                                                <ContentControl>
+                                                                                    <ContentControl.Style>
+                                                                                        <Style TargetType="ContentControl">
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                                                                    <Setter Property="Content">
+                                                                                                        <Setter.Value>
+                                                                                                            <ui:Card Padding="5,4,5,0"
                                                                                                                              Background="Transparent"
                                                                                                                              BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
-                                                                                                                        <ui:SymbolIcon Filled="True" Symbol="EyeOff24" />
-                                                                                                                    </ui:Card>
-                                                                                                                </Setter.Value>
-                                                                                                            </Setter>
+                                                                                                                <ui:SymbolIcon Filled="True" Symbol="EyeOff24" />
+                                                                                                            </ui:Card>
+                                                                                                        </Setter.Value>
+                                                                                                    </Setter>
 
-                                                                                                        </DataTrigger>
-                                                                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
-                                                                                                            <Setter Property="Content">
-                                                                                                                <Setter.Value>
-                                                                                                                    <ui:Card Padding="5,4,5,0"
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                                                                    <Setter Property="Content">
+                                                                                                        <Setter.Value>
+                                                                                                            <ui:Card Padding="5,4,5,0"
                                                                                                                              Background="Transparent"
                                                                                                                              BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
-                                                                                                                        <!--  Replace with your unchecked icon  -->
-                                                                                                                        <ui:SymbolIcon Filled="True" Symbol="Eye48" />
-                                                                                                                    </ui:Card>
-                                                                                                                </Setter.Value>
-                                                                                                            </Setter>
-                                                                                                        </DataTrigger>
-                                                                                                    </Style.Triggers>
-                                                                                                </Style>
-                                                                                            </ContentControl.Style>
-                                                                                        </ContentControl>
-                                                                                    </ControlTemplate>
-                                                                                </ToggleButton.Template>
-                                                                            </ToggleButton>
+                                                                                                                <!--  Replace with your unchecked icon  -->
+                                                                                                                <ui:SymbolIcon Filled="True" Symbol="Eye48" />
+                                                                                                            </ui:Card>
+                                                                                                        </Setter.Value>
+                                                                                                    </Setter>
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </ContentControl.Style>
+                                                                                </ContentControl>
+                                                                            </ControlTemplate>
+                                                                        </ToggleButton.Template>
+                                                                    </ToggleButton>
 
-                                                                        </Grid>
-                                                                    </DataTemplate>
-                                                                </ui:ListView.ItemTemplate>
-                                                            </ui:ListView>
-                                                        </StackPanel>
-                                                    </ui:CardExpander>
-                                                </DataTemplate>
-                                            </ui:ListView.ItemTemplate>
-                                        </ui:ListView>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ui:ListView.ItemTemplate>
+                                                    </ui:ListView>
+                                                </StackPanel>
+                                            </ui:CardExpander>
+                                        </DataTemplate>
+                                    </ui:ListView.ItemTemplate>
+                                </ui:ListView>
+                            </ScrollViewer>
+                            <Separator Grid.Row="4" Margin="5" />
+                            <ScrollViewer Grid.Row="5" Margin="-14,10,-14,0" Padding="25,0,25,0" CanContentScroll="True" VerticalScrollBarVisibility="Visible">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Bottom">
+                                        <Label Content="Properties" Margin="0,5,0,15"/>
+                                        <Grid Margin="0,0,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="25" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="60" />
+                                                <ColumnDefinition Width="25" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition />
+                                                <RowDefinition Height="5" />
+                                                <RowDefinition />
+                                            </Grid.RowDefinitions>
 
+                                            <Label Content="X"
+                                               Padding="1,2,0,0" VerticalAlignment="Center" />
+                                            <ui:TextBox Text="{Binding Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                Grid.Column="1"
+                                                ClearButtonEnabled="False" />
+                                            <Label Content="Y"
+                                                Grid.Row="0" Grid.Column="3"
+                                                Padding="1,2,0,0" VerticalAlignment="Center" />      
+                                            <ui:TextBox Text="{Binding Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                Grid.Row="0" Grid.Column="4"
+                                                ClearButtonEnabled="False" />
 
+                                            <Label Content="W"
+                                                Grid.Row="2"
+                                                Padding="1,2,0,0" VerticalAlignment="Center" />
+                                            <ui:TextBox Text="{Binding Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                Grid.Row="2" Grid.Column="1"
+                                                ClearButtonEnabled="False" />
+                                            <Label Content="H"
+                                                Grid.Row="2" Grid.Column="3"
+                                                Padding="1,2,0,0" VerticalAlignment="Center" />
+                                            <ui:TextBox Text="{Binding Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                Grid.Row="2" Grid.Column="4"
+                                                ClearButtonEnabled="False" />
+
+                                            <Label Content="mm"
+                                                Grid.Column="1"
+                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                            <Label Content="mm"
+                                                Grid.Column="4"
+                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                            <Label Content="mm"
+                                                Grid.Row="2" Grid.Column="1"
+                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                            <Label Content="mm"
+                                                Grid.Row="2" Grid.Column="4"
+                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                        </Grid>
                                     </StackPanel>
                                 </DockPanel>
                             </ScrollViewer>
+
                         </Grid>
                     </TabItem>
                     <TabItem Style="{StaticResource CustomTabStyle}">
@@ -815,9 +873,9 @@
                     <ui:Button Content="Browse..."
                                Grid.Column="2"
                                Command="{Binding BrowseSVGCommand}" />
-                  </Grid>-->
+                  </Grid>
 
-                                        <!--<CheckBox Content="Ignore Hidden" Visibility="Collapsed"
+                                        <CheckBox Content="Ignore Hidden" Visibility="Collapsed"
                             IsChecked="{Binding Configuration.IgnoreHidden, Mode=TwoWay}" />
                   <CheckBox Content="Ignore Locked" Visibility="Collapsed"
                             IsChecked="{Binding Configuration.IgnoreLocked, Mode=TwoWay}" />-->

@@ -321,14 +321,10 @@ Public Class CanvasToolModeCursorConverter
         Select Case toolMode
             Case CanvasMode.Selection
                 cursor = "Arrow"
-            Case CanvasMode.Rectangle
-                cursor = "Cross"
-            Case CanvasMode.Line
-                cursor = "Cross"
-            Case CanvasMode.Ellipse
-                cursor = "Cross"
             Case CanvasMode.Text
                 cursor = "IBeam"
+            Case Else
+                cursor = "Cross"
         End Select
 
         Return cursor

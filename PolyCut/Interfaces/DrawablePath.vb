@@ -62,6 +62,17 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
 
         ' Translate
         matrix.Translate(originX - LCorrection, originY - TCorrection)
+
+        Dim tfg As TransformGroup = TryCast(drawableElement.RenderTransform, TransformGroup)
+        If tfg IsNot Nothing Then
+            For Each transform As Transform In tfg.Children
+                If TypeOf transform Is ScaleTransform Then
+                    Dim st = CType(transform, ScaleTransform)
+                    matrix.ScaleAt(st.ScaleX, st.ScaleY, originX + width / 2, originY + height / 2)
+                End If
+            Next
+        End If
+
         ' Rotate if present
         If TypeOf container.RenderTransform Is RotateTransform Then
             Dim rt = CType(container.RenderTransform, RotateTransform)

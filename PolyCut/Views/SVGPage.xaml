@@ -4,21 +4,21 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
-      xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
+      xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
       xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
       xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
       xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
       xmlns:system="clr-namespace:System;assembly=mscorlib"
       xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      x:Name="SVGPageView" Title="SVGPage" Unloaded="SVGPageView_Unloaded"
-      Margin="0,5,0,0" Drop="Page_Drop"
+      x:Name="SVGPageView" Title="SVGPage"
+      Margin="0,5,0,0"
       d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
       d:DesignHeight="1000" d:DesignWidth="1000" AllowDrop="True"
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
-      ScrollViewer.CanContentScroll="False"
+      Drop="Page_Drop" ScrollViewer.CanContentScroll="False" Unloaded="SVGPageView_Unloaded"
       mc:Ignorable="d">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=SVGPageView}">
@@ -192,13 +192,13 @@
                                        Fill="{StaticResource PaletteBlueBrush}"
                                        Visibility="Hidden" />
                             <Border x:Name="Border"
-                                    MinWidth="80" MinHeight="40"
-                                    Margin="0" Padding="6"
+                                    MinWidth="2" MinHeight="40"
+                                    Margin="0" Padding="3"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="1,1,1,0" CornerRadius="8,8,0,0">
+                                    BorderThickness="1,1,1,0" CornerRadius="8,8,8,8">
                                 <ContentPresenter x:Name="ContentSite"
-                                                  Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Margin="0" HorizontalAlignment="Left" VerticalAlignment="Center"
                                                   ContentSource="Header" RecognizesAccessKey="True" />
                             </Border>
 
@@ -210,7 +210,18 @@
                                 </VisualStateGroup>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="MouseOver" />
+                                    <VisualState x:Name="MouseOver">
+                                        <!--<Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
+                To="#80FFFFFF" Duration="0:0:0.3" />
+                                        </Storyboard>-->
+                                    </VisualState>
+                                    <VisualState x:Name="MouseLeave">
+                                        <!--<Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="Border" Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
+To="#00FFFFFF" Duration="0:0:0.3" />
+                                        </Storyboard>-->
+                                    </VisualState>
                                     <VisualState x:Name="Disabled">
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetName="Border"
@@ -267,7 +278,7 @@
                       Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
 
 
-        <ui:Card Grid.Column="0" 
+        <ui:Card Grid.Column="0"
                  Margin="5,5,0,5" Padding="0" VerticalAlignment="Stretch"
                  HorizontalContentAlignment="Center" VerticalContentAlignment="Top" Panel.ZIndex="100">
 
@@ -319,9 +330,8 @@
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top"
                  Panel.ZIndex="20"
                  Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
-               
-                Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-           
+                 Visibility="{Binding ElementName=CanvasTextTool, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+
             <StackPanel Orientation="Horizontal">
                 <Label Content="Font"
                        Margin="0,2,10,0" VerticalAlignment="Center" />
@@ -412,72 +422,76 @@
         </ui:Card>
 
         <rc:ZoomBorder x:Name="zoomPanControl"
-                       Grid.Column="1" CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
-                       Background="Transparent" ClipToBounds="True"
-                       Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}" CanvasTextBox="{Binding CanvasTextBox}"
+                       Grid.Column="1"
+                       Background="Transparent"
+                       CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
+                       CanvasTextBox="{Binding CanvasTextBox}"
+                       ClipToBounds="True"
+                       Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset"
                        ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01">
 
 
-                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <AdornerDecorator>
-                        <rc:PolyCanvas x:Name="mainCanvas"
-                                       Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                       Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                       Margin="0,0,0,0"
-                                       Background="Transparent"
-                                       ChildrenCollection="{Binding DrawableCollection}"
-                                       ClipToBounds="False" IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}"/>
-                    </AdornerDecorator>
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <AdornerDecorator>
+                    <rc:PolyCanvas x:Name="mainCanvas"
+                                   Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                                   Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                                   Margin="0,0,0,0"
+                                   Background="Transparent"
+                                   ChildrenCollection="{Binding DrawableCollection}"
+                                   ClipToBounds="False"
+                                   IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />
+                </AdornerDecorator>
 
 
 
-                    <Canvas Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                <Canvas Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                        Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                        Panel.ZIndex="-1"
+                        IsHitTestVisible="False">
+
+                    <Border x:Name="DupCuttingMatBounds"
+                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Panel.ZIndex="-1"
-                            IsHitTestVisible="False">
+                            Panel.ZIndex="20"
+                            IsHitTestVisible="False" Opacity="0">
 
-                        <Border x:Name="DupCuttingMatBounds"
-                                Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                Panel.ZIndex="20"
-                                IsHitTestVisible="False" Opacity="0">
+                        <svgc:SvgCanvas x:Name="DupCuttingMat"
+                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
+                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
+                                        Source="{Binding CuttingMat.QualifiedSVGSource}">
+                            <svgc:SvgCanvas.RenderTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
+                                    <TranslateTransform X="{Binding ElementName=CuttingMat_RenderTransform, Path=X}" Y="{Binding ElementName=CuttingMat_RenderTransform, Path=Y}" />
+                                </TransformGroup>
+                            </svgc:SvgCanvas.RenderTransform>
+                        </svgc:SvgCanvas>
 
-                            <svgc:SvgCanvas x:Name="DupCuttingMat"
-                                            HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                            VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
-                                            Source="{Binding CuttingMat.QualifiedSVGSource}">
-                                <svgc:SvgCanvas.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
-                                        <TranslateTransform X="{Binding ElementName=CuttingMat_RenderTransform, Path=X}" Y="{Binding ElementName=CuttingMat_RenderTransform, Path=Y}" />
-                                    </TransformGroup>
-                                </svgc:SvgCanvas.RenderTransform>
-                            </svgc:SvgCanvas>
+                    </Border>
+                    <Border x:Name="CuttingMatBounds"
+                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                            Background="{Binding CanvasThemeColor}"
+                            ClipToBounds="True" CornerRadius="0,0,0,0">
+                        <svgc:SvgCanvas x:Name="CuttingMat"
+                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
+                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
+                                        EnsureViewboxSize="False"
+                                        Source="{Binding CuttingMat.QualifiedSVGSource}"
+                                        Visibility="{Binding IsChecked, ElementName=CuttingMatVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <svgc:SvgCanvas.RenderTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
+                                    <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
+                                </TransformGroup>
+                            </svgc:SvgCanvas.RenderTransform>
+                        </svgc:SvgCanvas>
 
-                        </Border>
-                        <Border x:Name="CuttingMatBounds"
-                                Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                Background="{Binding CanvasThemeColor}"
-                                ClipToBounds="True" CornerRadius="0,0,0,0">
-                            <svgc:SvgCanvas x:Name="CuttingMat"
-                                            HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                            VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
-                                            EnsureViewboxSize="False"
-                                            Source="{Binding CuttingMat.QualifiedSVGSource}"
-                                            Visibility="{Binding IsChecked, ElementName=CuttingMatVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <svgc:SvgCanvas.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
-                                        <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
-                                    </TransformGroup>
-                                </svgc:SvgCanvas.RenderTransform>
-                            </svgc:SvgCanvas>
+                    </Border>
 
-                        </Border>
-
-                        <!--<Border  x:Name="svgDrawingBounds"
+                    <!--<Border  x:Name="svgDrawingBounds"
          IsHitTestVisible="True"
          Margin="0"
          BorderThickness="0">
@@ -513,54 +527,54 @@
   </Border.BorderBrush>
 </Border>-->
 
-                        <!--  Fill the offset outside space  -->
-                        <Path Canvas.Left="0" Canvas.Bottom="0"
-                              ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
-                              Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Path.Data>
-                                <CombinedGeometry GeometryCombineMode="Xor">
-                                    <CombinedGeometry.Geometry1>
-                                        <RectangleGeometry Rect="{Binding Printer.BedRect}" />
-                                    </CombinedGeometry.Geometry1>
-                                    <CombinedGeometry.Geometry2>
-                                        <RectangleGeometry Rect="{Binding Printer.WorkingRect}" />
-                                    </CombinedGeometry.Geometry2>
-                                </CombinedGeometry>
-                            </Path.Data>
-                            <Path.Fill>
-                                <LinearGradientBrush SpreadMethod="Reflect" StartPoint="0 0" EndPoint="0.01 0.01">
-                                    <GradientStop Offset="0.5" Color="#30FFFFFF" />
-                                    <GradientStop Offset="0.5" Color="#40FFFFFF" />
-                                </LinearGradientBrush>
-                                <!--<SolidColorBrush Color="#40000000"/>-->
-                            </Path.Fill>
-                            <Path.Stroke>
-                                <SolidColorBrush Color="Transparent" />
-                            </Path.Stroke>
+                    <!--  Fill the offset outside space  -->
+                    <Path Canvas.Left="0" Canvas.Bottom="0"
+                          ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
+                          Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Path.Data>
+                            <CombinedGeometry GeometryCombineMode="Xor">
+                                <CombinedGeometry.Geometry1>
+                                    <RectangleGeometry Rect="{Binding Printer.BedRect}" />
+                                </CombinedGeometry.Geometry1>
+                                <CombinedGeometry.Geometry2>
+                                    <RectangleGeometry Rect="{Binding Printer.WorkingRect}" />
+                                </CombinedGeometry.Geometry2>
+                            </CombinedGeometry>
+                        </Path.Data>
+                        <Path.Fill>
+                            <LinearGradientBrush SpreadMethod="Reflect" StartPoint="0 0" EndPoint="0.01 0.01">
+                                <GradientStop Offset="0.5" Color="#30FFFFFF" />
+                                <GradientStop Offset="0.5" Color="#40FFFFFF" />
+                            </LinearGradientBrush>
+                            <!--<SolidColorBrush Color="#40000000"/>-->
+                        </Path.Fill>
+                        <Path.Stroke>
+                            <SolidColorBrush Color="Transparent" />
+                        </Path.Stroke>
 
-                            <Path.Effect>
-                                <DropShadowEffect BlurRadius="15" Direction="0" RenderingBias="Quality" ShadowDepth="0" />
+                        <Path.Effect>
+                            <DropShadowEffect BlurRadius="15" Direction="0" RenderingBias="Quality" ShadowDepth="0" />
 
-                            </Path.Effect>
-                            <Path.LayoutTransform>
-                                <ScaleTransform ScaleY="-1" />
-                            </Path.LayoutTransform>
-                        </Path>
+                        </Path.Effect>
+                        <Path.LayoutTransform>
+                            <ScaleTransform ScaleY="-1" />
+                        </Path.LayoutTransform>
+                    </Path>
 
-                    </Canvas>
+                </Canvas>
 
-                    <Grid Width="{Binding Printer.BedWidth, Mode=TwoWay, FallbackValue=235}"
-                          Height="{Binding Printer.BedHeight, Mode=TwoWay, FallbackValue=235}"
-                          Margin="0,0,0,0" Panel.ZIndex="-11"
-                          Background="#FF000000">
+                <Grid Width="{Binding Printer.BedWidth, Mode=TwoWay, FallbackValue=235}"
+                      Height="{Binding Printer.BedHeight, Mode=TwoWay, FallbackValue=235}"
+                      Margin="0,0,0,0" Panel.ZIndex="-11"
+                      Background="#FF000000">
 
-                        <Grid.Effect>
-                            <DropShadowEffect  RenderingBias="Quality" BlurRadius="5" ShadowDepth="2"/>
-                        </Grid.Effect>
+                    <Grid.Effect>
+                        <DropShadowEffect BlurRadius="5" RenderingBias="Quality" ShadowDepth="2" />
+                    </Grid.Effect>
 
-                        
-                    </Grid>
+
                 </Grid>
+            </Grid>
 
 
         </rc:ZoomBorder>
@@ -606,9 +620,12 @@
                             BorderBrush="Transparent">
                     <TabItem IsSelected="True" Style="{StaticResource CustomTabStyle}">
                         <TabItem.Header>
-                            <StackPanel Margin="10,0" Orientation="Horizontal">
-                                <ui:SymbolIcon Margin="0,0,6,0" Symbol="PuzzlePiece24" />
-                                <TextBlock Text="Elements" />
+                            <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="PuzzlePiece24" />
+                                <TextBlock Text="Elements"
+                                           Margin="6,0,0,0"
+                                           Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />
+
                             </StackPanel>
                         </TabItem.Header>
                         <Grid>
@@ -616,23 +633,29 @@
                                 <RowDefinition Height="auto" />
                                 <RowDefinition Height="auto" />
                                 <RowDefinition Height="auto" />
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="auto"/>
-                                <RowDefinition Height="0"/>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <Separator Grid.Row="0" Margin="5" />
-                            <StackPanel Grid.Row="1" Margin="5,0" Orientation="Horizontal">
+                            <StackPanel Grid.Row="1"
+                                        Margin="5,0"
+                                        Orientation="Horizontal">
 
-                                <ui:Button Margin="5" Padding="6" Command="{Binding BrowseSVGCommand}">
+                                <ui:Button Margin="5" Padding="6"
+                                           Command="{Binding BrowseSVGCommand}">
                                     <ui:SymbolIcon Symbol="Add12" />
                                 </ui:Button>
-                                <TextBlock Text="Import SVG" Margin="10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Import SVG"
+                                           Margin="10,0" VerticalAlignment="Center" />
                             </StackPanel>
 
                             <ScrollViewer Grid.Row="3"
                                           Margin="-14,0,-14,0" Padding="25,0,25,0"
                                           CanContentScroll="True" VerticalScrollBarVisibility="Visible">
-                                <ui:ListView x:Name="FilesList" ItemsSource="{Binding SVGFiles}">
+                                <ui:ListView x:Name="FilesList"
+                                             VerticalAlignment="Top"
+                                             ItemsSource="{Binding SVGFiles}">
                                     <ui:ListView.ItemContainerStyle>
                                         <Style TargetType="ListViewItem">
                                             <Setter Property="Template">
@@ -650,9 +673,9 @@
                                         <DataTemplate>
 
                                             <ui:CardExpander Margin="-10,0" Padding="10,5"
-                                                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
-                                                                     FlowDirection="RightToLeft" IsExpanded="True"
-                                                                     Style="{StaticResource CustomCardExpanderStyle}">
+                                                             Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                                             FlowDirection="RightToLeft" IsExpanded="True"
+                                                             Style="{StaticResource CustomCardExpanderStyle}">
                                                 <ui:CardExpander.Header>
                                                     <Grid FlowDirection="LeftToRight">
                                                         <Grid.ColumnDefinitions>
@@ -660,14 +683,14 @@
                                                             <ColumnDefinition Width="32" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Text="{Binding FilePath, Converter={StaticResource PathTrimmerConverter}}"
-                                                                           MaxWidth="260"
-                                                                           Margin="10,-1,10,0" VerticalAlignment="Center"
-                                                                           TextTrimming="WordEllipsis" />
+                                                                   MaxWidth="260"
+                                                                   Margin="10,-1,10,0" VerticalAlignment="Center"
+                                                                   TextTrimming="WordEllipsis" />
                                                         <ui:Button Grid.Column="1"
-                                                                           Padding="6"
-                                                                           Background="Transparent"
-                                                                           Command="{Binding DataContext.MainVM.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                                                           CommandParameter="{Binding}">
+                                                                   Padding="6"
+                                                                   Background="Transparent"
+                                                                   Command="{Binding DataContext.MainVM.RemoveSVGCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                   CommandParameter="{Binding}">
                                                             <ui:SymbolIcon Foreground="{StaticResource PaletteRedBrush}" Symbol="Dismiss48" />
                                                         </ui:Button>
                                                         <ToolTipService.ToolTip>
@@ -710,19 +733,19 @@
 
                                                                     </Grid.ColumnDefinitions>
                                                                     <TextBlock Text="{Binding VisualName}"
-                                                                                       Grid.Column="3"
-                                                                                       VerticalAlignment="Center" />
+                                                                               Grid.Column="3"
+                                                                               VerticalAlignment="Center" />
 
                                                                     <Border Grid.Column="0"
-                                                                                    Width="2" Height="20"
-                                                                                    Margin="-10,0,0,0"
-                                                                                    Background="{StaticResource PaletteBlueBrush}"
-                                                                                    CornerRadius="2"
-                                                                                    Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}" />
+                                                                            Width="2" Height="20"
+                                                                            Margin="-10,0,0,0"
+                                                                            Background="{StaticResource PaletteBlueBrush}"
+                                                                            CornerRadius="2"
+                                                                            Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}" />
 
                                                                     <ToggleButton x:Name="WorkingAreaVisibilityToggle"
-                                                                                          Grid.Column="1"
-                                                                                          IsChecked="{Binding IsHidden}">
+                                                                                  Grid.Column="1"
+                                                                                  IsChecked="{Binding IsHidden}">
                                                                         <ToggleButton.Template>
                                                                             <ControlTemplate>
                                                                                 <ContentControl>
@@ -733,8 +756,8 @@
                                                                                                     <Setter Property="Content">
                                                                                                         <Setter.Value>
                                                                                                             <ui:Card Padding="5,4,5,0"
-                                                                                                                             Background="Transparent"
-                                                                                                                             BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
+                                                                                                                     Background="Transparent"
+                                                                                                                     BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
                                                                                                                 <ui:SymbolIcon Filled="True" Symbol="EyeOff24" />
                                                                                                             </ui:Card>
                                                                                                         </Setter.Value>
@@ -745,8 +768,8 @@
                                                                                                     <Setter Property="Content">
                                                                                                         <Setter.Value>
                                                                                                             <ui:Card Padding="5,4,5,0"
-                                                                                                                             Background="Transparent"
-                                                                                                                             BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
+                                                                                                                     Background="Transparent"
+                                                                                                                     BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}">
                                                                                                                 <!--  Replace with your unchecked icon  -->
                                                                                                                 <ui:SymbolIcon Filled="True" Symbol="Eye48" />
                                                                                                             </ui:Card>
@@ -772,78 +795,155 @@
                                 </ui:ListView>
                             </ScrollViewer>
                             <Separator Grid.Row="4" Margin="5" />
-                            <ScrollViewer Grid.Row="5" Margin="-14,10,-14,0" Padding="25,0,25,0" CanContentScroll="True" VerticalScrollBarVisibility="Visible">
+
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Style="{StaticResource CustomTabStyle}">
+                        <TabItem.Header>
+                            <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
+                                <ui:SymbolIcon Margin="0,0,6,0" Symbol="AlignLeft16" />
+                                <TextBlock Text="Properties" Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            </StackPanel>
+                        </TabItem.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Separator Grid.Row="0" Margin="5" />
+                            <ScrollViewer Grid.Row="1" Visibility="{Binding SelectedDrawable, Converter={StaticResource NullToVisibilityConverter}}"
+                                          Margin="-14,00,-14,0" Padding="25,0,25,0"
+                                          CanContentScroll="True" VerticalScrollBarVisibility="Visible">
                                 <DockPanel>
+
                                     <StackPanel DockPanel.Dock="Bottom">
-                                        <Label Content="Properties" Margin="0,5,0,15"/>
-                                        <Grid Margin="0,0,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="25" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="60" />
-                                                <ColumnDefinition Width="25" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition />
-                                                <RowDefinition Height="5" />
-                                                <RowDefinition />
-                                            </Grid.RowDefinitions>
 
-                                            <Label Content="X"
-                                               Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:TextBox Text="{Binding Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                Grid.Column="1"
-                                                ClearButtonEnabled="False" />
-                                            <Label Content="Y"
-                                                Grid.Row="0" Grid.Column="3"
-                                                Padding="1,2,0,0" VerticalAlignment="Center" />      
-                                            <ui:TextBox Text="{Binding Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                Grid.Row="0" Grid.Column="4"
-                                                ClearButtonEnabled="False" />
+                                        <ui:CardExpander Margin="-15,0" VerticalAlignment="Top" 
+                                                         Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                                         FlowDirection="RightToLeft" IsExpanded="True"
+                                                         Style="{StaticResource CustomCardExpanderStyle}">
+                                            <ui:CardExpander.Header>
+                                                <Grid Margin="10,0" FlowDirection="LeftToRight">
 
-                                            <Label Content="W"
-                                                Grid.Row="2"
-                                                Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:TextBox Text="{Binding Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                Grid.Row="2" Grid.Column="1"
-                                                ClearButtonEnabled="False" />
-                                            <Label Content="H"
-                                                Grid.Row="2" Grid.Column="3"
-                                                Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:TextBox Text="{Binding Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                Grid.Row="2" Grid.Column="4"
-                                                ClearButtonEnabled="False" />
+                                                    <TextBlock Text="Transform"
+                                                               Padding="1,2,0,0" VerticalAlignment="Center" />
 
-                                            <Label Content="mm"
-                                                Grid.Column="1"
-                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
-                                            <Label Content="mm"
-                                                Grid.Column="4"
-                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
-                                            <Label Content="mm"
-                                                Grid.Row="2" Grid.Column="1"
-                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
-                                            <Label Content="mm"
-                                                Grid.Row="2" Grid.Column="4"
-                                                Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                                </Grid>
+                                            </ui:CardExpander.Header>
 
-                                        </Grid>
+                                            <StackPanel FlowDirection="LeftToRight">
+
+                                                <Grid Margin="15,0,15,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="25" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="60" />
+                                                        <ColumnDefinition Width="25" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition />
+                                                        <RowDefinition Height="8" />
+                                                        <RowDefinition />
+                                                        <RowDefinition Height="8" />
+                                                        <RowDefinition />
+                                                    </Grid.RowDefinitions>
+
+                                                    <Label Content="W"
+                                                           Grid.Row="0"
+                                                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.Width, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                                Grid.Row="0" Grid.Column="1"
+                                                                ClearButtonEnabled="False" />
+                                                    <Label Content="H"
+                                                           Grid.Row="0" Grid.Column="3"
+                                                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.Height, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                                Grid.Row="0" Grid.Column="4"
+                                                                ClearButtonEnabled="False" />
+
+                                                    <Label Content="X"
+                                                           Grid.Row="2"
+                                                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                                Grid.Row="2" Grid.Column="1"
+                                                                ClearButtonEnabled="False" />
+                                                    <Label Content="Y"
+                                                           Grid.Row="2" Grid.Column="3"
+                                                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                                Grid.Row="2" Grid.Column="4"
+                                                                ClearButtonEnabled="False" />
+
+                                                    <Label Content="R"
+                                                           Grid.Row="4"
+                                                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                                                    <ui:NumberBox Grid.Row="4" Grid.Column="1"
+                                                                  ClearButtonEnabled="False" Maximum="360" Minimum="-360" SpinButtonPlacementMode="Compact" AcceptsReturn="False"
+                                                                  Value="{Binding SelectedDrawable.DrawableElement.Parent.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" LostFocus="NumberBox_LostFocus" />
+
+                                                    <ui:Button Grid.Row="4" Grid.Column="4" Command="{Binding MirrorHorizontallyCommand}"
+                                                               Width="50">
+                                                        <ui:SymbolIcon Filled="False" Symbol="FlipHorizontal16" />
+                                                    </ui:Button>
+                                                    <ui:Button Grid.Row="4" Grid.Column="4"
+                                                               Width="50"
+                                                               HorizontalAlignment="Right">
+                                                        <ui:SymbolIcon Filled="False" Symbol="FlipVertical16" />
+                                                    </ui:Button>
+
+                                                    <Label Content="mm"
+                                                           Grid.Column="1"
+                                                           Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                                    <Label Content="mm"
+                                                           Grid.Column="4"
+                                                           Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                                    <Label Content="mm"
+                                                           Grid.Row="2" Grid.Column="1"
+                                                           Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                                    <Label Content="mm"
+                                                           Grid.Row="2" Grid.Column="4"
+                                                           Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                                    <Label Content="°"
+                                                           Grid.Row="4" Grid.Column="1"
+                                                           Padding="1,2,25,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                                </Grid>
+                                            </StackPanel>
+
+                                        </ui:CardExpander>
+                                        <Separator Margin="5" />
                                     </StackPanel>
+
                                 </DockPanel>
                             </ScrollViewer>
 
                         </Grid>
                     </TabItem>
+
+                    <TabItem Width="9"
+                             Margin="0,0,-6,0"
+                             IsEnabled="False" IsHitTestVisible="False"
+                             Style="{StaticResource CustomTabStyle}">
+                        <TabItem.Header>
+                            <Separator Height="28" Background="{StaticResource CardBackground}" />
+                        </TabItem.Header>
+                    </TabItem>
+
+
                     <TabItem Style="{StaticResource CustomTabStyle}">
                         <TabItem.Header>
-                            <StackPanel Margin="10,0" Orientation="Horizontal">
+                            <StackPanel Margin="5,0" Orientation="Horizontal">
                                 <ui:SymbolIcon Margin="0,0,6,0" Symbol="LayerDiagonal20" />
                                 <TextBlock Text="Align" />
+
                             </StackPanel>
                         </TabItem.Header>
                         <Grid>
@@ -1217,9 +1317,10 @@
 
                     <TabItem Style="{StaticResource CustomTabStyle}">
                         <TabItem.Header>
-                            <StackPanel Margin="10,0" Orientation="Horizontal">
+                            <StackPanel Margin="5,0" Orientation="Horizontal">
                                 <ui:SymbolIcon Margin="0,0,6,0" Symbol="Options20" />
                                 <TextBlock Text="Configure" />
+
                             </StackPanel>
                         </TabItem.Header>
                         <Grid>
@@ -1251,7 +1352,7 @@
 
                                                 <RadioButton.ToolTip>
                                                     <TextBlock TextWrapping="Wrap">
-                                                        Settings designed for cutting objects out using a drag-knife. 
+                                                        Settings designed for cutting objects out using a drag-knife.
                                                     </TextBlock>
                                                 </RadioButton.ToolTip>
 
@@ -1269,7 +1370,7 @@
 
                                                 </StackPanel>
                                                 <RadioButton.ToolTip>
-                                                    <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                         Settings designed for drawing using a pen, marker, or even a foil stamping pen.
                                                     </TextBlock>
                                                 </RadioButton.ToolTip>
@@ -1300,8 +1401,8 @@
                                                    VerticalAlignment="Center"
                                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
                                             <Grid.ToolTip>
-                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                    Speed of the toolhead when the tool is raised and not actively cutting/drawing. 
+                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                    Speed of the toolhead when the tool is raised and not actively cutting/drawing.
                                                 </TextBlock>
                                             </Grid.ToolTip>
                                         </Grid>
@@ -1314,9 +1415,9 @@
                                                 <ColumnDefinition Width="100" />
                                             </Grid.ColumnDefinitions>
                                             <Grid.ToolTip>
-                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                    Speed of the toolhead when the tool is down and cutting/drawing.<LineBreak/><LineBreak/> Slower is usually better
-                                                </TextBlock>
+                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                    Speed of the toolhead when the tool is down and cutting/drawing.<LineBreak /><LineBreak />
+                                                    Slower is usually better</TextBlock>
                                             </Grid.ToolTip>
                                             <Slider x:Name="drawSpeed"
                                                     Margin="0,5,0,0" VerticalAlignment="Center"
@@ -1346,9 +1447,10 @@
 
                                             </Grid.ColumnDefinitions>
                                             <Grid.ToolTip>
-                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                    How high above the workpiece the toolhead should be positioned when travelling or drawing.<LineBreak/><LineBreak/> Positive values are offset above the bed surface. <LineBreak/><LineBreak/>This value is affected by your printer's Z-Offset.  
-                                                </TextBlock>
+                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                    How high above the workpiece the toolhead should be positioned when travelling or drawing.<LineBreak /><LineBreak />
+                                                    Positive values are offset above the bed surface.<LineBreak /><LineBreak />
+                                                    This value is affected by your printer's Z-Offset.</TextBlock>
                                             </Grid.ToolTip>
                                             <Label Content="Draw"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
@@ -1404,16 +1506,16 @@
                                                         </Grid.RowDefinitions>
 
                                                         <Label Content="Curve-fitting Precision"
-                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center" >
+                                                               Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
                                                         <ui:TextBox Text="{Binding Configuration.Tolerance}"
                                                                     Grid.Column="1"
-                                                                    ClearButtonEnabled="False"/>
+                                                                    ClearButtonEnabled="False" />
                                                         <Label Content="mm"
                                                                Grid.Column="1"
                                                                Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1423,9 +1525,9 @@
                                                         <CheckBox x:Name="extractSingleColor"
                                                                   Content="Extract one colour"
                                                                   Grid.Row="2"
-                                                                  IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}" >
+                                                                  IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}">
                                                             <CheckBox.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Processes only objects with the specified colour, and ignores all others.
                                                                 </TextBlock>
                                                             </CheckBox.ToolTip>
@@ -1471,9 +1573,10 @@
                                                         <Label Content="Tool Diameter"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Diameter of the swivelling part of the cutting blade.<LineBreak/>Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge.<LineBreak/><LineBreak/>Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Diameter of the swivelling part of the cutting blade.<LineBreak />
+                                                                    Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge.<LineBreak /><LineBreak />
+                                                                    Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
                                                         <ui:TextBox Text="{Binding Configuration.CuttingConfig.ToolDiameter}"
@@ -1489,9 +1592,9 @@
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.<LineBreak/> <LineBreak/>Recommended value ~1mm
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.<LineBreak /> <LineBreak />
+                                                                    Recommended value ~1mm</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
                                                         <ui:TextBox Text="{Binding Configuration.CuttingConfig.Overcut}"
@@ -1508,8 +1611,8 @@
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
                                                                IsEnabled="{Binding UsingGCodePlot}">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    For each object, whether outer features or inner features are cut first. 
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    For each object, whether outer features or inner features are cut first.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
@@ -1563,9 +1666,9 @@
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
                                                                IsEnabled="{Binding UsingGCodePlot}">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                   Specifies the preferred drawing direction for shape outlines.<LineBreak/><LineBreak/>0° represents East, with positive values rotating counterclockwise.
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Specifies the preferred drawing direction for shape outlines.<LineBreak /><LineBreak />
+                                                                    0° represents East, with positive values rotating counterclockwise.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
 
@@ -1582,10 +1685,10 @@
                                                         <Label Content="Optimisation Timeout"
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}" >
+                                                               IsEnabled="{Binding UsingGCodePlot}">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    How long to allow GCodePlot to spend optimising travel paths and drawing directions. 
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    How long to allow GCodePlot to spend optimising travel paths and drawing directions.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
@@ -1603,11 +1706,11 @@
                                                                   Content="Keep Outlines"
                                                                   Grid.Row="4"
                                                                   IsChecked="{Binding Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
-                                                                  IsEnabled="{Binding UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}" >
+                                                                  IsEnabled="{Binding UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}">
                                                             <CheckBox.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Whether shape outlines should be drawn, or ignored.<LineBreak/><LineBreak/>Disable this if you want to shade in an area without the area being outlined. 
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Whether shape outlines should be drawn, or ignored.<LineBreak /><LineBreak />
+                                                                    Disable this if you want to shade in an area without the area being outlined.</TextBlock>
                                                             </CheckBox.ToolTip>
                                                         </CheckBox>
 
@@ -1649,9 +1752,9 @@
                                                             <RowDefinition Height="5" />
                                                             <RowDefinition />
                                                         </Grid.RowDefinitions>
-                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}" >
+                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}">
                                                             <CheckBox.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Add a second shading pass at 90° to the first, creating a cross-hatch pattern.
                                                                 </TextBlock>
                                                             </CheckBox.ToolTip>
@@ -1662,9 +1765,9 @@
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
                                                                IsEnabled="{Binding UsingGCodePlot}">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Range = 0 to 1<LineBreak/><LineBreak/>How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects. 
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Range = 0 to 1<LineBreak /><LineBreak />
+                                                                    How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
                                                         <ui:NumberBox Grid.Row="2" Grid.Column="1"
@@ -1677,7 +1780,7 @@
                                                                Grid.Row="4"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     How far apart drawn lines should be when shading the lightest parts of the image.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
@@ -1696,7 +1799,7 @@
                                                                Grid.Row="6"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     How far apart drawn lines should be when shading the darkest parts of the image.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
@@ -1714,9 +1817,9 @@
                                                                Grid.Row="8"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
                                                             <Label.ToolTip>
-                                                                <TextBlock TextWrapping="Wrap" TextAlignment="Left">
-                                                                    Which Direction to draw when shading objects.<LineBreak/><LineBreak/>0° represents East, with positive values rotating counterclockwise.
-                                                                </TextBlock>
+                                                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                                                    Which Direction to draw when shading objects.<LineBreak /><LineBreak />
+                                                                    0° represents East, with positive values rotating counterclockwise.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
                                                         <ui:TextBox Text="{Binding Configuration.DrawingConfig.ShadingAngle}"
@@ -1740,6 +1843,9 @@
                             </ScrollViewer>
                         </Grid>
                     </TabItem>
+
+
+
                 </TabControl>
                 <Separator Grid.Row="1"
                            Margin="0" VerticalAlignment="Top"

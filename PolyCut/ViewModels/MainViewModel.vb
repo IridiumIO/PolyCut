@@ -93,6 +93,12 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
 
+    Public ReadOnly Property SelectedDrawable As IDrawable
+        Get
+            Return DrawableCollection.FirstOrDefault(Function(f) f.IsSelected)
+        End Get
+    End Property
+
     Public Property SVGFiles As New ObservableCollection(Of SVGFile)
     Public ReadOnly Property PolyCutDocumentName As String
         Get
@@ -144,7 +150,29 @@ Public Class MainViewModel : Inherits ObservableObject
 
                                                                                 End Sub)
 
+    Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub()
+                                                                                 If SelectedDrawable IsNot Nothing Then
+                                                                                     Dim parentContentControl As ContentControl = TryCast(SelectedDrawable.DrawableElement.Parent, ContentControl)
 
+                                                                                     Dim mirrorTransform As New ScaleTransform With {.ScaleX = -1}
+                                                                                     ' Get the current transform of the DrawableElement
+                                                                                     Dim currentTransformGroup As TransformGroup = TryCast(SelectedDrawable.DrawableElement.RenderTransform, TransformGroup)
+
+                                                                                     If currentTransformGroup Is Nothing Then
+                                                                                         currentTransformGroup = New TransformGroup()
+                                                                                         SelectedDrawable.DrawableElement.RenderTransform = currentTransformGroup
+                                                                                     End If
+
+                                                                                     Dim scaletransform = currentTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+                                                                                     If scaletransform IsNot Nothing Then
+                                                                                         scaletransform.ScaleX *= -1
+                                                                                     Else
+                                                                                         currentTransformGroup.Children.Add(mirrorTransform)
+                                                                                     End If
+                                                                                     SelectedDrawable.DrawableElement.RenderTransformOrigin = New Point(0.5, 0.5)
+
+                                                                                 End If
+                                                                             End Sub)
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
@@ -152,6 +180,10 @@ Public Class MainViewModel : Inherits ObservableObject
         _navigationService = navigationService
         _argsService = argsService
         Initialise()
+
+    End Sub
+
+    Private Async Sub TickEverySecond()
 
     End Sub
 
@@ -293,6 +325,8 @@ Public Class MainViewModel : Inherits ObservableObject
                 End If
             Next
         Next
+
+        OnPropertyChanged(NameOf(SelectedDrawable))
 
     End Sub
 

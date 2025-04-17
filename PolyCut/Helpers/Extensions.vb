@@ -50,6 +50,7 @@ Public Module Extensions
         component.Transforms.Insert(0, translateTF)
 
 
+
         Dim transformableCCTransforms = transformableContentControl.RenderTransform
 
         If TypeOf (transformableCCTransforms) Is RotateTransform Then

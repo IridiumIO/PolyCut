@@ -1,11 +1,7 @@
-﻿Imports System.ComponentModel
-Imports System.IO
+﻿Imports System.IO
 Imports System.Windows.Controls.Primitives
 Imports System.Xml
 
-Imports CommunityToolkit.Mvvm.ComponentModel
-
-Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Imports SharpVectors.Converters

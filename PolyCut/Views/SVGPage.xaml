@@ -292,17 +292,18 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                     <ui:SymbolIcon Filled="True" Symbol="Cursor24" />
                 </RadioButton>
                 <Separator Margin="0,0,0,0" />
-                <RadioButton Width="35" Height="30"
-                             Margin="0,5" Padding="5"
-                             IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Line}, Mode=TwoWay}"
-                             Style="{StaticResource MyRadioButtonStyle}">
-                    <ui:SymbolIcon Filled="True" Symbol="Line20" />
-                </RadioButton>
+               
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
                              IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Path}, Mode=TwoWay}"
                              Style="{StaticResource MyRadioButtonStyle}">
                     <ui:SymbolIcon Filled="False" Symbol="Pen20" />
+                </RadioButton>
+                <RadioButton Width="35" Height="30"
+              Margin="0,5" Padding="5"
+              IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Line}, Mode=TwoWay}"
+              Style="{StaticResource MyRadioButtonStyle}">
+                    <ui:SymbolIcon Filled="True" Symbol="Line20" />
                 </RadioButton>
                 <RadioButton Width="35" Height="30"
                              Margin="0,5" Padding="5"
@@ -637,7 +638,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                 <RowDefinition Height="auto" />
                                 <RowDefinition Height="auto" />
                                 <RowDefinition Height="*" />
-                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="0" />
                                 <RowDefinition Height="0" />
                             </Grid.RowDefinitions>
                             <Separator Grid.Row="0" Margin="5" />

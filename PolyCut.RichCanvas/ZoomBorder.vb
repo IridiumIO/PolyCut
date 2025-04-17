@@ -277,7 +277,7 @@ Public Class ZoomBorder
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
-        If CanvasMode <> CanvasMode.Selection Then
+        If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             Dim position As Point = e.GetPosition(polyCanvas)
@@ -289,7 +289,7 @@ Public Class ZoomBorder
 
     Private Sub ZoomBorder_MouseUp(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
 
-        If CanvasMode <> CanvasMode.Selection Then
+        If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
             Return
@@ -332,7 +332,7 @@ Public Class ZoomBorder
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
         Dim currentPosition As Point = e.GetPosition(Me)
-        If CanvasMode <> CanvasMode.Selection Then
+        If CanvasMode <> CanvasMode.Selection AndAlso e.LeftButton = MouseButtonState.Pressed Then
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             Dim position As Point = e.GetPosition(polyCanvas)
             DrawingManager.UpdateDrawing(CanvasMode, position, Keyboard.IsKeyDown(Key.LeftShift))

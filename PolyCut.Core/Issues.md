@@ -1,14 +1,14 @@
 # Issues
 
 ## PolyCut 
-- [ ] The visual indicator for the imported Elements list does not keep up with the actual list
+- [X] The visual indicator for the imported Elements list does not keep up with the actual list
 - [X] The toggle button to hide travel moves needs to be toggled twice to take effect
 - [ ] Significant lag when trying to copy GCode from the preview window when it has a lot of lines
 - [ ] Touchscreen scrolling/panning does not work
 - [ ] Monitor tab won't open if the URL on the Export tab is not prefixed with `http://` or `https://`
 - [x] Nested hidden elements are not visible in the editor but are still exported
-- [ ] Shapes drawn on canvas directly are buggy
-    - [ ] creating a shape so that it extends beyond the canvas edges will cause it to get stuck and can leave a ghost element behind
+- [X] Shapes drawn on canvas directly are buggy
+    - [X] creating a shape so that it extends beyond the canvas edges will cause it to get stuck and can leave a ghost element behind
     - [x] Text cannot be edited after it is created
 
 ## PolyCut.Core 
@@ -38,7 +38,7 @@
 	- [X] Move
 	- [X] Rotate
 	- [X] Scale
-	- [ ] Mirror
+	- [X] Mirror
 	- [X] Delete
 	- [ ] Duplicate
 	- [ ] Undo/Redo
@@ -48,6 +48,7 @@
 - [ ] Allow grouping/ungrouping elements, and editing nested elements
 - [X] Hide cutting mat
 - [X] Basic tools: Line/Rectangle/Circle/Text
+        - [X] Additional tool: Freeform Pen 
 
 ## PolyCut.Core
 ### Parity Features

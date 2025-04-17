@@ -148,6 +148,8 @@ Public Class MainViewModel : Inherits ObservableObject
                                                                                         End If
                                                                                     Next
 
+                                                                                    OnPropertyChanged(NameOf(SelectedDrawable))
+
                                                                                 End Sub)
 
     Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub()
@@ -173,6 +175,33 @@ Public Class MainViewModel : Inherits ObservableObject
 
                                                                                  End If
                                                                              End Sub)
+
+
+    Public Property MirrorVerticallyCommand As ICommand = New RelayCommand(Sub()
+                                                                               If SelectedDrawable IsNot Nothing Then
+                                                                                   Dim parentContentControl As ContentControl = TryCast(SelectedDrawable.DrawableElement.Parent, ContentControl)
+
+                                                                                   Dim mirrorTransform As New ScaleTransform With {.ScaleY = -1}
+                                                                                   ' Get the current transform of the DrawableElement
+                                                                                   Dim currentTransformGroup As TransformGroup = TryCast(SelectedDrawable.DrawableElement.RenderTransform, TransformGroup)
+
+                                                                                   If currentTransformGroup Is Nothing Then
+                                                                                       currentTransformGroup = New TransformGroup()
+                                                                                       SelectedDrawable.DrawableElement.RenderTransform = currentTransformGroup
+                                                                                   End If
+
+                                                                                   Dim scaletransform = currentTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+                                                                                   If scaletransform IsNot Nothing Then
+                                                                                       scaletransform.ScaleY *= -1
+                                                                                   Else
+                                                                                       currentTransformGroup.Children.Add(mirrorTransform)
+                                                                                   End If
+                                                                                   SelectedDrawable.DrawableElement.RenderTransformOrigin = New Point(0.5, 0.5)
+
+                                                                               End If
+                                                                           End Sub)
+
+
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 
@@ -251,6 +280,7 @@ Public Class MainViewModel : Inherits ObservableObject
         OnPropertyChanged(NameOf(SVGFiles))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
         OnPropertyChanged(NameOf(DrawableCollection))
+        OnPropertyChanged(NameOf(SelectedDrawable))
 
     End Sub
 
@@ -265,6 +295,8 @@ Public Class MainViewModel : Inherits ObservableObject
 
         OnPropertyChanged(NameOf(SVGFiles))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
+        OnPropertyChanged(NameOf(SelectedDrawable))
+
     End Sub
 
 
@@ -450,7 +482,9 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Function
 
-
+    Public Sub NotifyPropertyChanged(propertyName As String)
+        OnPropertyChanged(propertyName)
+    End Sub
 
 
 

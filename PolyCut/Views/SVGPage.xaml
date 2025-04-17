@@ -46,6 +46,7 @@
         <local:InverseBoolConverter x:Key="InverseBoolConverter" />
         <local:ComparisonConverter x:Key="ComparisonConverter" />
         <local:CanvasToolModeCursorConverter x:Key="CanvasToolModeCursorConverter" />
+        <c:NullToBoolConverter x:Key="NullToBoolConverter" IsInverted="True"/>
         <Style x:Key="CustomCardExpanderStyle"
                BasedOn="{StaticResource DefaultUiCardExpanderStyle}"
                TargetType="{x:Type ui:CardExpander}">
@@ -813,7 +814,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
                             <Separator Grid.Row="0" Margin="5" />
-                            <ScrollViewer Grid.Row="1" Visibility="{Binding SelectedDrawable, Converter={StaticResource NullToVisibilityConverter}}"
+                            <ScrollViewer Grid.Row="1" IsEnabled="{Binding SelectedDrawable, Converter={StaticResource NullToBoolConverter}}"
                                           Margin="-14,00,-14,0" Padding="25,0,25,0"
                                           CanContentScroll="True" VerticalScrollBarVisibility="Visible">
                                 <DockPanel>
@@ -888,7 +889,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                Width="50">
                                                         <ui:SymbolIcon Filled="False" Symbol="FlipHorizontal16" />
                                                     </ui:Button>
-                                                    <ui:Button Grid.Row="4" Grid.Column="4"
+                                                    <ui:Button Grid.Row="4" Grid.Column="4" Command="{Binding MirrorVerticallyCommand}"
                                                                Width="50"
                                                                HorizontalAlignment="Right">
                                                         <ui:SymbolIcon Filled="False" Symbol="FlipVertical16" />

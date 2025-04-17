@@ -1,8 +1,10 @@
 ﻿Imports System.Runtime.CompilerServices
+Imports System.Windows.Media.Media3D
 
 Imports PolyCut.Shared
 
 Imports Svg
+Imports Svg.Transforms
 
 Public Module Extensions
 
@@ -36,6 +38,17 @@ Public Module Extensions
         Dim transformableContentControl As ContentControl = drawableElement.Parent
         If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
 
+        Dim tfg As TransformGroup = TryCast(drawableElement.RenderTransform, TransformGroup)
+        If tfg IsNot Nothing Then
+            For Each transform As Transform In tfg.Children
+                If TypeOf transform Is ScaleTransform Then
+                    component.Transforms.Insert(0, New Transforms.SvgScale(CType(transform, ScaleTransform).ScaleX, CType(transform, ScaleTransform).ScaleY))
+                    'Dim st = CType(transform, ScaleTransform)
+                    'Matrix.ScaleAt(st.ScaleX, st.ScaleY, originX + width / 2, originY + height / 2)
+                End If
+            Next
+        End If
+
         Dim scaleTF As New Transforms.SvgScale(transformableContentControl.ActualWidth / component.Bounds.Width, transformableContentControl.ActualHeight / component.Bounds.Height)
         component.Transforms.Insert(0, scaleTF)
 
@@ -48,6 +61,7 @@ Public Module Extensions
 
         Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
         component.Transforms.Insert(0, translateTF)
+
 
 
 
@@ -64,6 +78,8 @@ Public Module Extensions
         End If
 
         Return component
+
+
 
     End Function
 

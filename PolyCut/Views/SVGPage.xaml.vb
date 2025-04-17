@@ -189,6 +189,10 @@ Class SVGPage
             child.IsSelected = False
 
         Next
+        mainCanvas.RaiseEvent(New MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) With {
+            .RoutedEvent = Mouse.MouseDownEvent,
+            .Source = mainCanvas
+        })
         MainViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 

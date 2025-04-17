@@ -78,7 +78,8 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             Dim wrapper As New ContentControl With {
                     .Content = child,
                     .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
-                    .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight)
+                    .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight),
+                    .RenderTransform = New RotateTransform(0)
                 }
             If TypeOf child Is Line Then
                 Dim line As Line = CType(child, Line)

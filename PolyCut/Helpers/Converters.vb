@@ -29,7 +29,7 @@ Public Class InputToMillimetresConverter
 
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
         If value IsNot Nothing AndAlso IsNumeric(value) AndAlso CStr(value).ToLower <> "nan" Then
-            Return CDec(value)
+            Return Math.Round(CDec(value), 4)
         End If
         Return 0
     End Function
@@ -337,3 +337,20 @@ Public Class CanvasToolModeCursorConverter
         Throw New NotImplementedException()
     End Function
 End Class
+
+Public Class SelectedObjectIsTextboxToVisConverter
+    Implements IValueConverter
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.Convert
+        If TypeOf (value) Is TextBox Then
+            Return Visibility.Visible
+        Else
+            Return Visibility.Hidden
+        End If
+
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As System.Globalization.CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotImplementedException()
+    End Function
+End Class
+

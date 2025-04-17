@@ -52,7 +52,7 @@ Public Class MainViewModel : Inherits ObservableObject
                     child.IsSelected = False
 
                 Next
-
+                OnPropertyChanged(NameOf(SelectedDrawable))
             End If
         End Set
     End Property
@@ -85,7 +85,7 @@ Public Class MainViewModel : Inherits ObservableObject
         End Set
     End Property
 
-    Public Property CanvasTextBox As TextBox = New TextBox
+    Public Property CanvasTextBox As TextBox = New TextBox With {.FontFamily = New FontFamily("Calibri"), .FontSize = 14}
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry

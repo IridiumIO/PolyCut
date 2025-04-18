@@ -271,7 +271,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="55" />
+            <ColumnDefinition Width="55" MinWidth="55" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800" />
         </Grid.ColumnDefinitions>
@@ -280,7 +280,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                       Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
 
 
-        <ui:Card Grid.Column="0"
+        <ui:Card Grid.Column="0" 
                  Margin="5,5,0,5" Padding="0" VerticalAlignment="Stretch"
                  HorizontalContentAlignment="Center" VerticalContentAlignment="Top" Panel.ZIndex="100">
 
@@ -609,7 +609,9 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
 
 
-
+        <GridSplitter Width="10" Grid.Column="1"
+              Margin="0,0,-10,0" Panel.ZIndex="1"
+              Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
         <ui:Card Grid.Column="2"
                  Margin="5,5,0,5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
             <ui:Card.Background>
@@ -677,7 +679,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                         <DataTemplate>
 
                                             <ui:CardExpander Margin="-10,0" Padding="10,5"
-                                                             Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                                             Background="Transparent" BorderBrush="Transparent" ContentPadding="0" 
                                                              FlowDirection="RightToLeft" IsExpanded="True"
                                                              Style="{StaticResource CustomCardExpanderStyle}">
                                                 <ui:CardExpander.Header>
@@ -688,7 +690,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Text="{Binding FilePath, Converter={StaticResource PathTrimmerConverter}}"
                                                                    MaxWidth="260"
-                                                                   Margin="10,-1,10,0" VerticalAlignment="Center"
+                                                                   Margin="10,-1,10,0" HorizontalAlignment="Left" VerticalAlignment="Center"
                                                                    TextTrimming="WordEllipsis" />
                                                         <ui:Button Grid.Column="1"
                                                                    Padding="6"
@@ -714,7 +716,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                 <Setter Property="Template">
                                                                     <Setter.Value>
                                                                         <ControlTemplate TargetType="ListViewItem">
-                                                                            <Border Padding="4">
+                                                                            <Border Padding="0" >
                                                                                 <ContentPresenter />
                                                                             </Border>
                                                                         </ControlTemplate>
@@ -725,8 +727,8 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         </ui:ListView.ItemContainerStyle>
                                                         <ui:ListView.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid>
-
+                                                                <Grid  >
+                                                                   
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="5" />
                                                                         <ColumnDefinition Width="32" />
@@ -736,13 +738,23 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                         <ColumnDefinition Width="32" />
 
                                                                     </Grid.ColumnDefinitions>
+                                                                    <Border CornerRadius="5" Grid.ColumnSpan="6" x:Name="ContainingGrid">
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1" Opacity="0">
+                                                                                <GradientStop Color="#FFFFFFFF" Offset="0.4"/>
+                                                                                <GradientStop Color="#FFFFFFFF" Offset="1"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+
+                                                                    </Border>
+                                                                    
                                                                     <TextBlock Text="{Binding VisualName}"
-                                                                               Grid.Column="3"
+                                                                               Grid.Column="3" Margin="0,5"
                                                                                VerticalAlignment="Center" />
 
                                                                     <Border Grid.Column="0"
                                                                             Width="2" Height="20"
-                                                                            Margin="-10,0,0,0"
+                                                                            Margin="-4,0,0,0"
                                                                             Background="{StaticResource PaletteBlueBrush}"
                                                                             CornerRadius="2"
                                                                             Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}" />
@@ -789,7 +801,24 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                     </ToggleButton>
 
                                                                 </Grid>
+                                                                <DataTemplate.Triggers>
+                                                                    <EventTrigger RoutedEvent="MouseEnter" >
+                                                                        <BeginStoryboard>
+                                                                            <Storyboard>
+                                                                                <DoubleAnimation To="0.11" Duration="0:0:0.2" Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)"/>
+                                                                            </Storyboard>
+                                                                        </BeginStoryboard>
+                                                                    </EventTrigger>
+                                                                    <EventTrigger RoutedEvent="MouseLeave" >
+                                                                        <BeginStoryboard>
+                                                                            <Storyboard>
+                                                                                <DoubleAnimation To="0" Duration="0:0:0.05" Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)"/>
+                                                                            </Storyboard>
+                                                                        </BeginStoryboard>
+                                                                    </EventTrigger>
+                                                                </DataTemplate.Triggers>
                                                             </DataTemplate>
+                                                            
                                                         </ui:ListView.ItemTemplate>
                                                     </ui:ListView>
                                                 </StackPanel>

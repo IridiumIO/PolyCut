@@ -477,9 +477,9 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                     <Border x:Name="CuttingMatBounds"
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Background="{Binding CanvasThemeColor}"
+                            Background="{Binding CanvasThemeColor}" BorderBrush="#858585" BorderThickness="1"
                             ClipToBounds="True" CornerRadius="0,0,0,0">
-                        <svgc:SvgCanvas x:Name="CuttingMat"
+                        <svgc:SvgCanvas x:Name="CuttingMat" Margin="-1"
                                         HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
                                         VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
                                         EnsureViewboxSize="False"
@@ -495,43 +495,8 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
                     </Border>
 
-                    <!--<Border  x:Name="svgDrawingBounds"
-         IsHitTestVisible="True"
-         Margin="0"
-         BorderThickness="0">
 
-  <Grid>
-    <local:DragCanvas  x:Name="svgDrawing"
-                       Background="Transparent"
-                       AllowDragOutOfView="True" CanvasSelectedMode="{Binding CanvasToolMode}">
-
-    </local:DragCanvas>
-
-  </Grid>
-
-  <Border.BorderBrush>
-    <VisualBrush>
-
-      <VisualBrush.Visual>
-        <Grid>
-
-          <Rectangle  Stroke="#80FFFFFF"
-                      StrokeThickness="0.5"
-                      Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
-                      Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}" />
-          <Rectangle StrokeDashArray="8 4"
-                     Stroke="#80000000"
-                     StrokeThickness="0.5"
-                     Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
-                     Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}" />
-        </Grid>
-
-      </VisualBrush.Visual>
-    </VisualBrush>
-  </Border.BorderBrush>
-</Border>-->
-
-                    <!--  Fill the offset outside space  -->
+                    <!--  Fill the offset outside space  --><!--
                     <Path Canvas.Left="0" Canvas.Bottom="0"
                           ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
                           Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -550,7 +515,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                 <GradientStop Offset="0.5" Color="#30FFFFFF" />
                                 <GradientStop Offset="0.5" Color="#40FFFFFF" />
                             </LinearGradientBrush>
-                            <!--<SolidColorBrush Color="#40000000"/>-->
+                            --><!--<SolidColorBrush Color="#40000000"/>--><!--
                         </Path.Fill>
                         <Path.Stroke>
                             <SolidColorBrush Color="Transparent" />
@@ -563,21 +528,11 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                         <Path.LayoutTransform>
                             <ScaleTransform ScaleY="-1" />
                         </Path.LayoutTransform>
-                    </Path>
+                    </Path>-->
 
                 </Canvas>
 
-                <Grid Width="{Binding Printer.BedWidth, Mode=TwoWay, FallbackValue=235}"
-                      Height="{Binding Printer.BedHeight, Mode=TwoWay, FallbackValue=235}"
-                      Margin="0,0,0,0" Panel.ZIndex="-11"
-                      Background="#FF000000">
-
-                    <Grid.Effect>
-                        <DropShadowEffect BlurRadius="5" RenderingBias="Quality" ShadowDepth="2" />
-                    </Grid.Effect>
-
-
-                </Grid>
+             
             </Grid>
 
 

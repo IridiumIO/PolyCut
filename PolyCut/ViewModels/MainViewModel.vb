@@ -19,7 +19,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property UsingGCodePlot As Boolean
 
-    Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+    Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
     Public Property CanvasThemeColor As String
         Get
             Return CanvasColor.ToString
@@ -28,7 +28,7 @@ Public Class MainViewModel : Inherits ObservableObject
             If value = "Light" Then
                 CanvasColor = Brushes.White
             Else
-                CanvasColor = New SolidColorBrush(Color.FromRgb(50, 50, 50))
+                CanvasColor = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
             End If
         End Set
     End Property

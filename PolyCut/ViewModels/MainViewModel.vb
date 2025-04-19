@@ -1,37 +1,19 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.IO
-Imports System.Windows.Controls.Primitives
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
-
 Imports PolyCut.Core
-Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Imports Svg
 
 Imports WPF.Ui
-Imports WPF.Ui.Controls
 
 Public Class MainViewModel : Inherits ObservableObject
 
     Public Property UsingGCodePlot As Boolean
-
-    Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
-    Public Property CanvasThemeColor As String
-        Get
-            Return CanvasColor.ToString
-        End Get
-        Set(value As String)
-            If value = "Light" Then
-                CanvasColor = Brushes.White
-            Else
-                CanvasColor = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
-            End If
-        End Set
-    End Property
 
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
@@ -39,53 +21,6 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property CuttingMat As CuttingMat
     Public Property Configuration As ProcessorConfiguration
 
-    Private _CanvasToolMode As CanvasMode
-    Public Property CanvasToolMode As CanvasMode
-        Get
-            Return _CanvasToolMode
-        End Get
-        Set(value As CanvasMode)
-            _CanvasToolMode = value
-            OnPropertyChanged(NameOf(CanvasToolMode))
-            If value <> CanvasMode.Selection Then
-                For Each child In DrawableCollection
-                    child.IsSelected = False
-
-                Next
-                OnPropertyChanged(NameOf(SelectedDrawable))
-            End If
-        End Set
-    End Property
-
-    Private _CanvasFontFamily As New FontFamily("Calibri")
-    Public Property CanvasFontFamily As FontFamily
-        Get
-            Return _CanvasFontFamily
-        End Get
-        Set(value As FontFamily)
-            _CanvasFontFamily = value
-            CanvasTextBox.FontFamily = value
-            OnPropertyChanged(NameOf(CanvasTextBox))
-        End Set
-    End Property
-
-    Private _CanvasFontSize As String = "14"
-    Public Property CanvasFontSize As String
-        Get
-            Return _CanvasFontSize
-        End Get
-        Set(value As String)
-            If String.IsNullOrEmpty(value) Then
-                value = "14"
-            End If
-            _CanvasFontSize = value
-            CanvasTextBox.FontSize = CInt(value)
-            OnPropertyChanged(NameOf(CanvasTextBox))
-
-        End Set
-    End Property
-
-    Public Property CanvasTextBox As TextBox = New TextBox With {.FontFamily = New FontFamily("Calibri"), .FontSize = 14}
 
     Public Property GCode As String = Nothing
     Public Property GCodeGeometry As GCodeGeometry
@@ -124,83 +59,6 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
-    Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub()
-
-                                                                                    Dim drawableItemsToRemove As New List(Of IDrawable)
-
-                                                                                    For Each child In DrawableCollection
-                                                                                        If child.IsSelected Then
-                                                                                            drawableItemsToRemove.Add(child)
-
-                                                                                        End If
-                                                                                    Next
-
-
-                                                                                    ' Remove corresponding IDrawables from SVGFiles
-                                                                                    For Each drawable In drawableItemsToRemove
-                                                                                        DrawableCollection.Remove(drawable)
-                                                                                        Dim svgFile = SVGFiles.FirstOrDefault(Function(file) file.SVGComponents.Contains(drawable))
-                                                                                        If svgFile IsNot Nothing Then
-                                                                                            svgFile.SVGComponents.Remove(drawable)
-                                                                                            If svgFile.SVGVisualComponents.IsEmpty Then
-                                                                                                ModifySVGFiles(svgFile, removeSVG:=True)
-                                                                                            End If
-                                                                                        End If
-                                                                                    Next
-
-                                                                                    OnPropertyChanged(NameOf(SelectedDrawable))
-
-                                                                                End Sub)
-
-    Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub()
-                                                                                 If SelectedDrawable IsNot Nothing Then
-                                                                                     Dim parentContentControl As ContentControl = TryCast(SelectedDrawable.DrawableElement.Parent, ContentControl)
-
-                                                                                     Dim mirrorTransform As New ScaleTransform With {.ScaleX = -1}
-                                                                                     ' Get the current transform of the DrawableElement
-                                                                                     Dim currentTransformGroup As TransformGroup = TryCast(SelectedDrawable.DrawableElement.RenderTransform, TransformGroup)
-
-                                                                                     If currentTransformGroup Is Nothing Then
-                                                                                         currentTransformGroup = New TransformGroup()
-                                                                                         SelectedDrawable.DrawableElement.RenderTransform = currentTransformGroup
-                                                                                     End If
-
-                                                                                     Dim scaletransform = currentTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-                                                                                     If scaletransform IsNot Nothing Then
-                                                                                         scaletransform.ScaleX *= -1
-                                                                                     Else
-                                                                                         currentTransformGroup.Children.Add(mirrorTransform)
-                                                                                     End If
-                                                                                     SelectedDrawable.DrawableElement.RenderTransformOrigin = New Point(0.5, 0.5)
-
-                                                                                 End If
-                                                                             End Sub)
-
-
-    Public Property MirrorVerticallyCommand As ICommand = New RelayCommand(Sub()
-                                                                               If SelectedDrawable IsNot Nothing Then
-                                                                                   Dim parentContentControl As ContentControl = TryCast(SelectedDrawable.DrawableElement.Parent, ContentControl)
-
-                                                                                   Dim mirrorTransform As New ScaleTransform With {.ScaleY = -1}
-                                                                                   ' Get the current transform of the DrawableElement
-                                                                                   Dim currentTransformGroup As TransformGroup = TryCast(SelectedDrawable.DrawableElement.RenderTransform, TransformGroup)
-
-                                                                                   If currentTransformGroup Is Nothing Then
-                                                                                       currentTransformGroup = New TransformGroup()
-                                                                                       SelectedDrawable.DrawableElement.RenderTransform = currentTransformGroup
-                                                                                   End If
-
-                                                                                   Dim scaletransform = currentTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-                                                                                   If scaletransform IsNot Nothing Then
-                                                                                       scaletransform.ScaleY *= -1
-                                                                                   Else
-                                                                                       currentTransformGroup.Children.Add(mirrorTransform)
-                                                                                   End If
-                                                                                   SelectedDrawable.DrawableElement.RenderTransformOrigin = New Point(0.5, 0.5)
-
-                                                                               End If
-                                                                           End Sub)
-
 
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
@@ -212,9 +70,6 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Sub
 
-    Private Async Sub TickEverySecond()
-
-    End Sub
 
     Private Sub Initialise()
 
@@ -223,7 +78,6 @@ Public Class MainViewModel : Inherits ObservableObject
         CuttingMats = SettingsHandler.GetCuttingMats
         CuttingMat = CuttingMats.First
         Configuration = (SettingsHandler.GetConfigurations).First
-        AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
     End Sub
 
 
@@ -242,16 +96,10 @@ Public Class MainViewModel : Inherits ObservableObject
             .Filter = "*.svg|*.svg",
             .Multiselect = True
         }
-
         If fs.ShowDialog Then
-
             For Each fl In fs.FileNames
-
                 ModifySVGFiles(New SVGFile(fl))
-
             Next
-
-
         End If
 
     End Sub
@@ -345,22 +193,6 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
-        ' Handle the change to the CurrentSelected property
-        Dim currentSelected = DesignerItemDecorator.CurrentSelected
-        For Each svgFile In SVGFiles
-            For Each child In svgFile.SVGComponents
-                If currentSelected IsNot Nothing AndAlso ((TryCast(child, SVGComponent) IsNot Nothing AndAlso TryCast(child, SVGComponent).SVGViewBox Is currentSelected.Content) OrElse child.DrawableElement Is currentSelected.Content) Then
-                    child.IsSelected = True
-                Else
-                    child.IsSelected = False
-                End If
-            Next
-        Next
-
-        OnPropertyChanged(NameOf(SelectedDrawable))
-
-    End Sub
 
 
     Public Property GeneratedGCode As List(Of GCode)
@@ -481,11 +313,6 @@ Public Class MainViewModel : Inherits ObservableObject
         Return document
 
     End Function
-
-    Public Sub NotifyPropertyChanged(propertyName As String)
-        OnPropertyChanged(propertyName)
-    End Sub
-
 
 
 End Class

@@ -25,7 +25,7 @@
             <i:InvokeCommandAction Command="{Binding MainVM.MainViewLoadedCommand}" />
         </i:EventTrigger>
         <i:KeyTrigger Key="Delete" SourceObject="{Binding ElementName=zoomPanControl}">
-            <i:InvokeCommandAction Command="{Binding MainVM.DeleteDrawableElementCommand}" />
+            <i:InvokeCommandAction Command="{Binding DeleteDrawableElementCommand}" />
         </i:KeyTrigger>
         <i:KeyTrigger Key="OemCloseBrackets" SourceObject="{Binding ElementName=zoomPanControl}">
             <i:InvokeCommandAction Command="{Binding PreviewKeyDownCommand}" CommandParameter="]" />
@@ -265,7 +265,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
         </Style>
     </Page.Resources>
 
-    <Grid Margin="5,5,10,5" DataContext="{Binding MainVM}">
+    <Grid Margin="5,5,10,5">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -439,32 +439,32 @@ To="#00FFFFFF" Duration="0:0:0.3" />
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                 <AdornerDecorator>
                     <rc:PolyCanvas x:Name="mainCanvas"
-                                   Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                   Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                                   Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                                   Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                                    Margin="0,0,0,0"
                                    Background="Transparent"
-                                   ChildrenCollection="{Binding DrawableCollection}"
+                                   ChildrenCollection="{Binding MainVM.DrawableCollection}"
                                    ClipToBounds="False"
                                    IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />
                 </AdornerDecorator>
 
 
 
-                <Canvas Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                        Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                <Canvas Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                        Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                         Panel.ZIndex="-1"
                         IsHitTestVisible="False">
 
                     <Border x:Name="DupCuttingMatBounds"
-                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                            Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="20"
                             IsHitTestVisible="False" Opacity="0">
 
                         <svgc:SvgCanvas x:Name="DupCuttingMat"
-                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
-                                        Source="{Binding CuttingMat.QualifiedSVGSource}">
+                                        HorizontalAlignment="{Binding MainVM.CuttingMat.SelectedHorizontalAlignment}"
+                                        VerticalAlignment="{Binding MainVM.CuttingMat.SelectedVerticalAlignment}"
+                                        Source="{Binding MainVM.CuttingMat.QualifiedSVGSource}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
@@ -475,15 +475,15 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
                     </Border>
                     <Border x:Name="CuttingMatBounds"
-                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                            Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                             Background="{Binding CanvasThemeColor}" BorderBrush="#858585" BorderThickness="1"
                             ClipToBounds="True" CornerRadius="0,0,0,0">
                         <svgc:SvgCanvas x:Name="CuttingMat" Margin="-1"
-                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
+                                        HorizontalAlignment="{Binding MainVM.CuttingMat.SelectedHorizontalAlignment}"
+                                        VerticalAlignment="{Binding MainVM.CuttingMat.SelectedVerticalAlignment}"
                                         EnsureViewboxSize="False"
-                                        Source="{Binding CuttingMat.QualifiedSVGSource}"
+                                        Source="{Binding MainVM.CuttingMat.QualifiedSVGSource}"
                                         Visibility="{Binding IsChecked, ElementName=CuttingMatVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
@@ -496,17 +496,17 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                     </Border>
 
 
-                    <!--  Fill the offset outside space  --><!--
+                    <!--  Fill the offset outside space  -->
                     <Path Canvas.Left="0" Canvas.Bottom="0"
                           ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
                           Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Path.Data>
                             <CombinedGeometry GeometryCombineMode="Xor">
                                 <CombinedGeometry.Geometry1>
-                                    <RectangleGeometry Rect="{Binding Printer.BedRect}" />
+                                    <RectangleGeometry Rect="{Binding MainVM.Printer.BedRect}" />
                                 </CombinedGeometry.Geometry1>
                                 <CombinedGeometry.Geometry2>
-                                    <RectangleGeometry Rect="{Binding Printer.WorkingRect}" />
+                                    <RectangleGeometry Rect="{Binding MainVM.Printer.WorkingRect}" />
                                 </CombinedGeometry.Geometry2>
                             </CombinedGeometry>
                         </Path.Data>
@@ -515,7 +515,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                 <GradientStop Offset="0.5" Color="#30FFFFFF" />
                                 <GradientStop Offset="0.5" Color="#40FFFFFF" />
                             </LinearGradientBrush>
-                            --><!--<SolidColorBrush Color="#40000000"/>--><!--
+                            <!--<SolidColorBrush Color="#40000000"/>-->
                         </Path.Fill>
                         <Path.Stroke>
                             <SolidColorBrush Color="Transparent" />
@@ -528,7 +528,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                         <Path.LayoutTransform>
                             <ScaleTransform ScaleY="-1" />
                         </Path.LayoutTransform>
-                    </Path>-->
+                    </Path>
 
                 </Canvas>
 
@@ -604,7 +604,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                         Orientation="Horizontal">
 
                                 <ui:Button Margin="5" Padding="6"
-                                           Command="{Binding BrowseSVGCommand}">
+                                           Command="{Binding MainVM.BrowseSVGCommand}">
                                     <ui:SymbolIcon Symbol="Add12" />
                                 </ui:Button>
                                 <TextBlock Text="Import SVG"
@@ -616,7 +616,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                           CanContentScroll="True" VerticalScrollBarVisibility="Visible">
                                 <ui:ListView x:Name="FilesList"
                                              VerticalAlignment="Top"
-                                             ItemsSource="{Binding SVGFiles}">
+                                             ItemsSource="{Binding MainVM.SVGFiles}">
                                     <ui:ListView.ItemContainerStyle>
                                         <Style TargetType="ListViewItem">
                                             <Setter Property="Template">
@@ -804,7 +804,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                             <ScrollViewer Grid.Row="1"
                                           Margin="-14,00,-14,0" Padding="25,0,25,0"
                                           CanContentScroll="True"
-                                          IsEnabled="{Binding SelectedDrawable, Converter={StaticResource NullToBoolConverter}}"
+                                          IsEnabled="{Binding MainVM.SelectedDrawable, Converter={StaticResource NullToBoolConverter}}"
                                           VerticalScrollBarVisibility="Visible">
                                 <DockPanel>
 
@@ -844,26 +844,26 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                     <Label Content="W"
                                                            Grid.Row="0"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.Width, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Width, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="0" Grid.Column="1"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="H"
                                                            Grid.Row="0" Grid.Column="3"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.Height, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Height, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="0" Grid.Column="4"
                                                                 ClearButtonEnabled="False" />
 
                                                     <Label Content="X"
                                                            Grid.Row="2"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="2" Grid.Column="1"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="Y"
                                                            Grid.Row="2" Grid.Column="3"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding SelectedDrawable.DrawableElement.Parent.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="2" Grid.Column="4"
                                                                 ClearButtonEnabled="False" />
 
@@ -873,7 +873,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                     <ui:NumberBox Grid.Row="4" Grid.Column="1"
                                                                   AcceptsReturn="False" ClearButtonEnabled="False" LostFocus="NumberBox_LostFocus"
                                                                   Maximum="360" Minimum="-360" SpinButtonPlacementMode="Compact"
-                                                                  Value="{Binding SelectedDrawable.DrawableElement.Parent.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                                  Value="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                                                     <ui:Button Grid.Row="4" Grid.Column="4"
                                                                Width="50"
@@ -918,7 +918,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                          Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
                                                          FlowDirection="RightToLeft" IsExpanded="True"
                                                          Style="{StaticResource CustomCardExpanderStyle}"
-                                                         Visibility="{Binding SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Hidden}">
+                                                         Visibility="{Binding MainVM.SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Hidden}">
                                             <ui:CardExpander.Header>
                                                 <Grid Margin="10,0" FlowDirection="LeftToRight">
 
@@ -947,7 +947,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                               Background="Transparent"
                                                               ItemTemplate="{DynamicResource FontTemplate}"
                                                               ScrollViewer.VerticalScrollBarVisibility="Visible"
-                                                              SelectedValue="{Binding SelectedDrawable.DrawableElement.(TextBox.FontFamily), Mode=TwoWay}">
+                                                              SelectedValue="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontFamily), Mode=TwoWay}">
                                                         <ComboBox.Resources>
 
                                                             <CollectionViewSource x:Key="myFonts" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}">
@@ -1005,7 +1005,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                     </ComboBox>
 
                                                     <ui:SymbolIcon Symbol="TextFontSize24" Grid.Column="1" Grid.Row="0" FontSize="16" HorizontalAlignment="Right"/>
-                                                    <ComboBox Text="{Binding SelectedDrawable.DrawableElement.(TextBox.FontSize), Mode=TwoWay}"
+                                                    <ComboBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontSize), Mode=TwoWay}"
                                                               Grid.Row="0" Grid.Column="3"
                                                               Width="80"
                                                               Padding="7" HorizontalAlignment="Right"
@@ -1117,13 +1117,13 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         </Grid.ColumnDefinitions>
                                                         <ComboBox Grid.Column="0"
                                                                   Background="Transparent" DisplayMemberPath="Name"
-                                                                  ItemsSource="{Binding Printers}"
-                                                                  SelectedItem="{Binding Printer}" />
+                                                                  ItemsSource="{Binding MainVM.Printers}"
+                                                                  SelectedItem="{Binding MainVM.Printer}" />
                                                         <ui:Button Grid.Column="1"
                                                                    Width="25" Height="35"
                                                                    Margin="-55,0,-10,0" Padding="0"
                                                                    Background="Transparent" BorderBrush="Transparent"
-                                                                   Command="{Binding SavePrinterCommand}"
+                                                                   Command="{Binding MainVM.SavePrinterCommand}"
                                                                    CommandParameter="Ender 3 S1">
                                                             <ui:SymbolIcon Margin="0" Symbol="Save24" />
                                                         </ui:Button>
@@ -1155,14 +1155,14 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                     <Label Content="W"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
                                                     <ui:TextBox x:Name="canvasW"
-                                                                Text="{Binding Printer.BedWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                                Text="{Binding MainVM.Printer.BedWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Column="1"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="H"
                                                            Grid.Row="0" Grid.Column="3"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
                                                     <ui:TextBox x:Name="canvasH"
-                                                                Text="{Binding Printer.BedHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                                Text="{Binding MainVM.Printer.BedHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="0" Grid.Column="4"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="mm"
@@ -1236,26 +1236,26 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
                                                     <Label Content="X"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Column="1"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="Y"
                                                            Grid.Row="0" Grid.Column="3"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="0" Grid.Column="4"
                                                                 ClearButtonEnabled="False" />
 
                                                     <Label Content="W"
                                                            Grid.Row="2"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="2" Grid.Column="1"
                                                                 ClearButtonEnabled="False" />
                                                     <Label Content="H"
                                                            Grid.Row="2" Grid.Column="3"
                                                            Padding="1,2,0,0" VerticalAlignment="Center" />
-                                                    <ui:TextBox Text="{Binding Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                    <ui:TextBox Text="{Binding MainVM.Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                                 Grid.Row="2" Grid.Column="4"
                                                                 ClearButtonEnabled="False" />
 
@@ -1347,13 +1347,13 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <ComboBox Grid.Column="0"
                                                                   Padding="10,8,30,8"
                                                                   Background="Transparent" DisplayMemberPath="DisplayName"
-                                                                  ItemsSource="{Binding CuttingMats}"
-                                                                  SelectedItem="{Binding CuttingMat}" />
+                                                                  ItemsSource="{Binding MainVM.CuttingMats}"
+                                                                  SelectedItem="{Binding MainVM.CuttingMat}" />
                                                         <ui:Button Grid.Column="1"
                                                                    Width="25" Height="35"
                                                                    Margin="-55,0,-10,0" Padding="0"
                                                                    Background="Transparent" BorderBrush="Transparent"
-                                                                   Command="{Binding SaveCuttingMatCommand}"
+                                                                   Command="{Binding MainVM.SaveCuttingMatCommand}"
                                                                    CommandParameter="Cricut StandardGrip 12''">
                                                             <ui:SymbolIcon Margin="0" Symbol="Save24" />
                                                         </ui:Button>
@@ -1377,13 +1377,13 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <RowDefinition Height="5" />
                                                         <RowDefinition />
                                                     </Grid.RowDefinitions>
-                                                    <ComboBox ItemsSource="{Binding CuttingMat.VerticalAlignment}"
+                                                    <ComboBox ItemsSource="{Binding MainVM.CuttingMat.VerticalAlignment}"
                                                               SelectedIndex="0"
-                                                              SelectedItem="{Binding CuttingMat.SelectedVerticalAlignment, Mode=TwoWay}" />
+                                                              SelectedItem="{Binding MainVM.CuttingMat.SelectedVerticalAlignment, Mode=TwoWay}" />
                                                     <ComboBox Grid.Column="2"
-                                                              ItemsSource="{Binding CuttingMat.HorizontalAlignment}"
+                                                              ItemsSource="{Binding MainVM.CuttingMat.HorizontalAlignment}"
                                                               SelectedIndex="0"
-                                                              SelectedItem="{Binding CuttingMat.SelectedHorizontalAlignment, Mode=TwoWay}" />
+                                                              SelectedItem="{Binding MainVM.CuttingMat.SelectedHorizontalAlignment, Mode=TwoWay}" />
                                                 </Grid>
 
                                                 <Grid Margin="0,10,0,0">
@@ -1402,9 +1402,9 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
                                                     <ComboBox x:Name="Rotation"
                                                               Grid.Column="2"
-                                                              ItemsSource="{Binding CuttingMat.Rotation}"
+                                                              ItemsSource="{Binding MainVM.CuttingMat.Rotation}"
                                                               SelectedIndex="0"
-                                                              SelectedItem="{Binding CuttingMat.SelectedRotation}">
+                                                              SelectedItem="{Binding MainVM.CuttingMat.SelectedRotation}">
 
                                                         <ComboBox.ItemTemplate>
                                                             <DataTemplate>
@@ -1455,7 +1455,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             <RadioButton x:Name="modeCut"
                                                          Width="80" Height="60"
                                                          Margin="0,0,20,0"
-                                                         IsChecked="{Binding Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
+                                                         IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
                                                          Style="{StaticResource {x:Type ToggleButton}}">
                                                 <StackPanel>
                                                     <ui:SymbolIcon Margin="0,6,0,0" Symbol="CalligraphyPen20" />
@@ -1475,7 +1475,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             <RadioButton x:Name="modeDraw"
                                                          Width="80" Height="60"
                                                          d:IsChecked="True"
-                                                         IsChecked="{Binding Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
+                                                         IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
                                                          Style="{StaticResource {x:Type ToggleButton}}">
                                                 <StackPanel>
                                                     <ui:SymbolIcon Margin="0,6,0,0" Symbol="Pen20" />
@@ -1505,11 +1505,11 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             <Slider x:Name="travelSpeed"
                                                     Margin="0,5,0,0" VerticalAlignment="Center"
                                                     IsSnapToTickEnabled="True" Maximum="100" Minimum="10" TickFrequency="1"
-                                                    Value="{Binding Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                             <ui:NumberBox Grid.Column="2"
                                                           Background="Transparent" BorderBrush="Transparent" ClearButtonEnabled="False"
                                                           IsReadOnly="True" SpinButtonPlacementMode="Hidden"
-                                                          Value="{Binding Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                          Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                             <Label Content="mm/s"
                                                    Grid.Column="2"
                                                    Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1537,11 +1537,11 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             <Slider x:Name="drawSpeed"
                                                     Margin="0,5,0,0" VerticalAlignment="Center"
                                                     IsSnapToTickEnabled="True" Maximum="60" Minimum="5" TickFrequency="1"
-                                                    Value="{Binding Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                             <ui:NumberBox Grid.Column="2"
                                                           Background="Transparent" BorderBrush="Transparent" ClearButtonEnabled="False"
                                                           IsReadOnly="True" SpinButtonPlacementMode="Hidden"
-                                                          Value="{Binding Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                          Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                                             <Label Content="mm/s"
                                                    Grid.Column="2"
                                                    Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1569,7 +1569,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             </Grid.ToolTip>
                                             <Label Content="Draw"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:TextBox Text="{Binding Configuration.WorkZ}"
+                                            <ui:TextBox Text="{Binding MainVM.Configuration.WorkZ}"
                                                         Grid.Column="2"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="mm"
@@ -1581,7 +1581,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                             <Label Content="Travel"
                                                    Grid.Column="4"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:TextBox Text="{Binding Configuration.TravelZ}"
+                                            <ui:TextBox Text="{Binding MainVM.Configuration.TravelZ}"
                                                         Grid.Column="6"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="mm"
@@ -1628,7 +1628,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.Tolerance}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.Tolerance}"
                                                                     Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
                                                         <Label Content="mm"
@@ -1640,14 +1640,14 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <CheckBox x:Name="extractSingleColor"
                                                                   Content="Extract one colour"
                                                                   Grid.Row="2"
-                                                                  IsChecked="{Binding Configuration.ExtractOneColour, Mode=TwoWay}">
+                                                                  IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
                                                             <CheckBox.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Processes only objects with the specified colour, and ignores all others.
                                                                 </TextBlock>
                                                             </CheckBox.ToolTip>
                                                         </CheckBox>
-                                                        <ui:TextBox Text="{Binding Configuration.ExtractionColor, Mode=TwoWay}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
 
@@ -1694,7 +1694,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                     Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.CuttingConfig.ToolDiameter}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.CuttingConfig.ToolDiameter}"
                                                                     Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
                                                         <Label Content="mm"
@@ -1712,7 +1712,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                     Recommended value ~1mm</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.CuttingConfig.Overcut}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.CuttingConfig.Overcut}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
                                                         <Label Content="mm"
@@ -1724,7 +1724,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <Label Content="Cutting order"
                                                                Grid.Row="4"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                               IsEnabled="{Binding MainVM.UsingGCodePlot}">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     For each object, whether outer features or inner features are cut first.
@@ -1733,8 +1733,8 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         </Label>
 
                                                         <ComboBox Grid.Row="4" Grid.Column="2"
-                                                                  IsEnabled="{Binding UsingGCodePlot}"
-                                                                  SelectedIndex="{Binding Configuration.InsideOutCuttingOrder}">
+                                                                  IsEnabled="{Binding MainVM.UsingGCodePlot}"
+                                                                  SelectedIndex="{Binding MainVM.Configuration.InsideOutCuttingOrder}">
                                                             <ComboBoxItem Content="Outer First" />
                                                             <ComboBoxItem Content="Inner First" />
 
@@ -1779,7 +1779,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <Label Content="Drawing Angle"
                                                                Grid.Row="0"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                               IsEnabled="{Binding MainVM.UsingGCodePlot}">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Specifies the preferred drawing direction for shape outlines.<LineBreak /><LineBreak />
@@ -1787,10 +1787,10 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                             </Label.ToolTip>
                                                         </Label>
 
-                                                        <ui:TextBox Text="{Binding Configuration.DrawingConfig.DrawingDirection, Converter={StaticResource NullableIntConverter}}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.DrawingDirection, Converter={StaticResource NullableIntConverter}}"
                                                                     Grid.Row="0" Grid.Column="1"
                                                                     ClearButtonEnabled="True"
-                                                                    IsEnabled="{Binding UsingGCodePlot}" />
+                                                                    IsEnabled="{Binding MainVM.UsingGCodePlot}" />
                                                         <Label Content="°"
                                                                Grid.Row="0" Grid.Column="1"
                                                                Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1800,17 +1800,17 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <Label Content="Optimisation Timeout"
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                               IsEnabled="{Binding MainVM.UsingGCodePlot}">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     How long to allow GCodePlot to spend optimising travel paths and drawing directions.
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.OptimisationTimeout}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.OptimisationTimeout}"
                                                                     Grid.Row="2" Grid.Column="1"
                                                                     ClearButtonEnabled="False"
-                                                                    IsEnabled="{Binding UsingGCodePlot}" />
+                                                                    IsEnabled="{Binding MainVM.UsingGCodePlot}" />
                                                         <Label Content="sec"
                                                                Grid.Row="2" Grid.Column="1"
                                                                Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1820,8 +1820,8 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <CheckBox x:Name="keepOutlines"
                                                                   Content="Keep Outlines"
                                                                   Grid.Row="4"
-                                                                  IsChecked="{Binding Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
-                                                                  IsEnabled="{Binding UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}">
+                                                                  IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding MainVM.UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}">
                                                             <CheckBox.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Whether shape outlines should be drawn, or ignored.<LineBreak /><LineBreak />
@@ -1867,7 +1867,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                             <RowDefinition Height="5" />
                                                             <RowDefinition />
                                                         </Grid.RowDefinitions>
-                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}">
+                                                        <CheckBox Content="Enable Crosshatching" IsChecked="{Binding MainVM.Configuration.DrawingConfig.CrossHatch, Mode=TwoWay}">
                                                             <CheckBox.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Add a second shading pass at 90° to the first, creating a cross-hatch pattern.
@@ -1878,7 +1878,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         <Label Content="Shading Threshold"
                                                                Grid.Row="2"
                                                                Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
-                                                               IsEnabled="{Binding UsingGCodePlot}">
+                                                               IsEnabled="{Binding MainVM.UsingGCodePlot}">
                                                             <Label.ToolTip>
                                                                 <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                                                     Range = 0 to 1<LineBreak /><LineBreak />
@@ -1887,9 +1887,9 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                         </Label>
                                                         <ui:NumberBox Grid.Row="2" Grid.Column="1"
                                                                       ClearButtonEnabled="False"
-                                                                      IsEnabled="{Binding UsingGCodePlot}"
+                                                                      IsEnabled="{Binding MainVM.UsingGCodePlot}"
                                                                       LargeChange="0.1" MaxDecimalPlaces="3" Maximum="1.0" Minimum="0.0" SmallChange="0.05"
-                                                                      Value="{Binding Configuration.DrawingConfig.ShadingThreshold}" />
+                                                                      Value="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold}" />
 
                                                         <Label Content="Lightest shading spacing"
                                                                Grid.Row="4"
@@ -1900,10 +1900,10 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.DrawingConfig.MaxStrokeWidth}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth}"
                                                                     Grid.Row="4" Grid.Column="1"
                                                                     ClearButtonEnabled="False"
-                                                                    IsEnabled="{Binding UsingGCodePlot}" />
+                                                                    IsEnabled="{Binding MainVM.UsingGCodePlot}" />
                                                         <Label Content="mm"
                                                                Grid.Row="4" Grid.Column="1"
                                                                Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
@@ -1919,7 +1919,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                 </TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.DrawingConfig.MinStrokeWidth}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth}"
                                                                     Grid.Row="6" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
                                                         <Label Content="mm"
@@ -1937,7 +1937,7 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                                                                     0° represents East, with positive values rotating counterclockwise.</TextBlock>
                                                             </Label.ToolTip>
                                                         </Label>
-                                                        <ui:TextBox Text="{Binding Configuration.DrawingConfig.ShadingAngle}"
+                                                        <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle}"
                                                                     Grid.Row="8" Grid.Column="1"
                                                                     ClearButtonEnabled="False" />
                                                         <Label Content="°"

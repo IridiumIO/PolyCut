@@ -10,6 +10,7 @@ Imports Svg
 Imports System.Windows.Controls.Primitives
 Imports PolyCut.Shared
 Imports WPF
+Imports PolyCut.RichCanvas
 Class SVGPage
 
     Public ReadOnly Property MainViewModel As MainViewModel
@@ -28,10 +29,14 @@ Class SVGPage
         AddHandler MainViewModel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler MainViewModel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler MainViewModel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
-        'AddHandler viewmodel.PropertyChanged, AddressOf MainVMPropertyChangedHandler
         AddHandler zoomPanControl.DrawingManager.DrawingFinished, AddressOf DrawingFinishedHandler
 
+        AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
         Transform()
+    End Sub
+
+    Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
+        SVGPageViewModel.OnDesignerItemDecoratorCurrentSelectedChanged(DesignerItemDecorator.CurrentSelected)
     End Sub
 
     Private Sub DrawingFinishedHandler(sender As Object, shape As UIElement)
@@ -63,13 +68,13 @@ Class SVGPage
         CuttingMat_RenderTransform.Y = ret.Item2
     End Sub
 
-    Shared Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
+    Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
         Dim x As Double = 0
         Dim y As Double = 0
 
         'TODO
-        'Dim CuttingMatWidth = MainViewModel.CuttingMat.Width 
-        'Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
+        Dim CuttingMatWidth = MainViewModel.CuttingMat.Width
+        Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
 
         Select Case rotation
             Case 0
@@ -79,39 +84,39 @@ Class SVGPage
                 Select Case alignmentV
                     Case "Top"
                         If alignmentH = "Left" Then
-                            x = 355.6
+                            x = CuttingMatHeight
                         ElseIf alignmentH = "Right" Then
-                            x = 330.2
+                            x = CuttingMatWidth
                         End If
                     Case "Bottom"
                         If alignmentH = "Left" Then
-                            x = 355.6
+                            x = CuttingMatHeight
                             y = 25.4
                         ElseIf alignmentH = "Right" Then
-                            x = 330.2
+                            x = CuttingMatWidth
                             y = 25.4
                         End If
                 End Select
             Case 180
                 ' 180 degrees rotation
-                x = 330.2
-                y = 355.6
+                x = CuttingMatWidth
+                y = CuttingMatHeight
             Case 270
                 ' 270 degrees rotation
                 Select Case alignmentV
                     Case "Top"
                         If alignmentH = "Left" Then
-                            y = 330.2
+                            y = CuttingMatWidth
                         ElseIf alignmentH = "Right" Then
                             x = -25.4
-                            y = 330.2
+                            y = CuttingMatWidth
                         End If
                     Case "Bottom"
                         If alignmentH = "Left" Then
-                            y = 355.6
+                            y = CuttingMatHeight
                         ElseIf alignmentH = "Right" Then
                             x = -25.4
-                            y = 355.6
+                            y = CuttingMatHeight
                         End If
                 End Select
         End Select
@@ -169,7 +174,7 @@ Class SVGPage
         StartPos = e.GetPosition(mainCanvas)
 
         Debug.WriteLine(MainViewModel.DrawableCollection.Count)
-        If MainViewModel.CanvasToolMode <> CanvasMode.Selection Then
+        If SVGPageViewModel.CanvasToolMode <> CanvasMode.Selection Then
             For Each child In MainViewModel.DrawableCollection
                 If TypeOf child.DrawableElement.Parent Is ContentControl Then
                     child.IsSelected = False
@@ -193,7 +198,7 @@ Class SVGPage
             .RoutedEvent = Mouse.MouseDownEvent,
             .Source = mainCanvas
         })
-        MainViewModel.CanvasToolMode = CanvasMode.Selection
+        SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 
     Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)

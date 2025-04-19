@@ -1,0 +1,53 @@
+﻿<StackPanel x:Class="ToolSelectorPane"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PolyCut"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+             d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
+             d:DesignHeight="450" 
+             mc:Ignorable="d" >
+
+            <RadioButton Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Filled="True" Symbol="Cursor24" />
+            </RadioButton>
+            <Separator Margin="0,0,0,0" />
+
+            <RadioButton Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Path}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Filled="False" Symbol="Pen20" />
+            </RadioButton>
+            <RadioButton Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Line}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Filled="True" Symbol="Line20" />
+            </RadioButton>
+            <RadioButton Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Rectangle}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Symbol="RectangleLandscape12" />
+            </RadioButton>
+            <RadioButton Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Ellipse}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Symbol="Circle12" />
+            </RadioButton>
+            <RadioButton x:Name="CanvasTextTool"
+                         Width="35" Height="30"
+                         Margin="0,5" Padding="5"
+                         IsChecked="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Text}, Mode=TwoWay}"
+                         Style="{StaticResource MyRadioButtonStyle}">
+                <ui:SymbolIcon Symbol="Text12" />
+            </RadioButton>
+      
+</StackPanel>

@@ -30,7 +30,8 @@ Class SVGPage
         AddHandler MainViewModel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler MainViewModel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler zoomPanControl.DrawingManager.DrawingFinished, AddressOf DrawingFinishedHandler
-
+        AddHandler MainSidebar.CuttingMatAlignmentMouseEnter, AddressOf HoverAlignment
+        AddHandler MainSidebar.CuttingMatAlignmentMouseLeave, AddressOf HoverAlignment
         AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
         Transform()
     End Sub
@@ -128,7 +129,7 @@ Class SVGPage
 
     Dim translation As Point
 
-    Private Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles cuttingMat_AlignmentBoxes.MouseEnter, cuttingMat_AlignmentBoxes.MouseLeave
+    Private Sub HoverAlignment(sender As Object, e As MouseEventArgs)
 
         If e.RoutedEvent Is MouseEnterEvent Then
 
@@ -201,19 +202,4 @@ Class SVGPage
         SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 
-    Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)
-        'Need to explicitly call the `Enter` keypress as pressing `Tab` doesn't commit the new number before switching focus
-
-        Dim numberBox As WPF.Ui.Controls.NumberBox = TryCast(sender, WPF.Ui.Controls.NumberBox)
-        If numberBox IsNot Nothing Then
-
-            numberBox.RaiseEvent(New KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(numberBox), 0, Key.Enter) With {
-            .RoutedEvent = Keyboard.KeyDownEvent
-        })
-
-
-            Dim bindingExpression = numberBox.GetBindingExpression(WPF.Ui.Controls.NumberBox.ValueProperty)
-            bindingExpression?.UpdateSource()
-        End If
-    End Sub
 End Class

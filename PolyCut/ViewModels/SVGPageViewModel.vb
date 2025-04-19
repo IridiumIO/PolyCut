@@ -29,6 +29,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         Set(value As CanvasMode)
             _CanvasToolMode = value
             OnPropertyChanged(NameOf(CanvasToolMode))
+            OnPropertyChanged(NameOf(CanvasToolModeIsText))
             If value <> CanvasMode.Selection Then
                 For Each child In MainVM.DrawableCollection
                     child.IsSelected = False
@@ -39,6 +40,11 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         End Set
     End Property
 
+    Public ReadOnly Property CanvasToolModeIsText As Boolean
+        Get
+            Return CanvasToolMode = CanvasMode.Text
+        End Get
+    End Property
 
     Private _CanvasFontFamily As New FontFamily("Calibri")
     Public Property CanvasFontFamily As FontFamily

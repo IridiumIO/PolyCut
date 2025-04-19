@@ -253,8 +253,6 @@ Public Class MainViewModel : Inherits ObservableObject
             .Height = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedHeight),
             .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)}
 
-        outDoc.Children.AddRange(coll.Select(Function(f) f.GetTransformedSVGElement))
-
         For Each drawableL In DrawableCollection
 
             Dim finalElement = drawableL?.GetTransformedSVGElement

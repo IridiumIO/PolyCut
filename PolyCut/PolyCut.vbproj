@@ -10,6 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Resources\Controls\**" />
+    <EmbeddedResource Remove="Resources\Controls\**" />
+    <None Remove="Resources\Controls\**" />
+    <Page Remove="Resources\Controls\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Resources\banner_dark.svg" />
     <None Remove="Resources\banner_light.svg" />
     <None Remove="Resources\CuttingMat.Dark.svg" />
@@ -76,10 +83,6 @@
     <Compile Update="Views\SettingsPage.xaml.vb">
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Resources\Controls\" />
   </ItemGroup>
 
 </Project>

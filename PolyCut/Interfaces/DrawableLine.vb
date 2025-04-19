@@ -19,7 +19,8 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
             .StartX = ln.X1,
             .StartY = ln.Y1,
             .EndX = ln.X2,
-            .EndY = ln.Y2}
+            .EndY = ln.Y2,
+            .StrokeWidth = 0.001}
 
 
         Return svgLine

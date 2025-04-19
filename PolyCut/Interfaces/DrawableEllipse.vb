@@ -24,6 +24,7 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
             .FillOpacity = 0.001,
             .Fill = New SvgColourServer(System.Drawing.Color.White),
             .Stroke = New SvgColourServer(System.Drawing.Color.Black),
+            .StrokeWidth = 0.001,
             .StrokeLineCap = SvgStrokeLineCap.Round}
 
         Return svgE

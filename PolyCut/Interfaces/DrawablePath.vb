@@ -18,7 +18,8 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
         Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(ln.Data.ToString())
 
         Dim svgPath As New SvgPath With {
-        .PathData = paths
+        .PathData = paths,
+        .StrokeWidth = 0.001
     }
 
         Return svgPath

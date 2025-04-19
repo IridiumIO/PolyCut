@@ -231,11 +231,13 @@ Public Class ZoomBorder
     Public Async Sub Reset()
         If Child Is Nothing Then Return
 
+        Dim cs = CType(Child, FrameworkElement)
+
         Dim duration As Integer = 200 ' in milliseconds
         Dim frames As Integer = 28
-        Dim deltaScale = (Scale - 1) / frames
-        Dim deltaTX = TranslateTransform.X / frames
-        Dim deltaTY = TranslateTransform.Y / frames
+        Dim deltaScale = (Scale - 2) / frames
+        Dim deltaTX = (TranslateTransform.X + cs.ActualWidth / 2) / frames
+        Dim deltaTY = (TranslateTransform.Y + cs.ActualHeight / 2) / frames
 
         Dim frame As Integer = 0
         While frame < frames
@@ -249,9 +251,9 @@ Public Class ZoomBorder
             frame += 1
         End While
 
-        Scale = 1
-        TranslateTransform.X = 0.0
-        TranslateTransform.Y = 0.0
+        Scale = 2
+        TranslateTransform.X = -cs.ActualWidth / 2
+        TranslateTransform.Y = -cs.ActualHeight / 2
 
     End Sub
 

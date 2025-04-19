@@ -273,6 +273,8 @@ Public Class MainViewModel : Inherits ObservableObject
 
     End Function
 
-
+    Public Sub NotifyPropertyChanged(propName As String)
+        OnPropertyChanged(propName)
+    End Sub
 
 End Class

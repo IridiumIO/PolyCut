@@ -34,7 +34,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
                     child.IsSelected = False
 
                 Next
-                OnPropertyChanged(NameOf(MainVM.SelectedDrawable))
+                MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
             End If
         End Set
     End Property
@@ -92,7 +92,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
             End If
         Next
 
-        OnPropertyChanged(NameOf(MainVM.SelectedDrawable))
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
 
     End Sub
 
@@ -131,8 +131,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
                 End If
             Next
         Next
-
-        OnPropertyChanged(NameOf(MainVM.SelectedDrawable))
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
 
     End Sub
 

@@ -164,7 +164,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             End If
         Next
 
-        ViewModel.GCodePaths = gc.Paths
+        ViewModel.GCodePaths = New ObservableCollection(Of Line)(gc.Paths)
         Return 0
     End Function
 

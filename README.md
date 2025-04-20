@@ -1,6 +1,6 @@
 <p align="center"><img src="https://raw.githubusercontent.com/IridiumIO/PolyCut/ac993f8824416a01a3d201cd3b27ee47d56aceee/PolyCut/Resources/banner_light.svg" width="450"></p>
 
-<p align="center"><b>If you've already got a 3D Printer (or any machine that can process GCode), you don't need to buy a separate Cricut or Silhouette machine.</b></p> 
+<p align="center"><b>If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut or Silhouette machine.</b></p> 
 
 <p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives/foil stampers or other tools attached. It also directly supports uploading to a networked 3D Printer via Klipper. 
 </p> 
@@ -8,7 +8,7 @@
 &nbsp;
 
 <p align="center">
-  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/4e607626-e387-4719-8142-c19fb7bac342" width="1000"/>
+  <img src="https://github.com/user-attachments/assets/0e6ff91c-14cd-447d-adea-5113609f091e" width="1000"/>
   </br> 
 </p>
 
@@ -20,13 +20,14 @@
 
 ### Drawing Canvas:
 - Import multiple SVGs, arrange and scale them (currently you need to have them grouped how you want in advance as groups can't be separated yet) with a resizable/rotatable cutting mat to help line things up
-    - (Technically) support for any size 3D printer bed since all we really need is the bed dimensions; right now the default is named `Ender 3 S1` at 235x235mm but you can adjust and save the dimensions; proper adding/editing names is planned.
-- Draw basic shapes (line, ellipse, rectangle) and text elements directly onto the canvas (best used for creating cutout lines for easier weeding of vinyl)
+    - Support for any size 3D printer bed since all we really need is the bed dimensions; right now the default is named `Ender 3 S1` at 235x235mm but you can adjust and save the dimensions to anything; proper adding/editing names is planned.
+- Draw basic shapes (line, ellipse, rectangle, path) and text elements directly onto the canvas (best used for creating cutout lines for easier weeding of vinyl)
+- Objects can be resized and re-positioned as needed. I do however recommend using a program such as `Inkscape` to actually create your SVGs exactly how you want them, and then using PolyCut as the slicer
 
 ### Tool Modes:
-- Cutting mode - generates outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter); importantly, has configurable swivels at sharp corners to account for the blade diameter
+- Cutting mode - generates outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter); importantly, has configurable swivel offsets that account for the blade's diameter, to ensure sharp corners remain sharp.
 - Drawing mode - generate paths and fills in a hatch / crosshatch pattern
-- (More modes planned)
+- (More modes planned, though editing the settings of the above two modes can allow for foiling and embossing as well)
 
 ### Generators:
 There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`

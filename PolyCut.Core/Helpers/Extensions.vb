@@ -43,6 +43,10 @@ Partial Public Module Extensions
         Return New Point(line.X2, line.Y2)
     End Function
 
+    <Extension>
+    Public Function MidPoint(line As Line) As Point
+        Return New Point((line.X1 + line.X2) / 2, (line.Y1 + line.Y2) / 2)
+    End Function
 
     <Extension>
     Public Function TransformLine(line As Line, transforms As System.Drawing.Drawing2D.Matrix) As Line
@@ -100,7 +104,7 @@ Partial Public Module Extensions
     End Function
 
     <Extension>
-    Public Function GetIntersectionPointWith(line1 As Line, line2 As Line) As Nullable(Of Point)
+    Public Function GetIntersectionPointWith(line1 As Line, line2 As Line, Optional IncludeCoincidentIntersection As Boolean = False) As Nullable(Of Point)
         Dim Ax As Double = line1.X1
         Dim Ay As Double = line1.Y1
         Dim Bx As Double = line1.X2
@@ -111,30 +115,74 @@ Partial Public Module Extensions
         Dim Dx As Double = line2.X2
         Dim Dy As Double = line2.Y2
 
+        Const Epsilon As Double = 0.000000001
         Dim denominator As Double = (Dy - Cy) * (Bx - Ax) - (Dx - Cx) * (By - Ay)
         Dim numerator1 As Double = (Dx - Cx) * (Ay - Cy) - (Dy - Cy) * (Ax - Cx)
         Dim numerator2 As Double = (Cy - Ay) * (Ax - Bx) - (Cx - Ax) * (Ay - By)
 
-        If denominator = 0 Then Return Nothing
+        If Math.Abs(denominator) < Epsilon Then
+            ' Lines are parallel or coincident
+            If IncludeCoincidentIntersection AndAlso Math.Abs(numerator1) < Epsilon AndAlso Math.Abs(numerator2) < Epsilon Then
+                ' Return any point on the coincident lines (e.g., the start point of the first line)
+                Return New Point(Ax, Ay)
+            End If
+            Return Nothing
+        End If
 
         Dim t = numerator1 / denominator
         Dim u = numerator2 / denominator
 
-        If t < 0 OrElse t > 1 OrElse u < 0 OrElse u > 1 Then Return Nothing
+        If t < -Epsilon OrElse t > 1 + Epsilon OrElse u < -Epsilon OrElse u > 1 + Epsilon Then
+            Return Nothing
+        End If
 
-        Return New Point(Ax, Ay).Lerp(New Point(Bx, By), t)
-
+        ' Calculate the intersection point
+        Return New Point(Ax + t * (Bx - Ax), Ay + t * (By - Ay))
     End Function
 
     <Extension>
-    Public Function IntersectsWithShape(line As Line, shapeBoundaries As List(Of Line)) As Boolean
+    Public Function IsPointOnLine(point As Point, line As Line) As Boolean
+        Const Epsilon As Double = 0.000000001
+        Dim crossProduct As Double = (point.Y - line.Y1) * (line.X2 - line.X1) - (point.X - line.X1) * (line.Y2 - line.Y1)
+        If Math.Abs(crossProduct) > Epsilon Then Return False
 
-        Dim intersectionPoints As New List(Of Point)
+        Dim dotProduct As Double = (point.X - line.X1) * (line.X2 - line.X1) + (point.Y - line.Y1) * (line.Y2 - line.Y1)
+        If dotProduct < 0 Then Return False
+
+        Dim squaredLength As Double = (line.X2 - line.X1) ^ 2 + (line.Y2 - line.Y1) ^ 2
+        If dotProduct > squaredLength Then Return False
+
+        Return True
+    End Function
+
+    <Extension>
+    Public Function IsLineOnLine(line1 As Line, line2 As Line) As Boolean
+        Return line1.StartPoint.IsPointOnLine(line2) AndAlso line1.EndPoint.IsPointOnLine(line2)
+    End Function
+
+    <Extension>
+    Public Function IsLineOnAnyLine(line As Line, lines As List(Of Line)) As Boolean
+        For Each l In lines
+            If line.IsLineOnLine(l) Then
+                Return True
+            End If
+        Next
+        Return False
+    End Function
+
+    <Extension>
+    Public Function IntersectsWithShape(line As Line, shapeBoundaries As List(Of Line), Optional includeCoincidentPoints As Boolean = False) As Boolean
         For Each segment In shapeBoundaries
-            Dim intersection = line.GetIntersectionPointWith(segment)
+            ' Check for intersection
+            Dim intersection = line.GetIntersectionPointWith(segment, includeCoincidentPoints)
             If intersection IsNot Nothing Then
                 Return True
             End If
+
+            '' Check if the line starts or ends on the boundary
+            'If includeCoincidentPoints AndAlso (line.StartPoint.IsPointOnLine(segment) OrElse line.EndPoint.IsPointOnLine(segment)) Then
+            '    Return True
+            'End If
         Next
 
         Return False
@@ -179,6 +227,32 @@ Partial Public Module Extensions
 
         Return False
     End Function
+
+    <Extension>
+    Public Function IsPointInsideShape(point As Point, shapeBoundaries As List(Of Line), Optional angle As Double = 0, Optional rayLength As Double = 10000) As Boolean
+        ' Define the endpoint of the ray based on the given angle and length
+        Dim endpoint As New Point(point.X + rayLength * Math.Cos(angle), point.Y + rayLength * Math.Sin(angle))
+        Dim intersectionCount As Integer = 0
+
+        ' Loop through each boundary line of the shape
+        For Each line In shapeBoundaries
+            Dim intersection = New Line With {
+            .X1 = point.X,
+            .Y1 = point.Y,
+            .X2 = endpoint.X,
+            .Y2 = endpoint.Y
+        }.GetIntersectionPointWith(line)
+
+            ' If there is an intersection, increment the count
+            If intersection IsNot Nothing Then
+                intersectionCount += 1
+            End If
+        Next
+
+        ' Return true if the intersection count is odd (inside), false if even (outside)
+        Return intersectionCount Mod 2 = 1
+    End Function
+
 
     <Extension>
     Public Function DistanceTo(point1 As Point, point2 As Point) As Double

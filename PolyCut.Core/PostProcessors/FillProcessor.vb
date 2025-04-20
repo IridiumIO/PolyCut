@@ -104,7 +104,7 @@ Public Class FillProcessor : Implements IProcessor
 
 
     <MeasurePerformance>
-    Public Shared Function OptimiseFills(lines As List(Of Line))
+    Public Shared Function OptimiseFills(lines As List(Of Line), geometrybounds As List(Of Line))
 
         Dim fractionalPaths As Integer = 0
 
@@ -120,6 +120,7 @@ Public Class FillProcessor : Implements IProcessor
             Dim nearestLine As Line = Nothing
             Dim nearestDistance As Double = Double.MaxValue
 
+
             For Each line In workingLines
 
                 Dim startDistance As Double = currentPoint.DistanceTo(line.StartPoint)
@@ -131,25 +132,24 @@ Public Class FillProcessor : Implements IProcessor
                 End If
             Next
 
-            If currentPoint.DistanceTo(nearestLine.StartPoint) < currentPoint.DistanceTo(nearestLine.EndPoint) Then
+            ' Determine if nearestLine needs to be reversed
+            Dim isReversed As Boolean = currentPoint.DistanceTo(nearestLine.EndPoint) < currentPoint.DistanceTo(nearestLine.StartPoint)
 
-                If currentPoint.DistanceTo(nearestLine.StartPoint) < 1 Then
-                    Dim nl As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1}
-                    optimisedLines.Add(nl)
-                    fractionalPaths += 1
-                End If
+            ' Create fractional line if needed
+            Dim fractionalLine As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = If(isReversed, nearestLine.X2, nearestLine.X1), .Y2 = If(isReversed, nearestLine.Y2, nearestLine.Y1)}
 
+            If currentPoint.DistanceTo(If(isReversed, nearestLine.EndPoint, nearestLine.StartPoint)) < 1000 AndAlso Not fractionalLine.IntersectsWithShape(geometrybounds) Then
+                optimisedLines.Add(fractionalLine)
+                fractionalPaths += 1
+            End If
+
+            ' Add the nearest line
+            If isReversed Then
+                optimisedLines.Add(New Line With {.X1 = nearestLine.X2, .Y1 = nearestLine.Y2, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1})
+                currentPoint = nearestLine.StartPoint
+            Else
                 optimisedLines.Add(nearestLine)
                 currentPoint = nearestLine.EndPoint
-            Else
-
-                If currentPoint.DistanceTo(nearestLine.EndPoint) < 1 Then
-                    Dim nl As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = nearestLine.X2, .Y2 = nearestLine.Y2}
-                    optimisedLines.Add(nl)
-                    fractionalPaths += 1
-                End If
-                optimisedLines.Add(New Line() With {.X1 = nearestLine.X2, .Y1 = nearestLine.Y2, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1})
-                currentPoint = nearestLine.StartPoint
             End If
 
             workingLines.Remove(nearestLine)
@@ -186,8 +186,9 @@ Public Class FillProcessor : Implements IProcessor
         If cfg.DrawingConfig.CrossHatch Then
             processedLines.AddRange(FillLines(lines, cfg.DrawingConfig.MinStrokeWidth, cfg.DrawingConfig.ShadingAngle + 90))
         End If
-
-        processedLines = OptimiseFills(processedLines)
+        Debug.WriteLine($"{processedLines.Count} fills generated")
+        processedLines = OptimiseFills(processedLines, lines)
+        Debug.WriteLine($"{processedLines.Count} optimised fills generated")
 
         If cfg.DrawingConfig.KeepOutlines Then
             processedLines.InsertRange(0, lines)

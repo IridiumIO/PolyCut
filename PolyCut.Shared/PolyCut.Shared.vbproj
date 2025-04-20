@@ -5,6 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>PolyCut.Shared</RootNamespace>
     <UseWPF>true</UseWPF>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>PolyCut.RichCanvas</RootNamespace>
     <UseWPF>true</UseWPF>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

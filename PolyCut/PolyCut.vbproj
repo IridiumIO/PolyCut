@@ -6,7 +6,11 @@
     <RootNamespace>PolyCut</RootNamespace>
     <UseWPF>true</UseWPF>
     <Company>IridiumIO</Company>
+    <Description>Plotter/Cutter GCode Generator for 3D printers</Description>
+    <Copyright>Copyright © 2025</Copyright>
+    <PackageProjectUrl>https://github.com/IridiumIO/PolyCut/</PackageProjectUrl>
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -84,5 +88,24 @@
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
+  
+  <Target Name="RenamePublishedExe" AfterTargets="Publish" Condition="'$(IsMonolithic)' == 'true'">
+    <Move SourceFiles="$(PublishDir)PolyCut.exe"
+          DestinationFiles="$(PublishDir)PolyCut.mono.exe"/>
 
+  </Target>
+  
+  <PropertyGroup>
+    <FinalPublishDir>$(ProjectDir)bin\publish\FinalOutput\</FinalPublishDir>
+  </PropertyGroup>
+
+  <Target Name="MovePublishedFiles" AfterTargets="Publish">
+    <Message Text="Moving published files to FinalOutput..." Importance="high" />
+    
+    <ItemGroup>
+        <PublishedFiles Include="$(PublishDir)**\*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(PublishedFiles)" DestinationFolder="$(FinalPublishDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

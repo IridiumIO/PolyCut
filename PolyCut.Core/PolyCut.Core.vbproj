@@ -6,6 +6,7 @@
     <RootNamespace>PolyCut.Core</RootNamespace>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU</Platforms>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

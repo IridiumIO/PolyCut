@@ -179,10 +179,10 @@ Partial Public Module Extensions
                 Return True
             End If
 
-            '' Check if the line starts or ends on the boundary
-            'If includeCoincidentPoints AndAlso (line.StartPoint.IsPointOnLine(segment) OrElse line.EndPoint.IsPointOnLine(segment)) Then
-            '    Return True
-            'End If
+            ' Check if the line starts or ends on the boundary
+            If includeCoincidentPoints AndAlso (line.StartPoint.IsPointOnLine(segment) OrElse line.EndPoint.IsPointOnLine(segment)) Then
+                Return True
+            End If
         Next
 
         Return False

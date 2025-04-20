@@ -6,71 +6,45 @@ Imports MeasurePerformance.IL.Weaver
 Public Class FillProcessor : Implements IProcessor
     <MeasurePerformance>
     Public Shared Function FillLines(lines As List(Of Line), density As Double, fillangle As Double) As List(Of Line)
-
-
         Dim fills As New List(Of Line)
 
-        Dim minX As Double = Double.PositiveInfinity
-        Dim minY As Double = Double.PositiveInfinity
-        Dim maxX As Double = Double.NegativeInfinity
-        Dim maxY As Double = Double.NegativeInfinity
+        ' Convert angles to radians
+        Dim traverseAngleRad = Math.PI * fillangle / 180 + (Math.PI / 2)
+        Dim fillAngleRad = Math.PI * fillangle / 180
 
-        For Each line In lines
-            minX = Math.Min(minX, Math.Min(line.X1, line.X2))
-            minY = Math.Min(minY, Math.Min(line.Y1, line.Y2))
-            maxX = Math.Max(maxX, Math.Max(line.X1, line.X2))
-            maxY = Math.Max(maxY, Math.Max(line.Y1, line.Y2))
+        ' Calculate the bounding box of the shape
+        Dim minX = lines.Min(Function(line) Math.Min(line.X1, line.X2))
+        Dim minY = lines.Min(Function(line) Math.Min(line.Y1, line.Y2))
+        Dim maxX = lines.Max(Function(line) Math.Max(line.X1, line.X2))
+        Dim maxY = lines.Max(Function(line) Math.Max(line.Y1, line.Y2))
+        Dim centerX = (minX + maxX) / 2
+        Dim centerY = (minY + maxY) / 2
+
+        ' Calculate the maximum traverse extent
+        Dim maxExtent = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
+        Dim scaleFactor = 10 * Math.Max(maxX - minX, maxY - minY) ' Scale for infinite ray length
+
+        ' Traverse across the shape
+        For traversePosition = -maxExtent To maxExtent Step density
+            ' Calculate the starting point of the ray
+            Dim rayStart = New Point(
+            centerX + traversePosition * Math.Cos(traverseAngleRad),
+            centerY + traversePosition * Math.Sin(traverseAngleRad)
+        )
+
+            ' Create an infinite ray in the fill direction
+            Dim ray = New Line With {
+            .X1 = rayStart.X - scaleFactor * Math.Cos(fillAngleRad),
+            .Y1 = rayStart.Y - scaleFactor * Math.Sin(fillAngleRad),
+            .X2 = rayStart.X + scaleFactor * Math.Cos(fillAngleRad),
+            .Y2 = rayStart.Y + scaleFactor * Math.Sin(fillAngleRad)
+        }
+
+            ' Get the valid segments of the ray inside the shape
+            fills.AddRange(GetLinesWithinShape(lines, ray))
         Next
 
-        'We fudge the bounding box by a fraction of a pixel to ensure the centerpoint doesn't intersect the exact corner of squares. 
-        Dim boundingBox As New Rect(New Point(minX, minY), New Point(maxX, maxY))
-        Dim centerP As New Point(boundingBox.X + boundingBox.Width / 2 + 0.1, boundingBox.Y + boundingBox.Height / 2 + 0.1)
-
-        Dim safeLength As Double = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-
-        Dim traverseangle = Math.PI * fillangle / 180 + (Math.PI / 2)
-        fillangle = Math.PI * fillangle / 180
-
-
-        'Fill the first half of the shape, starting from the center and moving in the positive direction
-        While boundingBox.Contains(centerP) OrElse centerP.RaycastIntersectsWithShape(lines, fillangle, safeLength)
-            Dim endpoint As New Point(centerP.X + safeLength * Math.Cos(fillangle), centerP.Y + safeLength * Math.Sin(fillangle))
-            Dim startpoint As New Point(centerP.X - safeLength * Math.Cos(fillangle), centerP.Y - safeLength * Math.Sin(fillangle))
-
-            fills.Add(startpoint.LineTo(endpoint))
-
-            centerP.X += (density * Math.Cos(traverseangle))
-            centerP.Y += (density * Math.Sin(traverseangle))
-
-        End While
-
-
-        'Resent the centerpoint, and offset it by the density in the opposite direction
-        centerP = New Point(boundingBox.X + boundingBox.Width / 2 + 0.1, boundingBox.Y + boundingBox.Height / 2 + 0.1)
-        centerP.X -= (density * Math.Cos(traverseangle))
-        centerP.Y -= (density * Math.Sin(traverseangle))
-
-
-        'Fill the second half of the shape, starting from the center and moving in the negative direction
-        While boundingBox.Contains(centerP) OrElse centerP.RaycastIntersectsWithShape(lines, fillangle, safeLength)
-            Dim endpoint As New Point(centerP.X + safeLength * Math.Cos(fillangle), centerP.Y + safeLength * Math.Sin(fillangle))
-            Dim startpoint As New Point(centerP.X - safeLength * Math.Cos(fillangle), centerP.Y - safeLength * Math.Sin(fillangle))
-
-            fills.Add(startpoint.LineTo(endpoint))
-
-            centerP.X -= (density * Math.Cos(traverseangle))
-            centerP.Y -= (density * Math.Sin(traverseangle))
-
-        End While
-
-
-        Dim clippedLines As New List(Of Line)
-
-        For Each l In fills
-            clippedLines.AddRange(GetLinesWithinShape(lines, l))
-        Next
-
-        Return clippedLines.ToList
+        Return fills
     End Function
     Public Shared Function GetLinesWithinShape(shapeBoundaries As List(Of Line), ray As Line) As List(Of Line)
 
@@ -107,19 +81,14 @@ Public Class FillProcessor : Implements IProcessor
     Public Shared Function OptimiseFills(lines As List(Of Line), geometrybounds As List(Of Line))
 
         Dim fractionalPaths As Integer = 0
-
         Dim workingLines As New List(Of Line)(lines)
-
         Dim currentPoint As New Point(0, 0)
-
         Dim optimisedLines As New List(Of Line)
-
 
         While workingLines.Count > 0
 
             Dim nearestLine As Line = Nothing
             Dim nearestDistance As Double = Double.MaxValue
-
 
             For Each line In workingLines
 

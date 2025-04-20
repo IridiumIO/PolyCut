@@ -6,11 +6,11 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
       xmlns:local="clr-namespace:PolyCut" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
-      mc:Ignorable="d" Panel.ZIndex="-2"   Margin="0,5,0,0"
+      mc:Ignorable="d" Panel.ZIndex="-2"   Margin="0,5,0,0" Loaded="Page_Initialized"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="MonitorPage">
 
-        <wv2:WebView2 x:Name="webView" Source="{Binding Configuration.ExportConfig.DestinationIP}"  Margin="0,0,2,2" DefaultBackgroundColor="#272727">
+        <wv2:WebView2 x:Name="webView" Margin="0,0,2,2" DefaultBackgroundColor="#272727">
             <wv2:WebView2.RenderTransform>
                 <TranslateTransform x:Name="webViewTranslateTransform"/>
             </wv2:WebView2.RenderTransform>

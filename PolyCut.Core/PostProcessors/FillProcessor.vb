@@ -1,18 +1,16 @@
-﻿Imports System.Windows
+﻿Imports System.Numerics
 Imports System.Windows.Shapes
 
-Imports MeasurePerformance.IL.Weaver
-
 Public Class FillProcessor : Implements IProcessor
-    <MeasurePerformance>
-    Public Shared Function FillLines(lines As List(Of Line), density As Double, fillangle As Double) As List(Of Line)
-        Dim fills As New List(Of Line)
 
-        ' Convert angles to radians
+    Public Shared Function FillLines(lines As List(Of GeoLine), density As Double, fillangle As Double) As List(Of GeoLine)
+
+        Dim fills As New List(Of GeoLine) ' Thread-safe collection for storing results
+
         Dim traverseAngleRad = Math.PI * fillangle / 180 + (Math.PI / 2)
         Dim fillAngleRad = Math.PI * fillangle / 180
 
-        ' Calculate the bounding box of the shape
+        ' Step 1: Calculate the bounding box of the shape
         Dim minX = lines.Min(Function(line) Math.Min(line.X1, line.X2))
         Dim minY = lines.Min(Function(line) Math.Min(line.Y1, line.Y2))
         Dim maxX = lines.Max(Function(line) Math.Max(line.X1, line.X2))
@@ -20,101 +18,93 @@ Public Class FillProcessor : Implements IProcessor
         Dim centerX = (minX + maxX) / 2
         Dim centerY = (minY + maxY) / 2
 
-        ' Calculate the maximum traverse extent
+        ' Step 2: Calculate the maximum traverse extent and scale factor to create rays long enough to cover the shape
         Dim maxExtent = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-        Dim scaleFactor = 10 * Math.Max(maxX - minX, maxY - minY) ' Scale for infinite ray length
+        Dim scaleFactor = 10 * Math.Max(maxX - minX, maxY - minY)
 
-        ' Traverse across the shape
+        ' Step 3: Traverse across the shape
         For traversePosition = -maxExtent To maxExtent Step density
-            ' Calculate the starting point of the ray
-            Dim rayStart = New Point(
-            centerX + traversePosition * Math.Cos(traverseAngleRad),
-            centerY + traversePosition * Math.Sin(traverseAngleRad)
-        )
 
-            ' Create an infinite ray in the fill direction
-            Dim ray = New Line With {
-            .X1 = rayStart.X - scaleFactor * Math.Cos(fillAngleRad),
-            .Y1 = rayStart.Y - scaleFactor * Math.Sin(fillAngleRad),
-            .X2 = rayStart.X + scaleFactor * Math.Cos(fillAngleRad),
-            .Y2 = rayStart.Y + scaleFactor * Math.Sin(fillAngleRad)
-        }
+            Dim rayStart = New Vector2(
+                centerX + traversePosition * Math.Cos(traverseAngleRad),
+                centerY + traversePosition * Math.Sin(traverseAngleRad)
+            )
 
-            ' Get the valid segments of the ray inside the shape
+
+            Dim ray As New GeoLine(
+                X1:=rayStart.X - scaleFactor * Math.Cos(fillAngleRad),
+                Y1:=rayStart.Y - scaleFactor * Math.Sin(fillAngleRad),
+                X2:=rayStart.X + scaleFactor * Math.Cos(fillAngleRad),
+                Y2:=rayStart.Y + scaleFactor * Math.Sin(fillAngleRad)
+            )
+
+            ' Step 4: Get the valid segments of the ray inside the shape
             fills.AddRange(GetLinesWithinShape(lines, ray))
         Next
 
+
         Return fills
     End Function
-    Public Shared Function GetLinesWithinShape(shapeBoundaries As List(Of Line), ray As Line) As List(Of Line)
+    Public Shared Function GetLinesWithinShape(shapeBoundaries As List(Of GeoLine), ray As GeoLine) As List(Of GeoLine)
 
-        Dim intersectionPoints As New List(Of Point)
+        Dim intersectionPoints As New List(Of Vector2)
 
         For Each line In shapeBoundaries
-            Dim intersection = ray.GetIntersectionPointWith(line)
+            Dim intersection = ray.GetIntersectionPointWith(line, True)
             If intersection IsNot Nothing Then
                 intersectionPoints.Add(intersection)
-
             End If
         Next
 
-        Dim segments As New List(Of Line)
+        Dim segments As New List(Of GeoLine)
 
         intersectionPoints = intersectionPoints.OrderBy(Function(p) p.X).ThenBy(Function(p) p.Y).ToList()
 
-        For i As Integer = 0 To intersectionPoints.Count - 2
-            Dim segment As Line = intersectionPoints(i).LineTo(intersectionPoints(i + 1))
-
-            'Naive filtering method; in most cases, a line that passes through a shape must intersect the shape an even number of times
-            'but this does not account for lines that pass through a shape's corners, which will intersect the shape an odd number of times
-            'Probably won't be an issue since we're using Doubles.
-            If i Mod 2 = 0 Then
-                segments.Add(segment)
-            End If
+        ' Iterate through pairs of intersection points to create segments
+        For i As Integer = 0 To intersectionPoints.Count - 2 Step 2
+            segments.Add(intersectionPoints(i).LineTo(intersectionPoints(i + 1)))
         Next
+
         Return segments
 
     End Function
 
 
-    <MeasurePerformance>
-    Public Shared Function OptimiseFills(lines As List(Of Line), geometrybounds As List(Of Line))
+    Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine)) As List(Of GeoLine)
 
-        Dim fractionalPaths As Integer = 0
-        Dim workingLines As New List(Of Line)(lines)
-        Dim currentPoint As New Point(0, 0)
-        Dim optimisedLines As New List(Of Line)
+        Dim workingLines As New List(Of GeoLine)(lines)
+        Dim currentPoint As Vector2 = New Vector2(0, 0)
+        Dim optimisedLines As New List(Of GeoLine)
 
         While workingLines.Count > 0
-
-            Dim nearestLine As Line = Nothing
+            Dim nearestLine As GeoLine = Nothing
             Dim nearestDistance As Double = Double.MaxValue
 
+            ' Find the nearest line
             For Each line In workingLines
 
-                Dim startDistance As Double = currentPoint.DistanceTo(line.StartPoint)
-                Dim endDistance As Double = currentPoint.DistanceTo(line.EndPoint)
+                Dim startDistance As Single = Vector2.DistanceSquared(currentPoint, line.StartPoint)
+                Dim endDistance As Single = Vector2.DistanceSquared(currentPoint, line.EndPoint)
 
                 If startDistance < nearestDistance Or endDistance < nearestDistance Then
                     nearestLine = line
                     nearestDistance = Math.Min(startDistance, endDistance)
                 End If
+
             Next
 
-            ' Determine if nearestLine needs to be reversed
-            Dim isReversed As Boolean = currentPoint.DistanceTo(nearestLine.EndPoint) < currentPoint.DistanceTo(nearestLine.StartPoint)
+            Dim isReversed As Boolean = Vector2.DistanceSquared(currentPoint, nearestLine.EndPoint) < Vector2.DistanceSquared(currentPoint, nearestLine.StartPoint)
 
-            ' Create fractional line if needed
-            Dim fractionalLine As New Line With {.X1 = currentPoint.X, .Y1 = currentPoint.Y, .X2 = If(isReversed, nearestLine.X2, nearestLine.X1), .Y2 = If(isReversed, nearestLine.Y2, nearestLine.Y1)}
+            'TODO: Only generate fractional lines if the user specifies (lines that travel along the boundaries of the shape)
+            Dim fractionalLine As New GeoLine(currentPoint, If(isReversed, nearestLine.EndPoint, nearestLine.StartPoint))
 
-            If currentPoint.DistanceTo(If(isReversed, nearestLine.EndPoint, nearestLine.StartPoint)) < 1000 AndAlso Not fractionalLine.IntersectsWithShape(geometrybounds) Then
+            If fractionalLine.IsLineOnAnyLine(geometrybounds, 100) Then 'Since we're multiplying all values by 100,000 - a tolerance of 100 is 0.001mm
                 optimisedLines.Add(fractionalLine)
-                fractionalPaths += 1
             End If
 
             ' Add the nearest line
             If isReversed Then
-                optimisedLines.Add(New Line With {.X1 = nearestLine.X2, .Y1 = nearestLine.Y2, .X2 = nearestLine.X1, .Y2 = nearestLine.Y1})
+                optimisedLines.Add(nearestLine.Reverse())
                 currentPoint = nearestLine.StartPoint
             Else
                 optimisedLines.Add(nearestLine)
@@ -124,8 +114,6 @@ Public Class FillProcessor : Implements IProcessor
             workingLines.Remove(nearestLine)
 
         End While
-
-        Debug.WriteLine(fractionalPaths)
 
         Return optimisedLines
 
@@ -145,25 +133,46 @@ Public Class FillProcessor : Implements IProcessor
 
     Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
 
+        Dim scalingFactor = 100_000 'Define a scaling factor to offset the floating-point precision of working in millimetres. 1mm > 100m
+
         If Not IsShapeClosed(lines) Then
             Return lines
         End If
 
-        Dim processedLines As New List(Of Line)
-        processedLines.AddRange(FillLines(lines, cfg.DrawingConfig.MinStrokeWidth, cfg.DrawingConfig.ShadingAngle))
+        'TODO ( in another processor, not here: Especially for text, process each of the shape outlines to see which one is nearest afterwards, and move to that shape next.
+        'Then consider aligning the end vector of the first shape's last line with the start vector of the next shape's first line, particularly useful to negate the effect of the swivelling toolhead when cutting
+
+        Dim optimisedLines As New List(Of GeoLine)
+        For Each ln In lines
+            optimisedLines.Add(New GeoLine(ln.X1 * scalingFactor, ln.Y1 * scalingFactor, ln.X2 * scalingFactor, ln.Y2 * scalingFactor))
+        Next
+
+        Dim processedLines As New List(Of GeoLine)
+        processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle))
 
         If cfg.DrawingConfig.CrossHatch Then
-            processedLines.AddRange(FillLines(lines, cfg.DrawingConfig.MinStrokeWidth, cfg.DrawingConfig.ShadingAngle + 90))
+            processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle + 90))
         End If
-        Debug.WriteLine($"{processedLines.Count} fills generated")
-        processedLines = OptimiseFills(processedLines, lines)
-        Debug.WriteLine($"{processedLines.Count} optimised fills generated")
+
+        'TODO: Choose whether to skip optimisation step
+        processedLines = OptimiseFills(processedLines, optimisedLines)
+
 
         If cfg.DrawingConfig.KeepOutlines Then
-            processedLines.InsertRange(0, lines)
+            processedLines.InsertRange(0, optimisedLines)
         End If
 
-        Return processedLines
+        Dim finalLines As New List(Of Line)
+        For Each ln In processedLines
+            finalLines.Add(New Line With {
+                .X1 = ln.X1 / scalingFactor,
+                .Y1 = ln.Y1 / scalingFactor,
+                .X2 = ln.X2 / scalingFactor,
+                .Y2 = ln.Y2 / scalingFactor
+            })
+        Next
+
+        Return finalLines
 
     End Function
 End Class

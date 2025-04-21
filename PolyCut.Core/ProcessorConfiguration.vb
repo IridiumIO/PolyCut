@@ -38,7 +38,7 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     Public Property ExportConfig As New ExportConfiguration
 
 
-    Public Property OptimisedToolPath As Boolean = True 'TODO: Implement
+    Public Property OptimisedToolPath As Boolean = True
 
     ''' Currently only supported by GCodePlot
     Public Property ExtractOneColour As Boolean = False

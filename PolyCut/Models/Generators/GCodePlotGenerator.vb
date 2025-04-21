@@ -241,7 +241,11 @@ Public Class GCodePlotGenerator : Implements IGenerator
                     args.Add($"--{Mappings(prop.Name)}=draw")
                 End If
                 Continue For
-
+            ElseIf prop.Name = NameOf(Configuration.DrawingConfig.DrawingDirection) Then
+                If Configuration.OptimisedToolPath Then
+                    args.Add($"--{Mappings(prop.Name)}=none")
+                    Continue For
+                End If
             End If
 
             If Not Mappings.ContainsKey(prop.Name) Then

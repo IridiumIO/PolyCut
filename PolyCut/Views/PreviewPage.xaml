@@ -74,8 +74,16 @@
                         </svgc:SvgCanvas>
 
                     </Border>
+                    <local:VisualHost x:Name="visualHost">
+                        <local:VisualHost.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleY="-1" />
+                            <TranslateTransform Y="{Binding Printer.BedHeight}" />
+                        </TransformGroup>
+                    </local:VisualHost.RenderTransform>
+                    </local:VisualHost>
 
-                    <ItemsControl x:Name="mainC"
+                    <!--<ItemsControl x:Name="mainC"
                                   Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                                   Height="{Binding Printer.BedHeight, Mode=TwoWay}"
                                   ItemsSource="{Binding GCodePaths, Mode=TwoWay}">
@@ -92,7 +100,7 @@
                             </TransformGroup>
                         </ItemsControl.RenderTransform>
 
-                    </ItemsControl>
+                    </ItemsControl>-->
 
                 </Canvas>
 
@@ -217,9 +225,9 @@
                             Click="PreviewToolpath" />
                     <Label Content="Speed" VerticalAlignment="Center" Margin="20,4,10,0"/>
                     <Slider x:Name="previewSpeed"
-                             VerticalAlignment="Center" Width="130"  Margin="5,0"
-                            
-                            Minimum="5" Maximum="60" Value="{Binding PreviewRenderSpeed, Mode=TwoWay}" />
+                             VerticalAlignment="Center" Width="130"  Margin="5,10,5,0"
+                            TickPlacement="BottomRight" Ticks="02,3,4,5,6,7,8,9,10,15,20,30,40,50"
+                            Minimum="2" Maximum="50" Value="{Binding PreviewRenderSpeed, Mode=TwoWay, FallbackValue=20}" />
                 </StackPanel>
 
 

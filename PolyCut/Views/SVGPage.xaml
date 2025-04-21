@@ -162,7 +162,7 @@
                                         VerticalAlignment="{Binding MainVM.CuttingMat.SelectedVerticalAlignment}"
                                         EnsureViewboxSize="False"
                                         Source="{Binding MainVM.CuttingMat.QualifiedSVGSource}"
-                                        Visibility="{Binding IsChecked, ElementName=CuttingMatVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        Visibility="{Binding CuttingMatIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
@@ -177,7 +177,7 @@
                     <!--  Fill the offset outside space  -->
                     <Path Canvas.Left="0" Canvas.Bottom="0"
                           ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
-                          Visibility="{Binding Path=IsChecked, ElementName=WorkingAreaVisibilityToggle, Converter={StaticResource BoolToVisibilityConverter}}">
+                          Visibility="{Binding WorkingAreaIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Path.Data>
                             <CombinedGeometry GeometryCombineMode="Xor">
                                 <CombinedGeometry.Geometry1>

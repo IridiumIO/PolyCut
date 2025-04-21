@@ -91,33 +91,33 @@
                                                    Grid.Row="0"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Width, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="0" Grid.Column="1"
+                                                        Grid.Row="0" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="H"
                                                    Grid.Row="0" Grid.Column="3"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Height, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="0" Grid.Column="4"
+                                                        Grid.Row="0" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
 
                                             <Label Content="X"
                                                    Grid.Row="2"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="2" Grid.Column="1"
+                                                        Grid.Row="2" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="Y"
                                                    Grid.Row="2" Grid.Column="3"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="2" Grid.Column="4"
+                                                        Grid.Row="2" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
 
                                             <Label Content="R"
                                                    Grid.Row="4"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
-                                            <ui:NumberBox Grid.Row="4" Grid.Column="1"
-                                                          AcceptsReturn="False" ClearButtonEnabled="False" LostFocus="NumberBox_LostFocus"
+                                            <ui:NumberBox Grid.Row="4" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                                          AcceptsReturn="False" ClearButtonEnabled="False" LostFocus="NumberBox_LostFocus" 
                                                           Maximum="360" Minimum="-360" SpinButtonPlacementMode="Compact"
                                                           Value="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -343,14 +343,14 @@
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox x:Name="canvasW"
                                                         Text="{Binding MainVM.Printer.BedWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Column="1"
+                                                        Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="H"
                                                    Grid.Row="0" Grid.Column="3"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox x:Name="canvasH"
                                                         Text="{Binding MainVM.Printer.BedHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="0" Grid.Column="4"
+                                                        Grid.Row="0" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="mm"
                                                    Grid.Column="1"
@@ -366,7 +366,7 @@
 
                                             <Label Content="Working Area" Margin="0,4,10,0" />
 
-                                            <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="True">
+                                            <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding WorkingAreaIsVisible}">
                                                 <ToggleButton.Template>
                                                     <ControlTemplate>
                                                         <ContentControl>
@@ -424,26 +424,26 @@
                                             <Label Content="X"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Column="1"
+                                                        Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="Y"
                                                    Grid.Row="0" Grid.Column="3"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="0" Grid.Column="4"
+                                                        Grid.Row="0" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
 
                                             <Label Content="W"
                                                    Grid.Row="2"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="2" Grid.Column="1"
+                                                        Grid.Row="2" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
                                             <Label Content="H"
                                                    Grid.Row="2" Grid.Column="3"
                                                    Padding="1,2,0,0" VerticalAlignment="Center" />
                                             <ui:TextBox Text="{Binding MainVM.Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                        Grid.Row="2" Grid.Column="4"
+                                                        Grid.Row="2" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                                         ClearButtonEnabled="False" />
 
                                             <Label Content="mm"
@@ -487,7 +487,7 @@
                                                        Padding="1,2,10,0" VerticalAlignment="Center" />
                                             <ToggleButton x:Name="CuttingMatVisibilityToggle"
                                                           Grid.Column="1"
-                                                          IsChecked="True">
+                                                          IsChecked="{Binding CuttingMatIsVisible}">
                                                 <ToggleButton.Template>
                                                     <ControlTemplate>
                                                         <ContentControl>

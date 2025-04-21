@@ -76,6 +76,9 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public Property CanvasTextBox As TextBox = New TextBox With {.FontFamily = New FontFamily("Calibri"), .FontSize = 14}
 
+    Public Property WorkingAreaIsVisible As Boolean = True
+    Public Property CuttingMatIsVisible As Boolean = True
+
     Public Property PreviewKeyDownCommand As ICommand = New RelayCommand(Of String)(Sub(key) ShortcutKeyHandler(key))
     Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub() MirrorObject(MainVM.SelectedDrawable.DrawableElement, True, False))
     Public Property MirrorVerticallyCommand As ICommand = New RelayCommand(Sub() MirrorObject(MainVM.SelectedDrawable.DrawableElement, False, True))

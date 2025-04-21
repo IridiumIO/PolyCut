@@ -70,7 +70,7 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine)) As List(Of GeoLine)
+    Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean) As List(Of GeoLine)
 
         Dim workingLines As New List(Of GeoLine)(lines)
         Dim currentPoint As Vector2 = New Vector2(0, 0)
@@ -98,7 +98,7 @@ Public Class FillProcessor : Implements IProcessor
             'TODO: Only generate fractional lines if the user specifies (lines that travel along the boundaries of the shape)
             Dim fractionalLine As New GeoLine(currentPoint, If(isReversed, nearestLine.EndPoint, nearestLine.StartPoint))
 
-            If fractionalLine.IsLineOnAnyLine(geometrybounds, 100) Then 'Since we're multiplying all values by 100,000 - a tolerance of 100 is 0.001mm
+            If allowTravelInOutlines AndAlso fractionalLine.IsLineOnAnyLine(geometrybounds, 100) Then 'Since we're multiplying all values by 100,000 - a tolerance of 100 is 0.001mm
                 optimisedLines.Add(fractionalLine)
             End If
 
@@ -135,7 +135,7 @@ Public Class FillProcessor : Implements IProcessor
 
         Dim scalingFactor = 100_000 'Define a scaling factor to offset the floating-point precision of working in millimetres. 1mm > 100m
 
-        If Not IsShapeClosed(lines) Then
+        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then
             Return lines
         End If
 
@@ -150,12 +150,12 @@ Public Class FillProcessor : Implements IProcessor
         Dim processedLines As New List(Of GeoLine)
         processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle))
 
-        If cfg.DrawingConfig.CrossHatch Then
+        If cfg.DrawingConfig.FillType = FillType.CrossHatch Then
             processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle + 90))
         End If
 
         'TODO: Choose whether to skip optimisation step
-        processedLines = OptimiseFills(processedLines, optimisedLines)
+        If cfg.OptimisedToolPath Then processedLines = OptimiseFills(processedLines, optimisedLines, cfg.DrawingConfig.AllowDrawingOverOutlines)
 
 
         If cfg.DrawingConfig.KeepOutlines Then

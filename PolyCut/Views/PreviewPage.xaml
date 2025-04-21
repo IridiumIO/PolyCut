@@ -41,61 +41,62 @@
                       Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
 
         <rc:ZoomBorder x:Name="zoomPanControl"
-                       Background="Transparent" ClipToBounds="True" LeftButtonAction="None" ScaleMin="0.01"
-                       MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002" ScaleMax="40">
+                       Background="Transparent" ClipToBounds="True" LeftButtonAction="None"
+                       MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002" ScaleMax="40"
+                       ScaleMin="0.01">
             <Grid x:Name="outerBounds"
                   HorizontalAlignment="Center" VerticalAlignment="Center"
                   Background="Transparent">
 
-                    <Canvas x:Name="mainCanvas"
+                <Canvas x:Name="mainCanvas"
+                        Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                        Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                        Margin="0,0,0,0"
+                        Background="Transparent">
+
+                    <Border x:Name="CuttingMatBounds"
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Margin="0,0,0,0"
-                            Background="Transparent">
+                            Background="#44646464" BorderBrush="#858585" BorderThickness="1" ClipToBounds="True">
 
-                        <Border x:Name="CuttingMatBounds"
-                                Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                Background="#44646464"
-                                ClipToBounds="True" BorderBrush="#858585" BorderThickness="1">
-
-                            <svgc:SvgCanvas x:Name="CuttingMat" Margin="-1"
-                                            HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                            VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
-                                            Source="{Binding CuttingMat.QualifiedSVGSource}"
-                                            Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <svgc:SvgCanvas.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform Angle="{Binding CuttingMat.SelectedRotation}" />
-                                        <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
-                                    </TransformGroup>
-                                </svgc:SvgCanvas.RenderTransform>
-                            </svgc:SvgCanvas>
-
-                        </Border>
-
-                        <ItemsControl x:Name="mainC"
-                                      Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                      Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                      ItemsSource="{Binding GCodePaths, Mode=TwoWay}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Grid />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.RenderTransform>
+                        <svgc:SvgCanvas x:Name="CuttingMat"
+                                        Margin="-1"
+                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
+                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
+                                        Source="{Binding CuttingMat.QualifiedSVGSource}"
+                                        Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
-                                    <ScaleTransform ScaleY="-1" />
-                                    <TranslateTransform Y="{Binding Printer.BedHeight}" />
-
+                                    <RotateTransform Angle="{Binding CuttingMat.SelectedRotation}" />
+                                    <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
                                 </TransformGroup>
-                            </ItemsControl.RenderTransform>
+                            </svgc:SvgCanvas.RenderTransform>
+                        </svgc:SvgCanvas>
 
-                        </ItemsControl>
+                    </Border>
 
-                    </Canvas>
-                    
-               
+                    <ItemsControl x:Name="mainC"
+                                  Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                                  Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                                  ItemsSource="{Binding GCodePaths, Mode=TwoWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Grid />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1" />
+                                <TranslateTransform Y="{Binding Printer.BedHeight}" />
+
+                            </TransformGroup>
+                        </ItemsControl.RenderTransform>
+
+                    </ItemsControl>
+
+                </Canvas>
+
+
 
             </Grid>
 
@@ -208,11 +209,19 @@
                     <Label Content="Travel Moves" Margin="10,4,10,0" />
 
                 </StackPanel>
-                <Button x:Name="previewTools"
-                        Content="Preview Toolpath"
-                        Grid.Row="2"
-                        Margin="0,10,0,10"
-                        Click="PreviewToolpath" />
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <Button x:Name="previewTools"
+                            Content="Preview Toolpath"
+                            Margin="0,10,0,10"
+                            Click="PreviewToolpath" />
+                    <Label Content="Speed" VerticalAlignment="Center" Margin="20,4,10,0"/>
+                    <Slider x:Name="previewSpeed"
+                             VerticalAlignment="Center" Width="130"  Margin="5,0"
+                            
+                            Minimum="5" Maximum="60" Value="{Binding PreviewRenderSpeed, Mode=TwoWay}" />
+                </StackPanel>
+
 
                 <Label Content="GCode" Grid.Row="3" />
 

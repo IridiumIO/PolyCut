@@ -62,6 +62,7 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
 
+    Public Property PreviewRenderSpeed As Double = 5.0
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 

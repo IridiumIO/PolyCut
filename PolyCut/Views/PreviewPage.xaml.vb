@@ -14,6 +14,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
     Private cancellationTokenSource As CancellationTokenSource = New CancellationTokenSource
 
+
     Sub New(viewmodel As MainViewModel)
 
         Me.ViewModel = viewmodel
@@ -168,35 +169,104 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Return 0
     End Function
 
-    Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
 
+    Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
         ViewModel.GCodePaths.Clear()
 
+        ' Define the drawing speed (milliseconds per unit length)
+        Dim speed As Double = 5 ' Adjust this value to control the overall drawing speed
 
+        ' Define the segment length (adjust as needed for smoothness)
+        Dim segmentLength As Double = 5.0
 
         For Each line In ViewModel.GCodeGeometry.Paths
-
             If cToken.IsCancellationRequested Then
                 Return 1
             End If
 
-            line.Visibility = Visibility.Visible
-            If Not TravelMovesVisibilityToggle.IsChecked Then
-                If line.Stroke Is Brushes.OrangeRed Then
-                    line.Visibility = Visibility.Collapsed
+            ' Get the start and end points of the line
+            Dim startPoint As Point = New Point(line.X1, line.Y1)
+            Dim endPoint As Point = New Point(line.X2, line.Y2)
+
+            ' Calculate the total length of the line
+            Dim totalLength As Double = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
+
+            ' Calculate the number of segments
+            Dim numSegments As Integer = Math.Ceiling(totalLength / segmentLength)
+
+            ' Temporary collection to store segments for the current line
+            Dim segments As New List(Of Line)
+
+            ' Generate and draw each segment
+            For i As Integer = 0 To numSegments - 1
+                If cToken.IsCancellationRequested Then
+                    Return 1
                 End If
-            End If
 
-            ViewModel.GCodePaths.Add(line)
-            Await Task.Delay(20 * line.Length / 10)
+                ' Calculate the start and end points of the segment
+                Dim t1 As Double = i / numSegments
+                Dim t2 As Double = (i + 1) / numSegments
+
+                Dim segmentStart As Point = New Point(
+                startPoint.X + (endPoint.X - startPoint.X) * t1,
+                startPoint.Y + (endPoint.Y - startPoint.Y) * t1
+            )
+
+                Dim segmentEnd As Point = New Point(
+                startPoint.X + (endPoint.X - startPoint.X) * t2,
+                startPoint.Y + (endPoint.Y - startPoint.Y) * t2
+            )
+
+                ' Create a new line segment
+                Dim segment As New Line() With {
+                .X1 = segmentStart.X,
+                .Y1 = segmentStart.Y,
+                .X2 = segmentEnd.X,
+                .Y2 = segmentEnd.Y,
+                .Stroke = line.Stroke,
+                .StrokeThickness = line.StrokeThickness,
+                .Visibility = If(Not TravelMovesVisibilityToggle.IsChecked AndAlso line.Stroke Is Brushes.OrangeRed, Visibility.Collapsed, Visibility.Visible)
+            }
 
 
+                segments.Add(segment)
+                Await Application.Current.Dispatcher.InvokeAsync(Sub()
+                                                                     ViewModel.GCodePaths.Add(segment)
+                                                                 End Sub)
 
+
+                ' Calculate the length of the segment
+                Dim segmentLengthActual As Double = Math.Sqrt((segmentEnd.X - segmentStart.X) ^ 2 + (segmentEnd.Y - segmentStart.Y) ^ 2)
+
+                Dim renderSpeed = 10 / (ViewModel.PreviewRenderSpeed)
+                Dim delay As Integer = CInt(segmentLengthActual * renderSpeed)
+                Await Task.Delay(delay)
+            Next
+
+            ' Replace all segments with the original line
+            Await Application.Current.Dispatcher.InvokeAsync(Sub()
+                                                                 ' Remove all segments from GCodePaths
+                                                                 For Each segment In segments
+                                                                     ViewModel.GCodePaths.Remove(segment)
+                                                                 Next
+
+                                                                 ' Add the original line back to GCodePaths
+                                                                 Dim finalLine As New Line() With {
+                                                                 .X1 = startPoint.X,
+                                                                 .Y1 = startPoint.Y,
+                                                                 .X2 = endPoint.X,
+                                                                 .Y2 = endPoint.Y,
+                                                                 .Stroke = line.Stroke,
+                                                                 .StrokeThickness = line.StrokeThickness,
+                                                                 .Visibility = line.Visibility
+                                                             }
+                                                                 ViewModel.GCodePaths.Add(finalLine)
+                                                             End Sub)
         Next
 
         Return 0
-
     End Function
+
 
 
 
@@ -217,3 +287,4 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 End Class
+

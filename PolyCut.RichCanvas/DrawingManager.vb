@@ -17,6 +17,8 @@ Public Class DrawingManager
                 _currentShape = CreateEllipse(startPoint)
             Case CanvasMode.Path
                 _currentShape = CreatePen(startPoint)
+            Case CanvasMode.Text
+                _currentShape = Nothing
 
         End Select
 

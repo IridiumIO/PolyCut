@@ -223,7 +223,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         If ViewModel.GCodeGeometry Is Nothing Then Return 1
 
         ' Accumulated delay time
-        Dim accumulatedDelay As Double = 0
+        Dim accumulatedDelay As Single = 0
         Dim stopwatch As New Stopwatch()
 
         For Each line In ViewModel.GCodeGeometry.Paths
@@ -233,40 +233,35 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             Dim endPoint As New Point(line.X2, line.Y2)
 
             Dim isTravelMove As Boolean = (line.Stroke Is Brushes.OrangeRed)
+            Dim hasTravelMoveBeenAdded As Boolean = False
 
             ' Calculate the total length of the line
-            Dim totalLength As Double = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
+            Dim totalLength As Single = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
 
-            Dim segmentLength As Double = 0.5
+            Dim segmentLength As Single = 0.5
             ' Calculate the number of segments
             Dim numSegments As Integer = Math.Ceiling(totalLength / segmentLength)
 
-            ' List to store segment visuals for this line
-            Dim segmentVisuals As New List(Of DrawingVisual)()
-
             Dim lineVisual As New DrawingVisual
+            Dim hasVisualBeenAdded As Boolean = False
+            Dim lvIndex As Integer = 0
+
             ' Generate and draw each segment
             For i As Integer = 0 To numSegments - 1
                 If cToken.IsCancellationRequested Then Return 1
                 stopwatch.Restart()
-                ' Calculate the start and end points of the segment
-                Dim t1 As Double = i / numSegments
-                Dim t2 As Double = (i + 1) / numSegments
 
-                Dim segmentStart As New Point(
-                startPoint.X + (endPoint.X - startPoint.X) * t1,
-                startPoint.Y + (endPoint.Y - startPoint.Y) * t1
-            )
-
+                Dim t2 As Single = (i + 1) / numSegments
 
                 Dim segmentEnd As New Point(
                 startPoint.X + (endPoint.X - startPoint.X) * t2,
                 startPoint.Y + (endPoint.Y - startPoint.Y) * t2
             )
-                visualHost.RemoveVisual(lineVisual)
-                lineVisual = New DrawingVisual()
-                visualHost.AddVisual(lineVisual)
-
+                If Not hasVisualBeenAdded Then
+                    lineVisual = New DrawingVisual()
+                    visualHost.AddVisual(lineVisual)
+                    hasVisualBeenAdded = True
+                End If
 
                 Using dc As DrawingContext = lineVisual.RenderOpen()
                     dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), startPoint, segmentEnd)
@@ -274,8 +269,9 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
                 ' Handle travel lines
                 If isTravelMove Then
-                    If Not travelMoveVisuals.Contains(lineVisual) Then
+                    If Not hasTravelMoveBeenAdded Then
                         travelMoveVisuals.Add(lineVisual)
+                        hasTravelMoveBeenAdded = True
                     End If
                     If Not TravelMovesVisibilityToggle.IsChecked Then
                         lineVisual.Opacity = 0 ' Hide the travel line
@@ -283,7 +279,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                 End If
 
                 ' Calculate the delay for this segment in milliseconds
-                Dim delayTime As Double = Math.Min(segmentLength, totalLength) / (ViewModel.LogarithmicPreviewSpeed) * 1000
+                Dim delayTime As Single = Math.Min(segmentLength, totalLength) / ViewModel.LogarithmicPreviewSpeed * 1000
                 accumulatedDelay += delayTime
                 stopwatch.Stop()
                 accumulatedDelay -= stopwatch.Elapsed.TotalMilliseconds
@@ -293,16 +289,15 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                     Try
                         Await Task.Delay(Math.Max(CInt(accumulatedDelay), 1), cToken)
                     Catch ex As TaskCanceledException
-                        ' Exit gracefully if the task is canceled
                         Return 1
                     End Try
-                    accumulatedDelay = 0 ' Reset the accumulated delay
+
+                    accumulatedDelay = 0
                 End If
             Next
 
         Next
 
-        Debug.WriteLine($"Total segments: {visualHost.ChildrenCount}")
         Return 0
     End Function
 
@@ -317,7 +312,6 @@ Public Class VisualHost
     Private ReadOnly _visuals As New VisualCollection(Me)
 
     Public Sub New()
-
     End Sub
 
     Public Sub AddVisual(visual As Visual)

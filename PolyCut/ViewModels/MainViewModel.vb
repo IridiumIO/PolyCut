@@ -61,8 +61,29 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
 
+    Private _PreviewRenderSpeed As Double = 0.48
 
-    Public Property PreviewRenderSpeed As Double = 5.0
+    Public Property PreviewRenderSpeed As Double
+        Get
+            Return _PreviewRenderSpeed
+        End Get
+        Set(value As Double)
+            _PreviewRenderSpeed = value
+            LogarithmicPreviewSpeed = CInt(30 * (Math.Exp(6 * value) - 1) + 30)
+            OnPropertyChanged(NameOf(LogarithmicPreviewSpeed))
+            OnPropertyChanged(NameOf(PreviewRenderSpeed))
+        End Set
+    End Property
+
+    Private _LogarithmicPreviewSpeed As Integer = 500
+    Public Property LogarithmicPreviewSpeed As Integer
+        Get
+            Return _LogarithmicPreviewSpeed
+        End Get
+        Set(value As Integer)
+            _LogarithmicPreviewSpeed = value
+        End Set
+    End Property
 
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService)
 

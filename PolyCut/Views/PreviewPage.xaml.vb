@@ -140,32 +140,52 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
+    Private Sub StopPreviewToolpath(sender As Object, e As RoutedEventArgs)
+        cancellationTokenSource.Cancel()
+        isRendering = False
+        ' Clear the visuals
+        visualHost.ClearVisuals()
+        travelMoveVisuals.Clear()
+        DrawToolPaths()
+        cancellationTokenSource = New CancellationTokenSource
+    End Sub
+
 
     Private travelMoveVisuals As New List(Of DrawingVisual)()
 
     Private Function DrawToolPaths()
-
+        ' Clear existing visuals in the VisualHost
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
 
         ' Compile the GCode into paths
+        If ViewModel.GCode Is Nothing Then Return 1
         Dim gc = New GCodeGeometry(ViewModel.GCode)
-        For Each line In gc.Paths
 
+        For Each line In gc.Paths
+            ' Create a new DrawingVisual for the line
             Dim lineVisual As New DrawingVisual()
             Using dc As DrawingContext = lineVisual.RenderOpen()
-
-                If line.Stroke Is Brushes.OrangeRed Then
-                    travelMoveVisuals.Add(lineVisual)
-                    If Not TravelMovesVisibilityToggle.IsChecked Then Continue For
-                End If
-
+                ' Draw the line
                 dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
             End Using
 
             ' Add the visual to the VisualHost
             visualHost.AddVisual(lineVisual)
+
+            ' Handle travel lines
+            If line.Stroke Is Brushes.OrangeRed Then
+                ' Add to travel move visuals
+                travelMoveVisuals.Add(lineVisual)
+
+                ' Set initial visibility based on the toggle state
+                If Not TravelMovesVisibilityToggle.IsChecked Then
+                    lineVisual.Opacity = 0 ' Hide the travel line
+                End If
+            End If
         Next
+
+        Debug.WriteLine($"Total segments: {visualHost.ChildrenCount}")
 
         Return 0
     End Function
@@ -196,12 +216,15 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
 
     Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
-
+        ' Clear existing visuals
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
 
-        ' Define the segment length (short=smooth)
-        Dim segmentLength As Double = 5.0
+        If ViewModel.GCodeGeometry Is Nothing Then Return 1
+
+        ' Accumulated delay time
+        Dim accumulatedDelay As Double = 0
+        Dim stopwatch As New Stopwatch()
 
         For Each line In ViewModel.GCodeGeometry.Paths
             If cToken.IsCancellationRequested Then Return 1
@@ -211,51 +234,78 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
             Dim isTravelMove As Boolean = (line.Stroke Is Brushes.OrangeRed)
 
+            ' Calculate the total length of the line
             Dim totalLength As Double = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
+
+            Dim segmentLength As Double = 0.5
+            ' Calculate the number of segments
             Dim numSegments As Integer = Math.Ceiling(totalLength / segmentLength)
 
+            ' List to store segment visuals for this line
+            Dim segmentVisuals As New List(Of DrawingVisual)()
+
+            Dim lineVisual As New DrawingVisual
             ' Generate and draw each segment
             For i As Integer = 0 To numSegments - 1
                 If cToken.IsCancellationRequested Then Return 1
-
-
+                stopwatch.Restart()
                 ' Calculate the start and end points of the segment
                 Dim t1 As Double = i / numSegments
                 Dim t2 As Double = (i + 1) / numSegments
 
                 Dim segmentStart As New Point(
-                    startPoint.X + (endPoint.X - startPoint.X) * t1,
-                    startPoint.Y + (endPoint.Y - startPoint.Y) * t1
-                )
+                startPoint.X + (endPoint.X - startPoint.X) * t1,
+                startPoint.Y + (endPoint.Y - startPoint.Y) * t1
+            )
+
 
                 Dim segmentEnd As New Point(
-                    startPoint.X + (endPoint.X - startPoint.X) * t2,
-                    startPoint.Y + (endPoint.Y - startPoint.Y) * t2
-                )
+                startPoint.X + (endPoint.X - startPoint.X) * t2,
+                startPoint.Y + (endPoint.Y - startPoint.Y) * t2
+            )
+                visualHost.RemoveVisual(lineVisual)
+                lineVisual = New DrawingVisual()
+                visualHost.AddVisual(lineVisual)
 
-                ' Create a new DrawingVisual for the segment
-                Dim segmentVisual As New DrawingVisual()
-                Using dc As DrawingContext = segmentVisual.RenderOpen()
-                    dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), segmentStart, segmentEnd)
+
+                Using dc As DrawingContext = lineVisual.RenderOpen()
+                    dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), startPoint, segmentEnd)
                 End Using
 
-                visualHost.AddVisual(segmentVisual)
-
+                ' Handle travel lines
                 If isTravelMove Then
-                    travelMoveVisuals.Add(segmentVisual)
-                    If Not TravelMovesVisibilityToggle.IsChecked Then segmentVisual.Opacity = 0
+                    If Not travelMoveVisuals.Contains(lineVisual) Then
+                        travelMoveVisuals.Add(lineVisual)
+                    End If
+                    If Not TravelMovesVisibilityToggle.IsChecked Then
+                        lineVisual.Opacity = 0 ' Hide the travel line
+                    End If
                 End If
 
-                ' Delay to animate the drawing
-                Dim segmentLengthActual As Double = Math.Sqrt((segmentEnd.X - segmentStart.X) ^ 2 + (segmentEnd.Y - segmentStart.Y) ^ 2)
-                Dim renderSpeed = 10 / (ViewModel.PreviewRenderSpeed)
-                Dim delay As Integer = CInt(segmentLengthActual * renderSpeed)
-                Await Task.Delay(delay, cToken)
+                ' Calculate the delay for this segment in milliseconds
+                Dim delayTime As Double = Math.Min(segmentLength, totalLength) / (ViewModel.LogarithmicPreviewSpeed) * 1000
+                accumulatedDelay += delayTime
+                stopwatch.Stop()
+                accumulatedDelay -= stopwatch.Elapsed.TotalMilliseconds
+
+                ' Render the batch if the accumulated delay exceeds 1 millisecond
+                If accumulatedDelay >= 1 Then
+                    Try
+                        Await Task.Delay(Math.Max(CInt(accumulatedDelay), 1), cToken)
+                    Catch ex As TaskCanceledException
+                        ' Exit gracefully if the task is canceled
+                        Return 1
+                    End Try
+                    accumulatedDelay = 0 ' Reset the accumulated delay
+                End If
             Next
+
         Next
 
+        Debug.WriteLine($"Total segments: {visualHost.ChildrenCount}")
         Return 0
     End Function
+
 
 
 End Class
@@ -281,6 +331,10 @@ Public Class VisualHost
     Public Sub ClearVisuals()
         _visuals.Clear()
     End Sub
+
+    Public Function ChildrenCount() As Integer
+        Return _visuals.Count
+    End Function
 
     Protected Overrides ReadOnly Property VisualChildrenCount As Integer
         Get

@@ -78,7 +78,7 @@ Public Class GCodeGeometry : Inherits ObservableObject
             .X2 = Math.Round(x2, 2),
             .Y2 = Math.Round(y2, 2),
             .Stroke = If(isRapidMove, Brushes.OrangeRed, New SolidColorBrush(DirectCast(ColorConverter.ConvertFromString("#ccccff"), Color))),
-            .StrokeThickness = 0.2,
+            .StrokeThickness = If(isRapidMove, 0.1, 0.2),
             .StrokeEndLineCap = PenLineCap.Round,
             .StrokeStartLineCap = PenLineCap.Round
         }

@@ -160,8 +160,10 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             ' Create a new DrawingVisual for the line
             Dim lineVisual As New DrawingVisual()
             Using dc As DrawingContext = lineVisual.RenderOpen()
-                ' Draw the line
-                dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                Dim pen As New Pen(line.Stroke, line.StrokeThickness)
+                pen.StartLineCap = PenLineCap.Round
+                pen.EndLineCap = PenLineCap.Round
+                dc.DrawLine(pen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
             End Using
 
             ' Add the visual to the VisualHost
@@ -258,7 +260,10 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                 End If
 
                 Using dc As DrawingContext = lineVisual.RenderOpen()
-                    dc.DrawLine(New Pen(line.Stroke, line.StrokeThickness), startPoint, segmentEnd)
+                    Dim pen As New Pen(line.Stroke, line.StrokeThickness)
+                    pen.StartLineCap = PenLineCap.Round
+                    pen.EndLineCap = PenLineCap.Round
+                    dc.DrawLine(pen, startPoint, segmentEnd)
                 End Using
 
                 ' Handle travel lines

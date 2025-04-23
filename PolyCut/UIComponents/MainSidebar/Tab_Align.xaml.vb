@@ -1,4 +1,4 @@
-﻿Public Class MainSidebar
+﻿Public Class Tab_Align
 
     Sub New()
 
@@ -25,17 +25,6 @@
         End If
     End Sub
 
-    Public Event CuttingMatAlignmentMouseEnter As EventHandler(Of MouseEventArgs)
-    Public Event CuttingMatAlignmentMouseLeave As EventHandler(Of MouseEventArgs)
-    Public Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles Tab_Align.CuttingMatAlignmentMouseEnter, Tab_Align.CuttingMatAlignmentMouseLeave
-
-        If e.RoutedEvent Is MouseEnterEvent Then
-            RaiseEvent CuttingMatAlignmentMouseEnter(Me, e)
-        Else
-            RaiseEvent CuttingMatAlignmentMouseLeave(Me, e)
-        End If
-
-    End Sub
 
     Private Sub TextBox_GotKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
 
@@ -45,4 +34,18 @@
             e.Handled = True
         End If
     End Sub
+
+
+    Public Event CuttingMatAlignmentMouseEnter As EventHandler(Of MouseEventArgs)
+    Public Event CuttingMatAlignmentMouseLeave As EventHandler(Of MouseEventArgs)
+    Private Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles cuttingMat_AlignmentBoxes.MouseEnter, cuttingMat_AlignmentBoxes.MouseLeave
+
+        If e.RoutedEvent Is MouseEnterEvent Then
+            RaiseEvent CuttingMatAlignmentMouseEnter(Me, e)
+        Else
+            RaiseEvent CuttingMatAlignmentMouseLeave(Me, e)
+        End If
+
+    End Sub
+
 End Class

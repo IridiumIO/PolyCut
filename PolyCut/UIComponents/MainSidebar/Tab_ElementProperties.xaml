@@ -1,0 +1,201 @@
+﻿<UserControl x:Class="Tab_ElementProperties"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
+xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
+xmlns:sys="clr-namespace:System;assembly=mscorlib"
+xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"  d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
+             d:DesignHeight="800" d:DesignWidth="380">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Separator Grid.Row="0" Margin="5" />
+        <ScrollViewer Grid.Row="1"
+                   Margin="-14,00,-14,0" Padding="25,0,25,0"
+                   CanContentScroll="True"
+                   IsEnabled="{Binding MainVM.SelectedDrawable, Converter={StaticResource NullToBoolConverter}}"
+                   VerticalScrollBarVisibility="Visible">
+            <DockPanel>
+
+                <StackPanel DockPanel.Dock="Bottom">
+
+                    <ui:CardExpander Margin="-15,0" VerticalAlignment="Top"
+                                  Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                  FlowDirection="RightToLeft" IsExpanded="True"
+                                  Style="{StaticResource CustomCardExpanderStyle}">
+                        <ui:CardExpander.Header>
+                            <Grid Margin="10,0" FlowDirection="LeftToRight">
+
+                                <TextBlock Text="Transform"
+                                        Padding="1,2,0,0" VerticalAlignment="Center" />
+
+                            </Grid>
+                        </ui:CardExpander.Header>
+
+                        <StackPanel FlowDirection="LeftToRight">
+
+                            <Grid Margin="15,0,15,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="25" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <Label Content="W"
+                                    Grid.Row="0"
+                                    Padding="1,2,0,0" VerticalAlignment="Center" />
+                                <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Width, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                         Grid.Row="0" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                         ClearButtonEnabled="False" />
+                                <Label Content="H"
+                                    Grid.Row="0" Grid.Column="3"
+                                    Padding="1,2,0,0" VerticalAlignment="Center" />
+                                <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.Height, Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                         Grid.Row="0" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                         ClearButtonEnabled="False" />
+
+                                <Label Content="X"
+                                    Grid.Row="2"
+                                    Padding="1,2,0,0" VerticalAlignment="Center" />
+                                <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                         Grid.Row="2" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                         ClearButtonEnabled="False" />
+                                <Label Content="Y"
+                                    Grid.Row="2" Grid.Column="3"
+                                    Padding="1,2,0,0" VerticalAlignment="Center" />
+                                <ui:TextBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}"
+                                         Grid.Row="2" Grid.Column="4" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                         ClearButtonEnabled="False" />
+
+                                <Label Content="R"
+                                    Grid.Row="4"
+                                    Padding="1,2,0,0" VerticalAlignment="Center" />
+                                <ui:NumberBox Grid.Row="4" Grid.Column="1" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                           AcceptsReturn="False" ClearButtonEnabled="False" LostFocus="NumberBox_LostFocus" 
+                                           Maximum="360" Minimum="-360" SpinButtonPlacementMode="Compact"
+                                           Value="{Binding MainVM.SelectedDrawable.DrawableElement.Parent.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <ui:Button Grid.Row="4" Grid.Column="4"
+                                        Width="50"
+                                        Command="{Binding MirrorHorizontallyCommand}">
+                                    <ui:SymbolIcon Filled="False" Symbol="FlipHorizontal16" />
+                                </ui:Button>
+                                <ui:Button Grid.Row="4" Grid.Column="4"
+                                        Width="50"
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding MirrorVerticallyCommand}">
+                                    <ui:SymbolIcon Filled="False" Symbol="FlipVertical16" />
+                                </ui:Button>
+
+                                <Label Content="mm"
+                                    Grid.Column="1"
+                                    Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                <Label Content="mm"
+                                    Grid.Column="4"
+                                    Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                <Label Content="mm"
+                                    Grid.Row="2" Grid.Column="1"
+                                    Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                <Label Content="mm"
+                                    Grid.Row="2" Grid.Column="4"
+                                    Padding="1,2,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                <Label Content="°"
+                                    Grid.Row="4" Grid.Column="1"
+                                    Padding="1,2,25,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                            </Grid>
+                        </StackPanel>
+
+                    </ui:CardExpander>
+                    <Separator Margin="5" />
+
+                    <ui:CardExpander Margin="-15,0" VerticalAlignment="Top"
+                                  Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                  FlowDirection="RightToLeft" IsExpanded="True"
+                                  Style="{StaticResource CustomCardExpanderStyle}"
+                                  Visibility="{Binding MainVM.SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Hidden}">
+                        <ui:CardExpander.Header>
+                            <Grid Margin="10,0" FlowDirection="LeftToRight">
+
+                                <TextBlock Text="Text"
+                                        Padding="1,2,0,0" VerticalAlignment="Center" />
+
+                            </Grid>
+                        </ui:CardExpander.Header>
+
+                        <StackPanel FlowDirection="LeftToRight">
+
+                            <Grid Margin="15,0,15,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+
+                                <local:FontPickerComboBox Grid.Column="0"
+                                                       Width="180"
+                                                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                       Background="Transparent"
+                                                       SelectedFont="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontFamily), Mode=TwoWay}" />
+
+                                <ui:SymbolIcon Grid.Row="0" Grid.Column="1"
+                                            HorizontalAlignment="Right"
+                                            FontSize="16" Symbol="TextFontSize24" />
+                                <ComboBox Text="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontSize), Mode=TwoWay}"
+                                       Grid.Row="0" Grid.Column="3"
+                                       Width="80"
+                                       Padding="7" HorizontalAlignment="Right"
+                                       Background="Transparent" IsEditable="True" SelectedIndex="6">
+                                    <ComboBoxItem Content="3" />
+                                    <ComboBoxItem Content="4" />
+                                    <ComboBoxItem Content="6" />
+                                    <ComboBoxItem Content="8" />
+                                    <ComboBoxItem Content="10" />
+                                    <ComboBoxItem Content="12" />
+                                    <ComboBoxItem Content="14" />
+                                    <ComboBoxItem Content="16" />
+                                    <ComboBoxItem Content="18" />
+                                    <ComboBoxItem Content="20" />
+                                    <ComboBoxItem Content="24" />
+                                    <ComboBoxItem Content="28" />
+                                    <ComboBoxItem Content="32" />
+                                    <ComboBoxItem Content="36" />
+                                    <ComboBoxItem Content="48" />
+                                    <ComboBoxItem Content="72" />
+                                </ComboBox>
+
+
+
+
+                            </Grid>
+                        </StackPanel>
+                    </ui:CardExpander>
+
+                </StackPanel>
+
+            </DockPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

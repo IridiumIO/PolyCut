@@ -1,0 +1,576 @@
+﻿<UserControl x:Class="Tab_Configure"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
+xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
+xmlns:sys="clr-namespace:System;assembly=mscorlib"
+xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="380">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Separator Grid.Row="0" Margin="5" />
+        <ScrollViewer Grid.Row="1"
+                  Margin="-14,10,-14,0" Padding="25,0,25,0"
+                  VerticalScrollBarVisibility="Visible" IsDeferredScrollingEnabled="False">
+
+                <StackPanel >
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+
+                        <RadioButton x:Name="modeCut"
+                                 Width="80" Height="60"
+                                 Margin="0,0,20,0"
+                                 IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
+                                 Style="{StaticResource {x:Type ToggleButton}}">
+                            <StackPanel>
+                                <ui:SymbolIcon Margin="0,6,0,0" Symbol="CalligraphyPen20" />
+                                <TextBlock Text="Cut"
+                                       Margin="0,4,0,0" HorizontalAlignment="Center"
+                                       FontWeight="SemiBold" />
+
+                            </StackPanel>
+
+                            <RadioButton.ToolTip>
+                                <TextBlock TextWrapping="Wrap">
+                                Settings designed for cutting objects out using a drag-knife.
+                                </TextBlock>
+                            </RadioButton.ToolTip>
+
+                        </RadioButton>
+                        <RadioButton x:Name="modeDraw"
+                                 Width="80" Height="60"
+                                 d:IsChecked="True"
+                                 IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
+                                 Style="{StaticResource {x:Type ToggleButton}}">
+                            <StackPanel>
+                                <ui:SymbolIcon Margin="0,6,0,0" Symbol="Pen20" />
+                                <TextBlock Text="Draw"
+                                       Margin="0,4,0,0" HorizontalAlignment="Center"
+                                       FontWeight="SemiBold" />
+
+                            </StackPanel>
+                            <RadioButton.ToolTip>
+                                <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                Settings designed for drawing using a pen, marker, or even a foil stamping pen.
+                                </TextBlock>
+                            </RadioButton.ToolTip>
+                        </RadioButton>
+
+                    </StackPanel>
+
+                    <Label Content="Travel Speed" Margin="0,20,0,-5" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+
+                        <Slider x:Name="travelSpeed"
+                            Margin="0,5,0,0" VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True" Maximum="100" Minimum="10" TickFrequency="1"
+                            Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:NumberBox Grid.Column="2"
+                                  Background="Transparent" BorderBrush="Transparent" ClearButtonEnabled="False"
+                                  IsReadOnly="True" SpinButtonPlacementMode="Hidden"
+                                  Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                        <Label Content="mm/s"
+                           Grid.Column="2"
+                           Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                        <Grid.ToolTip>
+                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                            Speed of the toolhead when the tool is raised and not actively cutting/drawing.
+                            </TextBlock>
+                        </Grid.ToolTip>
+                    </Grid>
+                    <Label Content="Draw Speed" Margin="0,20,0,-5" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.ToolTip>
+                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                            Speed of the toolhead when the tool is down and cutting/drawing.<LineBreak /><LineBreak />
+                            Slower is usually better</TextBlock>
+                        </Grid.ToolTip>
+                        <Slider x:Name="drawSpeed"
+                            Margin="0,5,0,0" VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True" Maximum="60" Minimum="5" TickFrequency="1"
+                            Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:NumberBox Grid.Column="2"
+                                  Background="Transparent" BorderBrush="Transparent" ClearButtonEnabled="False"
+                                  IsReadOnly="True" SpinButtonPlacementMode="Hidden"
+                                  Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                        <Label Content="mm/s"
+                           Grid.Column="2"
+                           Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                    </Grid>
+                    <Label Content="Z Height" Margin="0,10,0,10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition />
+
+                        </Grid.ColumnDefinitions>
+                        <Grid.ToolTip>
+                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                            How high above the workpiece the toolhead should be positioned when travelling or drawing.<LineBreak /><LineBreak />
+                            Positive values are offset above the bed surface.<LineBreak /><LineBreak />
+                            This value is affected by your printer's Z-Offset.</TextBlock>
+                        </Grid.ToolTip>
+                        <Label Content="Draw"
+                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                        <ui:TextBox Text="{Binding MainVM.Configuration.WorkZ}"
+                                Grid.Column="2"
+                                ClearButtonEnabled="False" />
+                        <Label Content="mm"
+                           Grid.Column="2"
+                           Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                        <Label Content="Travel"
+                           Grid.Column="4"
+                           Padding="1,2,0,0" VerticalAlignment="Center" />
+                        <ui:TextBox Text="{Binding MainVM.Configuration.TravelZ}"
+                                Grid.Column="6"
+                                ClearButtonEnabled="False" />
+                        <Label Content="mm"
+                           Grid.Column="6"
+                           Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                    </Grid>
+
+                    <Separator Margin="0,10,0,0" />
+
+                    <StackPanel>
+
+                        <ui:CardExpander Margin="-15,0"
+                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                     FlowDirection="RightToLeft" IsExpanded="True"
+                                     Style="{StaticResource CustomCardExpanderStyle}">
+                            <ui:CardExpander.Header>
+                                <Label Content="Processing Settings"
+                                   Margin="10,0"
+                                   FlowDirection="LeftToRight" />
+
+                            </ui:CardExpander.Header>
+
+                            <StackPanel Margin="15,-10,15,10" FlowDirection="LeftToRight">
+
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Content="Curve-fitting Precision"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time.
+                                            </TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.Tolerance}"
+                                            Grid.Column="1"
+                                            ClearButtonEnabled="False" />
+                                    <Label Content="mm"
+                                       Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <CheckBox x:Name="extractSingleColor"
+                                          Content="Extract one colour"
+                                          Grid.Row="2"
+                                          IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
+                                        <CheckBox.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Processes only objects with the specified colour, and ignores all others.
+                                            </TextBlock>
+                                        </CheckBox.ToolTip>
+                                    </CheckBox>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay}"
+                                            Grid.Row="2" Grid.Column="1"
+                                            Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                </Grid>
+
+                            </StackPanel>
+
+                        </ui:CardExpander>
+
+                        <Separator />
+
+                        <ui:CardExpander Margin="-15,0"
+                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                     FlowDirection="RightToLeft" IsExpanded="True"
+                                     Style="{StaticResource CustomCardExpanderStyle}"
+                                     Visibility="{Binding ElementName=modeCut, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ui:CardExpander.Header>
+                                <Label Content="Blade Settings"
+                                   Margin="10,0"
+                                   FlowDirection="LeftToRight" />
+
+                            </ui:CardExpander.Header>
+
+                            <StackPanel Margin="15,-10,15,10" FlowDirection="LeftToRight">
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Content="Tool Diameter"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Diameter of the swivelling part of the cutting blade.<LineBreak />
+                                            Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge.<LineBreak /><LineBreak />
+                                            Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.</TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.CuttingConfig.ToolDiameter}"
+                                            Grid.Column="1"
+                                            ClearButtonEnabled="False" />
+                                    <Label Content="mm"
+                                       Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <Label Content="Overcut"
+                                       Grid.Row="2"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.<LineBreak /> <LineBreak />
+                                            Recommended value ~1mm</TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.CuttingConfig.Overcut}"
+                                            Grid.Row="2" Grid.Column="1"
+                                            ClearButtonEnabled="False" />
+                                    <Label Content="mm"
+                                       Grid.Row="2" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <Label Content="Cutting order"
+                                       Grid.Row="4"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
+                                       IsEnabled="{Binding MainVM.UsingGCodePlot}">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            For each object, whether outer features or inner features are cut first.
+                                            </TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+
+                                    <ComboBox Grid.Row="4" Grid.Column="2"
+                                          IsEnabled="{Binding MainVM.UsingGCodePlot}"
+                                          SelectedIndex="{Binding MainVM.Configuration.InsideOutCuttingOrder}">
+                                        <ComboBoxItem Content="Outer First" />
+                                        <ComboBoxItem Content="Inner First" />
+
+                                    </ComboBox>
+                                </Grid>
+
+                            </StackPanel>
+                        </ui:CardExpander>
+
+                        <ui:CardExpander Margin="-15,0"
+                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                     FlowDirection="RightToLeft" IsExpanded="True"
+                                     Style="{StaticResource CustomCardExpanderStyle}"
+                                     Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ui:CardExpander.Header>
+                                <Label Content="Drawing Settings"
+                                   Margin="10,0"
+                                   FlowDirection="LeftToRight" />
+
+                            </ui:CardExpander.Header>
+
+                            <StackPanel Margin="15,-10,15,0" FlowDirection="LeftToRight">
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Content="Drawing Angle"
+                                       Grid.Row="0"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
+                                       IsEnabled="{Binding MainVM.UsingGCodePlot}">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Specifies the preferred drawing direction for shape outlines.<LineBreak /><LineBreak />
+                                            0° represents East, with positive values rotating counterclockwise.</TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.DrawingDirection, Converter={StaticResource NullableIntConverter}}"
+                                            Grid.Row="0" Grid.Column="1"
+                                            ClearButtonEnabled="True"
+                                            IsEnabled="{Binding MainVM.UsingGCodePlot}" />
+                                    <Label Content="°"
+                                       Grid.Row="0" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <!--<Label Content="Optimisation Timeout"
+                                       Grid.Row="2"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
+                                       IsEnabled="{Binding MainVM.UsingGCodePlot}">
+                                    <Label.ToolTip>
+                                        <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            How long to allow GCodePlot to spend optimising travel paths and drawing directions.
+                                        </TextBlock>
+                                    </Label.ToolTip>
+                                </Label>
+                                <ui:TextBox Text="{Binding MainVM.Configuration.OptimisationTimeout}"
+                                            Grid.Row="2" Grid.Column="1"
+                                            ClearButtonEnabled="False"
+                                            IsEnabled="{Binding MainVM.UsingGCodePlot}" />
+                                <Label Content="sec"
+                                       Grid.Row="2" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />-->
+
+
+                                    <CheckBox x:Name="optimiseDrawingPaths"
+                                          Content="Optimise Drawing Paths"
+                                          Grid.Row="2"
+                                          IsChecked="{Binding MainVM.Configuration.OptimisedToolPath, Mode=TwoWay}">
+                                        <CheckBox.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Optimises the order in which lines are drawn to minimise travel time.<LineBreak /><LineBreak />
+                                            Particularly useful for ordering lines when filling shapes.</TextBlock>
+                                        </CheckBox.ToolTip>
+                                    </CheckBox>
+
+
+                                    <CheckBox Content="Allow Travel in Outlines"
+                                          Grid.Row="4"
+                                          IsChecked="{Binding MainVM.Configuration.DrawingConfig.AllowDrawingOverOutlines, Mode=TwoWay}"
+                                          IsEnabled="{Binding MainVM.Configuration.OptimisedToolPath}"
+                                          ToolTipService.ShowOnDisabled="True">
+                                        <CheckBox.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Allows the pen to travel through shape outlines without lifting the pen up to start the next line.<LineBreak /><LineBreak />
+                                            Requires "Optimise Drawing Paths" to be enabled. Can massively improve overall speed</TextBlock>
+                                        </CheckBox.ToolTip>
+                                    </CheckBox>
+
+
+                                    <CheckBox x:Name="keepOutlines"
+                                          Content="Keep Outlines"
+                                          Grid.Row="6"
+                                          IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
+                                          IsEnabled="{Binding MainVM.UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}">
+                                        <CheckBox.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Whether shape outlines should be drawn, or ignored.<LineBreak /><LineBreak />
+                                            Disable this if you want to shade in an area without the area being outlined.</TextBlock>
+                                        </CheckBox.ToolTip>
+                                    </CheckBox>
+
+
+                                </Grid>
+
+                            </StackPanel>
+                        </ui:CardExpander>
+                        <Separator Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <ui:CardExpander Margin="-15,0"
+                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0"
+                                     FlowDirection="RightToLeft" IsExpanded="True"
+                                     Style="{StaticResource CustomCardExpanderStyle}"
+                                     Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ui:CardExpander.Header>
+                                <Label Content="Shading Settings"
+                                   Margin="10,0"
+                                   FlowDirection="LeftToRight" />
+
+                            </ui:CardExpander.Header>
+
+                            <StackPanel Margin="15,-10,15,10" FlowDirection="LeftToRight">
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.Resources>
+                                        <ObjectDataProvider x:Key="dataFromEnum"
+                                                        MethodName="GetValues"
+                                                        ObjectType="{x:Type sys:Enum}">
+                                            <ObjectDataProvider.MethodParameters>
+                                                <x:Type TypeName="pc:FillType" />
+                                            </ObjectDataProvider.MethodParameters>
+                                        </ObjectDataProvider>
+                                    </Grid.Resources>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Label Content="Fill Style"
+                                       Grid.Row="0"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            The method used to fill shapes
+                                            </TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+
+                                    <ComboBox Grid.Row="0" Grid.Column="1"
+                                          SelectedItem="{Binding MainVM.Configuration.DrawingConfig.FillType}" ItemsSource="{Binding Source={StaticResource dataFromEnum}}"/>
+
+
+                                    <Label Content="Shading Threshold"
+                                       Grid.Row="4"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center"
+                                       IsEnabled="{Binding MainVM.UsingGCodePlot}">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Range = 0 to 1<LineBreak /><LineBreak />
+                                            How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects.</TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:NumberBox Grid.Row="4" Grid.Column="1"
+                                              ClearButtonEnabled="False"
+                                              IsEnabled="{Binding MainVM.UsingGCodePlot}"
+                                              LargeChange="0.1" MaxDecimalPlaces="3" Maximum="1.0" Minimum="0.0" SmallChange="0.05"
+                                              Value="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold}" />
+
+                                    <Label Content="Lightest shading spacing"
+                                       Grid.Row="6"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            How far apart drawn lines should be when shading the lightest parts of the image.
+                                            </TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth}"
+                                            Grid.Row="6" Grid.Column="1"
+                                            ClearButtonEnabled="False"
+                                            IsEnabled="{Binding MainVM.UsingGCodePlot}" />
+                                    <Label Content="mm"
+                                       Grid.Row="6" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <Label Content="Darkest shading spacing"
+                                       Grid.Row="8"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            How far apart drawn lines should be when shading the darkest parts of the image.
+                                            </TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth}"
+                                            Grid.Row="8" Grid.Column="1"
+                                            ClearButtonEnabled="False" />
+                                    <Label Content="mm"
+                                       Grid.Row="8" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                    <Label Content="Shading angle"
+                                       Grid.Row="10"
+                                       Margin="0,0,20,0" Padding="1,2,0,0" VerticalAlignment="Center">
+                                        <Label.ToolTip>
+                                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Which Direction to draw when shading objects.<LineBreak /><LineBreak />
+                                            0° represents East, with positive values rotating counterclockwise.</TextBlock>
+                                        </Label.ToolTip>
+                                    </Label>
+                                    <ui:TextBox Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle}"
+                                            Grid.Row="10" Grid.Column="1"
+                                            ClearButtonEnabled="False" />
+                                    <Label Content="°"
+                                       Grid.Row="10" Grid.Column="1"
+                                       Margin="-50,0,0,0" Padding="1,2,10,0" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+
+                                </Grid>
+                            </StackPanel>
+                        </ui:CardExpander>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+        </ScrollViewer>
+    </Grid>
+</UserControl>

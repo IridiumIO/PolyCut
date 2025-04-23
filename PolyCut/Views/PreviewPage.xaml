@@ -16,7 +16,7 @@
       d:DesignHeight="800" d:DesignWidth="1000"
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
       ScrollViewer.CanContentScroll="False"
-      mc:Ignorable="d">
+      mc:Ignorable="d" MouseMove="Page_MouseMove" >
     <Page.Resources>
         <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />
         <c:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -109,9 +109,9 @@
             </Grid>
 
         </rc:ZoomBorder>
-
+        
         <ui:Card Grid.Column="0"
-                 Width="500" 
+                 Width="500" x:Name="PreviewControlBar"
                  Margin="5" Padding="0" VerticalAlignment="Bottom">
             <ui:Card.Background>
                 <SolidColorBrush Color="{DynamicResource CardBackgroundFillColorDefault}" />

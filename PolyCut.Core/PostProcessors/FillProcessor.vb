@@ -70,48 +70,96 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean) As List(Of GeoLine)
+    Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean, Optional preferDirection As Boolean = True, Optional startPoint As Nullable(Of Vector2) = Nothing) As List(Of GeoLine)
 
         Dim workingLines As New List(Of GeoLine)(lines)
-        Dim currentPoint As Vector2 = New Vector2(0, 0)
+        Dim currentPoint As Vector2
+        If startPoint.HasValue Then
+            currentPoint = startPoint.Value
+        Else
+            currentPoint = New Vector2(0, 0)
+        End If
+
         Dim optimisedLines As New List(Of GeoLine)
 
-        While workingLines.Count > 0
-            Dim nearestLine As GeoLine = Nothing
-            Dim nearestDistance As Double = Double.MaxValue
+        ' Keep track of the previous drawn direction so we can prefer candidates that continue the same vector.
+        Dim previousDirection As Vector2 = New Vector2(0, 0)
+        Dim havePreviousDirection As Boolean = False
 
-            ' Find the nearest line
+        ' Tunable weight that converts angular difference into a distance-like penalty (units: squared distance).
+        ' Increase to prefer directional continuation more strongly.
+        Dim directionPreferenceWeight As Double = 2000.0
+
+        While workingLines.Count > 0
+            Dim bestLine As GeoLine = Nothing
+            Dim bestCost As Double = Double.MaxValue
+            Dim bestIsReversed As Boolean = False
+
+            ' Find the best next line using a combined metric: distance^2 + (directionPenalty)
             For Each line In workingLines
 
-                Dim startDistance As Single = Vector2.DistanceSquared(currentPoint, line.StartPoint)
-                Dim endDistance As Single = Vector2.DistanceSquared(currentPoint, line.EndPoint)
+                Dim startDistance As Double = Vector2.DistanceSquared(currentPoint, line.StartPoint)
+                Dim endDistance As Double = Vector2.DistanceSquared(currentPoint, line.EndPoint)
 
-                If startDistance < nearestDistance Or endDistance < nearestDistance Then
-                    nearestLine = line
-                    nearestDistance = Math.Min(startDistance, endDistance)
+                ' assume we'll travel to the nearer endpoint
+                Dim chosenDistance As Double
+                Dim candidateDir As Vector2
+
+                If startDistance <= endDistance Then
+                    chosenDistance = startDistance
+                    candidateDir = line.EndPoint - line.StartPoint
+                Else
+                    chosenDistance = endDistance
+                    candidateDir = line.StartPoint - line.EndPoint
+                End If
+
+                Dim directionPenalty As Double = 0.0
+
+                If preferDirection AndAlso havePreviousDirection AndAlso candidateDir.LengthSquared() > 0 Then
+                    Dim candNorm As Vector2 = Vector2.Normalize(candidateDir)
+                    Dim prevNorm As Vector2 = Vector2.Normalize(previousDirection)
+                    ' dot in [-1,1]; We use absolute dot so opposite-direction (same line vector reversed) also counts as aligned.
+                    Dim dot As Double = Math.Max(-1.0, Math.Min(1.0, Vector2.Dot(prevNorm, candNorm)))
+                    Dim alignment As Double = Math.Abs(dot) ' 1.0 means perfect alignment, 0 means perpendicular
+                    ' penalty decreases with better alignment
+                    directionPenalty = (1.0 - alignment) * directionPreferenceWeight
+                End If
+
+                Dim totalCost As Double = chosenDistance + directionPenalty
+
+                If totalCost < bestCost Then
+                    bestCost = totalCost
+                    bestLine = line
+                    bestIsReversed = If(startDistance <= endDistance, False, True)
                 End If
 
             Next
 
-            Dim isReversed As Boolean = Vector2.DistanceSquared(currentPoint, nearestLine.EndPoint) < Vector2.DistanceSquared(currentPoint, nearestLine.StartPoint)
+            ' If bestLine is nothing then break (shouldn't happen)
+            If bestLine Is Nothing Then Exit While
 
-            'TODO: Only generate fractional lines if the user specifies (lines that travel along the boundaries of the shape)
-            Dim fractionalLine As New GeoLine(currentPoint, If(isReversed, nearestLine.EndPoint, nearestLine.StartPoint))
+            ' Compute fractional travel line
+            Dim fractionalLine As New GeoLine(currentPoint, If(bestIsReversed, bestLine.EndPoint, bestLine.StartPoint))
 
-            If allowTravelInOutlines AndAlso fractionalLine.IsLineOnAnyLine(geometrybounds, 100) Then 'Since we're multiplying all values by 100,000 - a tolerance of 100 is 0.001mm
+            If allowTravelInOutlines AndAlso fractionalLine.IsLineOnAnyLine(geometrybounds, 100) Then
                 optimisedLines.Add(fractionalLine)
             End If
 
-            ' Add the nearest line
-            If isReversed Then
-                optimisedLines.Add(nearestLine.Reverse())
-                currentPoint = nearestLine.StartPoint
+            ' Append the selected line (respecting chosen orientation)
+            If bestIsReversed Then
+                optimisedLines.Add(bestLine.Reverse())
+                ' Update currentPoint and previousDirection
+                previousDirection = bestLine.StartPoint - bestLine.EndPoint
+                currentPoint = bestLine.StartPoint
             Else
-                optimisedLines.Add(nearestLine)
-                currentPoint = nearestLine.EndPoint
+                optimisedLines.Add(bestLine)
+                previousDirection = bestLine.EndPoint - bestLine.StartPoint
+                currentPoint = bestLine.EndPoint
             End If
 
-            workingLines.Remove(nearestLine)
+            havePreviousDirection = previousDirection.LengthSquared() > 0
+
+            workingLines.Remove(bestLine)
 
         End While
 

@@ -27,23 +27,29 @@ Public Class ProcessorManager
         Dim workFigures As List(Of List(Of Line)) = If(ProcessorConfiguration.OptimisedToolPath, ReorderFiguresGreedy(figures), New List(Of List(Of Line))(figures))
 
 
-        Dim overcutProcessedFigures As New List(Of List(Of Line))
 
+        Dim offsetProcessedFigures As New List(Of List(Of Line))
+
+        ' IMPORTANT CHANGE:
+        ' Apply offset first, then apply overcut to the offset result.
+        ' This prevents the offset arc completion from jumping to the overcut lines that were appended before offsetting.
         For Each figure In workFigures
 
             Dim closedLoops = GetClosedPaths(figure)
             For Each closedloop In closedLoops
-                overcutProcessedFigures.Add(New OvercutProcessor().Process(closedloop, ProcessorConfiguration))
+
+                ' First offset the closed loop so arcs are generated from the original loop geometry.
+                Dim offsetLoop As List(Of Line) = New OffsetProcessor().Process(closedloop, ProcessorConfiguration)
+
+                ' Then apply overcut to the offset loop so any overcut segments are added after offset geometry.
+                Dim overcutLoop As List(Of Line) = New OvercutProcessor().Process(offsetLoop, ProcessorConfiguration)
+
+                offsetProcessedFigures.Add(offsetLoop)
 
             Next
 
         Next
 
-        Dim offsetProcessedFigures As New List(Of List(Of Line))
-
-        For Each figure In overcutProcessedFigures
-            offsetProcessedFigures.Add(New OffsetProcessor().Process(figure, ProcessorConfiguration))
-        Next
 
         Return offsetProcessedFigures.SelectMany(Of Line)(Function(x) x).ToList
 

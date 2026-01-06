@@ -354,3 +354,116 @@ Public Class SelectedObjectIsTextboxToVisConverter
     End Function
 End Class
 
+Public Class GCodeToFlowDocumentConverter
+    Implements IValueConverter
+
+    Private Shared ReadOnly TokenRegex As New Regex(
+        "(?ix)
+            (?<Comment>        ;.*$ )
+          | (?<ParenComment>   \(.*?\) )
+          | (?<KlipperExpr>    \[[^\]]+\] )
+          | (?<KlipperParam>   \b[A-Z_][A-Z0-9_]*=[^\s]+ )
+          | (?<GCode>          \b[GM]\d+(?:\.\d+)?\b )
+          | (?<Axis>           \b[XYZ][+-]?\d+(?:\.\d+)?\b )
+          | (?<Feed>           \b[FSE][+-]?\d+(?:\.\d+)?\b )
+          | (?<Macro>          \b[A-Z_]{2,}[A-Z0-9_]*\b )
+          | (?<Number>         [+-]?\d+(?:\.\d+)? )
+        ",
+        RegexOptions.Compiled)
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+
+        Dim doc As New FlowDocument With {.PagePadding = New Thickness(0), .TextAlignment = TextAlignment.Left}
+
+        Dim text = If(value?.ToString(), "")
+        If text.Length = 0 Then Return doc
+
+        For Each line In text.Replace(vbCr, "").Split(vbLf)
+            Dim para As New Paragraph With {.Margin = New Thickness(0)}
+            Dim last = 0
+
+            If line.Trim() = ";######################################" Then
+                ' Add a horizontal rule
+                Dim hr As New Border With {
+                        .BorderBrush = Brushes.Gray,
+                        .BorderThickness = New Thickness(0, 0, 0, 1),
+                        .Height = 4,
+                        .Margin = New Thickness(0, 4, 0, 10)
+                    }
+                doc.Blocks.Add(New BlockUIContainer(hr))
+                Continue For ' skip normal tokenization
+            End If
+
+
+            For Each m As Match In TokenRegex.Matches(line)
+
+                If m.Index > last Then
+                    para.Inlines.Add(New Run(line.Substring(last, m.Index - last)))
+                End If
+
+                If m.Groups("Comment").Success Then
+                    ' Add any text before the comment
+                    If m.Index > last Then
+                        para.Inlines.Add(New Run(line.Substring(last, m.Index - last)))
+                    End If
+
+                    ' Strip leading ';'
+                    Dim commentText = m.Value.Substring(1).TrimStart
+                    para.Inlines.Add(New Run(";") With {.Foreground = Brushes.Transparent, .FontSize = 1})
+                    para.Inlines.Add(New Run(commentText) With {.Foreground = Brushes.Gray})
+
+                    last = line.Length ' prevetnt trailing text from being added
+                    Exit For
+                End If
+
+                Dim run As New Run(m.Value)
+
+                Select Case True
+
+                    Case m.Groups("GCode").Success
+                        run.Foreground = New SolidColorBrush(Color.FromRgb(&H59, &HAF, &HEF))
+                        run.FontWeight = FontWeights.Bold
+
+                    Case m.Groups("Macro").Success
+                        run.Foreground = Brushes.OrangeRed
+                        run.FontWeight = FontWeights.Bold
+
+                    Case m.Groups("KlipperParam").Success
+                        run.Foreground = New SolidColorBrush(Color.FromRgb(&H2E, &H8B, &H57))
+
+                    Case m.Groups("KlipperExpr").Success
+                        run.Foreground = New SolidColorBrush(Color.FromRgb(&HCC, &H78, &H32))
+
+                    Case m.Groups("Axis").Success
+                        run.Foreground = New SolidColorBrush(Color.FromRgb(&HE0, &H6C, &H75))
+
+                    Case m.Groups("Feed").Success
+                        run.Foreground = New SolidColorBrush(Color.FromRgb(&HC7, &H6B, &H0))
+
+                    Case m.Groups("Number").Success
+                        run.Foreground = Brushes.DarkCyan
+
+                    Case Else
+                        run.Foreground = Brushes.Black
+                End Select
+
+                para.Inlines.Add(run)
+                last = m.Index + m.Length
+            Next
+
+            If last < line.Length Then
+                para.Inlines.Add(New Run(line.Substring(last)))
+            End If
+
+            doc.Blocks.Add(para)
+        Next
+
+        Return doc
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object _
+        Implements IValueConverter.ConvertBack
+
+        Throw New NotImplementedException()
+    End Function
+End Class

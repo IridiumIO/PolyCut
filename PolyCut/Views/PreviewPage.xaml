@@ -28,6 +28,7 @@
         <local:InverseBoolToVisConverter x:Key="InverseBoolToVisConverter" />
         <local:NullableIntConverter x:Key="NullableIntConverter" />
         <c:StringToObjectConverter x:Key="StringtoObjConverter" />
+        <local:GCodeToFlowDocumentConverter x:Key="GCodeToFlowDocConverter" />
 
     </Page.Resources>
     <Grid Margin="5,5,10,5">
@@ -322,26 +323,29 @@
                         SnapsToDevicePixels="True">-->
                 <Border
                     Grid.Row="4"
-                    Background="{StaticResource CardBackground}"
+                    Margin="-15,0,-15,-15"
+                    Background="#40000000"
                     BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="2"
-                    CornerRadius="5">
+                    BorderThickness="1,0,0,0"
+                    CornerRadius="0 0 4 4">
                     <RichTextBox
-                        x:Name="GCodeRichText"
+                        x:Name="GCodeRichTextBox"
                         Grid.Row="4"
                         Margin="0"
-                        Padding="10,10,8,10"
+                        Padding="10,10,10,10"
                         Background="Transparent"
                         BorderThickness="0"
                         FontFamily="Consolas"
                         Foreground="{StaticResource TextControlForeground}"
                         HorizontalScrollBarVisibility="Auto"
+                        IsDocumentEnabled="False"
                         IsReadOnly="True"
-                        IsReadOnlyCaretVisible="False"
-                        Opacity="0.8"
+                        Opacity="1"
                         ScrollViewer.CanContentScroll="True"
                         Style="{x:Null}"
-                        VerticalScrollBarVisibility="Auto" />
+                        VerticalScrollBarVisibility="Auto"
+                        VirtualizingPanel.IsContainerVirtualizable="True"
+                        VirtualizingPanel.ScrollUnit="Item" />
                 </Border>
                 <!--</ScrollViewer>-->
 

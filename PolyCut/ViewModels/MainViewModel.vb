@@ -373,9 +373,9 @@ Public Class MainViewModel : Inherits ObservableObject
         For Each gc In GeneratedGCode
             stringBuilder.AppendLine(gc.ToString())
             If gc?.Comment?.Equals("Custom Start GCode") Then
-                stringBuilder.Append(Printer.StartGCode)
+                stringBuilder.Append(Printer.StartGCode.Trim)
             ElseIf gc?.Comment?.Equals("Custom End GCode") Then
-                stringBuilder.Append(Printer.EndGCode)
+                stringBuilder.Append(Printer.EndGCode.Trim)
             End If
         Next
         Return stringBuilder.ToString()

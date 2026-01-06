@@ -1,4 +1,5 @@
 ﻿Imports System.ComponentModel
+Imports System.Globalization
 Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
@@ -24,7 +25,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         InitializeDrawingVisual()
 
 
-
+        UpdateGCodeDocument()
 
         ' Subscribe main VM property changes to the correct handler that knows how to re-subscribe printers
         AddHandler viewmodel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
@@ -105,11 +106,63 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             cancellationTokenSource.Cancel()
             ViewModel.GCodePaths.Clear()
             DrawToolPaths()
-
+            UpdateGCodeDocument()
         End If
 
 
     End Sub
+
+    Private Sub UpdateGCodeDocument()
+        Dim convObj = TryCast(TryCast(Me, FrameworkElement).FindResource("GCodeToFlowDocConverter"), IValueConverter)
+
+        Dim doc As FlowDocument = TryCast(convObj?.Convert(ViewModel?.GCode, GetType(FlowDocument), Nothing, CultureInfo.CurrentCulture), FlowDocument)
+
+        If doc Is Nothing Then
+            doc = New FlowDocument()
+        End If
+
+        doc.PagePadding = New Thickness(0)
+        doc.TextAlignment = TextAlignment.Left
+
+        GCodeRichTextBox.Document = doc
+
+        Dispatcher.BeginInvoke(Sub()
+                                   Dim contentWidth = MeasureMaxLineWidth(doc)
+                                   Dim minWidth = GCodeRichTextBox.ViewportWidth
+                                   doc.PageWidth = Math.Max(contentWidth + 20, minWidth)
+                               End Sub, DispatcherPriority.Loaded)
+    End Sub
+
+    Private Function MeasureMaxLineWidth(doc As FlowDocument) As Double
+        Dim typeface As New Typeface(
+        doc.FontFamily,
+        doc.FontStyle,
+        doc.FontWeight,
+        doc.FontStretch)
+
+        Dim maxWidth As Double = 0
+
+        For Each block In doc.Blocks.OfType(Of Paragraph)()
+            Dim text = New TextRange(block.ContentStart, block.ContentEnd).Text
+            Dim lines = text.Split({vbCrLf, vbLf}, StringSplitOptions.None)
+
+            For Each line In lines
+                Dim ft As New FormattedText(
+                line,
+                CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                typeface,
+                doc.FontSize,
+                Brushes.Black,
+                VisualTreeHelper.GetDpi(GCodeRichTextBox).PixelsPerDip)
+
+                maxWidth = Math.Max(maxWidth, ft.WidthIncludingTrailingWhitespace)
+            Next
+        Next
+
+        Return maxWidth
+    End Function
+
 
     Private Sub Transform()
         Dim ret = CalculateOutputs(ViewModel.Printer.CuttingMatRotation, ViewModel.Printer.CuttingMatHorizontalAlignment, ViewModel.Printer.CuttingMatVerticalAlignment)

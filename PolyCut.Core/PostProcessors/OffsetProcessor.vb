@@ -8,6 +8,8 @@ Public Class OffsetProcessor : Implements IProcessor
 
     Private Shared Function CreateOffsetArcs(lines As List(Of Line), toolRadius As Double) As List(Of Line)
 
+        If toolRadius <= 0 Then Return lines
+
         Dim processedLines As New List(Of Line)
 
         'Flag to note if the last processed line was continuous so we don't double up on adding a shortened l2

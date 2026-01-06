@@ -1,4 +1,5 @@
-﻿Imports System.Windows.Shapes
+﻿Imports System.Windows.Documents
+Imports System.Windows.Shapes
 
 Public Class ProcessorManager
 
@@ -30,21 +31,17 @@ Public Class ProcessorManager
 
         Dim offsetProcessedFigures As New List(Of List(Of Line))
 
-        ' IMPORTANT CHANGE:
-        ' Apply offset first, then apply overcut to the offset result.
-        ' This prevents the offset arc completion from jumping to the overcut lines that were appended before offsetting.
         For Each figure In workFigures
 
             Dim closedLoops = GetClosedPaths(figure)
             For Each closedloop In closedLoops
-
                 ' First offset the closed loop so arcs are generated from the original loop geometry.
                 Dim offsetLoop As List(Of Line) = New OffsetProcessor().Process(closedloop, ProcessorConfiguration)
 
                 ' Then apply overcut to the offset loop so any overcut segments are added after offset geometry.
                 Dim overcutLoop As List(Of Line) = New OvercutProcessor().Process(offsetLoop, ProcessorConfiguration)
 
-                offsetProcessedFigures.Add(offsetLoop)
+                offsetProcessedFigures.Add(overcutLoop)
 
             Next
 
@@ -137,7 +134,16 @@ Public Class ProcessorManager
     End Function
 
     Public Function GenerateGCode(lines As List(Of Line)) As GCodeData
-        Return GCodeGenerator.GenerateWithMetadata(lines, ProcessorConfiguration)
+
+        Dim GCodeData = GCodeGenerator.GenerateWithMetadata(lines, ProcessorConfiguration)
+
+        Select Case ProcessorConfiguration.SelectedToolMode
+            Case ProcessorConfiguration.ToolMode.Cut : GCodeData = New GCodeLeadInPostProcessor().Process(GCodeData, ProcessorConfiguration)
+            Case ProcessorConfiguration.ToolMode.Draw : GCodeData = GCodeData
+            Case Else : Throw New NotImplementedException("Tool Mode not implemented")
+        End Select
+
+        Return GCodeData
     End Function
 
 

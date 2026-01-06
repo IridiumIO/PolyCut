@@ -49,6 +49,13 @@ Partial Public Module Extensions
     End Function
 
     <Extension>
+    Public Function Direction(line As Line) As Vector
+        Dim v As New Vector(line.X2 - line.X1, line.Y2 - line.Y1)
+        If v.Length > 0 Then v.Normalize()
+        Return v
+    End Function
+
+    <Extension>
     Public Function TransformLine(line As Line, transforms As System.Drawing.Drawing2D.Matrix) As Line
 
         Dim wpfMatrix As New Matrix(transforms.Elements(0), transforms.Elements(1), transforms.Elements(2), transforms.Elements(3), transforms.OffsetX, transforms.OffsetY)
@@ -188,8 +195,105 @@ Partial Public Module Extensions
         Return False
     End Function
 
+    <Extension>
+    Public Function RotateStartAt(lines As IEnumerable(Of Line), startIndex As Integer) As List(Of Line)
+        Dim list = lines.ToList()
+        If list.Count = 0 OrElse startIndex <= 0 OrElse startIndex >= list.Count Then
+            Return New List(Of Line)(list)
+        End If
+
+        Dim result As New List(Of Line)(list.Count)
+        For i = startIndex To list.Count - 1
+            result.Add(list(i))
+        Next
+        For i = 0 To startIndex - 1
+            result.Add(list(i))
+        Next
+        Return result
+    End Function
+
+    <Extension>
+    Public Function RepresentativeCenterPoint(figure As IEnumerable(Of Line)) As Point
+        If figure Is Nothing Then Return New Point(0, 0)
+        Dim list = figure.ToList()
+        If list.Count = 0 Then Return New Point(0, 0)
+        Dim sumX As Double = 0
+        Dim sumY As Double = 0
+        For Each ln In list
+            Dim mp = ln.MidPoint()
+            sumX += mp.X
+            sumY += mp.Y
+        Next
+        Return New Point(sumX / list.Count, sumY / list.Count)
+    End Function
+
+    <Extension>
+    Public Function LastDirection(lines As IEnumerable(Of Line)) As Vector?
+        Dim list = lines.ToList()
+        For i = list.Count - 1 To 0 Step -1
+            Dim v = list(i).Direction()
+            If v.Length > 0 Then Return v
+        Next
+        Return Nothing
+    End Function
+
+    'Reorder figures to minimise travel distance between them. I really need to get away from List(of List(of Line)) at some point...
+    <Extension>
+    Public Function ReorderFiguresGreedy(figures As IEnumerable(Of List(Of Line))) As List(Of List(Of Line))
+
+        If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of List(Of Line))()
+
+        Dim remaining As New List(Of List(Of Line))(figures)
+        Dim orderedFigures As New List(Of List(Of Line))
+
+        Dim currentPoint As New Windows.Point(0, 0)
+
+        While remaining.Count > 0
+            Dim bestIdx As Integer = -1
+            Dim bestDistSq As Double = Double.MaxValue
+
+            For i = 0 To remaining.Count - 1
+                Dim rep = remaining(i).RepresentativeCenterPoint
+                Dim dx = rep.X - currentPoint.X
+                Dim dy = rep.Y - currentPoint.Y
+                Dim distSq = dx * dx + dy * dy
+                If distSq < bestDistSq Then
+                    bestDistSq = distSq
+                    bestIdx = i
+                End If
+            Next
+
+            If bestIdx = -1 Then
+                orderedFigures.AddRange(remaining)
+                Exit While
+            End If
+
+            Dim chosen = remaining(bestIdx)
+            orderedFigures.Add(chosen)
+            remaining.RemoveAt(bestIdx)
+
+            ' update currentPoint to the representative of chosen group (keeps continuity for greedy selection)
+            currentPoint = chosen.RepresentativeCenterPoint
+        End While
+
+        Return orderedFigures
+    End Function
+
+
+
+
 
 End Module
+
+
+
+
+
+
+
+
+
+
 
 'Extension Methods for Points
 Partial Public Module Extensions

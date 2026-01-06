@@ -157,6 +157,31 @@ Public Class OffsetProcessor : Implements IProcessor
 
     End Function
 
+    Const AlignmentThreshold As Double = 0.5 'Approximately 60 degrees
+
+    Public Shared Function ReorderLoopForBladeAlignment(loopLines As List(Of Line), lastBladeDir As Vector?) As List(Of Line)
+
+        If Not lastBladeDir.HasValue OrElse loopLines Is Nothing OrElse loopLines.Count < 2 Then
+            Return loopLines
+        End If
+
+        ' score each segment by dot(lastBlade, segmentDirection)
+        Dim scored = loopLines.Select(Function(l, idx) New With {
+            idx,
+            Key .score = Vector.Multiply(lastBladeDir.Value, l.Direction())
+        }).OrderByDescending(Function(x) x.score).ToList()
+
+        Dim best = scored.First()
+        ' preserve threshold behavior: if best score is below threshold we still pick the max-scoring start
+        If best.score <= AlignmentThreshold Then
+            ' keep using the best-scoring anyway (previous logic fell back to ordering by best score)
+        End If
+
+        Return loopLines.RotateStartAt(best.idx)
+    End Function
+
+
+
     Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
         Return CreateOffsetArcs(lines, cfg.CuttingConfig.ToolDiameter / 2)
     End Function

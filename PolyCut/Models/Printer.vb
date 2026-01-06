@@ -83,6 +83,12 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         End Get
     End Property
 
+    Public Property CuttingMat As CuttingMat
+    Public Property CuttingMatVerticalAlignment As String = "Top"
+    Public Property CuttingMatHorizontalAlignment As String = "Left"
+    Public Property CuttingMatRotation As Double = 0
+
+
     Private _BedWidth As Decimal = 235
     Private _BedHeight As Decimal = 235
     Private _WorkingWidth As Decimal = 235
@@ -90,7 +96,40 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
     Private _WorkingOffsetX As Decimal = 0
     Private _WorkingOffsetY As Decimal = 0
 
+    Public Function Clone() As Printer
+        Dim p As New Printer With {
+            .Version = Me.Version,
+            .Name = Me.Name,
+            .BedWidth = Me.BedWidth,
+            .BedHeight = Me.BedHeight,
+            .WorkingOffsetX = Me.WorkingOffsetX,
+            .WorkingOffsetY = Me.WorkingOffsetY,
+            .WorkingWidth = Me.WorkingWidth,
+            .WorkingHeight = Me.WorkingHeight,
+            .CuttingMat = Me.CuttingMat,
+            .CuttingMatVerticalAlignment = Me.CuttingMatVerticalAlignment,
+            .CuttingMatHorizontalAlignment = Me.CuttingMatHorizontalAlignment,
+            .CuttingMatRotation = Me.CuttingMatRotation
+        }
+        Return p
+    End Function
 
+    Public Sub CopyFrom(other As Printer)
+        If other Is Nothing Then Return
+
+        Me.Version = other.Version
+        Me.Name = other.Name
+        Me.BedWidth = other.BedWidth
+        Me.BedHeight = other.BedHeight
+        Me.WorkingOffsetX = other.WorkingOffsetX
+        Me.WorkingOffsetY = other.WorkingOffsetY
+        Me.WorkingWidth = other.WorkingWidth
+        Me.WorkingHeight = other.WorkingHeight
+        Me.CuttingMat = other.CuttingMat
+        Me.CuttingMatVerticalAlignment = other.CuttingMatVerticalAlignment
+        Me.CuttingMatHorizontalAlignment = other.CuttingMatHorizontalAlignment
+        Me.CuttingMatRotation = other.CuttingMatRotation
+    End Sub
 
 End Class
 

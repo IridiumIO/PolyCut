@@ -20,7 +20,6 @@ Public Class MainViewModel : Inherits ObservableObject
     Public Property Printers As ObservableCollection(Of Printer)
     Public Property Printer As Printer
     Public Property CuttingMats As ObservableCollection(Of CuttingMat)
-    Public Property CuttingMat As CuttingMat
     Public Property Configuration As ProcessorConfiguration
 
 
@@ -51,8 +50,12 @@ Public Class MainViewModel : Inherits ObservableObject
     Private ReadOnly _navigationService As INavigationService
     Private ReadOnly _argsService As CommandLineArgsService
 
-    Public Property SavePrinterCommand As ICommand = New RelayCommand(AddressOf SavePrinter)
-    Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
+    Public Property SavePrinterCommand As ICommand = New RelayCommand(Of String)(AddressOf SavePrinter)
+
+    Public Property ConfigurePrinterCommand As ICommand = New RelayCommand(AddressOf ConfigurePrinter)
+    Public Property AddPrinterCommand As ICommand = New RelayCommand(Of Printer)(AddressOf AddPrinter)
+    Public Property DeletePrinterCommand As ICommand = New RelayCommand(AddressOf DeletePrinter)
+    'Public Property SaveCuttingMatCommand As ICommand = New RelayCommand(AddressOf SaveCuttingMat)
     Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
@@ -96,23 +99,135 @@ Public Class MainViewModel : Inherits ObservableObject
 
 
     Private Sub Initialise()
+        CuttingMats = SettingsHandler.GetCuttingMats
 
         Printers = SettingsHandler.GetPrinters
+
+        For Each p In Printers
+            If p Is Nothing Then Continue For
+
+            If p.CuttingMat IsNot Nothing Then
+                Dim match As CuttingMat = Nothing
+
+                ' Prefer matching by Id (new saves)
+                If p.CuttingMat.Id <> Guid.Empty Then
+                    match = CuttingMats.FirstOrDefault(Function(cm) cm.Id = p.CuttingMat.Id)
+                End If
+
+                ' Fallback: try matching by name + size + svg (for older masts before Id entry)
+                If match Is Nothing Then
+                    match = CuttingMats.FirstOrDefault(Function(cm) _
+                        String.Equals(cm.Name, p.CuttingMat.Name, StringComparison.OrdinalIgnoreCase) AndAlso
+                        cm.Width = p.CuttingMat.Width AndAlso
+                        cm.Height = p.CuttingMat.Height AndAlso
+                        String.Equals(cm.SVGSource, p.CuttingMat.SVGSource, StringComparison.OrdinalIgnoreCase))
+                End If
+
+                If match IsNot Nothing Then
+                    p.CuttingMat = match ' use canonical instance so ComboBox.SelectedItem works
+                Else
+                    ' No match: preserve user's serialized mat by adding it to repository (and ensure it has an Id)
+                    If p.CuttingMat.Id = Guid.Empty Then p.CuttingMat.Id = Guid.NewGuid()
+                    CuttingMats.Add(p.CuttingMat)
+                End If
+
+
+            Else
+            ' No mat stored in this printer: assign default repository mat if available
+            If CuttingMats.Count > 0 Then p.CuttingMat = CuttingMats.First()
+            End If
+
+
+        Next
+
+
+
         Printer = Printers.First
-        CuttingMats = SettingsHandler.GetCuttingMats
-        CuttingMat = CuttingMats.First
+
         Configuration = (SettingsHandler.GetConfigurations).First
     End Sub
 
+    Public Sub AddPrinter(newPrinter As Printer)
 
-    Public Sub SavePrinter()
+        Printers.Add(newPrinter)
+        Printer = newPrinter
+        SettingsHandler.WritePrinter(Printer)
+        _snackbarService.GenerateSuccess("Added Preset", Printer.Name)
+    End Sub
+
+    Public Sub SavePrinter(newName As String)
+
+        ' If caller didn't pass a name, fall back to the bound Printer.Name
+        Dim nameToSave = If(String.IsNullOrWhiteSpace(newName), Printer?.Name, newName)
+
+        If nameToSave Is Nothing Then
+            _snackbarService.GenerateError("Error", "Printer name is empty", 3)
+            Return
+        End If
+
+        Dim existingPrinter = Printers.FirstOrDefault(Function(p) p.Name = nameToSave)
+
+        If existingPrinter IsNot Nothing Then
+            'Ask user if they want to overwrite
+            Dim result = MessageBox.Show($"A printer with the name '{nameToSave}' already exists. Do you want to overwrite it?", "Overwrite Printer?", MessageBoxButton.YesNo, MessageBoxImage.Exclamation)
+            If result = MessageBoxResult.No Then
+                _snackbarService.GenerateError("Error", "Printer not saved. Name already exists.", 3)
+                Return
+            End If
+
+            existingPrinter.CopyFrom(Printer)
+            existingPrinter.Name = newName
+            Printer = existingPrinter
+        Else
+            Dim newPrinter As Printer = Printer.Clone()
+            Printers.Add(newPrinter)
+            newPrinter.Name = nameToSave
+            Printer = newPrinter
+        End If
+
+
         SettingsHandler.WritePrinter(Printer)
         _snackbarService.GenerateSuccess("Saved Preset", Printer.Name)
     End Sub
-    Public Sub SaveCuttingMat()
-        SettingsHandler.WriteCuttingMat(CuttingMat)
-        _snackbarService.GenerateSuccess("Saved Preset", CuttingMat.Name)
+
+    Public Event PrinterConfigOpened()
+    Public Event PrinterConfigClosed()
+
+    Public Sub ConfigurePrinter()
+        Dim printerConfigWindow = Application.GetService(Of PrinterConfig)
+        RaiseEvent PrinterConfigOpened()
+        'Dim clone = Printer.Clone()
+        'Printer = clone
+
+        'OnPropertyChanged(NameOf(Printer))
+
+        Dim result = printerConfigWindow.ShowDialog()
+        RaiseEvent PrinterConfigClosed()
+
+        For Each p In Printers
+            SettingsHandler.WritePrinter(p)
+        Next
+
+
+        'Printer = Printers.First(Function(p) p.Name = Printer.Name)
     End Sub
+
+    Public Sub DeletePrinter()
+        If Printers.Count > 1 Then
+
+            Dim toRemove = Printer
+            Printer = Printers((Printers.IndexOf(toRemove) + 1) Mod (Printers.Count))
+
+            Printers.Remove(toRemove)
+            SettingsHandler.DeletePrinter(toRemove)
+        End If
+
+    End Sub
+
+    'Public Sub SaveCuttingMat()
+    '    SettingsHandler.WriteCuttingMat(CuttingMat)
+    '    _snackbarService.GenerateSuccess("Saved Preset", CuttingMat.Name)
+    'End Sub
 
 
     Private Sub BrowseSVG()

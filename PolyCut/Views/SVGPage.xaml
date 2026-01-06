@@ -139,12 +139,12 @@
                             IsHitTestVisible="False" Opacity="0">
 
                         <svgc:SvgCanvas x:Name="DupCuttingMat"
-                                        HorizontalAlignment="{Binding MainVM.CuttingMat.SelectedHorizontalAlignment}"
-                                        VerticalAlignment="{Binding MainVM.CuttingMat.SelectedVerticalAlignment}"
-                                        Source="{Binding MainVM.CuttingMat.QualifiedSVGSource}">
+                                        HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
+                                        VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
+                                        Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
-                                    <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
+                                    <RotateTransform Angle="{Binding MainVM.Printer.CuttingMatRotation}" />
                                     <TranslateTransform X="{Binding ElementName=CuttingMat_RenderTransform, Path=X}" Y="{Binding ElementName=CuttingMat_RenderTransform, Path=Y}" />
                                 </TransformGroup>
                             </svgc:SvgCanvas.RenderTransform>
@@ -158,14 +158,14 @@
                             BorderBrush="#858585" BorderThickness="1" ClipToBounds="True" CornerRadius="0,0,0,0">
                         <svgc:SvgCanvas x:Name="CuttingMat"
                                         Margin="-1"
-                                        HorizontalAlignment="{Binding MainVM.CuttingMat.SelectedHorizontalAlignment}"
-                                        VerticalAlignment="{Binding MainVM.CuttingMat.SelectedVerticalAlignment}"
+                                        HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
+                                        VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
                                         EnsureViewboxSize="False"
-                                        Source="{Binding MainVM.CuttingMat.QualifiedSVGSource}"
+                                        Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}"
                                         Visibility="{Binding CuttingMatIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
-                                    <RotateTransform Angle="{Binding ElementName=Rotation, Path=SelectedItem}" />
+                                    <RotateTransform Angle="{Binding MainVM.Printer.CuttingMatRotation}" />
                                     <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
                                 </TransformGroup>
                             </svgc:SvgCanvas.RenderTransform>
@@ -246,17 +246,69 @@
                       Width="10"
                       Margin="0,0,-10,0" Panel.ZIndex="1"
                       Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
+        
         <ui:Card Grid.Column="2"
-                 Margin="5,5,0,5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
-            <ui:Card.Background>
-                <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
-            </ui:Card.Background>
-            <local:MainSidebar x:Name="MainSidebar"/>
-       
+                 Margin="0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
+                 Background="Transparent" BorderThickness="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ui:Card Grid.Row="0"
+                         Margin="5,5,0,0" Padding="20 10" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <StackPanel Grid.Row="0" Orientation="Vertical">
+                        <Grid Margin="0,0" FlowDirection="LeftToRight">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="240" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Printer"
+                                   Padding="1,2,0,0" VerticalAlignment="Center" />
+                            <Grid Grid.Column="2" Margin="10,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0"
+                                          Background="Transparent" DisplayMemberPath="Name"
+                                          ItemsSource="{Binding MainVM.Printers}"
+                                          SelectedItem="{Binding MainVM.Printer}" />
+                                <ui:Button Grid.Column="1"
+                                           Width="25" Height="35"
+                                           Margin="-55,0,-10,0" Padding="0"
+                                           Background="Transparent" BorderBrush="Transparent"
+                                           Command="{Binding MainVM.ConfigurePrinterCommand}"
+                                           CommandParameter="Ender 3 S1">
+                                    <ui:SymbolIcon Margin="0" Symbol="Settings24" />
+                                </ui:Button>
 
 
+                            </Grid>
+
+                        </Grid>
+
+                    </StackPanel>
+                </ui:Card>
+
+                <ui:Card Grid.Row="1"
+                         Margin="5,5,0,5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <ui:Card.Background>
+                        <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
+                    </ui:Card.Background>
+                    <local:MainSidebar x:Name="MainSidebar" />
+
+
+
+
+                </ui:Card>
+
+            </Grid>
 
         </ui:Card>
+
 
     </Grid>
 

@@ -1,9 +1,12 @@
 ﻿Imports System.Text.Json
 
+Imports PolyCut.Core
+
 Public Class PrinterSettings : Inherits SettingsBase : Implements ISettingsService
 
     'Public Property SettingsFiles As List(Of IO.FileInfo) Implements ISettingsService.SettingsFiles
     'Public Property SettingsFolder As IO.DirectoryInfo Implements ISettingsService.SettingsFolder
+
 
 
     'Public Function GetValue(Of Printer)(settingName As String) As Printer Implements ISettingsService.GetValue

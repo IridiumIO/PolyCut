@@ -24,7 +24,6 @@ Class MainWindow : Implements INavigationWindow
         snackbarService.SetSnackbarPresenter(RootSnackbar)
 
 
-
     End Sub
 
 

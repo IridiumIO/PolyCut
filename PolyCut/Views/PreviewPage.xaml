@@ -1,22 +1,25 @@
-﻿<Page x:Class="PreviewPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:PolyCut"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
-      xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
-      xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-      xmlns:system="clr-namespace:System;assembly=mscorlib"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="ExportPage"
-      Margin="0,5,0,0"
-      d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-      d:DesignHeight="800" d:DesignWidth="1000"
-      Background="{DynamicResource ControlFillColorTertiaryBrush}"
-      ScrollViewer.CanContentScroll="False"
-      mc:Ignorable="d" MouseMove="Page_MouseMove" >
+﻿<Page
+    x:Class="PreviewPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:PolyCut"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
+    xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
+    xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="ExportPage"
+    Margin="0,5,0,0"
+    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+    d:DesignHeight="800"
+    d:DesignWidth="1000"
+    Background="{DynamicResource ControlFillColorTertiaryBrush}"
+    MouseMove="Page_MouseMove"
+    ScrollViewer.CanContentScroll="False"
+    mc:Ignorable="d">
     <Page.Resources>
         <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />
         <c:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -34,40 +37,60 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800" />
+            <ColumnDefinition
+                Width="380"
+                MinWidth="380"
+                MaxWidth="800" />
         </Grid.ColumnDefinitions>
-        <GridSplitter Width="5"
-                      Panel.ZIndex="1"
-                      Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
+        <GridSplitter
+            Width="5"
+            Panel.ZIndex="1"
+            Background="Transparent"
+            IsTabStop="False"
+            ResizeDirection="Columns" />
 
-        <rc:ZoomBorder x:Name="zoomPanControl"
-                       Background="Transparent" ClipToBounds="True" LeftButtonAction="None"
-                       MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002" ScaleMax="40"
-                       ScaleMin="0.01">
-            <Grid x:Name="outerBounds"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Background="Transparent">
+        <rc:ZoomBorder
+            x:Name="zoomPanControl"
+            Background="Transparent"
+            ClipToBounds="True"
+            LeftButtonAction="None"
+            MiddleButtonAction="Move"
+            RightButtonAction="Reset"
+            ScaleAmount="0.002"
+            ScaleMax="40"
+            ScaleMin="0.01">
+            <Grid
+                x:Name="outerBounds"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="Transparent">
 
-                <Canvas x:Name="mainCanvas"
+                <Canvas
+                    x:Name="mainCanvas"
+                    Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                    Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                    Margin="0,0,0,0"
+                    Background="Transparent">
+
+                    <Border
+                        x:Name="CuttingMatBounds"
                         Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                         Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                        Margin="0,0,0,0"
-                        Background="Transparent">
+                        Background="#44646464"
+                        BorderBrush="#858585"
+                        BorderThickness="1"
+                        ClipToBounds="True">
 
-                    <Border x:Name="CuttingMatBounds"
-                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                            Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Background="#44646464" BorderBrush="#858585" BorderThickness="1" ClipToBounds="True">
-
-                        <svgc:SvgCanvas x:Name="CuttingMat"
-                                        Margin="-1"
-                                        HorizontalAlignment="{Binding CuttingMat.SelectedHorizontalAlignment}"
-                                        VerticalAlignment="{Binding CuttingMat.SelectedVerticalAlignment}"
-                                        Source="{Binding CuttingMat.QualifiedSVGSource}"
-                                        Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <svgc:SvgCanvas
+                            x:Name="CuttingMat"
+                            Margin="-1"
+                            HorizontalAlignment="{Binding Printer.CuttingMatHorizontalAlignment}"
+                            VerticalAlignment="{Binding Printer.CuttingMatVerticalAlignment}"
+                            Source="{Binding Printer.CuttingMat.QualifiedSVGSource}"
+                            Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
-                                    <RotateTransform Angle="{Binding CuttingMat.SelectedRotation}" />
+                                    <RotateTransform Angle="{Binding Printer.CuttingMatRotation}" />
                                     <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
                                 </TransformGroup>
                             </svgc:SvgCanvas.RenderTransform>
@@ -109,10 +132,14 @@
             </Grid>
 
         </rc:ZoomBorder>
-        
-        <ui:Card Grid.Column="0"
-                 Width="500" x:Name="PreviewControlBar"
-                 Margin="5" Padding="0" VerticalAlignment="Bottom">
+
+        <ui:Card
+            x:Name="PreviewControlBar"
+            Grid.Column="0"
+            Width="500"
+            Margin="5"
+            Padding="0"
+            VerticalAlignment="Bottom">
             <ui:Card.Background>
                 <SolidColorBrush Color="{DynamicResource CardBackgroundFillColorDefault}" />
             </ui:Card.Background>
@@ -124,33 +151,52 @@
                     <ColumnDefinition Width="auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Label Content="Preview Toolpath"
-                       Margin="0,2,0,0" VerticalAlignment="Center" />
-                <ui:Button x:Name="PlayPreviewButton"
-                           Grid.Column="1" Click="PreviewToolpath"
-                           Margin="10,0,0,0">
+                <Label
+                    Margin="0,2,0,0"
+                    VerticalAlignment="Center"
+                    Content="Preview Toolpath" />
+                <ui:Button
+                    x:Name="PlayPreviewButton"
+                    Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Click="PreviewToolpath">
                     <ui:SymbolIcon Filled="True" Symbol="Play16" />
                 </ui:Button>
-                <ui:Button x:Name="StopPreviewButton"
-                           Grid.Column="2" Click="StopPreviewToolpath"
-                           Margin="10,0,0,0">
+                <ui:Button
+                    x:Name="StopPreviewButton"
+                    Grid.Column="2"
+                    Margin="10,0,0,0"
+                    Click="StopPreviewToolpath">
                     <ui:SymbolIcon Filled="True" Symbol="Stop20" />
                 </ui:Button>
 
 
-                <ui:SymbolIcon Grid.Column="3"
-                               Margin="30,0,0,0" HorizontalAlignment="Right"
-                               FontSize="25" Symbol="TopSpeed20" />
-                <Slider Grid.Column="4"
-                        Margin="10,0,10,0" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                        Maximum="1" Minimum="0" TickFrequency="0.001" SmallChange="0.001" IsSnapToTickEnabled="True"
-                        Value="{Binding PreviewRenderSpeed, Mode=TwoWay, FallbackValue=20}"  />
-                
+                <ui:SymbolIcon
+                    Grid.Column="3"
+                    Margin="30,0,0,0"
+                    HorizontalAlignment="Right"
+                    FontSize="25"
+                    Symbol="TopSpeed20" />
+                <Slider
+                    Grid.Column="4"
+                    Margin="10,0,10,0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Center"
+                    IsSnapToTickEnabled="True"
+                    Maximum="1"
+                    Minimum="0"
+                    SmallChange="0.001"
+                    TickFrequency="0.001"
+                    Value="{Binding PreviewRenderSpeed, Mode=TwoWay, FallbackValue=20}" />
+
             </Grid>
         </ui:Card>
 
-        <ui:Card Grid.Column="1"
-                 Margin="5,5,0,5" VerticalAlignment="Stretch" VerticalContentAlignment="Top">
+        <ui:Card
+            Grid.Column="1"
+            Margin="5,5,0,5"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Top">
             <ui:Card.Background>
                 <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
             </ui:Card.Background>
@@ -178,9 +224,10 @@
                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <ui:Card Padding="8,4"
-                                                                     Background="Transparent"
-                                                                     BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                            <ui:Card
+                                                                Padding="8,4"
+                                                                Background="Transparent"
+                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
                                                                 <ui:SymbolIcon Symbol="Eye24" />
                                                             </ui:Card>
                                                         </Setter.Value>
@@ -190,9 +237,10 @@
                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <ui:Card Padding="8,4"
-                                                                     Background="Transparent"
-                                                                     BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                            <ui:Card
+                                                                Padding="8,4"
+                                                                Background="Transparent"
+                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
                                                                 <!--  Replace with your unchecked icon  -->
                                                                 <ui:SymbolIcon Symbol="EyeOff24" />
                                                             </ui:Card>
@@ -206,12 +254,13 @@
                             </ControlTemplate>
                         </ToggleButton.Template>
                     </ToggleButton>
-                    <Label Content="Cutting Mat" Margin="10,4,10,0" />
+                    <Label Margin="10,4,10,0" Content="Cutting Mat" />
 
                 </StackPanel>
-                <StackPanel Grid.Row="1"
-                            Margin="0,10,0,10"
-                            Orientation="Horizontal">
+                <StackPanel
+                    Grid.Row="1"
+                    Margin="0,10,0,10"
+                    Orientation="Horizontal">
 
                     <ToggleButton x:Name="TravelMovesVisibilityToggle" IsChecked="True">
                         <ToggleButton.Template>
@@ -223,9 +272,10 @@
                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <ui:Card Padding="8,4"
-                                                                     Background="Transparent"
-                                                                     BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                            <ui:Card
+                                                                Padding="8,4"
+                                                                Background="Transparent"
+                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
                                                                 <ui:SymbolIcon Symbol="Eye24" />
                                                             </ui:Card>
                                                         </Setter.Value>
@@ -235,9 +285,10 @@
                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
                                                     <Setter Property="Content">
                                                         <Setter.Value>
-                                                            <ui:Card Padding="8,4"
-                                                                     Background="Transparent"
-                                                                     BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                            <ui:Card
+                                                                Padding="8,4"
+                                                                Background="Transparent"
+                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
                                                                 <!--  Replace with your unchecked icon  -->
                                                                 <ui:SymbolIcon Symbol="EyeOff24" />
                                                             </ui:Card>
@@ -251,13 +302,17 @@
                             </ControlTemplate>
                         </ToggleButton.Template>
                     </ToggleButton>
-                    <Label Content="Travel Moves" Margin="10,4,10,0" />
+                    <Label Margin="10,4,10,0" Content="Travel Moves" />
 
                 </StackPanel>
 
-                
 
-                <Label Content="GCode" Grid.Row="3" Margin="0,10" FontWeight="SemiBold" />
+
+                <Label
+                    Grid.Row="3"
+                    Margin="0,10"
+                    Content="GCode"
+                    FontWeight="SemiBold" />
 
                 <!--<ScrollViewer Grid.Row="4"
                         HorizontalScrollBarVisibility="Visible"
@@ -265,19 +320,28 @@
                         Margin="0,10,10,0"
                         Padding="0,-5,-5,10"
                         SnapsToDevicePixels="True">-->
-                <Border Grid.Row="4"
-                        Background="{StaticResource CardBackground}"
-                        BorderBrush="{StaticResource CardBorderBrush}"
-                        BorderThickness="2" CornerRadius="5">
-                    <TextBox Text="{Binding GCode}"
-                             Grid.Row="4"
-                             Margin="0" Padding="10,10,8,10"
-                             Background="Transparent" BorderThickness="0" FontFamily="Consolas"
-                             Foreground="{StaticResource TextControlForeground}"
-                             HorizontalScrollBarVisibility="Auto" IsReadOnly="True" IsReadOnlyCaretVisible="False"
-                             Opacity="0.8" ScrollViewer.CanContentScroll="True"
-                             Style="{x:Null}"
-                             VerticalScrollBarVisibility="Auto" />
+                <Border
+                    Grid.Row="4"
+                    Background="{StaticResource CardBackground}"
+                    BorderBrush="{StaticResource CardBorderBrush}"
+                    BorderThickness="2"
+                    CornerRadius="5">
+                    <TextBox
+                        Grid.Row="4"
+                        Margin="0"
+                        Padding="10,10,8,10"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontFamily="Consolas"
+                        Foreground="{StaticResource TextControlForeground}"
+                        HorizontalScrollBarVisibility="Auto"
+                        IsReadOnly="True"
+                        IsReadOnlyCaretVisible="False"
+                        Opacity="0.8"
+                        ScrollViewer.CanContentScroll="True"
+                        Style="{x:Null}"
+                        Text="{Binding GCode}"
+                        VerticalScrollBarVisibility="Auto" />
                 </Border>
                 <!--</ScrollViewer>-->
 

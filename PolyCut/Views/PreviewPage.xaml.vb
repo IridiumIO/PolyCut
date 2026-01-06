@@ -10,6 +10,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
     Private cancellationTokenSource As CancellationTokenSource = New CancellationTokenSource
 
+    Private _subscribedPrinter As Printer
+    Private _subscribedPrinterCuttingMat As CuttingMat
 
     Sub New(viewmodel As MainViewModel)
 
@@ -20,9 +22,15 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
         zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
         InitializeDrawingVisual()
-        AddHandler viewmodel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+
+
+
+
+        ' Subscribe main VM property changes to the correct handler that knows how to re-subscribe printers
+        AddHandler viewmodel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
         AddHandler viewmodel.PropertyChanged, AddressOf PropertyChangedHandler
-        Transform()
+        ' Subscribe to the currently selected printer (sets up Printer.PropertyChanged -> PropertyChangedHandler)
+        SubscribeToPrinter(viewmodel.Printer)
 
         If viewmodel.GCode?.Length <> 0 Then
             cancellationTokenSource.Cancel()
@@ -32,12 +40,66 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
+    Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
+        If e Is Nothing Then Return
+
+        ' When MainViewModel.Printer reference changes, re-subscribe to the new instance
+        If String.Equals(e.PropertyName, NameOf(ViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
+            SubscribeToPrinter(ViewModel.Printer)
+            Transform()
+        End If
+    End Sub
+
+    Private Sub SubscribeToPrinter(pr As Printer)
+        ' Unsubscribe old printer events
+        If _subscribedPrinter IsNot Nothing Then
+            RemoveHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        _subscribedPrinter = pr
+
+        If _subscribedPrinter IsNot Nothing Then
+            AddHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        ' Subscribe to the cutting mat on the printer (if present) and manage changes
+        SubscribeToPrinterCuttingMat(If(pr IsNot Nothing, pr.CuttingMat, Nothing))
+    End Sub
+
+    Private Sub SubscribeToPrinterCuttingMat(mat As CuttingMat)
+        If _subscribedPrinterCuttingMat IsNot Nothing Then
+            RemoveHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        _subscribedPrinterCuttingMat = mat
+
+        If _subscribedPrinterCuttingMat IsNot Nothing Then
+            AddHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+    End Sub
+
+
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
-        Dim alignmentPropertyNames = {
-            NameOf(ViewModel.CuttingMat.SelectedVerticalAlignment),
-            NameOf(ViewModel.CuttingMat.SelectedHorizontalAlignment),
-            NameOf(ViewModel.CuttingMat.SelectedRotation),
-            NameOf(ViewModel.CuttingMat)}
+
+
+        Dim prop = If(e?.PropertyName, "")
+
+        If prop.IndexOf("CuttingMat", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse prop.IndexOf("Rotation", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse prop.IndexOf("Alignment", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse String.Equals(prop, NameOf(MainViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
+
+            ' If the printer's CuttingMat reference changed, resubscribe its events
+            If TypeOf sender Is Printer Then
+                Dim p = TryCast(sender, Printer)
+                If p IsNot Nothing Then
+                    SubscribeToPrinterCuttingMat(p.CuttingMat)
+                End If
+            End If
+
+            Transform()
+        End If
+
 
         If e.PropertyName = NameOf(ViewModel.GCode) Then
             cancellationTokenSource.Cancel()
@@ -45,15 +107,12 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             DrawToolPaths()
 
         End If
-        If alignmentPropertyNames.Contains(e.PropertyName) Then
-            Transform()
-        End If
 
 
     End Sub
 
     Private Sub Transform()
-        Dim ret = CalculateOutputs(ViewModel.CuttingMat.SelectedRotation, ViewModel.CuttingMat.SelectedHorizontalAlignment, ViewModel.CuttingMat.SelectedVerticalAlignment)
+        Dim ret = CalculateOutputs(ViewModel.Printer.CuttingMatRotation, ViewModel.Printer.CuttingMatHorizontalAlignment, ViewModel.Printer.CuttingMatVerticalAlignment)
 
         CuttingMat_RenderTransform.X = ret.Item1
         CuttingMat_RenderTransform.Y = ret.Item2
@@ -63,8 +122,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Dim x As Double = 0
         Dim y As Double = 0
 
-        Dim CuttingMatWidth = ViewModel.CuttingMat.Width
-        Dim CuttingMatHeight = ViewModel.CuttingMat.Height
+        Dim CuttingMatWidth = ViewModel.Printer.CuttingMat.Width
+        Dim CuttingMatHeight = ViewModel.Printer.CuttingMat.Height
 
         Select Case rotation
             Case 0

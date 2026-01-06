@@ -12,6 +12,9 @@ Public Interface ISettingsService
     <Pure>
     Function GetValue(Of T)(settingName As String) As T
 
+    <Pure>
+    Function DeleteValue(settingName As String) As Boolean
+
     Function InitialiseSettings(Of T As {ISaveable, New})(appName As String, Subfolder As String) As Task
 
 End Interface

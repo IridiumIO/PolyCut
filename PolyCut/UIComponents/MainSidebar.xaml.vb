@@ -27,7 +27,7 @@
 
     Public Event CuttingMatAlignmentMouseEnter As EventHandler(Of MouseEventArgs)
     Public Event CuttingMatAlignmentMouseLeave As EventHandler(Of MouseEventArgs)
-    Public Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles Tab_Align.CuttingMatAlignmentMouseEnter, Tab_Align.CuttingMatAlignmentMouseLeave
+    Public Sub HoverAlignment(sender As Object, e As MouseEventArgs)
 
         If e.RoutedEvent Is MouseEnterEvent Then
             RaiseEvent CuttingMatAlignmentMouseEnter(Me, e)

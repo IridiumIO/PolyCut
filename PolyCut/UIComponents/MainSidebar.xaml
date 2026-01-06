@@ -17,15 +17,16 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TabControl Margin="0" VerticalAlignment="Stretch"
+
+        <TabControl  Margin="0 0 0 0" VerticalAlignment="Stretch"
                     BorderBrush="Transparent">
             <TabItem IsSelected="True" Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
                     <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
                         <ui:SymbolIcon Symbol="PuzzlePiece24" />
                         <TextBlock Text="Elements"
-                                   Margin="6,0,0,0"
-                                   Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                   Margin="6,0,0,0"/>
+                        <!--Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />-->
 
                     </StackPanel>
                 </TabItem.Header>
@@ -36,7 +37,8 @@
                 <TabItem.Header>
                     <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
                         <ui:SymbolIcon Margin="0,0,6,0" Symbol="AlignLeft16" />
-                        <TextBlock Text="Properties" Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Text="Properties" />
+                        <!--Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />-->
 
                     </StackPanel>
                 </TabItem.Header>
@@ -44,7 +46,7 @@
             </TabItem>
 
             <TabItem Width="9"
-                     Margin="0,0,-6,0"
+                     Margin="0,0,0,0"
                      IsEnabled="False" IsHitTestVisible="False"
                      Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
@@ -53,15 +55,6 @@
             </TabItem>
 
 
-            <TabItem Style="{StaticResource CustomTabStyle}">
-                <TabItem.Header>
-                    <StackPanel Margin="5,0" Orientation="Horizontal">
-                        <ui:SymbolIcon Margin="0,0,6,0" Symbol="LayerDiagonal20" />
-                        <TextBlock Text="Align" />
-                    </StackPanel>
-                </TabItem.Header>
-                <local:Tab_Align x:Name="Tab_Align" />
-            </TabItem>
 
             <TabItem Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>

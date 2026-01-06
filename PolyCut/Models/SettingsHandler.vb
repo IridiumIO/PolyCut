@@ -83,6 +83,10 @@ Public Class SettingsHandler : Inherits ObservableObject
         Await PrinterSettings.SetValue(printer.Name, printer)
     End Sub
 
+    Shared Sub DeletePrinter(printer As Printer)
+        PrinterSettings.DeleteValue(printer.Name)
+    End Sub
+
     Shared Function GetCuttingMats() As ObservableCollection(Of CuttingMat)
         Return GetCollection(Of CuttingMat)(CuttingMatSettings)
     End Function
@@ -99,7 +103,5 @@ Public Class SettingsHandler : Inherits ObservableObject
     Shared Async Sub WriteConfiguration(Configuration As ProcessorConfiguration)
         Await ConfigurationSettings.SetValue(Configuration.Name, Configuration)
     End Sub
-
-
 
 End Class

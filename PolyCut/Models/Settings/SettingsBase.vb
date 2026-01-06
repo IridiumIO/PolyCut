@@ -19,8 +19,14 @@ Public Class SettingsBase : Implements ISettingsService
 
         Dim output = JsonSerializer.Serialize(setting, js)
 
-        Await IO.File.WriteAllTextAsync(IO.Path.Combine(SettingsFolder.FullName, fileN), output)
+        Dim oldPath = IO.Path.Combine(SettingsFolder.FullName, fileN)
 
+
+        Await IO.File.WriteAllTextAsync(oldPath, output)
+        Dim exists = SettingsFiles.Any(Function(f) String.Equals(f.FullName, oldPath, StringComparison.OrdinalIgnoreCase))
+        If Not exists Then
+            SettingsFiles.Add(New FileInfo(oldPath))
+        End If
     End Function
 
     Public Async Function InitialiseSettings(Of T As {ISaveable, New})(appName As String, Subfolder As String) As Task Implements ISettingsService.InitialiseSettings
@@ -39,11 +45,11 @@ Public Class SettingsBase : Implements ISettingsService
             SettingsFiles.AddRange(files)
         End If
 
-        'Read then write all settings back to disk to ensure they are correctly formatted between updates
-        For Each file In SettingsFiles
+        For Each file In SettingsFiles.ToList()
             Dim p = GetValue(Of T)(file.FullName)
             Await SetValue(p.Name, p)
         Next
+
 
     End Function
 
@@ -53,4 +59,19 @@ Public Class SettingsBase : Implements ISettingsService
         Dim p = JsonSerializer.Deserialize(Of T)(IO.File.ReadAllText(path), New JsonSerializerOptions With {.IncludeFields = True})
         Return p
     End Function
+
+    Public Function DeleteValue(settingName As String) As Boolean Implements ISettingsService.DeleteValue
+        Dim path As String = IO.Path.Combine(SettingsFolder.FullName, settingName & ".json")
+        Dim fileInfo = SettingsFiles.FirstOrDefault(Function(f) String.Equals(f.FullName, path, StringComparison.OrdinalIgnoreCase))
+        If fileInfo IsNot Nothing Then
+            SettingsFiles.Remove(fileInfo)
+        End If
+        If IO.File.Exists(path) Then
+            IO.File.Delete(path)
+            Return True
+        End If
+        Return False
+    End Function
+
+
 End Class

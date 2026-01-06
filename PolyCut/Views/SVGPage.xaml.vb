@@ -14,8 +14,11 @@ Imports PolyCut.RichCanvas
 Class SVGPage
 
     Public ReadOnly Property MainViewModel As MainViewModel
-
     Public ReadOnly Property SVGPageViewModel As SVGPageViewModel
+
+    Private _subscribedPrinter As Printer
+    Private _subscribedPrinterCuttingMat As CuttingMat
+
 
     Sub New(viewmodel As SVGPageViewModel)
         Me.SVGPageViewModel = viewmodel
@@ -26,14 +29,73 @@ Class SVGPage
         zoomPanControl.Scale = 2
         zoomPanControl.TranslateTransform.X = -MainViewModel.Printer.BedWidth / 2
         zoomPanControl.TranslateTransform.Y = -MainViewModel.Printer.BedHeight / 2
-        AddHandler MainViewModel.CuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        AddHandler MainViewModel.Printer.PropertyChanged, AddressOf PropertyChangedHandler
+        AddHandler MainViewModel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
+
+        AddHandler MainViewModel.PrinterConfigOpened, Sub()
+
+                                                          Dim opacityAnimation As New DoubleAnimation(0.5, New Duration(TimeSpan.FromSeconds(0.3)))
+
+                                                          DupCuttingMatBounds.BeginAnimation(UIElement.OpacityProperty, opacityAnimation)
+                                                      End Sub
+
+        AddHandler MainViewModel.PrinterConfigClosed, Sub()
+                                                          ' Stop any existing animations and set final state when config is saved
+                                                          Dim op = DupCuttingMatBounds.Opacity
+                                                          DupCuttingMatBounds.BeginAnimation(UIElement.OpacityProperty, Nothing)
+                                                          DupCuttingMatBounds.Opacity = op
+                                                          ' Opacity animation for config saved
+                                                          Dim opacityAnimation As New DoubleAnimation(0, TimeSpan.FromSeconds(1)) With {
+                                                                           .EasingFunction = New ExponentialEase() With {.EasingMode = EasingMode.EaseIn, .Exponent = 4}
+                                                                       }
+                                                          DupCuttingMatBounds.BeginAnimation(UIElement.OpacityProperty, opacityAnimation)
+                                                      End Sub
+
+        SubscribeToPrinter(MainViewModel.Printer)
+
         AddHandler MainViewModel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler zoomPanControl.DrawingManager.DrawingFinished, AddressOf DrawingFinishedHandler
         AddHandler MainSidebar.CuttingMatAlignmentMouseEnter, AddressOf HoverAlignment
         AddHandler MainSidebar.CuttingMatAlignmentMouseLeave, AddressOf HoverAlignment
         AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
         Transform()
+    End Sub
+
+    Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
+        If e Is Nothing Then Return
+
+        ' When MainViewModel.Printer reference changes, re-subscribe to the new instance
+        If String.Equals(e.PropertyName, NameOf(MainViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
+            SubscribeToPrinter(MainViewModel.Printer)
+            Transform()
+        End If
+    End Sub
+
+    Private Sub SubscribeToPrinter(pr As Printer)
+        ' Unsubscribe old printer events
+        If _subscribedPrinter IsNot Nothing Then
+            RemoveHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        _subscribedPrinter = pr
+
+        If _subscribedPrinter IsNot Nothing Then
+            AddHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        ' Subscribe to the cutting mat on the printer (if present) and manage changes
+        SubscribeToPrinterCuttingMat(If(pr IsNot Nothing, pr.CuttingMat, Nothing))
+    End Sub
+
+    Private Sub SubscribeToPrinterCuttingMat(mat As CuttingMat)
+        If _subscribedPrinterCuttingMat IsNot Nothing Then
+            RemoveHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
+
+        _subscribedPrinterCuttingMat = mat
+
+        If _subscribedPrinterCuttingMat IsNot Nothing Then
+            AddHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
+        End If
     End Sub
 
     Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
@@ -47,22 +109,31 @@ Class SVGPage
 
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
 
-        Dim alignmentPropertyNames = {
-            NameOf(MainViewModel.CuttingMat.SelectedVerticalAlignment),
-            NameOf(MainViewModel.CuttingMat.SelectedHorizontalAlignment),
-            NameOf(MainViewModel.CuttingMat.SelectedRotation),
-            NameOf(MainViewModel.CuttingMat)}
+        Dim prop = If(e?.PropertyName, "")
 
-        If alignmentPropertyNames.Contains(e.PropertyName) Then
+        If prop.IndexOf("CuttingMat", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse prop.IndexOf("Rotation", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse prop.IndexOf("Alignment", StringComparison.OrdinalIgnoreCase) >= 0 _
+           OrElse String.Equals(prop, NameOf(MainViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
+
+            ' If the printer's CuttingMat reference changed, resubscribe its events
+            If TypeOf sender Is Printer Then
+                Dim p = TryCast(sender, Printer)
+                If p IsNot Nothing Then
+                    SubscribeToPrinterCuttingMat(p.CuttingMat)
+                End If
+            End If
+
             Transform()
         End If
+
         MainViewModel.GCodePaths.Clear()
         MainViewModel.GCode = ""
 
     End Sub
 
     Private Sub Transform()
-        Dim ret = CalculateOutputs(MainViewModel.CuttingMat.SelectedRotation, MainViewModel.CuttingMat.SelectedHorizontalAlignment, MainViewModel.CuttingMat.SelectedVerticalAlignment)
+        Dim ret = CalculateOutputs(MainViewModel.Printer.CuttingMatRotation, MainViewModel.Printer.CuttingMatHorizontalAlignment, MainViewModel.Printer.CuttingMatVerticalAlignment)
 
 
         CuttingMat_RenderTransform.X = ret.Item1
@@ -74,8 +145,8 @@ Class SVGPage
         Dim y As Double = 0
 
         'TODO
-        Dim CuttingMatWidth = MainViewModel.CuttingMat.Width
-        Dim CuttingMatHeight = MainViewModel.CuttingMat.Height
+        Dim CuttingMatWidth = MainViewModel.Printer.CuttingMat.Width
+        Dim CuttingMatHeight = MainViewModel.Printer.CuttingMat.Height
 
         Select Case rotation
             Case 0

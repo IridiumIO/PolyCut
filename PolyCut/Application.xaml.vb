@@ -27,12 +27,14 @@ Partial Public Class Application
 
                                services.AddSingleton(Of INavigationService, NavigationService)()
                                services.AddSingleton(Of SnackbarService)()
+                               services.AddSingleton(Of IContentDialogService, ContentDialogService)()
 
                                ' Main window with navigation
                                services.AddNavigationViewPageProvider()
                                services.AddSingleton(Of INavigationWindow, MainWindow)()
                                services.AddSingleton(Of MainViewModel)()
                                services.AddSingleton(Of MainWindow)()
+                               services.AddTransient(Of PrinterConfig)()
 
                                ' Views and ViewModels
                                services.AddSingleton(Of SVGPage)()

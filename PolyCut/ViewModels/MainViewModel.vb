@@ -390,7 +390,7 @@ Public Class MainViewModel : Inherits ObservableObject
             .Height = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedHeight),
             .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)}
 
-        For Each drawableL In DrawableCollection
+        For Each drawableL In DrawableCollection.Where(Function(d) Not d.IsHidden)
 
             Dim finalElement = drawableL?.GetTransformedSVGElement
 

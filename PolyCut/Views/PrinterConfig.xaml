@@ -9,7 +9,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="PrinterConfig"
     Width="600"
-    Height="600"
+    Height="900"
     d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -26,10 +26,13 @@
                 <RowDefinition Height="auto" />
                 <RowDefinition />
             </Grid.RowDefinitions>
-            <ContentPresenter x:Name="RootContentDialog" Grid.Row="0" Grid.RowSpan="5" 
-HorizontalAlignment="Stretch"
-VerticalAlignment="Stretch"
-Panel.ZIndex="200"/>
+            <ContentPresenter
+                x:Name="RootContentDialog"
+                Grid.Row="0"
+                Grid.RowSpan="5"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Panel.ZIndex="200" />
             <ui:TitleBar
                 Grid.Row="0"
                 Margin="-20"
@@ -451,7 +454,60 @@ Panel.ZIndex="200"/>
                             </StackPanel>
 
                         </ui:CardExpander>
+                        <Separator Margin="0,10,0,5" />
+                        <ui:CardExpander
+                            x:Name="CustomGCode_Section"
+                            Margin="-0,0"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ContentPadding="0"
+                            FlowDirection="RightToLeft"
+                            IsExpanded="True"
+                            Style="{StaticResource CustomCardExpanderStyle}">
+                            <ui:CardExpander.Header>
+                                <Grid Margin="10,0" FlowDirection="LeftToRight">
 
+                                    <TextBlock
+                                        Padding="1,2,10,0"
+                                        VerticalAlignment="Center"
+                                        Text="Custom GCode" />
+
+
+
+                                </Grid>
+                            </ui:CardExpander.Header>
+
+                            <StackPanel Margin="14,0" FlowDirection="LeftToRight">
+
+                                <Label Margin="0,0,0,0" Content="Start GCode" />
+
+                                <ui:TextBox
+                                    x:Name="StartGCodeTextBox"
+                                    Height="100"
+                                    Margin="0,5,0,0"
+                                    AcceptsReturn="True"
+                                    Text="{Binding MainVM.Printer.StartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto" />
+
+                                <Label
+                                    Margin="0,20,0,0"
+                                    VerticalAlignment="Center"
+                                    Content="End GCode" />
+
+                                <ui:TextBox
+                                    x:Name="EndGCodeTextBox"
+                                    Height="100"
+                                    Margin="0,5,0,0"
+                                    AcceptsReturn="True"
+                                    Text="{Binding MainVM.Printer.EndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto" />
+
+
+                            </StackPanel>
+
+                        </ui:CardExpander>
                     </StackPanel>
 
                 </DockPanel>

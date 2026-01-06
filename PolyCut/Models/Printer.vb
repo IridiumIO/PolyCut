@@ -88,6 +88,22 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
     Public Property CuttingMatHorizontalAlignment As String = "Left"
     Public Property CuttingMatRotation As Double = 0
 
+    Public Property StartGCode As String
+        Get
+            Return _StartGCode
+        End Get
+        Set(value As String)
+            _StartGCode = value
+        End Set
+    End Property
+    Public Property EndGCode As String
+        Get
+            Return _EndGCode
+        End Get
+        Set(value As String)
+            _EndGCode = value
+        End Set
+    End Property
 
     Private _BedWidth As Decimal = 235
     Private _BedHeight As Decimal = 235
@@ -95,6 +111,9 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
     Private _WorkingHeight As Decimal = 235
     Private _WorkingOffsetX As Decimal = 0
     Private _WorkingOffsetY As Decimal = 0
+
+    Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
+    Private _EndGCode As String = $""
 
     Public Function Clone() As Printer
         Dim p As New Printer With {
@@ -109,7 +128,9 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
             .CuttingMat = Me.CuttingMat,
             .CuttingMatVerticalAlignment = Me.CuttingMatVerticalAlignment,
             .CuttingMatHorizontalAlignment = Me.CuttingMatHorizontalAlignment,
-            .CuttingMatRotation = Me.CuttingMatRotation
+            .CuttingMatRotation = Me.CuttingMatRotation,
+            .StartGCode = Me.StartGCode,
+            .EndGCode = Me.EndGCode
         }
         Return p
     End Function
@@ -129,6 +150,8 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         Me.CuttingMatVerticalAlignment = other.CuttingMatVerticalAlignment
         Me.CuttingMatHorizontalAlignment = other.CuttingMatHorizontalAlignment
         Me.CuttingMatRotation = other.CuttingMatRotation
+        Me.StartGCode = other.StartGCode
+        Me.EndGCode = other.EndGCode
     End Sub
 
 End Class

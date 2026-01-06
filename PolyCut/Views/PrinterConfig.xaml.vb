@@ -1,4 +1,4 @@
-﻿Public Class PrinterConfig
+﻿Partial Public Class PrinterConfig
 
     Public Property ActivePrinter As Printer
 
@@ -15,6 +15,7 @@
         Me.MainVM = SVGPageVM.MainVM
 
         contentDialogHost.SetDialogHost(RootContentDialog)
+
 
     End Sub
 
@@ -80,7 +81,8 @@
             MainVM.AddPrinter(newPrinter)
         End If
 
-
-
     End Sub
+
+
+
 End Class

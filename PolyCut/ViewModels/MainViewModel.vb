@@ -339,6 +339,7 @@ Public Class MainViewModel : Inherits ObservableObject
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
         Configuration.SoftwareVersion = SettingsHandler.Version
+
         Dim generator As IGenerator = If(UsingGCodePlot,
             New GCodePlotGenerator((Configuration), Printer, GenerateSVGText),
             New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
@@ -366,11 +367,16 @@ Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Private Shared Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
+    Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
 
         Dim stringBuilder As New Text.StringBuilder()
         For Each gc In GeneratedGCode
             stringBuilder.AppendLine(gc.ToString())
+            If gc?.Comment?.Equals("Custom Start GCode") Then
+                stringBuilder.Append(Printer.StartGCode)
+            ElseIf gc?.Comment?.Equals("Custom End GCode") Then
+                stringBuilder.Append(Printer.EndGCode)
+            End If
         Next
         Return stringBuilder.ToString()
     End Function

@@ -100,12 +100,16 @@ Public Class GCodeGenerator
             GCode.CommentLine($"  Generator:              PolyCut.Core"),
             GCode.Blank(),
             GCode.CommentLine($"######################################"),
+            GCode.CommentLine($"Custom Start GCode"),
             GCode.Blank(),
-            GCode.Parse("G0 E0"),
-            GCode.Parse("G21"),
-            GCode.Parse("G28")}
+            GCode.Blank(),
+            GCode.CommentLine($"######################################")}
 
         Dim EndMeta As New List(Of GCode) From {
+            GCode.Blank(),
+            GCode.CommentLine($"######################################"),
+            GCode.CommentLine($"Custom End GCode"),
+            GCode.Blank(),
             GCode.Blank(),
             GCode.CommentLine($"######################################"),
             GCode.CommentLine($" Klipper MetaData"),

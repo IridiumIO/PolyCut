@@ -326,7 +326,8 @@
                     BorderBrush="{StaticResource CardBorderBrush}"
                     BorderThickness="2"
                     CornerRadius="5">
-                    <TextBox
+                    <RichTextBox
+                        x:Name="GCodeRichText"
                         Grid.Row="4"
                         Margin="0"
                         Padding="10,10,8,10"
@@ -340,7 +341,6 @@
                         Opacity="0.8"
                         ScrollViewer.CanContentScroll="True"
                         Style="{x:Null}"
-                        Text="{Binding GCode}"
                         VerticalScrollBarVisibility="Auto" />
                 </Border>
                 <!--</ScrollViewer>-->

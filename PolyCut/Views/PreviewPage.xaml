@@ -312,24 +312,108 @@
                     BorderBrush="{StaticResource CardBorderBrush}"
                     BorderThickness="1,0,0,0"
                     CornerRadius="4">
-                    <RichTextBox
-                        x:Name="GCodeRichTextBox"
-                        Grid.Row="4"
-                        Margin="0"
-                        Padding="10,10,10,10"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        FontFamily="Consolas"
-                        Foreground="{StaticResource TextControlForeground}"
-                        HorizontalScrollBarVisibility="Auto"
-                        IsDocumentEnabled="False"
-                        IsReadOnly="True"
-                        Opacity="1"
-                        ScrollViewer.CanContentScroll="True"
-                        Style="{x:Null}"
-                        VerticalScrollBarVisibility="Auto"
-                        VirtualizingPanel.IsContainerVirtualizable="True"
-                        VirtualizingPanel.ScrollUnit="Item" />
+
+                    <Grid>
+                        <ui:Button
+                            Margin="0,5,20,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Panel.ZIndex="1"
+                            Command="{Binding CopyGCodeToClipboardCommand}"
+                            ToolTip="Copy GCode to Clipboard">
+                            <ui:SymbolIcon Symbol="Copy24" />
+                        </ui:Button>
+                        <ListView
+                            x:Name="GCodeListView"
+                            Grid.Row="4"
+                            Margin="0"
+                            Padding="10,10,10,10"
+                            HorizontalContentAlignment="Stretch"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{StaticResource TextControlForeground}"
+                            ScrollViewer.CanContentScroll="True"
+                            VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
+                            </ListView.Resources>
+
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="IsTabStop" Value="False" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border
+                                                    x:Name="Bd"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="Transparent" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="Transparent" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <!--  Horizontal rule (hidden by default, for showing the ####### fancily)  -->
+                                        <Border
+                                            x:Name="hr"
+                                            Height="4"
+                                            Margin="0,4,0,10"
+                                            HorizontalAlignment="Stretch"
+                                            BorderBrush="Gray"
+                                            BorderThickness="0,0,0,1"
+                                            Visibility="Collapsed" />
+
+                                        <!--  Tokenized line renderer  -->
+                                        <TextBlock
+                                            x:Name="tb"
+                                            VerticalAlignment="Center"
+                                            local:InlineBuilder.Tokens="{Binding Tokens}"
+                                            FontFamily="Consolas"
+                                            FontSize="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=FontSize}"
+                                            TextWrapping="NoWrap"
+                                            Visibility="Visible" />
+                                    </Grid>
+
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsHorizontalRule}" Value="True">
+                                            <Setter TargetName="hr" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="tb" Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
                 </Border>
 
             </Grid>

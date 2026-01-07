@@ -63,6 +63,7 @@ Public Class MainViewModel : Inherits ObservableObject
 
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
+    Public Property CopyGCodeToClipboardCommand As ICommand = New RelayCommand(Sub() Clipboard.SetText(GCode))
 
     Private _PreviewRenderSpeed As Double = 0.48
 

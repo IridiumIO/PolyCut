@@ -107,24 +107,6 @@
                         </local:VisualHost.RenderTransform>
                     </local:VisualHost>
 
-                    <!--<ItemsControl x:Name="mainC"
-                                  Width="{Binding Printer.BedWidth, Mode=TwoWay}"
-                                  Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                                  ItemsSource="{Binding GCodePaths, Mode=TwoWay}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <Grid />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform ScaleY="-1" />
-                                <TranslateTransform Y="{Binding Printer.BedHeight}" />
-
-                            </TransformGroup>
-                        </ItemsControl.RenderTransform>
-
-                    </ItemsControl>-->
 
                 </Canvas>
 
@@ -196,138 +178,140 @@
         <ui:Card
             Grid.Column="1"
             Margin="5,5,0,5"
+            Padding="0"
             VerticalAlignment="Stretch"
-            VerticalContentAlignment="Top">
-            <ui:Card.Background>
-                <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
-            </ui:Card.Background>
-
+            VerticalContentAlignment="Stretch"
+            Background="Transparent"
+            BorderThickness="0">
             <Grid>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="60" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="*" />
 
                 </Grid.RowDefinitions>
 
-                <StackPanel Margin="0,10,0,10" Orientation="Horizontal">
+                <ui:Card Margin="0">
 
-                    <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="True">
-                        <ToggleButton.Template>
-                            <ControlTemplate>
-                                <ContentControl>
-                                    <ContentControl.Style>
-                                        <Style TargetType="ContentControl">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
-                                                    <Setter Property="Content">
-                                                        <Setter.Value>
-                                                            <ui:Card
-                                                                Padding="8,4"
-                                                                Background="Transparent"
-                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
-                                                                <ui:SymbolIcon Symbol="Eye24" />
-                                                            </ui:Card>
-                                                        </Setter.Value>
-                                                    </Setter>
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
-                                                    <Setter Property="Content">
-                                                        <Setter.Value>
-                                                            <ui:Card
-                                                                Padding="8,4"
-                                                                Background="Transparent"
-                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
-                                                                <!--  Replace with your unchecked icon  -->
-                                                                <ui:SymbolIcon Symbol="EyeOff24" />
-                                                            </ui:Card>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ContentControl.Style>
-                                </ContentControl>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                    <Label Margin="10,4,10,0" Content="Cutting Mat" />
+                        <StackPanel
+                            Grid.Column="0"
+                            Margin="0,0,10,0"
+                            Orientation="Horizontal">
 
-                </StackPanel>
-                <StackPanel
-                    Grid.Row="1"
-                    Margin="0,10,0,10"
-                    Orientation="Horizontal">
+                            <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="True">
+                                <ToggleButton.Template>
+                                    <ControlTemplate>
+                                        <ContentControl>
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                        <ui:SymbolIcon Symbol="Eye24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
 
-                    <ToggleButton x:Name="TravelMovesVisibilityToggle" IsChecked="True">
-                        <ToggleButton.Template>
-                            <ControlTemplate>
-                                <ContentControl>
-                                    <ContentControl.Style>
-                                        <Style TargetType="ContentControl">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
-                                                    <Setter Property="Content">
-                                                        <Setter.Value>
-                                                            <ui:Card
-                                                                Padding="8,4"
-                                                                Background="Transparent"
-                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
-                                                                <ui:SymbolIcon Symbol="Eye24" />
-                                                            </ui:Card>
-                                                        </Setter.Value>
-                                                    </Setter>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                        <!--  Replace with your unchecked icon  -->
+                                                                        <ui:SymbolIcon Symbol="EyeOff24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Label Margin="10,4,10,0" Content="Cutting Mat" />
 
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
-                                                    <Setter Property="Content">
-                                                        <Setter.Value>
-                                                            <ui:Card
-                                                                Padding="8,4"
-                                                                Background="Transparent"
-                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
-                                                                <!--  Replace with your unchecked icon  -->
-                                                                <ui:SymbolIcon Symbol="EyeOff24" />
-                                                            </ui:Card>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ContentControl.Style>
-                                </ContentControl>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                    <Label Margin="10,4,10,0" Content="Travel Moves" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="10,0,0,0"
+                            Orientation="Horizontal">
 
-                </StackPanel>
+                            <ToggleButton x:Name="TravelMovesVisibilityToggle" IsChecked="True">
+                                <ToggleButton.Template>
+                                    <ControlTemplate>
+                                        <ContentControl>
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                        <ui:SymbolIcon Symbol="Eye24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                        <!--  Replace with your unchecked icon  -->
+                                                                        <ui:SymbolIcon Symbol="EyeOff24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Label Margin="10,4,10,0" Content="Travel Moves" />
+
+                        </StackPanel>
 
 
+                    </Grid>
 
-                <Label
-                    Grid.Row="3"
-                    Margin="0,10"
-                    Content="GCode"
-                    FontWeight="SemiBold" />
 
-                <!--<ScrollViewer Grid.Row="4"
-                        HorizontalScrollBarVisibility="Visible"
-                        BorderThickness="3"
-                        Margin="0,10,10,0"
-                        Padding="0,-5,-5,10"
-                        SnapsToDevicePixels="True">-->
+                </ui:Card>
+
+
                 <Border
                     Grid.Row="4"
-                    Margin="-15,0,-15,-15"
-                    Background="#40000000"
+                    Margin="0"
+                    VerticalAlignment="Stretch"
+                    Background="{StaticResource CardBackground}"
                     BorderBrush="{StaticResource CardBorderBrush}"
                     BorderThickness="1,0,0,0"
-                    CornerRadius="0 0 4 4">
+                    CornerRadius="4">
                     <RichTextBox
                         x:Name="GCodeRichTextBox"
                         Grid.Row="4"
@@ -347,7 +331,6 @@
                         VirtualizingPanel.IsContainerVirtualizable="True"
                         VirtualizingPanel.ScrollUnit="Item" />
                 </Border>
-                <!--</ScrollViewer>-->
 
             </Grid>
 

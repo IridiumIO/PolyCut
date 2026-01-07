@@ -9,7 +9,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="PrinterConfig"
     Width="600"
-    Height="900"
+    Height="900" WindowStartupLocation="CenterOwner"
     d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -322,8 +322,8 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="auto" />
                                         <ColumnDefinition Width="auto" />
+                                        <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="220" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock
                                         Padding="1,2,10,0"

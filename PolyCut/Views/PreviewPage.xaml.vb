@@ -24,13 +24,12 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
         InitializeDrawingVisual()
 
-
         UpdateGCodeDocument()
 
-        ' Subscribe main VM property changes to the correct handler that knows how to re-subscribe printers
+
         AddHandler viewmodel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
         AddHandler viewmodel.PropertyChanged, AddressOf PropertyChangedHandler
-        ' Subscribe to the currently selected printer (sets up Printer.PropertyChanged -> PropertyChangedHandler)
+
         SubscribeToPrinter(viewmodel.Printer)
 
         If viewmodel.GCode?.Length <> 0 Then
@@ -44,7 +43,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
         If e Is Nothing Then Return
 
-        ' When MainViewModel.Printer reference changes, re-subscribe to the new instance
         If String.Equals(e.PropertyName, NameOf(ViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
             SubscribeToPrinter(ViewModel.Printer)
             Transform()
@@ -52,7 +50,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
     Private Sub SubscribeToPrinter(pr As Printer)
-        ' Unsubscribe old printer events
+
         If _subscribedPrinter IsNot Nothing Then
             RemoveHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
         End If
@@ -63,7 +61,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             AddHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
         End If
 
-        ' Subscribe to the cutting mat on the printer (if present) and manage changes
         SubscribeToPrinterCuttingMat(If(pr IsNot Nothing, pr.CuttingMat, Nothing))
     End Sub
 
@@ -112,57 +109,121 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
-    Private Sub UpdateGCodeDocument()
-        Dim convObj = TryCast(TryCast(Me, FrameworkElement).FindResource("GCodeToFlowDocConverter"), IValueConverter)
+    Private gcodeListCancellation As CancellationTokenSource = Nothing
 
-        Dim doc As FlowDocument = TryCast(convObj?.Convert(ViewModel?.GCode, GetType(FlowDocument), Nothing, CultureInfo.CurrentCulture), FlowDocument)
+    Private Async Sub UpdateGCodeDocument()
 
-        If doc Is Nothing Then
-            doc = New FlowDocument()
+        If gcodeListCancellation IsNot Nothing Then
+            Try
+                gcodeListCancellation.Cancel()
+            Catch
+            End Try
+            gcodeListCancellation.Dispose()
+        End If
+        gcodeListCancellation = New CancellationTokenSource()
+        Dim cToken = gcodeListCancellation.Token
+
+        Dim text = If(ViewModel?.GCode?.ToString(), "")
+        If String.IsNullOrWhiteSpace(text) Then
+            GCodeListView.ItemsSource = Nothing
+            Return
         End If
 
-        doc.PagePadding = New Thickness(0)
-        doc.TextAlignment = TextAlignment.Left
 
-        GCodeRichTextBox.Document = doc
+        Dim lines = text.Replace(vbCr, "").Split(New String() {vbLf}, StringSplitOptions.None)
 
-        Dispatcher.BeginInvoke(Sub()
-                                   Dim contentWidth = MeasureMaxLineWidth(doc)
-                                   Dim minWidth = GCodeRichTextBox.ViewportWidth
-                                   doc.PageWidth = Math.Max(contentWidth + 20, minWidth)
-                               End Sub, DispatcherPriority.Loaded)
+
+        Dim tokenized As List(Of InlineBuilder.LineTokens) = Nothing
+        Try
+            tokenized = Await Task.Run(Function()
+                                           Return TokenizeLinesForList(lines, cToken)
+                                       End Function, cToken)
+        Catch ex As OperationCanceledException
+            Return
+        End Try
+
+
+        If cToken.IsCancellationRequested Then Return
+        GCodeListView.ItemsSource = tokenized
     End Sub
 
-    Private Function MeasureMaxLineWidth(doc As FlowDocument) As Double
-        Dim typeface As New Typeface(
-        doc.FontFamily,
-        doc.FontStyle,
-        doc.FontWeight,
-        doc.FontStretch)
 
-        Dim maxWidth As Double = 0
+    Private Shared ReadOnly LocalTokenizerRegex As New Regex(
+     "(?ix)
+            (?<Comment>        ;.*$ )
+          | (?<ParenComment>   \(.*?\) )
+          | (?<KlipperExpr>    \[[^\]]+\] )
+          | (?<KlipperParam>   \b[A-Z_][A-Z0-9_]*=[^\s]+ )
+          | (?<GCode>          \b[GM]\d+(?:\.\d+)?\b )
+          | (?<Axis>           \b[XYZ][+-]?\d+(?:\.\d+)?\b )
+          | (?<Feed>           \b[FSE][+-]?\d+(?:\.\d+)?\b )
+          | (?<Macro>          \b[A-Z_]{2,}[A-Z0-9_]*\b )
+          | (?<Number>         [+-]?\d+(?:\.\d+)? )
+        ",
+        RegexOptions.Compiled)
 
-        For Each block In doc.Blocks.OfType(Of Paragraph)()
-            Dim text = New TextRange(block.ContentStart, block.ContentEnd).Text
-            Dim lines = text.Split({vbCrLf, vbLf}, StringSplitOptions.None)
+    Private Function TokenizeLinesForList(lines As String(), cToken As CancellationToken) As List(Of InlineBuilder.LineTokens)
+        Dim out As New List(Of InlineBuilder.LineTokens)(lines.Length)
 
-            For Each line In lines
-                Dim ft As New FormattedText(
-                line,
-                CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                typeface,
-                doc.FontSize,
-                Brushes.Black,
-                VisualTreeHelper.GetDpi(GCodeRichTextBox).PixelsPerDip)
+        For Each line As String In lines
+            cToken.ThrowIfCancellationRequested()
 
-                maxWidth = Math.Max(maxWidth, ft.WidthIncludingTrailingWhitespace)
+            Dim trimmed = If(line, "").Trim()
+            If String.Equals(trimmed, ";######################################", StringComparison.Ordinal) Then
+                Dim hr As New InlineBuilder.LineTokens With {.IsHorizontalRule = True}
+                out.Add(hr)
+                Continue For
+            End If
+
+            Dim lt As New InlineBuilder.LineTokens()
+            Dim matches = LocalTokenizerRegex.Matches(line)
+            Dim last = 0
+
+            For Each m As Match In matches
+                If m.Index > last Then
+                    lt.Tokens.Add(New InlineBuilder.TokenDto(0, line.Substring(last, m.Index - last)))
+                End If
+
+                If m.Groups("Comment").Success Then
+                    lt.Tokens.Add(New InlineBuilder.TokenDto(1, m.Value))
+                    last = line.Length
+                    Exit For
+                End If
+
+                Dim ttype As Integer = 0
+                If m.Groups("ParenComment").Success Then
+                    ttype = 2
+                ElseIf m.Groups("KlipperExpr").Success Then
+                    ttype = 3
+                ElseIf m.Groups("KlipperParam").Success Then
+                    ttype = 4
+                ElseIf m.Groups("GCode").Success Then
+                    ttype = 5
+                ElseIf m.Groups("Axis").Success Then
+                    ttype = 6
+                ElseIf m.Groups("Feed").Success Then
+                    ttype = 7
+                ElseIf m.Groups("Macro").Success Then
+                    ttype = 8
+                ElseIf m.Groups("Number").Success Then
+                    ttype = 9
+                Else
+                    ttype = 0
+                End If
+
+                lt.Tokens.Add(New InlineBuilder.TokenDto(ttype, m.Value))
+                last = m.Index + m.Length
             Next
+
+            If last < line.Length Then
+                lt.Tokens.Add(New InlineBuilder.TokenDto(0, line.Substring(last)))
+            End If
+
+            out.Add(lt)
         Next
 
-        Return maxWidth
+        Return out
     End Function
-
 
     Private Sub Transform()
         Dim ret = CalculateOutputs(ViewModel.Printer.CuttingMatRotation, ViewModel.Printer.CuttingMatHorizontalAlignment, ViewModel.Printer.CuttingMatVerticalAlignment)
@@ -260,6 +321,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private travelMoveVisuals As New List(Of DrawingVisual)()
 
     Private Function DrawToolPaths()
+
         ' Clear existing visuals in the VisualHost
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
@@ -292,8 +354,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                 End If
             End If
         Next
-
-        Debug.WriteLine($"Total segments: {visualHost.ChildrenCount}")
 
         Return 0
     End Function

@@ -7,15 +7,17 @@
     xmlns:local="clr-namespace:PolyCut"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    Title="PrinterConfig"
+    Title="Printer Configuration"
     Width="600"
-    Height="900" WindowStartupLocation="CenterOwner"
+    Height="900"
     d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-    ExtendsContentIntoTitleBar="False"
+    ExtendsContentIntoTitleBar="True"
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     RenderOptions.BitmapScalingMode="HighQuality"
+    WindowBackdropType="Mica"
+    WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <Grid Margin="20">
         <Grid>
@@ -487,7 +489,8 @@
                                     Margin="0,5,0,0"
                                     AcceptsReturn="True"
                                     Text="{Binding MainVM.Printer.StartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    TextWrapping="Wrap"
+                                    TextAlignment="Left"
+                                    TextWrapping="NoWrap"
                                     VerticalScrollBarVisibility="Auto" />
 
                                 <Label
@@ -501,7 +504,8 @@
                                     Margin="0,5,0,0"
                                     AcceptsReturn="True"
                                     Text="{Binding MainVM.Printer.EndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    TextWrapping="Wrap"
+                                    TextAlignment="Left"
+                                    TextWrapping="NoWrap"
                                     VerticalScrollBarVisibility="Auto" />
 
 

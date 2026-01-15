@@ -125,7 +125,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     Public Sub OnDesignerItemDecoratorCurrentSelectedChanged(currentSelected As ContentControl)
         ' NOTE: Selection is now handled in SVGPage.xaml.vb to support multi-select
         ' This old single-selection logic has been disabled
-        
+
         ' Just notify property changes for UI updates
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawables))

@@ -12,6 +12,8 @@ Public Class PolyCanvas : Inherits Controls.Canvas
 
     ' Track multiple selected items for multi-select support
     Private Shared _selectedItems As New List(Of IDrawable)
+    Private Shared _multiSelectAdorner As MultiSelectAdorner = Nothing
+    Private Shared _adornerCanvas As Canvas = Nothing
 
     Public Shared ReadOnly Property SelectedItems As IReadOnlyList(Of IDrawable)
         Get
@@ -19,12 +21,25 @@ Public Class PolyCanvas : Inherits Controls.Canvas
         End Get
     End Property
 
+    ' Attached property to indicate if multi-selection is active
+    Public Shared ReadOnly HasMultiSelectionProperty As DependencyProperty = DependencyProperty.RegisterAttached(
+    "HasMultiSelection", GetType(Boolean), GetType(PolyCanvas), New PropertyMetadata(False))
+
+    Public Shared Function GetHasMultiSelection(obj As DependencyObject) As Boolean
+        Return CBool(obj.GetValue(HasMultiSelectionProperty))
+    End Function
+
+    Public Shared Sub SetHasMultiSelection(obj As DependencyObject, value As Boolean)
+        obj.SetValue(HasMultiSelectionProperty, value)
+    End Sub
+
     Shared Sub New()
         DefaultStyleKeyProperty.OverrideMetadata(GetType(PolyCanvas), New FrameworkPropertyMetadata(GetType(PolyCanvas)))
     End Sub
 
     Sub New()
         AddHandler Me.MouseDown, AddressOf PolyCanvas_MouseDown
+        _adornerCanvas = Me
     End Sub
 
 
@@ -152,7 +167,10 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             item.IsSelected = False
         Next
         _selectedItems.Clear()
+        HideMultiSelectAdorner()
+        RaiseEvent SelectionCountChanged(_adornerCanvas, EventArgs.Empty)
     End Sub
+
 
 
     Public Shared Sub AddToSelection(drawable As IDrawable)
@@ -160,6 +178,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         If Not _selectedItems.Contains(drawable) Then
             _selectedItems.Add(drawable)
             drawable.IsSelected = True
+            UpdateMultiSelectAdorner()
         End If
     End Sub
 
@@ -169,6 +188,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         If _selectedItems.Contains(drawable) Then
             _selectedItems.Remove(drawable)
             drawable.IsSelected = False
+            UpdateMultiSelectAdorner()
         End If
     End Sub
 
@@ -181,6 +201,58 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             AddToSelection(drawable)
         End If
     End Sub
+
+
+    Private Shared Sub UpdateMultiSelectAdorner()
+        If _adornerCanvas IsNot Nothing Then
+            SetHasMultiSelection(_adornerCanvas, _selectedItems.Count > 1)
+        End If
+
+
+        If _selectedItems.Count > 1 Then
+            ShowMultiSelectAdorner()
+        Else
+            HideMultiSelectAdorner()
+        End If
+
+        RaiseEvent SelectionCountChanged(_adornerCanvas, EventArgs.Empty)
+    End Sub
+
+
+    Private Shared Sub ShowMultiSelectAdorner()
+        If _adornerCanvas Is Nothing Then Return
+
+        HideMultiSelectAdorner()
+
+
+        Dim adornerLayer As AdornerLayer = AdornerLayer.GetAdornerLayer(_adornerCanvas)
+        If adornerLayer Is Nothing Then Return
+
+        _multiSelectAdorner = New MultiSelectAdorner(_adornerCanvas, _selectedItems)
+        adornerLayer.Add(_multiSelectAdorner)
+
+        DesignerItemDecorator.CurrentSelected = Nothing
+    End Sub
+
+    Private Shared Sub HideMultiSelectAdorner()
+        If _multiSelectAdorner Is Nothing Then Return
+
+        Dim adornerLayer As AdornerLayer = AdornerLayer.GetAdornerLayer(_adornerCanvas)
+        If adornerLayer IsNot Nothing Then
+            adornerLayer.Remove(_multiSelectAdorner)
+        End If
+
+        _multiSelectAdorner = Nothing
+    End Sub
+
+    Public Shared Event SelectionCountChanged As EventHandler
+
+
+
+
+
+
+
 
 
 

@@ -57,8 +57,17 @@ Class SVGPage
         AddHandler MainSidebar.CuttingMatAlignmentMouseEnter, AddressOf HoverAlignment
         AddHandler MainSidebar.CuttingMatAlignmentMouseLeave, AddressOf HoverAlignment
         AddHandler DesignerItemDecorator.CurrentSelectedChanged, AddressOf OnDesignerItemDecoratorCurrentSelectedChanged
+        AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnSelectionCountChanged
         Transform()
     End Sub
+
+    Private Sub OnSelectionCountChanged(sender As Object, e As EventArgs)
+
+        MainSidebar.ElementsTab.SyncListViewSelection(PolyCanvas.SelectedItems)
+    End Sub
+
+
+
 
     Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
         If e Is Nothing Then Return

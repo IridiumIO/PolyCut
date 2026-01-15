@@ -17,9 +17,14 @@
         <Rectangle Fill="Transparent" />
     </ControlTemplate>
 
+    <ControlTemplate x:Key="MultiSelectMoveThumbTemplate" TargetType="{x:Type local:MultiSelectMoveThumb}">
+        <Rectangle Fill="Transparent" />
+    </ControlTemplate>
+
     <ControlTemplate x:Key="DesignerItemDecoratorTemplate" TargetType="{x:Type local:DesignerItemDecorator}">
         <Rectangle Fill="Transparent" />
     </ControlTemplate>
+
 
     <Style x:Key="DesignerItemStyle" TargetType="{x:Type ContentControl}">
         <Setter Property="MinHeight" Value="1" />
@@ -46,25 +51,30 @@
                                                      Template="{StaticResource DesignerItemDecoratorTemplate}" />
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="local:SelectionHelper.IsItemSelected" Value="True">
+                        <!-- Only show decorator if this item is selected AND multi-select is not active -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(local:SelectionHelper.IsItemSelected), RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding Path=(local:PolyCanvas.HasMultiSelection), RelativeSource={RelativeSource AncestorType={x:Type local:PolyCanvas}}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
                             <Setter TargetName="ItemDecorator" Property="ShowDecorator" Value="True" />
-                            <Trigger.EnterActions>
+                            <MultiDataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" From="0"
                                                          To="0.8" Duration="0:0:0.5" />
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
+                            </MultiDataTrigger.EnterActions>
+                            <MultiDataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0"
                                                          Duration="0:0:0.5" />
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
+                            </MultiDataTrigger.ExitActions>
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

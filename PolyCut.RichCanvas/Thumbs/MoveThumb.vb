@@ -1,8 +1,10 @@
 ﻿Imports System.Windows.Controls.Primitives
 Imports System.Windows.Controls
+Imports PolyCut.Shared
 
 Public Class MoveThumb
     Inherits Thumb
+
 
     Private rotateTransform As RotateTransform
     Private designerItem As ContentControl
@@ -64,6 +66,15 @@ Public Class MoveThumb
 
 
     Private Sub MoveThumb_DragStarted(sender As Object, e As DragStartedEventArgs)
+        ' Check if this is a multi-select adorner
+        Dim multiAdorner = TryCast(DataContext, MultiSelectAdorner)
+        If multiAdorner IsNot Nothing Then
+            ' Multi-select mode - handle differently
+            HandleMultiSelectDragStart(multiAdorner)
+            Return
+        End If
+
+        ' Single item mode
         Me.designerItem = TryCast(DataContext, ContentControl)
 
         If Me.designerItem Is Nothing Then Return
@@ -74,7 +85,33 @@ Public Class MoveThumb
 
     End Sub
 
+    Private _multiSelectItems As IReadOnlyList(Of IDrawable)
+    Private _multiSelectInitialPositions As New Dictionary(Of IDrawable, Point)
+
+    Private Sub HandleMultiSelectDragStart(adorner As MultiSelectAdorner)
+        _multiSelectItems = adorner.SelectedItems
+        _multiSelectInitialPositions.Clear()
+
+        ' Store initial positions
+        For Each drawable In _multiSelectItems
+            If drawable?.DrawableElement IsNot Nothing Then
+                Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
+                If wrapper IsNot Nothing Then
+                    _multiSelectInitialPositions(drawable) = New Point(Canvas.GetLeft(wrapper), Canvas.GetTop(wrapper))
+                End If
+            End If
+        Next
+    End Sub
+
+
     Private Sub MoveThumb_DragDelta(sender As Object, e As DragDeltaEventArgs)
+        ' Check if multi-select mode
+        If _multiSelectItems IsNot Nothing AndAlso _multiSelectItems.Count > 0 Then
+            HandleMultiSelectDragDelta(e)
+            Return
+        End If
+
+        ' Single item mode
         If Me.designerItem Is Nothing Then Return
 
         Dim dragDelta As New Point(e.HorizontalChange, e.VerticalChange)
@@ -102,10 +139,48 @@ Public Class MoveThumb
         Canvas.SetTop(Me.designerItem, Canvas.GetTop(Me.designerItem) + dragDelta.Y)
     End Sub
 
+    Private Sub HandleMultiSelectDragDelta(e As DragDeltaEventArgs)
+        Dim dragDelta = New Point(e.HorizontalChange, e.VerticalChange)
+
+        ' Handle SHIFT 
+        If Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift) Then
+            If dragDirection Is Nothing Then
+                dragDirection = If(Math.Abs(dragDelta.X) > Math.Abs(dragDelta.Y), "Horizontal", "Vertical")
+            End If
+
+            If dragDirection = "Horizontal" Then
+                dragDelta.Y = 0
+            Else
+                dragDelta.X = 0
+            End If
+        Else
+            dragDirection = Nothing
+        End If
+
+        ' Move all items
+        For Each drawable In _multiSelectItems
+            If drawable?.DrawableElement IsNot Nothing Then
+                Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
+                If wrapper IsNot Nothing Then
+                    Canvas.SetLeft(wrapper, Canvas.GetLeft(wrapper) + dragDelta.X)
+                    Canvas.SetTop(wrapper, Canvas.GetTop(wrapper) + dragDelta.Y)
+                End If
+            End If
+        Next
+
+        ' Update adorner
+        Dim adorner = TryCast(DataContext, MultiSelectAdorner)
+        adorner?.InvalidateArrange()
+    End Sub
+
+
 
     Private Sub MoveThumb_DragCompleted(sender As Object, e As DragCompletedEventArgs)
         dragDirection = Nothing
+        _multiSelectItems = Nothing
+        _multiSelectInitialPositions.Clear()
     End Sub
+
 
 
     Private Sub MoveThumb_MouseWheel(sender As Object, e As MouseWheelEventArgs)

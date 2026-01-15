@@ -80,6 +80,8 @@ Public Class DesignerItemDecorator : Inherits Control
     Private Sub ShowAdorner()
         InitialiseAdorner()
 
+        If adorner Is Nothing Then Return
+
         If ShowDecorator Then
             adorner.Visibility = Visibility.Visible
         Else
@@ -88,6 +90,7 @@ Public Class DesignerItemDecorator : Inherits Control
 
 
     End Sub
+
     Private Sub DesignerItemDecorator_Unloaded(sender As Object, e As RoutedEventArgs)
         If adorner Is Nothing Then Return
         Dim adornerLayer As AdornerLayer = AdornerLayer.GetAdornerLayer(Me)

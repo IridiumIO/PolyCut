@@ -14,6 +14,7 @@ Public Interface IDrawable
     Property IsSelected As Boolean
     ReadOnly Property VisualName As String
 
+    Property ParentGroup As IDrawable
     Function GetTransformedSVGElement() As SvgVisualElement
     Function DrawingToSVG() As SvgVisualElement
 

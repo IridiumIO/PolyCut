@@ -168,7 +168,10 @@ Public Class SVGComponent : Inherits BaseDrawable : Implements IDrawable
 
     End Sub
 
-
+    Public Sub New(svgele As SvgElement)
+        SVGElement = svgele
+        Initialise()
+    End Sub
     Public Property SVGViewBox As SharpVectors.Converters.SvgViewbox
         Get
             Return CType(DrawableElement, SharpVectors.Converters.SvgViewbox)

@@ -1,0 +1,462 @@
+﻿
+
+Imports System.IO
+Imports System.Xml
+
+Imports PolyCut.[Shared]
+
+Imports Svg
+Imports Svg.Transforms
+
+Public Interface ISvgImportService
+    Function ParseFromFile(path As String) As IEnumerable(Of IDrawable)
+    Function ParseFromDocument(svgDoc As Svg.SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable)
+End Interface
+
+Public Class SVGImportService : Implements ISvgImportService
+
+    Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromFile
+        Dim doc = SvgDocument.Open(path)
+        Return ParseFromDocument(doc, path)
+    End Function
+
+    Public Function ParseFromDocument(svgDoc As SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromDocument
+        Dim rootMatrix As Matrix = CalculateDocumentTransform(svgDoc)
+
+        Dim results As New List(Of IDrawable)
+
+        For Each child As SvgElement In svgDoc.Children
+            ProcessElement(child, rootMatrix, results)
+        Next
+
+        Return results
+    End Function
+
+    Private Function CalculateDocumentTransform(svgDoc As SvgDocument) As Matrix
+        Dim matrix As New Matrix()
+
+        Dim docWidthMM As Double = ConvertToMM(svgDoc.Width.Value, svgDoc.Width.Type)
+        Dim docHeightMM As Double = ConvertToMM(svgDoc.Height.Value, svgDoc.Height.Type)
+
+        If svgDoc.ViewBox.Width > 0 AndAlso svgDoc.ViewBox.Height > 0 Then
+            Dim scaleX As Double = docWidthMM / svgDoc.ViewBox.Width
+            Dim scaleY As Double = docHeightMM / svgDoc.ViewBox.Height
+            matrix.Scale(scaleX, scaleY)
+            matrix.Translate(-svgDoc.ViewBox.MinX, -svgDoc.ViewBox.MinY)
+        Else
+            Dim unitScale As Double = ConvertSVGScaleToMM(svgDoc.Width.Type)
+            matrix.Scale(unitScale, unitScale)
+        End If
+
+        Return matrix
+    End Function
+
+    Private Function CalculateStrokeDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)
+        Dim matrixScale As Double = Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12)
+        Dim strokeThickness As Double = If(strokeWidth > 0, strokeWidth * matrixScale, 0)
+        Return (bounds.Width + strokeThickness, bounds.Height + strokeThickness, strokeThickness / 2.0, strokeThickness)
+    End Function
+
+    Private Sub AssignDrawableName(drawable As IDrawable, elementId As String)
+        If Not String.IsNullOrEmpty(elementId) Then
+            drawable.Name = elementId
+        End If
+    End Sub
+
+    Private Function TransformAndFlattenGeometry(geometry As Geometry, matrix As Matrix, Optional tolerance As Double = 0) As PathGeometry
+        Dim pathGeom As PathGeometry
+        If TypeOf geometry Is PathGeometry Then
+            pathGeom = CType(geometry, PathGeometry)
+        Else
+            pathGeom = PathGeometry.CreateFromGeometry(geometry)
+        End If
+
+        pathGeom.Transform = New MatrixTransform(matrix)
+        Return If(tolerance > 0, pathGeom.GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute), pathGeom.GetFlattenedPathGeometry())
+    End Function
+
+    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, results As List(Of IDrawable))
+        Dim currentMatrix As Matrix = parentMatrix
+        currentMatrix = ApplySvgTransforms(elem, currentMatrix)
+
+        If TypeOf elem Is SvgGroup Then
+            Dim group = CType(elem, SvgGroup)
+            For Each child In group.Children
+                ProcessElement(child, currentMatrix, results)
+            Next
+        ElseIf TypeOf elem Is SvgPath Then
+            Dim drawable = ConvertPath(CType(elem, SvgPath), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgRectangle Then
+            Dim drawable = ConvertRectangle(CType(elem, SvgRectangle), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgEllipse Then
+            Dim drawable = ConvertEllipse(CType(elem, SvgEllipse), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgCircle Then
+            Dim drawable = ConvertCircle(CType(elem, SvgCircle), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgLine Then
+            Dim drawable = ConvertLine(CType(elem, SvgLine), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgText Then
+            Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix)
+            If drawable IsNot Nothing Then results.Add(drawable)
+        End If
+    End Sub
+
+    Private Function ApplySvgTransforms(elem As SvgElement, matrix As Matrix) As Matrix
+        If elem.Transforms Is Nothing OrElse elem.Transforms.Count = 0 Then Return matrix
+
+        Dim result As Matrix = matrix
+        For Each transform In elem.Transforms
+            If TypeOf transform Is SvgMatrix Then
+                Dim m = CType(transform, SvgMatrix)
+                Dim svgMatrix As New Matrix(m.Points(0), m.Points(1), m.Points(2), m.Points(3), m.Points(4), m.Points(5))
+                result = Matrix.Multiply(svgMatrix, result)
+            ElseIf TypeOf transform Is SvgTranslate Then
+                Dim t = CType(transform, SvgTranslate)
+                result.Translate(t.X, t.Y)
+            ElseIf TypeOf transform Is SvgScale Then
+                Dim s = CType(transform, SvgScale)
+                result.Scale(s.X, s.Y)
+            ElseIf TypeOf transform Is SvgRotate Then
+                Dim r = CType(transform, SvgRotate)
+                If r.CenterX <> 0 OrElse r.CenterY <> 0 Then
+                    result.RotateAt(r.Angle, r.CenterX, r.CenterY)
+                Else
+                    result.Rotate(r.Angle)
+                End If
+            End If
+        Next
+
+        Return result
+    End Function
+
+    Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix) As IDrawable
+        Try
+            Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
+            Dim flattenedGeometry = TransformAndFlattenGeometry(geometry, matrix, 0.05)
+            Dim bounds = flattenedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim translatedGeometry = flattenedGeometry.Clone()
+            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(0.05, ToleranceType.Absolute)
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, svgPath.StrokeWidth.Value, matrix)
+
+            Dim wpfPath As New Shapes.Path With {
+                .Data = translatedGeometry,
+                .Stretch = Stretch.None,
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfPath, svgPath, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawablePath(wpfPath)
+            AssignDrawableName(drawable, svgPath.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertRectangle(svgRect As SvgRectangle, matrix As Matrix) As IDrawable
+        Try
+            Dim rectGeometry As New RectangleGeometry(New Rect(svgRect.X, svgRect.Y, svgRect.Width, svgRect.Height))
+            Dim flattenedGeometry = TransformAndFlattenGeometry(rectGeometry, matrix)
+            Dim bounds = flattenedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, svgRect.StrokeWidth.Value, matrix)
+
+            Dim wpfRect As New Rectangle With {
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfRect, svgRect, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfRect, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfRect, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawableRectangle(wpfRect)
+            AssignDrawableName(drawable, svgRect.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertEllipse(svgEllipse As SvgEllipse, matrix As Matrix) As IDrawable
+        Try
+            Dim ellipseGeometry As New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
+            Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
+            Dim bounds = flattenedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, svgEllipse.StrokeWidth.Value, matrix)
+
+            Dim wpfEllipse As New Ellipse With {
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfEllipse, svgEllipse, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawableEllipse(wpfEllipse)
+            AssignDrawableName(drawable, svgEllipse.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertCircle(svgCircle As SvgCircle, matrix As Matrix) As IDrawable
+        Try
+            Dim ellipseGeometry As New EllipseGeometry(New Point(svgCircle.CenterX, svgCircle.CenterY), svgCircle.Radius, svgCircle.Radius)
+            Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
+            Dim bounds = flattenedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, svgCircle.StrokeWidth.Value, matrix)
+
+            Dim wpfEllipse As New Ellipse With {
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfEllipse, svgCircle, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawableEllipse(wpfEllipse)
+            AssignDrawableName(drawable, svgCircle.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertLine(svgLine As SvgLine, matrix As Matrix) As IDrawable
+        Try
+            Dim pt1 = matrix.Transform(New Point(svgLine.StartX, svgLine.StartY))
+            Dim pt2 = matrix.Transform(New Point(svgLine.EndX, svgLine.EndY))
+
+            Dim wpfLine As New Line With {
+                .X1 = pt1.X,
+                .Y1 = pt1.Y,
+                .X2 = pt2.X,
+                .Y2 = pt2.Y
+            }
+
+            ApplyStrokeAndFill(wpfLine, svgLine, 0)
+
+            Dim drawable As New DrawableLine(wpfLine)
+            AssignDrawableName(drawable, svgLine.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertText(svgText As SvgText, matrix As Matrix) As IDrawable
+        Try
+            Dim text As String = ExtractTextContent(svgText)
+            If String.IsNullOrEmpty(text) Then Return Nothing
+
+            Dim pathGeometry = BuildTextPathGeometry(svgText)
+            If pathGeometry Is Nothing Then Return Nothing
+
+            Const flatteningTolerance As Double = 0.05
+            Dim flattenedGeometry = TransformAndFlattenGeometry(pathGeometry, matrix, flatteningTolerance)
+            Dim bounds = flattenedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim translatedGeometry = flattenedGeometry.Clone()
+            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(flatteningTolerance, ToleranceType.Absolute)
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, svgText.StrokeWidth.Value, matrix)
+
+            Dim wpfPath As New Shapes.Path With {
+                .Data = translatedGeometry,
+                .Stretch = Stretch.None,
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfPath, svgText, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawablePath(wpfPath)
+            AssignDrawableName(drawable, svgText.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function BuildTextPathGeometry(svgText As SvgText) As PathGeometry
+        Dim pathData = svgText.Path(Nothing).PathData
+        Dim points = pathData.Points.ToList()
+        Dim types = pathData.Types.ToList()
+
+        For Each child In svgText.Children
+            Dim tBase = TryCast(child, SvgTextBase)
+            If tBase IsNot Nothing Then
+                Dim tBasePath = tBase.Path(Nothing).PathData
+                points.AddRange(tBasePath.Points)
+                types.AddRange(tBasePath.Types)
+            End If
+        Next
+
+        If points.Count = 0 Then Return Nothing
+
+        Dim pathGeometry As New PathGeometry()
+        Dim currentFigure As PathFigure = Nothing
+
+        For i As Integer = 0 To points.Count - 1
+            Dim point = points(i)
+            Dim pointType = CType(types(i), System.Drawing.Drawing2D.PathPointType)
+
+            If pointType = System.Drawing.Drawing2D.PathPointType.Start OrElse currentFigure Is Nothing Then
+                currentFigure = New PathFigure() With {.StartPoint = New Point(point.X, point.Y), .IsClosed = False}
+                pathGeometry.Figures.Add(currentFigure)
+            ElseIf (pointType And System.Drawing.Drawing2D.PathPointType.Line) = System.Drawing.Drawing2D.PathPointType.Line Then
+                currentFigure.Segments.Add(New LineSegment(New Point(point.X, point.Y), True))
+            ElseIf (pointType And System.Drawing.Drawing2D.PathPointType.Bezier) = System.Drawing.Drawing2D.PathPointType.Bezier Then
+                If i + 2 < points.Count Then
+                    currentFigure.Segments.Add(New BezierSegment(
+                        New Point(points(i).X, points(i).Y),
+                        New Point(points(i + 1).X, points(i + 1).Y),
+                        New Point(points(i + 2).X, points(i + 2).Y), True))
+                    i += 2
+                End If
+            End If
+
+            If (pointType And System.Drawing.Drawing2D.PathPointType.CloseSubpath) = System.Drawing.Drawing2D.PathPointType.CloseSubpath Then
+                currentFigure.IsClosed = True
+            End If
+        Next
+
+        Return pathGeometry
+    End Function
+
+    Private Function ExtractTextContent(svgText As SvgText) As String
+        Dim sb As New System.Text.StringBuilder()
+
+        If Not String.IsNullOrEmpty(svgText.Text) Then
+            sb.Append(svgText.Text)
+        End If
+
+        If svgText.Children IsNot Nothing Then
+            For Each child In svgText.Children
+                If TypeOf child Is SvgTextSpan Then
+                    Dim span = CType(child, SvgTextSpan)
+                    If Not String.IsNullOrEmpty(span.Text) Then
+                        sb.Append(span.Text)
+                    End If
+                ElseIf TypeOf child Is SvgText Then
+                    Dim nestedText = CType(child, SvgText)
+                    sb.Append(ExtractTextContent(nestedText))
+                End If
+            Next
+        End If
+
+        Dim result = sb.ToString().Trim()
+        Return result
+    End Function
+
+    Private Sub ApplyStrokeAndFill(shape As Shape, svgElement As SvgVisualElement, transformedStrokeThickness As Double)
+        If svgElement.Fill IsNot Nothing Then
+            If svgElement.Fill.ToString() = "none" OrElse svgElement.Fill.GetType().Name.Contains("None") Then
+                shape.Fill = Nothing
+            ElseIf TypeOf svgElement.Fill Is SvgColourServer Then
+                Dim color = CType(svgElement.Fill, SvgColourServer).Colour
+                shape.Fill = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
+            Else
+                shape.Fill = Brushes.Transparent
+            End If
+        Else
+            shape.Fill = Brushes.Transparent
+        End If
+
+        If svgElement.Stroke IsNot Nothing AndAlso TypeOf svgElement.Stroke Is SvgColourServer Then
+            Dim color = CType(svgElement.Stroke, SvgColourServer).Colour
+            shape.Stroke = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
+            shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 1)
+        Else
+            shape.Stroke = Nothing
+            shape.StrokeThickness = 0
+        End If
+
+        Select Case svgElement.StrokeLineCap
+            Case SvgStrokeLineCap.Round
+                shape.StrokeStartLineCap = PenLineCap.Round
+                shape.StrokeEndLineCap = PenLineCap.Round
+            Case SvgStrokeLineCap.Square
+                shape.StrokeStartLineCap = PenLineCap.Square
+                shape.StrokeEndLineCap = PenLineCap.Square
+            Case Else
+                shape.StrokeStartLineCap = PenLineCap.Flat
+                shape.StrokeEndLineCap = PenLineCap.Flat
+        End Select
+
+        Select Case svgElement.StrokeLineJoin
+            Case SvgStrokeLineJoin.Round
+                shape.StrokeLineJoin = PenLineJoin.Round
+            Case SvgStrokeLineJoin.Bevel
+                shape.StrokeLineJoin = PenLineJoin.Bevel
+            Case Else
+                shape.StrokeLineJoin = PenLineJoin.Miter
+        End Select
+    End Sub
+
+    Private Function ConvertToMM(value As Single, unitType As SvgUnitType) As Double
+        Return value * ConvertSVGScaleToMM(unitType)
+    End Function
+
+    Public Shared Function ConvertSVGScaleToMM(unitType As Svg.SvgUnitType) As Double
+        Select Case unitType
+            Case Svg.SvgUnitType.Centimeter
+                Return 10
+            Case Svg.SvgUnitType.Inch
+                Return 25.4
+            Case Svg.SvgUnitType.Millimeter
+                Return 1
+            Case Svg.SvgUnitType.Pixel
+                Return 0.264583333333333
+            Case Svg.SvgUnitType.Percentage
+                Return 0.264583333333333
+            Case Svg.SvgUnitType.Point
+                Return 0.352777777777778
+            Case Svg.SvgUnitType.Pica
+                Return 4.23333333333333
+            Case Else
+                Application.GetService(Of SnackbarService).GenerateCaution("Unknown SVG Unit Type: " & unitType.ToString, "Scaling may not be correct")
+                Return 1
+        End Select
+    End Function
+
+    Public Shared Function SVGDocumentToString(svgdocument As SvgDocument) As String
+        Using sw As New StringWriter()
+            Using writer As XmlWriter = XmlWriter.Create(sw, New XmlWriterSettings With {.Encoding = Text.Encoding.UTF8})
+                svgdocument.Write(writer)
+            End Using
+            Return sw.ToString()
+        End Using
+    End Function
+
+End Class

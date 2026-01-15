@@ -89,16 +89,8 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
         Dim drawableItemsToRemove = MainVM.DrawableCollection.Where(Function(d) d.IsSelected).ToList()
 
-        ' Remove corresponding IDrawables from SVGFiles
         For Each drawable In drawableItemsToRemove
-            MainVM.DrawableCollection.Remove(drawable)
-
-            Dim svgFile = MainVM.SVGFiles.FirstOrDefault(Function(file) file.SVGComponents.Contains(drawable))
-
-            If svgFile IsNot Nothing Then
-                svgFile.SVGComponents.Remove(drawable)
-                If svgFile.SVGVisualComponents.IsEmpty Then MainVM.ModifySVGFiles(svgFile, removeSVG:=True)
-            End If
+            MainVM.RemoveDrawableLeaf(drawable)
         Next
 
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
@@ -131,16 +123,31 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public Sub OnDesignerItemDecoratorCurrentSelectedChanged(currentSelected As ContentControl)
 
-        For Each svgFile In MainVM.SVGFiles
-            For Each child In svgFile.SVGComponents
-                If currentSelected IsNot Nothing AndAlso ((TryCast(child, SVGComponent) IsNot Nothing AndAlso TryCast(child, SVGComponent).SVGViewBox Is currentSelected.Content) OrElse child.DrawableElement Is currentSelected.Content) Then
-                    child.IsSelected = True
-                Else
-                    child.IsSelected = False
+        For Each d In MainVM.DrawableCollection
+            If currentSelected IsNot Nothing Then
+                Dim isMatch As Boolean = False
+
+                ' direct content match
+                If d.DrawableElement Is currentSelected.Content Then
+                    isMatch = True
                 End If
-            Next
+
+                ' group child match
+                If Not isMatch AndAlso TypeOf d Is DrawableGroup Then
+                    Dim g = CType(d, DrawableGroup)
+                    If g.GroupChildren.Any(Function(ch) ch.DrawableElement Is currentSelected.Content) Then
+                        isMatch = True
+                    End If
+                End If
+
+                d.IsSelected = isMatch
+            Else
+                d.IsSelected = False
+            End If
         Next
+
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
+
 
     End Sub
 
@@ -183,14 +190,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public Sub ProcessDroppedFiles(files() As String)
 
-        For Each file In files
-            Dim finfo As New FileInfo(file)
-
-            If finfo.Exists AndAlso finfo.Extension = ".svg" Then
-                MainVM.ModifySVGFiles(New SVGFile(file))
-            End If
-
-        Next
+        MainVM.DragSVGs(files)
 
     End Sub
 

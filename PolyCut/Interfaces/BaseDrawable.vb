@@ -55,6 +55,9 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
     End Property
     Public ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
+    Public Property ParentGroup As IDrawable Implements IDrawable.ParentGroup
+
+
     Public Shared _CurrentlySelectedComponent As IDrawable
 
     Public Event SelectionChanged(sender As Object, e As EventArgs) Implements IDrawable.SelectionChanged

@@ -10,6 +10,7 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
     Public Sub New(element As Path)
         DrawableElement = element
         VisualName = "Path"
+        Name = VisualName
     End Sub
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG

@@ -10,6 +10,7 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
     Public Sub New(element As Ellipse)
         DrawableElement = element
         VisualName = "Ellipse"
+        Name = VisualName
     End Sub
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG

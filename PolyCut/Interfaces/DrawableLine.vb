@@ -9,6 +9,7 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
     Public Sub New(element As Line)
         DrawableElement = element
         VisualName = "Line"
+        Name = VisualName
     End Sub
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG

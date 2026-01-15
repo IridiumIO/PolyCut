@@ -298,6 +298,54 @@ Public Class MainViewModel
     End Sub
 
     ' ----- Drawing group lifecycle & canvas additions -----
+    Private Function GenerateDrawableName(drawable As IDrawable) As String
+        ' For text objects, use the actual text content as the name
+        If TypeOf drawable Is DrawableText Then
+            Dim textDrawable = CType(drawable, DrawableText)
+            Dim textElement = TryCast(textDrawable.DrawableElement, System.Windows.Controls.TextBox)
+            If textElement IsNot Nothing AndAlso Not String.IsNullOrWhiteSpace(textElement.Text) Then
+                Dim textContent = textElement.Text.Trim()
+                Return If(textContent.Length > 15, textContent.Substring(0, 15) & "...", textContent)
+            End If
+        End If
+
+        ' For other types, find the lowest available number using pattern matching
+        Dim baseName As String
+        Dim pattern As String
+
+        If TypeOf drawable Is DrawableLine Then
+            baseName = "Line"
+        ElseIf TypeOf drawable Is DrawableRectangle Then
+            baseName = "Rect"
+        ElseIf TypeOf drawable Is DrawableEllipse Then
+            baseName = "Ellipse"
+        ElseIf TypeOf drawable Is DrawableText Then
+            baseName = "Text"
+        ElseIf TypeOf drawable Is DrawablePath Then
+            baseName = "Path"
+        Else
+            Return "Drawable1"
+        End If
+
+        Dim existingNumbers As New HashSet(Of Integer)
+        For Each d In DrawableCollection
+            If d IsNot Nothing AndAlso Not String.IsNullOrEmpty(d.Name) AndAlso d.Name.StartsWith(baseName, StringComparison.OrdinalIgnoreCase) Then
+                Dim numberPart = d.Name.Substring(baseName.Length)
+                Dim number As Integer
+                If Integer.TryParse(numberPart, number) Then
+                    existingNumbers.Add(number)
+                End If
+            End If
+        Next
+
+        Dim nextNumber As Integer = 1
+        While existingNumbers.Contains(nextNumber)
+            nextNumber += 1
+        End While
+
+        Return $"{baseName}{nextNumber}"
+    End Function
+
     Public Sub AddDrawableElement(element As FrameworkElement)
         Dim drawableL As IDrawable
         If TypeOf (element) Is Line Then
@@ -316,7 +364,8 @@ Public Class MainViewModel
 
         If drawableL Is Nothing Then Return
 
-        ' Create persistent drawing group if needed
+        drawableL.Name = GenerateDrawableName(drawableL)
+
         If DrawingGroup Is Nothing OrElse Not DrawableCollection.Contains(DrawingGroup) Then
             DrawingGroup = New DrawableGroup("Drawing Group")
             DrawableCollection.Add(DrawingGroup)

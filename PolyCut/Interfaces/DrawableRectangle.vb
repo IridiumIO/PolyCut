@@ -13,6 +13,7 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
     Public Sub New(element As Rectangle)
         DrawableElement = element
         VisualName = "Rectangle"
+        Name = VisualName
     End Sub
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG

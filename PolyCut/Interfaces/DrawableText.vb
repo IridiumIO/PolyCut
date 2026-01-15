@@ -13,6 +13,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     Public Sub New(element As TextBox)
         DrawableElement = element
         VisualName = "Text"
+        Name = VisualName
     End Sub
 
 

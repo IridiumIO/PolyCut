@@ -38,7 +38,6 @@ Public Class MainViewModel
     Public Property DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
     Public Property ImportedGroups As New ObservableCollection(Of DrawableGroup)
 
-    Private DrawableSVGFile As SVGFile
     Private DrawingGroup As DrawableGroup
 
     ' Commands

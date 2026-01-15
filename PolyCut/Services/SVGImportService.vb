@@ -15,6 +15,8 @@ End Interface
 
 Public Class SVGImportService : Implements ISvgImportService
 
+    Private Const FLATTENING_TOLERANCE As Double = 0.05
+
     Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromFile
         Dim doc = SvgDocument.Open(path)
         Return ParseFromDocument(doc, path)
@@ -26,7 +28,7 @@ Public Class SVGImportService : Implements ISvgImportService
         Dim results As New List(Of IDrawable)
 
         For Each child As SvgElement In svgDoc.Children
-            ProcessElement(child, rootMatrix, results)
+            ProcessElement(child, rootMatrix, results, svgDoc)
         Next
 
         Return results
@@ -75,35 +77,161 @@ Public Class SVGImportService : Implements ISvgImportService
         Return If(tolerance > 0, pathGeom.GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute), pathGeom.GetFlattenedPathGeometry())
     End Function
 
-    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, results As List(Of IDrawable))
+    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, results As List(Of IDrawable), svgDoc As SvgDocument)
         Dim currentMatrix As Matrix = parentMatrix
         currentMatrix = ApplySvgTransforms(elem, currentMatrix)
 
         If TypeOf elem Is SvgGroup Then
             Dim group = CType(elem, SvgGroup)
             For Each child In group.Children
-                ProcessElement(child, currentMatrix, results)
+                ProcessElement(child, currentMatrix, results, svgDoc)
             Next
         ElseIf TypeOf elem Is SvgPath Then
-            Dim drawable = ConvertPath(CType(elem, SvgPath), currentMatrix)
+            Dim drawable = ConvertPath(CType(elem, SvgPath), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgRectangle Then
-            Dim drawable = ConvertRectangle(CType(elem, SvgRectangle), currentMatrix)
+            Dim drawable = ConvertRectangle(CType(elem, SvgRectangle), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgEllipse Then
-            Dim drawable = ConvertEllipse(CType(elem, SvgEllipse), currentMatrix)
+            Dim drawable = ConvertEllipse(CType(elem, SvgEllipse), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgCircle Then
-            Dim drawable = ConvertCircle(CType(elem, SvgCircle), currentMatrix)
+            Dim drawable = ConvertCircle(CType(elem, SvgCircle), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgLine Then
             Dim drawable = ConvertLine(CType(elem, SvgLine), currentMatrix)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgText Then
-            Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix)
+            Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         End If
     End Sub
+
+    Private Function GetClipPathGeometry(svgDoc As SvgDocument, clipPathUri As Uri, matrix As Matrix) As Geometry
+        If clipPathUri Is Nothing Then Return Nothing
+
+        Try
+            Dim clipPathId = clipPathUri.ToString().TrimStart("#"c)
+            Dim clipPathElement = svgDoc.GetElementById(clipPathId)
+
+            If clipPathElement Is Nothing OrElse Not TypeOf clipPathElement Is SvgClipPath Then Return Nothing
+
+            Dim clipPath = CType(clipPathElement, SvgClipPath)
+            Dim combinedGeometry As Geometry = Nothing
+
+            For Each child In clipPath.Children
+                Dim childGeometry = ExtractGeometryFromElement(child)
+
+                If childGeometry IsNot Nothing Then
+                    ' Apply any transforms on the clip path child element
+                    Dim childMatrix = ApplySvgTransforms(child, matrix)
+                    If Not childMatrix.IsIdentity Then
+                        ' Transform and flatten the geometry so the transform is "baked in"
+                        ' This is necessary for Geometry.Combine to work correctly
+                        childGeometry = TransformAndFlattenGeometry(childGeometry, childMatrix, FLATTENING_TOLERANCE)
+                    End If
+
+                    If combinedGeometry Is Nothing Then
+                        combinedGeometry = childGeometry
+                    Else
+                        combinedGeometry = Geometry.Combine(combinedGeometry, childGeometry, GeometryCombineMode.Union, Nothing)
+                    End If
+                End If
+            Next
+
+            Return combinedGeometry
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ExtractGeometryFromElement(element As SvgElement) As Geometry
+        Try
+            If TypeOf element Is SvgPath Then
+                Dim svgPath = CType(element, SvgPath)
+                Return Geometry.Parse(svgPath.PathData.ToString())
+            ElseIf TypeOf element Is SvgRectangle Then
+                Dim svgRect = CType(element, SvgRectangle)
+                Return New RectangleGeometry(New Rect(svgRect.X, svgRect.Y, svgRect.Width, svgRect.Height))
+            ElseIf TypeOf element Is SvgCircle Then
+                Dim svgCircle = CType(element, SvgCircle)
+                Return New EllipseGeometry(New Point(svgCircle.CenterX, svgCircle.CenterY), svgCircle.Radius, svgCircle.Radius)
+            ElseIf TypeOf element Is SvgEllipse Then
+                Dim svgEllipse = CType(element, SvgEllipse)
+                Return New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
+            ElseIf TypeOf element Is SvgPolygon Then
+                Dim svgPolygon = CType(element, SvgPolygon)
+                Return CreatePolygonGeometry(svgPolygon.Points)
+            ElseIf TypeOf element Is SvgPolyline Then
+                Dim svgPolyline = CType(element, SvgPolyline)
+                Return CreatePolylineGeometry(svgPolyline.Points)
+            ElseIf TypeOf element Is SvgLine Then
+                Dim svgLine = CType(element, SvgLine)
+                Dim pathGeom As New PathGeometry()
+                Dim figure As New PathFigure() With {
+                    .StartPoint = New Point(svgLine.StartX, svgLine.StartY),
+                    .IsClosed = False
+                }
+                figure.Segments.Add(New LineSegment(New Point(svgLine.EndX, svgLine.EndY), True))
+                pathGeom.Figures.Add(figure)
+                Return pathGeom
+            ElseIf TypeOf element Is SvgText Then
+                ' Convert text to path geometry for clipping
+                Dim svgText = CType(element, SvgText)
+                Return BuildTextPathGeometry(svgText)
+            End If
+        Catch ex As Exception
+            Return Nothing
+        End Try
+        Return Nothing
+    End Function
+
+    Private Function CreatePolygonGeometry(points As SvgPointCollection) As Geometry
+        If points Is Nothing OrElse points.Count < 2 Then Return Nothing
+
+        Dim pathGeom As New PathGeometry()
+        Dim figure As New PathFigure() With {
+            .StartPoint = New Point(points(0), points(1)),
+            .IsClosed = True
+        }
+
+        For i As Integer = 2 To points.Count - 1 Step 2
+            If i + 1 < points.Count Then
+                figure.Segments.Add(New LineSegment(New Point(points(i), points(i + 1)), True))
+            End If
+        Next
+
+        pathGeom.Figures.Add(figure)
+        Return pathGeom
+    End Function
+
+    Private Function CreatePolylineGeometry(points As SvgPointCollection) As Geometry
+        If points Is Nothing OrElse points.Count < 2 Then Return Nothing
+
+        Dim pathGeom As New PathGeometry()
+        Dim figure As New PathFigure() With {
+            .StartPoint = New Point(points(0), points(1)),
+            .IsClosed = False
+        }
+
+        For i As Integer = 2 To points.Count - 1 Step 2
+            If i + 1 < points.Count Then
+                figure.Segments.Add(New LineSegment(New Point(points(i), points(i + 1)), True))
+            End If
+        Next
+
+        pathGeom.Figures.Add(figure)
+        Return pathGeom
+    End Function
+
+    Private Function ApplyClipPath(geometry As Geometry, clipGeometry As Geometry) As Geometry
+        If clipGeometry Is Nothing Then Return geometry
+        Try
+            Return Geometry.Combine(geometry, clipGeometry, GeometryCombineMode.Intersect, Nothing)
+        Catch ex As Exception
+            Return geometry
+        End Try
+    End Function
 
     Private Function ApplySvgTransforms(elem As SvgElement, matrix As Matrix) As Matrix
         If elem.Transforms Is Nothing OrElse elem.Transforms.Count = 0 Then Return matrix
@@ -133,17 +261,26 @@ Public Class SVGImportService : Implements ISvgImportService
         Return result
     End Function
 
-    Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix) As IDrawable
+    Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
-            Dim flattenedGeometry = TransformAndFlattenGeometry(geometry, matrix, 0.05)
+
+            ' Apply clipping path if present (in SVG coordinate space, before transform)
+            If svgPath.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPath.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    geometry = ApplyClipPath(geometry, clipGeometry)
+                End If
+            End If
+
+            Dim flattenedGeometry = TransformAndFlattenGeometry(geometry, matrix, FLATTENING_TOLERANCE)
             Dim bounds = flattenedGeometry.Bounds
 
             If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
 
             Dim translatedGeometry = flattenedGeometry.Clone()
             translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(0.05, ToleranceType.Absolute)
+            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
             Dim dimensions = CalculateStrokeDimensions(bounds, svgPath.StrokeWidth.Value, matrix)
 
@@ -166,9 +303,20 @@ Public Class SVGImportService : Implements ISvgImportService
         End Try
     End Function
 
-    Private Function ConvertRectangle(svgRect As SvgRectangle, matrix As Matrix) As IDrawable
+    Private Function ConvertRectangle(svgRect As SvgRectangle, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
-            Dim rectGeometry As New RectangleGeometry(New Rect(svgRect.X, svgRect.Y, svgRect.Width, svgRect.Height))
+            Dim rectGeometry As Geometry = New RectangleGeometry(New Rect(svgRect.X, svgRect.Y, svgRect.Width, svgRect.Height))
+            Dim wasClipped As Boolean = False
+
+            ' Apply clipping path if present
+            If svgRect.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgRect.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    rectGeometry = ApplyClipPath(rectGeometry, clipGeometry)
+                    wasClipped = True
+                End If
+            End If
+
             Dim flattenedGeometry = TransformAndFlattenGeometry(rectGeometry, matrix)
             Dim bounds = flattenedGeometry.Bounds
 
@@ -176,26 +324,59 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim dimensions = CalculateStrokeDimensions(bounds, svgRect.StrokeWidth.Value, matrix)
 
-            Dim wpfRect As New Rectangle With {
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
-            }
+            ' If clipped, return as Path instead of Rectangle
+            If wasClipped Then
+                Dim translatedGeometry = flattenedGeometry.Clone()
+                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
-            ApplyStrokeAndFill(wpfRect, svgRect, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfRect, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfRect, bounds.Y - dimensions.strokeOffset)
+                Dim wpfPath As New Shapes.Path With {
+                    .Data = translatedGeometry,
+                    .Stretch = Stretch.None,
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
 
-            Dim drawable As New DrawableRectangle(wpfRect)
-            AssignDrawableName(drawable, svgRect.ID)
-            Return drawable
+                ApplyStrokeAndFill(wpfPath, svgRect, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawablePath(wpfPath)
+                AssignDrawableName(drawable, svgRect.ID)
+                Return drawable
+            Else
+                Dim wpfRect As New Rectangle With {
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
+
+                ApplyStrokeAndFill(wpfRect, svgRect, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfRect, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfRect, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawableRectangle(wpfRect)
+                AssignDrawableName(drawable, svgRect.ID)
+                Return drawable
+            End If
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
 
-    Private Function ConvertEllipse(svgEllipse As SvgEllipse, matrix As Matrix) As IDrawable
+    Private Function ConvertEllipse(svgEllipse As SvgEllipse, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
-            Dim ellipseGeometry As New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
+            Dim ellipseGeometry As Geometry = New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
+            Dim wasClipped As Boolean = False
+
+            ' Apply clipping path if present
+            If svgEllipse.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgEllipse.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    ellipseGeometry = ApplyClipPath(ellipseGeometry, clipGeometry)
+                    wasClipped = True
+                End If
+            End If
+
             Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
             Dim bounds = flattenedGeometry.Bounds
 
@@ -203,26 +384,59 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim dimensions = CalculateStrokeDimensions(bounds, svgEllipse.StrokeWidth.Value, matrix)
 
-            Dim wpfEllipse As New Ellipse With {
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
-            }
+            ' If clipped, return as Path instead of Ellipse
+            If wasClipped Then
+                Dim translatedGeometry = flattenedGeometry.Clone()
+                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
-            ApplyStrokeAndFill(wpfEllipse, svgEllipse, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+                Dim wpfPath As New Shapes.Path With {
+                    .Data = translatedGeometry,
+                    .Stretch = Stretch.None,
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
 
-            Dim drawable As New DrawableEllipse(wpfEllipse)
-            AssignDrawableName(drawable, svgEllipse.ID)
-            Return drawable
+                ApplyStrokeAndFill(wpfPath, svgEllipse, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawablePath(wpfPath)
+                AssignDrawableName(drawable, svgEllipse.ID)
+                Return drawable
+            Else
+                Dim wpfEllipse As New Ellipse With {
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
+
+                ApplyStrokeAndFill(wpfEllipse, svgEllipse, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawableEllipse(wpfEllipse)
+                AssignDrawableName(drawable, svgEllipse.ID)
+                Return drawable
+            End If
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
 
-    Private Function ConvertCircle(svgCircle As SvgCircle, matrix As Matrix) As IDrawable
+    Private Function ConvertCircle(svgCircle As SvgCircle, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
-            Dim ellipseGeometry As New EllipseGeometry(New Point(svgCircle.CenterX, svgCircle.CenterY), svgCircle.Radius, svgCircle.Radius)
+            Dim ellipseGeometry As Geometry = New EllipseGeometry(New Point(svgCircle.CenterX, svgCircle.CenterY), svgCircle.Radius, svgCircle.Radius)
+            Dim wasClipped As Boolean = False
+
+            ' Apply clipping path if present
+            If svgCircle.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgCircle.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    ellipseGeometry = ApplyClipPath(ellipseGeometry, clipGeometry)
+                    wasClipped = True
+                End If
+            End If
+
             Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
             Dim bounds = flattenedGeometry.Bounds
 
@@ -230,18 +444,40 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim dimensions = CalculateStrokeDimensions(bounds, svgCircle.StrokeWidth.Value, matrix)
 
-            Dim wpfEllipse As New Ellipse With {
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
-            }
+            ' If clipped, return as Path instead of Ellipse
+            If wasClipped Then
+                Dim translatedGeometry = flattenedGeometry.Clone()
+                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
-            ApplyStrokeAndFill(wpfEllipse, svgCircle, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+                Dim wpfPath As New Shapes.Path With {
+                    .Data = translatedGeometry,
+                    .Stretch = Stretch.None,
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
 
-            Dim drawable As New DrawableEllipse(wpfEllipse)
-            AssignDrawableName(drawable, svgCircle.ID)
-            Return drawable
+                ApplyStrokeAndFill(wpfPath, svgCircle, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawablePath(wpfPath)
+                AssignDrawableName(drawable, svgCircle.ID)
+                Return drawable
+            Else
+                Dim wpfEllipse As New Ellipse With {
+                    .Width = dimensions.totalWidth,
+                    .Height = dimensions.totalHeight
+                }
+
+                ApplyStrokeAndFill(wpfEllipse, svgCircle, dimensions.transformedStroke)
+                Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
+                Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
+
+                Dim drawable As New DrawableEllipse(wpfEllipse)
+                AssignDrawableName(drawable, svgCircle.ID)
+                Return drawable
+            End If
         Catch ex As Exception
             Return Nothing
         End Try
@@ -269,7 +505,7 @@ Public Class SVGImportService : Implements ISvgImportService
         End Try
     End Function
 
-    Private Function ConvertText(svgText As SvgText, matrix As Matrix) As IDrawable
+    Private Function ConvertText(svgText As SvgText, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim text As String = ExtractTextContent(svgText)
             If String.IsNullOrEmpty(text) Then Return Nothing
@@ -277,15 +513,25 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim pathGeometry = BuildTextPathGeometry(svgText)
             If pathGeometry Is Nothing Then Return Nothing
 
-            Const flatteningTolerance As Double = 0.05
-            Dim flattenedGeometry = TransformAndFlattenGeometry(pathGeometry, matrix, flatteningTolerance)
+            ' Apply clipping path if present
+            If svgText.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgText.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    Dim textGeometry As Geometry = pathGeometry
+                    textGeometry = ApplyClipPath(textGeometry, clipGeometry)
+                    pathGeometry = If(TypeOf textGeometry Is PathGeometry, CType(textGeometry, PathGeometry), PathGeometry.CreateFromGeometry(textGeometry))
+                End If
+            End If
+
+
+            Dim flattenedGeometry = TransformAndFlattenGeometry(pathGeometry, matrix, FLATTENING_TOLERANCE)
             Dim bounds = flattenedGeometry.Bounds
 
             If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
 
             Dim translatedGeometry = flattenedGeometry.Clone()
             translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(flatteningTolerance, ToleranceType.Absolute)
+            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
             Dim dimensions = CalculateStrokeDimensions(bounds, svgText.StrokeWidth.Value, matrix)
 

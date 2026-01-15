@@ -10,7 +10,14 @@ Imports PolyCut.Shared
 
 Public Class PolyCanvas : Inherits Controls.Canvas
 
+    ' Track multiple selected items for multi-select support
+    Private Shared _selectedItems As New List(Of IDrawable)
 
+    Public Shared ReadOnly Property SelectedItems As IReadOnlyList(Of IDrawable)
+        Get
+            Return _selectedItems.AsReadOnly()
+        End Get
+    End Property
 
     Shared Sub New()
         DefaultStyleKeyProperty.OverrideMetadata(GetType(PolyCanvas), New FrameworkPropertyMetadata(GetType(PolyCanvas)))
@@ -133,7 +140,46 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
     Private Sub PolyCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs)
-        DesignerItemDecorator.CurrentSelected = Nothing
+        Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+        If Not isShiftPressed Then
+            ClearSelection()
+            DesignerItemDecorator.CurrentSelected = Nothing
+        End If
+    End Sub
+
+    Public Shared Sub ClearSelection()
+        For Each item In _selectedItems.ToList()
+            item.IsSelected = False
+        Next
+        _selectedItems.Clear()
+    End Sub
+
+
+    Public Shared Sub AddToSelection(drawable As IDrawable)
+        If drawable Is Nothing Then Return
+        If Not _selectedItems.Contains(drawable) Then
+            _selectedItems.Add(drawable)
+            drawable.IsSelected = True
+        End If
+    End Sub
+
+
+    Public Shared Sub RemoveFromSelection(drawable As IDrawable)
+        If drawable Is Nothing Then Return
+        If _selectedItems.Contains(drawable) Then
+            _selectedItems.Remove(drawable)
+            drawable.IsSelected = False
+        End If
+    End Sub
+
+
+    Public Shared Sub ToggleSelection(drawable As IDrawable)
+        If drawable Is Nothing Then Return
+        If _selectedItems.Contains(drawable) Then
+            RemoveFromSelection(drawable)
+        Else
+            AddToSelection(drawable)
+        End If
     End Sub
 
 

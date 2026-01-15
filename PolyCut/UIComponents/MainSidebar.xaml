@@ -30,7 +30,7 @@
 
                     </StackPanel>
                 </TabItem.Header>
-                <local:Tab_Elements />
+                <local:Tab_Elements x:Name="ElementsTab" x:FieldModifier="Public" />
             </TabItem>
 
             <TabItem Style="{StaticResource CustomTabStyle}">

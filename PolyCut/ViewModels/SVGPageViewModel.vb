@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Linq
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
@@ -86,7 +87,6 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
 
     Private Sub DeleteSelectedDrawableElement()
-
         Dim drawableItemsToRemove = MainVM.DrawableCollection.Where(Function(d) d.IsSelected).ToList()
 
         For Each drawable In drawableItemsToRemove
@@ -94,7 +94,8 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         Next
 
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
-
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawables))
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.HasMultipleSelected))
     End Sub
 
 
@@ -122,33 +123,13 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     End Sub
 
     Public Sub OnDesignerItemDecoratorCurrentSelectedChanged(currentSelected As ContentControl)
-
-        For Each d In MainVM.DrawableCollection
-            If currentSelected IsNot Nothing Then
-                Dim isMatch As Boolean = False
-
-                ' direct content match
-                If d.DrawableElement Is currentSelected.Content Then
-                    isMatch = True
-                End If
-
-                ' group child match
-                If Not isMatch AndAlso TypeOf d Is DrawableGroup Then
-                    Dim g = CType(d, DrawableGroup)
-                    If g.GroupChildren.Any(Function(ch) ch.DrawableElement Is currentSelected.Content) Then
-                        isMatch = True
-                    End If
-                End If
-
-                d.IsSelected = isMatch
-            Else
-                d.IsSelected = False
-            End If
-        Next
-
+        ' NOTE: Selection is now handled in SVGPage.xaml.vb to support multi-select
+        ' This old single-selection logic has been disabled
+        
+        ' Just notify property changes for UI updates
         MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
-
-
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawables))
+        MainVM.NotifyPropertyChanged(NameOf(MainVM.HasMultipleSelected))
     End Sub
 
 

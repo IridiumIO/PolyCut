@@ -103,7 +103,7 @@
                             </ui:CardExpander.Header>
 
                             <StackPanel Margin="15,0,15,0" FlowDirection="LeftToRight">
-                                <ui:ListView ItemsSource="{Binding DisplayChildren}" SelectionMode="Single">
+                                <ui:ListView ItemsSource="{Binding DisplayChildren}" SelectionMode="Extended" SelectionChanged="ListView_SelectionChanged">
                                     <ui:ListView.ItemContainerStyle>
                                         <Style TargetType="ListViewItem">
                                             <Setter Property="Template">
@@ -115,7 +115,6 @@
                                                     </ControlTemplate>
                                                 </Setter.Value>
                                             </Setter>
-                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                                         </Style>
                                     </ui:ListView.ItemContainerStyle>
                                     <ui:ListView.ItemTemplate>

@@ -8,6 +8,7 @@ Imports MeasurePerformance.IL.Weaver
 
 Imports PolyCut.Core
 Imports PolyCut.Shared
+Imports PolyCut.RichCanvas
 
 Imports Svg
 
@@ -81,6 +82,18 @@ Public Class MainViewModel
     Public ReadOnly Property SelectedDrawable As IDrawable
         Get
             Return DrawableCollection.FirstOrDefault(Function(f) f.IsSelected)
+        End Get
+    End Property
+
+    Public ReadOnly Property SelectedDrawables As IEnumerable(Of IDrawable)
+        Get
+            Return DrawableCollection.Where(Function(d) d.IsSelected)
+        End Get
+    End Property
+
+    Public ReadOnly Property HasMultipleSelected As Boolean
+        Get
+            Return SelectedDrawables.Count() > 1
         End Get
     End Property
 
@@ -379,6 +392,9 @@ Public Class MainViewModel
     Public Sub RemoveDrawableLeaf(drawable As IDrawable)
         If drawable Is Nothing Then Return
 
+        ' Remove from multi-select tracking
+        PolyCanvas.RemoveFromSelection(drawable)
+
         ' Remove from the flattened drawable collection if present
         If DrawableCollection.Contains(drawable) Then
             DrawableCollection.Remove(drawable)
@@ -403,6 +419,19 @@ Public Class MainViewModel
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(DrawableCollection))
         OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(SelectedDrawables))
+        OnPropertyChanged(NameOf(HasMultipleSelected))
+    End Sub
+
+
+    ' Removes all currently selected drawables
+
+    Public Sub RemoveSelectedDrawables()
+        Dim selectedItems = SelectedDrawables.ToList()
+        For Each drawable In selectedItems
+            RemoveDrawableLeaf(drawable)
+        Next
+        PolyCanvas.ClearSelection()
     End Sub
 
     Private Sub RemoveDrawableFromGroupRecursive(group As DrawableGroup, drawable As IDrawable)

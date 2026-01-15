@@ -1,5 +1,6 @@
 ﻿Imports System.ComponentModel
 Imports System.Windows.Controls.Primitives
+Imports System.Windows.Input
 
 Public Class DesignerItemDecorator : Inherits Control
 
@@ -115,17 +116,6 @@ Public Class DesignerItemDecorator : Inherits Control
             e.Handled = True ' If the TextBox is already focused, do nothing
             Return
         End If
-
-        '' Deselect all other controls
-        'Dim parent As Panel = TryCast(ThisControl.Parent, Panel)
-        'If parent IsNot Nothing Then
-        '    For Each child As UIElement In parent.Children
-        '        If TypeOf child Is ContentControl AndAlso child IsNot ThisControl Then
-        '            Selector.SetIsSelected(child, False)
-        '            parent.Focus()
-        '        End If
-        '    Next
-        'End If
 
         ' Check if the current control's content is visible
         If ThisControl.Content.Visibility <> Visibility.Visible Then Return

@@ -99,7 +99,50 @@ Class SVGPage
     End Sub
 
     Private Sub OnDesignerItemDecoratorCurrentSelectedChanged(sender As Object, e As EventArgs)
-        SVGPageViewModel.OnDesignerItemDecoratorCurrentSelectedChanged(DesignerItemDecorator.CurrentSelected)
+        Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+        Dim currentSelected = DesignerItemDecorator.CurrentSelected
+
+        If currentSelected IsNot Nothing Then
+            Dim selectedDrawable As IDrawable = Nothing
+
+            For Each drawable In MainViewModel.DrawableCollection
+                If drawable.DrawableElement IsNot Nothing Then
+                    Dim parent = TryCast(drawable.DrawableElement.Parent, ContentControl)
+                    If parent IsNot Nothing AndAlso parent Is currentSelected Then
+                        selectedDrawable = drawable
+                        Exit For
+                    End If
+                End If
+            Next
+
+            If selectedDrawable IsNot Nothing Then
+                If TypeOf selectedDrawable Is DrawableGroup Then Return
+
+                If isShiftPressed Then
+                    PolyCanvas.ToggleSelection(selectedDrawable)
+                Else
+                    PolyCanvas.ClearSelection()
+                    PolyCanvas.AddToSelection(selectedDrawable)
+                End If
+
+                SelectionHelper.SyncSelectionStates(MainViewModel.DrawableCollection)
+                MainSidebar.ElementsTab.SyncListViewSelection(PolyCanvas.SelectedItems)
+
+                MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.SelectedDrawable))
+                MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.SelectedDrawables))
+                MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.HasMultipleSelected))
+            End If
+        ElseIf Not isShiftPressed Then
+            PolyCanvas.ClearSelection()
+            SelectionHelper.SyncSelectionStates(MainViewModel.DrawableCollection)
+            MainSidebar.ElementsTab.SyncListViewSelection(PolyCanvas.SelectedItems)
+
+            MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.SelectedDrawable))
+            MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.SelectedDrawables))
+            MainViewModel.NotifyPropertyChanged(NameOf(MainViewModel.HasMultipleSelected))
+        End If
+
+        SVGPageViewModel.OnDesignerItemDecoratorCurrentSelectedChanged(currentSelected)
     End Sub
 
     Private Sub DrawingFinishedHandler(sender As Object, shape As UIElement)
@@ -246,15 +289,22 @@ Class SVGPage
         StartPos = e.GetPosition(mainCanvas)
 
         Debug.WriteLine(MainViewModel.DrawableCollection.Count)
+
+        ' Check multi-select
+        Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+
         If SVGPageViewModel.CanvasToolMode <> CanvasMode.Selection Then
+            ' If not in selection mode, deselect all items
+            PolyCanvas.ClearSelection()
             For Each child In MainViewModel.DrawableCollection
                 If TypeOf child.DrawableElement.Parent Is ContentControl Then
                     child.IsSelected = False
                 End If
             Next
+        ElseIf Not isShiftPressed Then
+            ' If in selection mode but SHIFT not pressed, this will be handled by PolyCanvas_MouseDown
+            ' which will clear selection if clicking on canvas background
         End If
-
-
     End Sub
 
 

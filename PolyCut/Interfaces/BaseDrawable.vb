@@ -24,41 +24,26 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
             End If
         End Set
     End Property
+
+    Private _isSelected As Boolean = False
+
     Public Property IsSelected As Boolean Implements IDrawable.IsSelected
         Get
-            Return _CurrentlySelectedComponent IsNot Nothing AndAlso _CurrentlySelectedComponent.Equals(Me)
+            Return _isSelected
         End Get
         Set(value As Boolean)
-            Debug.WriteLine($"Selected {VisualName}")
+            If _isSelected = value Then Return ' No change
+
+            _isSelected = value
             RaiseEvent SelectionChanged(Me, EventArgs.Empty)
-            If value Then
-                ' Deselect the currently selected component
-                If _CurrentlySelectedComponent IsNot Nothing AndAlso _CurrentlySelectedComponent IsNot Me Then
-                    _CurrentlySelectedComponent.IsSelected = False
-                End If
-
-                ' Update the currently selected component
-                _CurrentlySelectedComponent = Me
-            Else
-                ' Clear the currently selected component if this component is being deselected
-                If _CurrentlySelectedComponent Is Me Then
-                    _CurrentlySelectedComponent = Nothing
-                End If
-            End If
-            If TypeOf (DrawableElement.Parent) Is ContentControl Then
-                Selector.SetIsSelected(DrawableElement.Parent, value)
-            End If
-
 
             OnPropertyChanged(NameOf(IsSelected))
         End Set
     End Property
+
     Public ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
     Public Property ParentGroup As IDrawable Implements IDrawable.ParentGroup
-
-
-    Public Shared _CurrentlySelectedComponent As IDrawable
 
     Public Event SelectionChanged(sender As Object, e As EventArgs) Implements IDrawable.SelectionChanged
 

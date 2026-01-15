@@ -46,7 +46,7 @@
                                                      Template="{StaticResource DesignerItemDecoratorTemplate}" />
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="Selector.IsSelected" Value="True">
+                        <Trigger Property="local:SelectionHelper.IsItemSelected" Value="True">
                             <Setter TargetName="ItemDecorator" Property="ShowDecorator" Value="True" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>

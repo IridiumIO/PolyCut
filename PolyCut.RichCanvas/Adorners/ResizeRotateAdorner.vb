@@ -15,15 +15,9 @@
 
         AddHandler Me.MouseWheel, AddressOf Me.ResizeRotateAdorner_MouseWheel
         AddHandler Me.PreviewMouseWheel, AddressOf Me.ResizeRotateAdorner_MouseWheel
-        AddHandler Me.IsVisibleChanged, AddressOf Me.ResizeRotateAdorner_IsVisibleChanged
     End Sub
 
-    Private Sub ResizeRotateAdorner_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
-        If e.NewValue = Visibility.Visible Then
-            chrome.OnScaleChanged(New ScaleChangedMessage(ScaleChangedMessage.LastScale))
-        End If
 
-    End Sub
 
 
 

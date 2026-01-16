@@ -19,6 +19,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition />
+            <RowDefinition />
         </Grid.RowDefinitions>
         <Separator Grid.Row="0" Margin="5" />
         <ScrollViewer
@@ -291,6 +292,11 @@
 
             </DockPanel>
         </ScrollViewer>
-
+           <StackPanel Grid.Row="2">
+               <ui:Button Command="{Binding MainVM.UnionShapesCommand}" Content="Union"/>
+<ui:Button Command="{Binding MainVM.IntersectShapesCommand}" Content="Intersect"/>
+<ui:Button Command="{Binding MainVM.SubtractShapesCommand}" Content="Subtract"/>
+<ui:Button Command="{Binding MainVM.XorShapesCommand}" Content="XOR"/>
+           </StackPanel>
     </Grid>
 </UserControl>

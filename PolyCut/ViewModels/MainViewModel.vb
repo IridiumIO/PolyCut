@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.IO
+Imports System.Windows.Media
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
@@ -53,6 +54,10 @@ Public Class MainViewModel
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
     Public Property CopyGCodeToClipboardCommand As ICommand = New RelayCommand(Sub() Clipboard.SetText(GCode))
+    Public Property UnionShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Union))
+    Public Property IntersectShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Intersect))
+    Public Property SubtractShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Exclude))
+    Public Property XorShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Xor))
 
     ' UI meta properties
     Private _PreviewRenderSpeed As Double = 0.48
@@ -619,5 +624,270 @@ Public Class MainViewModel
     Public Sub NotifyPropertyChanged(propName As String)
         OnPropertyChanged(propName)
     End Sub
+
+    ' ----- Boolean Operations -----
+    Private Sub BooleanOperation(combineMode As GeometryCombineMode)
+        Dim selectedItems = SelectedDrawables.ToList()
+        If selectedItems.Count < 2 Then
+            _snackbarService.GenerateError("Error", "Select at least 2 shapes to combine", 3)
+            Return
+        End If
+
+        ' Check for open paths - boolean operations only work on closed shapes
+        For Each drawable In selectedItems
+            Dim element = drawable.DrawableElement
+
+            ' Lines are always open
+            If TypeOf element Is Line Then
+                _snackbarService.GenerateError("Error", "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.", 4)
+                Return
+            End If
+
+            ' Check if Paths have any open figures
+            If TypeOf element Is System.Windows.Shapes.Path Then
+                Dim path = CType(element, System.Windows.Shapes.Path)
+                Dim pathGeo = TryCast(path.Data, PathGeometry)
+                If pathGeo IsNot Nothing Then
+                    For Each figure In pathGeo.Figures
+                        If Not figure.IsClosed Then
+                            _snackbarService.GenerateError("Error", "Cannot perform boolean operations on open paths. All shapes must be closed.", 4)
+                            Return
+                        End If
+                    Next
+                End If
+            End If
+        Next
+
+        ' Convert all selected shapes to transformed geometries (in world space)
+        Dim geometries As New List(Of Geometry)
+        For Each drawable In selectedItems
+            Dim geometry = GetTransformedGeometry(drawable)
+            If geometry IsNot Nothing Then
+                geometries.Add(geometry)
+            End If
+        Next
+
+        If geometries.Count < 2 Then
+            _snackbarService.GenerateError("Error", "Could not convert shapes to geometries", 3)
+            Return
+        End If
+
+        ' Combine geometries in world space
+        Dim result As Geometry = geometries(0)
+        For i = 1 To geometries.Count - 1
+            result = New CombinedGeometry(combineMode, result, geometries(i))
+        Next
+
+        ' Flatten the combined geometry
+        Dim pathGeometry = result.GetFlattenedPathGeometry(0.05, ToleranceType.Absolute)
+
+        ' Check if the result is empty (no figures or empty bounds)
+        If pathGeometry.Figures.Count = 0 OrElse pathGeometry.Bounds.IsEmpty Then
+
+            Dim errorMessage = ""
+
+            Select Case combineMode
+                Case GeometryCombineMode.Union
+                    errorMessage = "Union operation resulted in an empty geometry. This should not happen."
+                Case GeometryCombineMode.Intersect
+                    errorMessage = "No intersection found. The selected shapes do not overlap."
+                Case GeometryCombineMode.Exclude
+                    errorMessage = "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted."
+                Case GeometryCombineMode.Xor
+                    errorMessage = "XOR operation resulted in an empty geometry. The shapes may be identical."
+            End Select
+
+            _snackbarService.GenerateError("Error", errorMessage, 4)
+            Return
+        End If
+
+        ' Get the bounds of the combined geometry (in world space)
+        Dim bounds = pathGeometry.Bounds
+
+        ' Create a new PathGeometry translated to local space
+        Dim localGeometry As New PathGeometry()
+        For Each figure In pathGeometry.Figures
+            Dim newFigure As New PathFigure() With {
+                .StartPoint = New Point(figure.StartPoint.X - bounds.Left, figure.StartPoint.Y - bounds.Top),
+                .IsClosed = figure.IsClosed,
+                .IsFilled = figure.IsFilled
+            }
+
+            For Each segment In figure.Segments
+                If TypeOf segment Is LineSegment Then
+                    Dim line = CType(segment, LineSegment)
+                    newFigure.Segments.Add(New LineSegment(
+                        New Point(line.Point.X - bounds.Left, line.Point.Y - bounds.Top), line.IsStroked))
+                ElseIf TypeOf segment Is PolyLineSegment Then
+                    Dim polyLine = CType(segment, PolyLineSegment)
+                    Dim newPoints As New PointCollection()
+                    For Each pt In polyLine.Points
+                        newPoints.Add(New Point(pt.X - bounds.Left, pt.Y - bounds.Top))
+                    Next
+                    newFigure.Segments.Add(New PolyLineSegment(newPoints, polyLine.IsStroked))
+                ElseIf TypeOf segment Is BezierSegment Then
+                    Dim bezier = CType(segment, BezierSegment)
+                    newFigure.Segments.Add(New BezierSegment(
+                        New Point(bezier.Point1.X - bounds.Left, bezier.Point1.Y - bounds.Top),
+                        New Point(bezier.Point2.X - bounds.Left, bezier.Point2.Y - bounds.Top),
+                        New Point(bezier.Point3.X - bounds.Left, bezier.Point3.Y - bounds.Top),
+                        bezier.IsStroked))
+                Else
+                    ' For other segment types, add them as-is (this is a simplified approach)
+                    newFigure.Segments.Add(segment)
+                End If
+            Next
+
+            localGeometry.Figures.Add(newFigure)
+        Next
+
+        ' Get local bounds
+        Dim localBounds = localGeometry.Bounds
+
+        ' Create a new Path element with the local-space geometry
+        Dim newPath As New System.Windows.Shapes.Path With {
+            .Data = localGeometry,
+            .Stroke = Brushes.Black,
+            .StrokeThickness = 0.5,
+            .Fill = Brushes.Transparent,
+            .Stretch = Stretch.None,
+            .Width = localBounds.Width,
+            .Height = localBounds.Height
+        }
+
+        ' Position the path itself on the canvas (like DrawingManager does)
+        Canvas.SetLeft(newPath, bounds.Left)
+        Canvas.SetTop(newPath, bounds.Top)
+
+        ' Find a canvas to add to (use the first selected item's canvas)
+        Dim firstWrapper = TryCast(selectedItems(0).DrawableElement?.Parent, ContentControl)
+        If firstWrapper IsNot Nothing Then
+            Dim canvas = TryCast(VisualTreeHelper.GetParent(firstWrapper), Canvas)
+            If canvas IsNot Nothing Then
+                ' Use the standard AddDrawableElement method which will wrap it and add to canvas
+                AddDrawableElement(newPath)
+
+                ' Remove original shapes
+                For Each drawable In selectedItems
+                    RemoveDrawableLeaf(drawable)
+                Next
+
+                Dim operationName = ""
+                Select Case combineMode
+                    Case GeometryCombineMode.Union
+                        operationName = "Union"
+                    Case GeometryCombineMode.Intersect
+                        operationName = "Intersect"
+                    Case GeometryCombineMode.Exclude
+                        operationName = "Subtract"
+                    Case GeometryCombineMode.Xor
+                        operationName = "XOR"
+                End Select
+
+                _snackbarService.GenerateSuccess("Success", $"{operationName}: Combined {selectedItems.Count} shapes")
+            End If
+        End If
+    End Sub
+
+    Private Function GetTransformedGeometry(drawable As IDrawable) As Geometry
+        If drawable?.DrawableElement Is Nothing Then Return Nothing
+
+        Dim element = drawable.DrawableElement
+        Dim wrapper = TryCast(element.Parent, ContentControl)
+        If wrapper Is Nothing Then Return Nothing
+
+        Dim geometry As Geometry = Nothing
+
+        ' Convert element to geometry based on type
+        If TypeOf element Is Rectangle Then
+            Dim rect = CType(element, Rectangle)
+            geometry = New RectangleGeometry(New Rect(0, 0, rect.ActualWidth, rect.ActualHeight))
+
+        ElseIf TypeOf element Is Ellipse Then
+            Dim ellipse = CType(element, Ellipse)
+            Dim radiusX = ellipse.ActualWidth / 2
+            Dim radiusY = ellipse.ActualHeight / 2
+            geometry = New EllipseGeometry(New Point(radiusX, radiusY), radiusX, radiusY)
+
+        ElseIf TypeOf element Is Line Then
+            Dim line = CType(element, Line)
+            ' Convert line to a stroked path with thickness
+            Dim lineGeometry As New LineGeometry(New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+            Dim thickness = If(line.StrokeThickness > 0, line.StrokeThickness, 1.0)
+            geometry = lineGeometry.GetWidenedPathGeometry(New Pen(Brushes.Black, thickness))
+
+        ElseIf TypeOf element Is System.Windows.Shapes.Path Then
+            Dim path = CType(element, System.Windows.Shapes.Path)
+            If path.Data IsNot Nothing Then
+                geometry = path.Data.Clone()
+            End If
+
+        ElseIf TypeOf element Is TextBox Then
+            Dim textBox = CType(element, TextBox)
+            If Not String.IsNullOrEmpty(textBox.Text) Then
+                ' Use DPI of 1.0 like DrawableText does to avoid distortion
+                Dim formattedText As New FormattedText(
+                    textBox.Text,
+                    Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    New Typeface(textBox.FontFamily, textBox.FontStyle, textBox.FontWeight, textBox.FontStretch),
+                    textBox.FontSize,
+                    Brushes.Black,
+                    1.0)
+
+
+                ' Build geometry at origin - transforms will position it correctly
+                geometry = formattedText.BuildGeometry(New Point(0, 0))
+            End If
+        End If
+
+        If geometry Is Nothing Then Return Nothing
+
+        ' Apply element-level transforms (mirror scale)
+        Dim elementTransformGroup = TryCast(element.RenderTransform, TransformGroup)
+        If elementTransformGroup IsNot Nothing Then
+            Dim elementScale = elementTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+            If elementScale IsNot Nothing Then
+                Dim scaleTransform = New ScaleTransform(elementScale.ScaleX, elementScale.ScaleY,
+                    geometry.Bounds.Width / 2, geometry.Bounds.Height / 2)
+                geometry = Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, scaleTransform)
+            End If
+        End If
+
+        ' Apply wrapper transforms (position and rotation)
+        Dim transformGroup As New TransformGroup()
+
+        ' Scale to wrapper size (but NOT for text - text geometry is already correct size)
+        If Not TypeOf element Is TextBox Then
+            If geometry.Bounds.Width > 0 AndAlso geometry.Bounds.Height > 0 Then
+                Dim scaleX = wrapper.ActualWidth / geometry.Bounds.Width
+                Dim scaleY = wrapper.ActualHeight / geometry.Bounds.Height
+                transformGroup.Children.Add(New ScaleTransform(scaleX, scaleY))
+            End If
+        End If
+
+        ' Apply rotation if present
+        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
+        If rotateTransform IsNot Nothing Then
+            transformGroup.Children.Add(New RotateTransform(rotateTransform.Angle,
+                wrapper.ActualWidth / 2, wrapper.ActualHeight / 2))
+        End If
+
+        ' Apply position
+        Dim left = Canvas.GetLeft(wrapper)
+        Dim top = Canvas.GetTop(wrapper)
+        If Not Double.IsNaN(left) AndAlso Not Double.IsNaN(top) Then
+            ' For text, apply the same correction as DrawableText.BakeTransforms (LCorrection=-3, TCorrection=-1)
+            ' This accounts for TextBox padding and text rendering offset
+            If TypeOf element Is TextBox Then
+                transformGroup.Children.Add(New TranslateTransform(left + 3, top + 1))
+            Else
+                transformGroup.Children.Add(New TranslateTransform(left, top))
+            End If
+        End If
+
+        ' Apply all transforms to the geometry
+        Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
+    End Function
 
 End Class

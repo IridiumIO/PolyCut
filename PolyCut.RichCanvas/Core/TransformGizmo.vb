@@ -208,6 +208,78 @@ Public Class TransformGizmo
         arrowGeometry.Figures.Add(arrowFigure)
         drawingContext.DrawGeometry(iconBrush, New Pen(iconBrush, strokeThickness), arrowGeometry)
 
+        ' Display current rotation angle while rotating (single selection only)
+        If _activeHandle = "Rotate" AndAlso _selectionManager.Count = 1 Then
+            Dim currentAngle = GetCurrentRotationAngle()
+            Dim angleText = $"{currentAngle:F1}°"
+            Dim formattedText As New FormattedText(
+                angleText,
+                Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                New Typeface("Segoe UI"),
+                14 / _scale,
+                Brushes.White,
+                VisualTreeHelper.GetDpi(Me).PixelsPerDip)
+
+            ' Position above the rotate handle
+            Dim textX = iconCenter.X - formattedText.Width / 2
+            Dim textY = _rotateHandleRect.Top - rotateOffset / 2 - formattedText.Height / 2
+
+            ' Draw background
+            Dim bgRect As New Rect(textX - 4 / _scale, textY - 2 / _scale, formattedText.Width + 8 / _scale, formattedText.Height + 4 / _scale)
+            Dim bgBrush As New SolidColorBrush(Color.FromArgb(&HC0, &H20, &H20, &H20))
+            drawingContext.DrawRoundedRectangle(bgBrush, Nothing, bgRect, 3 / _scale, 3 / _scale)
+
+            ' Draw text
+            drawingContext.DrawText(formattedText, New Point(textX, textY))
+        End If
+
+        ' Display current dimensions while resizing (single selection only)
+        If _activeHandle IsNot Nothing AndAlso _activeHandle <> "Rotate" AndAlso _activeHandle <> "Move" AndAlso _selectionManager.Count = 1 Then
+            Dim currentDimensions = GetCurrentDimensions()
+            If currentDimensions.HasValue Then
+                Dim widthMM = currentDimensions.Value.Width
+                Dim heightMM = currentDimensions.Value.Height
+
+                ' Display width along bottom edge
+                Dim widthText = $"{widthMM:F1} mm"
+                Dim widthFormattedText As New FormattedText(
+                    widthText,
+                    Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    New Typeface("Segoe UI"),
+                    12 / _scale,
+                    Brushes.White,
+                    VisualTreeHelper.GetDpi(Me).PixelsPerDip)
+
+                Dim widthX = rect.Left + rect.Width / 2 - widthFormattedText.Width / 2
+                Dim widthY = rect.Bottom + 8 / _scale
+
+                Dim widthBgRect As New Rect(widthX - 4 / _scale, widthY - 2 / _scale, widthFormattedText.Width + 8 / _scale, widthFormattedText.Height + 4 / _scale)
+                Dim dimBgBrush As New SolidColorBrush(Color.FromArgb(&HC0, &H20, &H20, &H20))
+                drawingContext.DrawRoundedRectangle(dimBgBrush, Nothing, widthBgRect, 3 / _scale, 3 / _scale)
+                drawingContext.DrawText(widthFormattedText, New Point(widthX, widthY))
+
+                ' Display height along right edge
+                Dim heightText = $"{heightMM:F1} mm"
+                Dim heightFormattedText As New FormattedText(
+                    heightText,
+                    Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    New Typeface("Segoe UI"),
+                    12 / _scale,
+                    Brushes.White,
+                    VisualTreeHelper.GetDpi(Me).PixelsPerDip)
+
+                Dim heightX = rect.Right + 8 / _scale
+                Dim heightY = rect.Top + rect.Height / 2 - heightFormattedText.Height / 2
+
+                Dim heightBgRect As New Rect(heightX - 4 / _scale, heightY - 2 / _scale, heightFormattedText.Width + 8 / _scale, heightFormattedText.Height + 4 / _scale)
+                drawingContext.DrawRoundedRectangle(dimBgBrush, Nothing, heightBgRect, 3 / _scale, 3 / _scale)
+                drawingContext.DrawText(heightFormattedText, New Point(heightX, heightY))
+            End If
+        End If
+
         If hasRotation Then
             drawingContext.Pop()
         End If
@@ -228,6 +300,38 @@ Public Class TransformGizmo
         End If
 
         Return 0
+    End Function
+
+    Private Function GetCurrentRotationAngle() As Double
+        ' Get the current rotation angle of the first selected item during rotation
+        If _selectionManager.Count > 0 Then
+            Dim item = _selectionManager.SelectedItems.FirstOrDefault()
+            If item?.DrawableElement IsNot Nothing Then
+                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
+                If wrapper IsNot Nothing Then
+                    Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
+                    If rotateTransform IsNot Nothing Then
+                        Return rotateTransform.Angle
+                    End If
+                End If
+            End If
+        End If
+        Return 0
+    End Function
+
+    Private Function GetCurrentDimensions() As (Width As Double, Height As Double)?
+        ' Get the current dimensions of the first selected item during resize
+        If _selectionManager.Count > 0 Then
+            Dim item = _selectionManager.SelectedItems.FirstOrDefault()
+            If item?.DrawableElement IsNot Nothing Then
+                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
+                If wrapper IsNot Nothing Then
+                    ' Return dimensions in millimeters (ActualWidth/Height are in WPF units, 1 unit = 1mm)
+                    Return (wrapper.ActualWidth, wrapper.ActualHeight)
+                End If
+            End If
+        End If
+        Return Nothing
     End Function
 
     Private Sub OnMouseDown(sender As Object, e As MouseButtonEventArgs)

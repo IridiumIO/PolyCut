@@ -750,7 +750,6 @@ Public Class TransformGizmo
                     Dim offsetY = initialPos.Y - anchorY
                     Canvas.SetLeft(wrapper, anchorX + (offsetX * scaleX))
                     Canvas.SetTop(wrapper, anchorY + (offsetY * scaleY))
-
                     If Math.Abs(rotation) > 0.01 Then
                         wrapper.RenderTransform = New RotateTransform(rotation)
                     Else

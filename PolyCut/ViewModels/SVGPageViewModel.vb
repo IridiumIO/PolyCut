@@ -81,8 +81,8 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     Public Property CuttingMatIsVisible As Boolean = True
 
     Public Property PreviewKeyDownCommand As ICommand = New RelayCommand(Of String)(Sub(key) ShortcutKeyHandler(key))
-    Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub() MirrorObject(MainVM.SelectedDrawable.DrawableElement, True, False))
-    Public Property MirrorVerticallyCommand As ICommand = New RelayCommand(Sub() MirrorObject(MainVM.SelectedDrawable.DrawableElement, False, True))
+    Public Property MirrorHorizontallyCommand As ICommand = New RelayCommand(Sub() MirrorSelection(True, False))
+    Public Property MirrorVerticallyCommand As ICommand = New RelayCommand(Sub() MirrorSelection(False, True))
     Public Property DeleteDrawableElementCommand As ICommand = New RelayCommand(Sub() DeleteSelectedDrawableElement())
 
 
@@ -99,27 +99,43 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     End Sub
 
 
-    Public Shared Sub MirrorObject(ByRef DrawableElement As FrameworkElement, MirrorX As Boolean, MirrorY As Boolean)
+    Private Sub MirrorSelection(mirrorX As Boolean, mirrorY As Boolean)
+        Dim selected = PolyCanvas.SelectedItems?.FirstOrDefault()
+        If selected?.DrawableElement Is Nothing Then Return
 
-        Dim mirrorTransform As New ScaleTransform With {.ScaleX = If(MirrorX, -1, 1), .ScaleY = If(MirrorY, -1, 1)}
+        Dim element = selected.DrawableElement
+        Dim wrapper = TryCast(element.Parent, ContentControl)
+        If wrapper Is Nothing Then Return
 
-        Dim currentTransformGroup As TransformGroup = TryCast(DrawableElement.RenderTransform, TransformGroup)
+        ' Set transform origin to center for consistent mirroring
+        element.RenderTransformOrigin = New Point(0.5, 0.5)
 
-        If currentTransformGroup Is Nothing Then
-            currentTransformGroup = New TransformGroup()
-            DrawableElement.RenderTransform = currentTransformGroup
+        ' Get or create transform group on element
+        Dim tg = TryCast(element.RenderTransform, TransformGroup)
+        If tg Is Nothing Then
+            Dim existing = element.RenderTransform
+            tg = New TransformGroup()
+            If existing IsNot Nothing AndAlso Not TypeOf existing Is TransformGroup Then
+                tg.Children.Add(existing)
+            End If
+            element.RenderTransform = tg
         End If
 
-        Dim existingScaleTransform = currentTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-        If existingScaleTransform IsNot Nothing Then
-            existingScaleTransform.ScaleY *= If(MirrorY, -1, 1)
-            existingScaleTransform.ScaleX *= If(MirrorX, -1, 1)
-        Else
-            currentTransformGroup.Children.Add(mirrorTransform)
+        ' Find or create scale transform
+        Dim scale = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+        If scale Is Nothing Then
+            scale = New ScaleTransform(1, 1)
+            tg.Children.Add(scale)
         End If
-        DrawableElement.RenderTransformOrigin = New Point(0.5, 0.5)
 
+        ' Toggle mirror
+        If mirrorX Then scale.ScaleX *= -1
+        If mirrorY Then scale.ScaleY *= -1
 
+        ' Force visual update
+        wrapper.InvalidateMeasure()
+        wrapper.InvalidateArrange()
+        wrapper.UpdateLayout()
     End Sub
 
     Public Sub New(mainvm As MainViewModel)

@@ -81,7 +81,13 @@ Public Class MainViewModel
     ' Convenience / computed properties
     Public ReadOnly Property SelectedDrawable As IDrawable
         Get
-            Return DrawableCollection.FirstOrDefault(Function(f) f.IsSelected)
+            Return PolyCanvas.SelectedItems?.FirstOrDefault()
+        End Get
+    End Property
+
+    Public ReadOnly Property SelectedWrapper As ContentControl
+        Get
+            Return PolyCanvas.CurrentSelected
         End Get
     End Property
 
@@ -117,7 +123,23 @@ Public Class MainViewModel
         _argsService = argsService
         _svgImportService = svgImportService
 
+        AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnCanvasSelectionChanged
+        AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
+
         Initialise()
+    End Sub
+
+    Private Sub OnCanvasSelectionChanged(sender As Object, e As EventArgs)
+        OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(SelectedDrawables))
+        OnPropertyChanged(NameOf(HasMultipleSelected))
+    End Sub
+
+    Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
+        OnPropertyChanged(NameOf(SelectedWrapper))
+        OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(SelectedDrawables))
+        OnPropertyChanged(NameOf(HasMultipleSelected))
     End Sub
 
     Private Sub Initialise()

@@ -38,13 +38,13 @@ Public Module Extensions
         Dim transformableContentControl As ContentControl = drawableElement.Parent
         If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
 
+        ' Check for scale transforms on the element's RenderTransform (mirror)
         Dim tfg As TransformGroup = TryCast(drawableElement.RenderTransform, TransformGroup)
         If tfg IsNot Nothing Then
             For Each transform As Transform In tfg.Children
                 If TypeOf transform Is ScaleTransform Then
-                    component.Transforms.Insert(0, New Transforms.SvgScale(CType(transform, ScaleTransform).ScaleX, CType(transform, ScaleTransform).ScaleY))
-                    'Dim st = CType(transform, ScaleTransform)
-                    'Matrix.ScaleAt(st.ScaleX, st.ScaleY, originX + width / 2, originY + height / 2)
+                    Dim st = CType(transform, ScaleTransform)
+                    component.Transforms.Insert(0, New Transforms.SvgScale(st.ScaleX, st.ScaleY))
                 End If
             Next
         End If
@@ -62,24 +62,16 @@ Public Module Extensions
         Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
         component.Transforms.Insert(0, translateTF)
 
-
-
-
+        ' Handle wrapper rotation (simple RotateTransform only)
         Dim transformableCCTransforms = transformableContentControl.RenderTransform
 
-        If TypeOf (transformableCCTransforms) Is RotateTransform Then
-
+        If TypeOf transformableCCTransforms Is RotateTransform Then
             Dim rt = CType(transformableCCTransforms, RotateTransform)
-
             Dim rotateTF As New Transforms.SvgRotate(rt.Angle, component.Bounds.X + component.Bounds.Width / 2, component.Bounds.Y + component.Bounds.Height / 2)
-
             component.Transforms.Insert(0, rotateTF)
-
         End If
 
         Return component
-
-
 
     End Function
 

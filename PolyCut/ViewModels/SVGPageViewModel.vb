@@ -122,49 +122,36 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
     End Sub
 
-    Public Sub OnDesignerItemDecoratorCurrentSelectedChanged(currentSelected As ContentControl)
-        ' NOTE: Selection is now handled in SVGPage.xaml.vb to support multi-select
-        ' This old single-selection logic has been disabled
-
-        ' Just notify property changes for UI updates
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawables))
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.HasMultipleSelected))
-    End Sub
-
-
-
-
-
-
-
-
-
-
-
-
     Public Sub New(mainvm As MainViewModel)
         Me.MainVM = mainvm
     End Sub
 
     Private Shared Sub ShortcutKeyHandler(Key As String)
-
         If (Key = "]") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
-            Dim currentSelected = DesignerItemDecorator.CurrentSelected
-            If currentSelected Is Nothing Then Return
-            Dim textbox As TextBox = TryCast(currentSelected.Content, TextBox)
+            Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
+            If selectedItem Is Nothing Then Return
+
+            Dim wrapper = TryCast(selectedItem.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Return
+
+            Dim textbox As TextBox = TryCast(wrapper.Content, TextBox)
             If textbox Is Nothing Then Return
-            Dim currentFontSize As Double = textbox.FontSize
-            textbox.FontSize = currentFontSize + 1
+
+            textbox.FontSize += 1
 
         ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
-            Dim currentSelected = DesignerItemDecorator.CurrentSelected
-            If currentSelected Is Nothing Then Return
-            Dim textbox As TextBox = TryCast(currentSelected.Content, TextBox)
-            If textbox Is Nothing Then Return
-            Dim currentFontSize As Double = textbox.FontSize
-            textbox.FontSize = currentFontSize - 1
+            Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
+            If selectedItem Is Nothing Then Return
 
+            Dim wrapper = TryCast(selectedItem.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Return
+
+            Dim textbox As TextBox = TryCast(wrapper.Content, TextBox)
+            If textbox Is Nothing Then Return
+
+            If textbox.FontSize > 1 Then
+                textbox.FontSize -= 1
+            End If
         End If
     End Sub
 

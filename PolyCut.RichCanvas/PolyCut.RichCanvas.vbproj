@@ -23,4 +23,9 @@
     <ProjectReference Include="..\PolyCut.Shared\PolyCut.Shared.vbproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Converters\" />
+    <Folder Include="Thumbs\" />
+  </ItemGroup>
+
 </Project>

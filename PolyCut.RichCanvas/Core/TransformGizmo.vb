@@ -28,6 +28,8 @@ Public Class TransformGizmo
     Private Const ROTATE_HANDLE_OFFSET As Double = 48
     Private Const CARDINAL_HANDLE_SIZE As Double = 9
 
+    Private _subscribedWrappers As New List(Of ContentControl)
+
     Public Sub New(selectionManager As SelectionManager, canvas As Canvas)
         _selectionManager = selectionManager
         _canvas = canvas
@@ -40,6 +42,7 @@ Public Class TransformGizmo
         AddHandler Me.MouseLeftButtonDown, AddressOf OnMouseDown
         AddHandler Me.MouseMove, AddressOf OnMouseMove
         AddHandler Me.MouseLeftButtonUp, AddressOf OnMouseUp
+        AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
 
         EventAggregator.Subscribe(AddressOf OnScaleChanged)
     End Sub
@@ -57,6 +60,34 @@ Public Class TransformGizmo
     Private Sub OnScaleChanged(message As Object)
         If TypeOf message IsNot ScaleChangedMessage Then Return
         Scale = CType(message, ScaleChangedMessage).NewScale
+    End Sub
+
+    Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
+        ' Unsubscribe from old wrappers
+        For Each wrapper In _subscribedWrappers
+            RemoveHandler wrapper.SizeChanged, AddressOf OnWrapperPropertyChanged
+            RemoveHandler wrapper.LayoutUpdated, AddressOf OnWrapperPropertyChanged
+        Next
+        _subscribedWrappers.Clear()
+
+
+        For Each item In _selectionManager.SelectedItems
+            If item?.DrawableElement IsNot Nothing Then
+                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
+                If wrapper IsNot Nothing Then
+                    AddHandler wrapper.SizeChanged, AddressOf OnWrapperPropertyChanged
+                    AddHandler wrapper.LayoutUpdated, AddressOf OnWrapperPropertyChanged
+                    _subscribedWrappers.Add(wrapper)
+                End If
+            End If
+        Next
+
+        InvalidateVisual()
+    End Sub
+
+    Private Sub OnWrapperPropertyChanged(sender As Object, e As EventArgs)
+        _selectionManager.InvalidateBoundsCache()
+        InvalidateVisual()
     End Sub
 
     Protected Overrides Sub OnRender(drawingContext As DrawingContext)

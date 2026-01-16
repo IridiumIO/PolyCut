@@ -19,7 +19,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition />
-            <RowDefinition />
         </Grid.RowDefinitions>
         <Separator Grid.Row="0" Margin="5" />
         <ScrollViewer
@@ -83,8 +82,14 @@
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus">
                                     <ui:TextBox.Text>
                                         <PriorityBinding>
-                                            <Binding Path="MainVM.SelectedWrapper.Width" Mode="TwoWay" Converter="{StaticResource UnitConverter}" />
-                                            <Binding Path="MainVM.SelectedWrapper.ActualWidth" Mode="OneWay" Converter="{StaticResource UnitConverter}" />
+                                            <Binding
+                                                Converter="{StaticResource UnitConverter}"
+                                                Mode="TwoWay"
+                                                Path="MainVM.SelectedWrapper.Width" />
+                                            <Binding
+                                                Converter="{StaticResource UnitConverter}"
+                                                Mode="OneWay"
+                                                Path="MainVM.SelectedWrapper.ActualWidth" />
                                         </PriorityBinding>
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
@@ -101,8 +106,14 @@
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus">
                                     <ui:TextBox.Text>
                                         <PriorityBinding>
-                                            <Binding Path="MainVM.SelectedWrapper.Height" Mode="TwoWay" Converter="{StaticResource UnitConverter}" />
-                                            <Binding Path="MainVM.SelectedWrapper.ActualHeight" Mode="OneWay" Converter="{StaticResource UnitConverter}" />
+                                            <Binding
+                                                Converter="{StaticResource UnitConverter}"
+                                                Mode="TwoWay"
+                                                Path="MainVM.SelectedWrapper.Height" />
+                                            <Binding
+                                                Converter="{StaticResource UnitConverter}"
+                                                Mode="OneWay"
+                                                Path="MainVM.SelectedWrapper.ActualHeight" />
                                         </PriorityBinding>
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
@@ -217,8 +228,88 @@
                         ContentPadding="0"
                         FlowDirection="RightToLeft"
                         IsExpanded="True"
+                        Style="{StaticResource CustomCardExpanderStyle}">
+                        <ui:CardExpander.Header>
+                            <Grid Margin="10,0" FlowDirection="LeftToRight">
+
+                                <TextBlock
+                                    Padding="1,2,0,0"
+                                    VerticalAlignment="Center"
+                                    Text="Combine Shapes" />
+
+                            </Grid>
+                        </ui:CardExpander.Header>
+
+                        <StackPanel FlowDirection="LeftToRight">
+
+                            <Grid Margin="35,0,15,0">
+
+
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:Button
+                                        Width="60"
+                                        Margin="5,0,5,0"
+                                        Command="{Binding MainVM.UnionShapesCommand}">
+                                        <ui:Button.ToolTip>
+                                            <TextBlock Text="Union" />
+                                        </ui:Button.ToolTip>
+                                        <ui:SymbolIcon
+                                            Filled="True"
+                                            FontSize="18"
+                                            Symbol="ShapeUnion20" />
+                                    </ui:Button>
+                                    <ui:Button
+                                        Width="60"
+                                        Margin="5,0,5,0"
+                                        Command="{Binding MainVM.IntersectShapesCommand}">
+                                        <ui:Button.ToolTip>
+                                            <TextBlock Text="Intersect" />
+                                        </ui:Button.ToolTip>
+                                        <ui:SymbolIcon
+                                            Filled="True"
+                                            FontSize="18"
+                                            Symbol="ShapeIntersect20" />
+                                    </ui:Button>
+                                    <ui:Button
+                                        Width="60"
+                                        Margin="5,0,5,0"
+                                        Command="{Binding MainVM.SubtractShapesCommand}">
+                                        <ui:Button.ToolTip>
+                                            <TextBlock Text="Subtract" />
+                                        </ui:Button.ToolTip>
+                                        <ui:SymbolIcon
+                                            Filled="True"
+                                            FontSize="18"
+                                            Symbol="ShapeSubtract20" />
+                                    </ui:Button>
+                                    <ui:Button
+                                        Width="60"
+                                        Margin="5,0,5,0"
+                                        Command="{Binding MainVM.XorShapesCommand}">
+                                        <ui:Button.ToolTip>
+                                            <TextBlock Text="Exclude" />
+                                        </ui:Button.ToolTip>
+                                        <ui:SymbolIcon
+                                            Filled="True"
+                                            FontSize="18"
+                                            Symbol="ShapeExclude20" />
+                                    </ui:Button>
+
+                                </StackPanel>
+
+                            </Grid>
+                        </StackPanel>
+                    </ui:CardExpander>
+                    <ui:CardExpander
+                        Margin="-15,0"
+                        VerticalAlignment="Top"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        ContentPadding="0"
+                        FlowDirection="RightToLeft"
+                        IsExpanded="True"
                         Style="{StaticResource CustomCardExpanderStyle}"
-                        Visibility="{Binding MainVM.SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Hidden}">
+                        Visibility="{Binding MainVM.SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Collapsed}">
                         <ui:CardExpander.Header>
                             <Grid Margin="10,0" FlowDirection="LeftToRight">
 
@@ -292,11 +383,6 @@
 
             </DockPanel>
         </ScrollViewer>
-           <StackPanel Grid.Row="2">
-               <ui:Button Command="{Binding MainVM.UnionShapesCommand}" Content="Union"/>
-<ui:Button Command="{Binding MainVM.IntersectShapesCommand}" Content="Intersect"/>
-<ui:Button Command="{Binding MainVM.SubtractShapesCommand}" Content="Subtract"/>
-<ui:Button Command="{Binding MainVM.XorShapesCommand}" Content="XOR"/>
-           </StackPanel>
+
     </Grid>
 </UserControl>

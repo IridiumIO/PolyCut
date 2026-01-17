@@ -300,52 +300,37 @@ Public Class MainViewModel
             .Multiselect = True
         }
         If fs.ShowDialog Then
+            Dim actions As New List(Of IUndoableAction)()
+
             For Each fl In fs.FileNames
-                Dim imported = _svgImportService.ParseFromFile(fl)
-
-                For Each d As IDrawable In imported
-                    If TypeOf d Is DrawableGroup Then
-                        Dim grp = CType(d, DrawableGroup)
-                        For Each child In grp.GroupChildren.ToList()
-                            If Not DrawableCollection.Contains(child) Then DrawableCollection.Add(child)
-                        Next
-                    Else
-                        If Not DrawableCollection.Contains(d) Then DrawableCollection.Add(d)
-                    End If
-                Next
-
-                Dim fileGroup As New DrawableGroup(Path.GetFileName(fl))
-                For Each d As IDrawable In imported
-                    fileGroup.AddChild(d)
-                Next
-
-                If Not ImportedGroups.Contains(fileGroup) Then ImportedGroups.Add(fileGroup)
+                Dim action As New ImportSVGAction(Me, _svgImportService, fl)
+                If action.Execute() Then
+                    actions.Add(action)
+                End If
             Next
+
+            If actions.Count > 0 Then
+                _undoRedoService.Push(New CompositeAction(actions))
+            End If
         End If
     End Sub
 
     Public Sub DragSVGs(x As String())
+        Dim actions As New List(Of IUndoableAction)()
+
         For Each file In x
             Dim finfo As New FileInfo(file)
             If finfo.Exists AndAlso finfo.Extension = ".svg" Then
-                Dim imported = _svgImportService.ParseFromFile(file)
-                Dim fileGroup As New DrawableGroup(finfo.Name)
-
-                For Each d As IDrawable In imported
-                    fileGroup.AddChild(d)
-                    If Not DrawableCollection.Contains(d) Then DrawableCollection.Add(d)
-                    Dim nested = TryCast(d, DrawableGroup)
-                    If nested IsNot Nothing Then
-                        For Each nd In nested.GroupChildren
-                            If Not DrawableCollection.Contains(nd) Then DrawableCollection.Add(nd)
-                        Next
-                    End If
-                Next
-
-                If Not ImportedGroups.Contains(fileGroup) Then ImportedGroups.Add(fileGroup)
-                If Not DrawableCollection.Contains(fileGroup) Then DrawableCollection.Add(fileGroup)
+                Dim action As New ImportSVGAction(Me, _svgImportService, file)
+                If action.Execute() Then
+                    actions.Add(action)
+                End If
             End If
         Next
+
+        If actions.Count > 0 Then
+            _undoRedoService.Push(New CompositeAction(actions))
+        End If
     End Sub
 
     Public Sub UpdateSVGFiles()

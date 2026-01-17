@@ -34,9 +34,8 @@ Public Class SVGPageViewModel : Inherits ObservableObject
             If value <> CanvasMode.Selection Then
                 For Each child In MainVM.DrawableCollection
                     child.IsSelected = False
-
                 Next
-                MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
+                MainVM.NotifyCollectionsChanged()
             End If
         End Set
     End Property
@@ -87,15 +86,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
 
     Private Sub DeleteSelectedDrawableElement()
-        Dim drawableItemsToRemove = MainVM.DrawableCollection.Where(Function(d) d.IsSelected).ToList()
-
-        For Each drawable In drawableItemsToRemove
-            MainVM.RemoveDrawableLeaf(drawable)
-        Next
-
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawable))
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.SelectedDrawables))
-        MainVM.NotifyPropertyChanged(NameOf(MainVM.HasMultipleSelected))
+        MainVM.RemoveSelectedDrawables()
     End Sub
 
 

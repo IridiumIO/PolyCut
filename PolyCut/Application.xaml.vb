@@ -29,6 +29,7 @@ Partial Public Class Application
                                services.AddSingleton(Of SnackbarService)()
                                services.AddSingleton(Of IContentDialogService, ContentDialogService)()
                                services.AddSingleton(Of ISvgImportService, SVGImportService)()
+                               services.AddSingleton(Of UndoRedoService)()
 
                                ' Main window with navigation
                                services.AddNavigationViewPageProvider()

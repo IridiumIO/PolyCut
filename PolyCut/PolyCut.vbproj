@@ -90,8 +90,7 @@
   </ItemGroup>
   
   <Target Name="RenamePublishedExe" AfterTargets="Publish" Condition="'$(IsMonolithic)' == 'true'">
-    <Move SourceFiles="$(PublishDir)PolyCut.exe"
-          DestinationFiles="$(PublishDir)PolyCut.mono.exe"/>
+    <Move SourceFiles="$(PublishDir)PolyCut.exe" DestinationFiles="$(PublishDir)PolyCut.mono.exe" />
 
   </Target>
   

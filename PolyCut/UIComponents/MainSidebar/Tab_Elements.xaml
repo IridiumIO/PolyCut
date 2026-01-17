@@ -57,6 +57,16 @@
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
+                        <!-- Hide Drawing Group when it has no children -->
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Name}" Value="Drawing Group" />
+                                    <Condition Binding="{Binding GroupChildren.Count}" Value="0" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
                     </Style>
                 </ui:ListView.ItemContainerStyle>
                 <ui:ListView.ItemTemplate>

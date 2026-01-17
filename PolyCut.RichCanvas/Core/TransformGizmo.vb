@@ -44,7 +44,7 @@ Public Class TransformGizmo
         AddHandler Me.MouseLeftButtonUp, AddressOf OnMouseUp
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
 
-        EventAggregator.Subscribe(AddressOf OnScaleChanged)
+        EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnScaleChanged)
     End Sub
 
     Public Property Scale As Double
@@ -429,10 +429,37 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub OnMouseUp(sender As Object, e As MouseButtonEventArgs)
+        Try
+            Dim msg As New TransformCompletedMessage()
+            For Each kvp In _initialSnapshots
+                Dim item = kvp.Key
+                If item?.DrawableElement IsNot Nothing Then
+                    Dim beforeSnap = kvp.Value
+                    Dim wrapperNow = TryCast(item.DrawableElement.Parent, ContentControl)
+                    Dim afterSnap As TransformAction.Snapshot = Nothing
+                    If wrapperNow IsNot Nothing Then
+                        afterSnap = TransformAction.MakeSnapshotFromWrapper(wrapperNow)
+                    End If
+
+                    If beforeSnap IsNot Nothing AndAlso afterSnap IsNot Nothing Then
+                        msg.Items.Add((item, CType(beforeSnap, Object), CType(afterSnap, Object)))
+                    End If
+                End If
+            Next
+
+            If msg.Items.Count > 0 Then
+                EventAggregator.Publish(Of TransformCompletedMessage)(msg)
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"TransformGizmo publish failed: {ex.Message}")
+        End Try
+
         _activeHandle = Nothing
+
         _initialTransforms.Clear()
         _initialSizes.Clear()
         _initialPositions.Clear()
+        _initialSnapshots.Clear()
         _cumulativeChangeX = 0
         _cumulativeChangeY = 0
         Me.ReleaseMouseCapture()
@@ -541,14 +568,24 @@ Public Class TransformGizmo
         CaptureInitialTransforms()
         Me.CaptureMouse()
     End Sub
-
+    Private _initialSnapshots As New Dictionary(Of IDrawable, TransformAction.Snapshot)
     Private Sub CaptureInitialTransforms()
         _initialTransforms.Clear()
+        _initialSnapshots.Clear() ' <-- capture snapshots at the start
         For Each item In _selectionManager.SelectedItems
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
                     _initialTransforms(item) = TransformState.FromElement(wrapper)
+
+                    Try
+                        Dim snap = TransformAction.MakeSnapshotFromWrapper(wrapper)
+                        If snap IsNot Nothing Then
+                            _initialSnapshots(item) = snap
+                        End If
+                    Catch
+
+                    End Try
                 End If
             End If
         Next

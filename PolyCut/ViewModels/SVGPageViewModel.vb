@@ -10,7 +10,7 @@ Imports PolyCut.Shared
 Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public Property MainVM As MainViewModel
-
+    Private ReadOnly _undoRedoService As UndoRedoService
     Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
     Public Property CanvasThemeColor As String
         Get
@@ -129,8 +129,9 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         wrapper.UpdateLayout()
     End Sub
 
-    Public Sub New(mainvm As MainViewModel)
+    Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService)
         Me.MainVM = mainvm
+        Me._undoRedoService = undoRedoService
     End Sub
 
     Private Shared Sub ShortcutKeyHandler(Key As String)
@@ -169,6 +170,48 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
     End Sub
 
+
+    ' -----------------
+    ' Style / Formatting
+    ' -----------------
+    <RelayCommand>
+    Private Sub ApplyFill(b As Brush)
+        ApplyFill(b, Nothing)
+    End Sub
+
+    Public Sub ApplyFill(b As Brush, previousFill As Brush)
+        If b Is Nothing Then Return
+        ApplyStyle(b, Nothing, Nothing, previousFill, Nothing, Nothing)
+    End Sub
+
+    <RelayCommand>
+    Private Sub ApplyStroke(b As Brush)
+        ApplyStroke(b, Nothing)
+    End Sub
+
+    Public Sub ApplyStroke(b As Brush, previousStroke As Brush)
+        If b Is Nothing Then Return
+        ApplyStyle(Nothing, b, Nothing, Nothing, previousStroke, Nothing)
+    End Sub
+
+    <RelayCommand>
+    Public Sub ApplyStrokeThickness(th As Double)
+        ApplyStrokeThickness(th, Nothing)
+    End Sub
+
+    Public Sub ApplyStrokeThickness(th As Double, Optional previousThickness As Nullable(Of Double) = Nothing)
+        If Double.IsNaN(th) Then Return
+        ApplyStyle(Nothing, Nothing, th, Nothing, Nothing, previousThickness)
+    End Sub
+
+    Private Sub ApplyStyle(fill As Brush, stroke As Brush, thickness As Double?, previousFill As Brush, previousStroke As Brush, previousThickness As Double?)
+        Dim items = MainVM.SelectedDrawables.ToList()
+        If items.Count < 1 Then Return
+
+        Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
+        If action.Execute() Then _undoRedoService.Push(action)
+
+    End Sub
 
 
 End Class

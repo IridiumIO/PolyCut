@@ -1,15 +1,13 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.IO
-Imports System.Windows.Media
+Imports System.Net.WebRequestMethods
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
-Imports MeasurePerformance.IL.Weaver
-
 Imports PolyCut.Core
-Imports PolyCut.Shared
 Imports PolyCut.RichCanvas
+Imports PolyCut.Shared
 
 Imports Svg
 
@@ -44,18 +42,8 @@ Partial Public Class MainViewModel
 
     Friend DrawingGroup As DrawableGroup
 
-    Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
-    Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
-    Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
-    Public Property CopyGCodeToClipboardCommand As ICommand = New RelayCommand(Sub() Clipboard.SetText(GCode))
-    Public Property UnionShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Union))
-    Public Property IntersectShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Intersect))
-    Public Property SubtractShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Exclude))
-    Public Property XorShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Xor))
-
-    Public Property UndoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Undo()) ', Function() _undoRedoService.CanUndo)
-    Public Property RedoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Redo()) ', Function() _undoRedoService.CanRedo)
-
+    ' Suspension flag for transform message handling
+    Private _suspendTransformMessageHandling As Boolean = False
 
     ' UI meta properties
     <NotifyPropertyChangedFor(NameOf(LogarithmicPreviewSpeed))>
@@ -106,6 +94,48 @@ Partial Public Class MainViewModel
     Public Event PrinterConfigOpened()
     Public Event PrinterConfigClosed()
 
+    ' Commands
+
+    <RelayCommand> Public Sub MainViewLoaded()
+        If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args)
+    End Sub
+
+    <RelayCommand> Public Sub MainViewClosing()
+        SettingsHandler.WriteConfiguration(Configuration)
+    End Sub
+
+    <RelayCommand> Public Sub CopyGCodeToClipboard()
+        If Not String.IsNullOrEmpty(GCode) Then
+            Clipboard.SetText(GCode)
+        End If
+    End Sub
+
+    <RelayCommand> Public Sub UnionShapes()
+        BooleanOperation(GeometryCombineMode.Union)
+    End Sub
+
+    <RelayCommand> Public Sub IntersectShapes()
+        BooleanOperation(GeometryCombineMode.Intersect)
+    End Sub
+
+    <RelayCommand> Public Sub SubtractShapes()
+        BooleanOperation(GeometryCombineMode.Exclude)
+    End Sub
+
+    <RelayCommand> Public Sub XorShapes()
+        BooleanOperation(GeometryCombineMode.Xor)
+    End Sub
+
+    <RelayCommand> Public Sub Undo()
+        _undoRedoService.Undo()
+    End Sub
+
+    <RelayCommand> Public Sub Redo()
+        _undoRedoService.Redo()
+    End Sub
+
+
+    ' Constructor & initialization
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService)
         _snackbarService = snackbarService
         _navigationService = navigationService
@@ -118,103 +148,6 @@ Partial Public Class MainViewModel
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         Initialise()
-    End Sub
-
-    <RelayCommand>
-    Private Sub ApplyFill(b As System.Windows.Media.Brush)
-        ApplyFill(b, Nothing)
-    End Sub
-
-    Public Sub ApplyFill(b As System.Windows.Media.Brush, previousFill As System.Windows.Media.Brush)
-        If b Is Nothing Then Return
-        Dim items = SelectedDrawables.ToList()
-        If items.Count = 0 Then Return
-
-        Dim action As New StyleAction(Me, items, b, Nothing, Nothing, Nothing, previousFill)
-        If action.Execute() Then
-            _undoRedoService.Push(action)
-        End If
-    End Sub
-
-    <RelayCommand>
-    Private Sub ApplyStroke(b As System.Windows.Media.Brush)
-        ApplyStroke(b, Nothing)
-    End Sub
-
-    Public Sub ApplyStroke(b As System.Windows.Media.Brush, previousStroke As System.Windows.Media.Brush)
-        If b Is Nothing Then Return
-        Dim items = SelectedDrawables.ToList()
-        If items.Count = 0 Then Return
-
-        Dim action As New StyleAction(Me, items, Nothing, b, Nothing, Nothing, Nothing, previousStroke)
-        If action.Execute() Then
-            _undoRedoService.Push(action)
-        End If
-    End Sub
-
-    <RelayCommand>
-    Public Sub ApplyStrokeThickness(th As Double)
-        ApplyStrokeThickness(th, Nothing)
-    End Sub
-
-    Public Sub ApplyStrokeThickness(th As Double, Optional previousThickness As Nullable(Of Double) = Nothing)
-        If Double.IsNaN(th) Then Return
-        Dim items = SelectedDrawables.ToList()
-        If items.Count = 0 Then Return
-
-        Dim action As New StyleAction(Me, items, Nothing, Nothing, th, previousThickness)
-        If action.Execute() Then
-            _undoRedoService.Push(action)
-        End If
-    End Sub
-
-    Private Sub OnCanvasSelectionChanged(sender As Object, e As EventArgs)
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(SelectedDrawables))
-        OnPropertyChanged(NameOf(HasMultipleSelected))
-    End Sub
-
-    Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
-        OnPropertyChanged(NameOf(SelectedWrapper))
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(SelectedDrawables))
-        OnPropertyChanged(NameOf(HasMultipleSelected))
-    End Sub
-
-    Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
-        If _suspendTransformMessageHandling Then
-            Debug.WriteLine("[MainViewModel] TransformCompleted ignored because transform recording is suspended")
-            Return
-        End If
-
-        If msg Is Nothing OrElse msg.Items Is Nothing OrElse msg.Items.Count = 0 Then Return
-
-        Dim items As New List(Of (IDrawable, TransformAction.Snapshot, TransformAction.Snapshot))()
-
-        For Each it In msg.Items
-            Dim drawable = it.Drawable
-            If drawable Is Nothing Then Continue For
-
-            Dim beforeSnap = TryCast(it.Before, TransformAction.Snapshot)
-            Dim afterSnap = TryCast(it.After, TransformAction.Snapshot)
-
-            If beforeSnap IsNot Nothing AndAlso afterSnap IsNot Nothing Then
-                Dim unchanged As Boolean = Math.Abs(beforeSnap.Left - afterSnap.Left) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Top - afterSnap.Top) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Width - afterSnap.Width) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Height - afterSnap.Height) < 0.01 AndAlso
-                                      ((beforeSnap.RenderTransform Is Nothing AndAlso afterSnap.RenderTransform Is Nothing) OrElse
-                                       (beforeSnap.RenderTransform IsNot Nothing AndAlso afterSnap.RenderTransform IsNot Nothing AndAlso beforeSnap.RenderTransform.Value = afterSnap.RenderTransform.Value))
-
-                If Not unchanged Then
-                    items.Add((drawable, beforeSnap, afterSnap))
-                End If
-            End If
-        Next
-
-        If items.Count = 0 Then Return
-
-        _undoRedoService.Push(New TransformAction(items))
     End Sub
 
     Private Sub Initialise()
@@ -267,6 +200,62 @@ Partial Public Class MainViewModel
         Next
     End Sub
 
+
+    ' -----------------
+    ' Selection / Transform event handlers
+    ' -----------------
+    Private Sub OnCanvasSelectionChanged(sender As Object, e As EventArgs)
+        OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(SelectedDrawables))
+        OnPropertyChanged(NameOf(HasMultipleSelected))
+    End Sub
+
+    Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
+        OnPropertyChanged(NameOf(SelectedWrapper))
+        OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(SelectedDrawables))
+        OnPropertyChanged(NameOf(HasMultipleSelected))
+    End Sub
+
+    Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
+        If _suspendTransformMessageHandling Then
+            Debug.WriteLine("[MainViewModel] TransformCompleted ignored because transform recording is suspended")
+            Return
+        End If
+
+        If msg Is Nothing OrElse msg.Items Is Nothing OrElse msg.Items.Count = 0 Then Return
+
+        Dim items As New List(Of (IDrawable, TransformAction.Snapshot, TransformAction.Snapshot))()
+
+        For Each it In msg.Items
+            Dim drawable = it.Drawable
+            If drawable Is Nothing Then Continue For
+
+            Dim beforeSnap = TryCast(it.Before, TransformAction.Snapshot)
+            Dim afterSnap = TryCast(it.After, TransformAction.Snapshot)
+
+            If beforeSnap IsNot Nothing AndAlso afterSnap IsNot Nothing Then
+                Dim unchanged As Boolean = Math.Abs(beforeSnap.Left - afterSnap.Left) < 0.01 AndAlso
+                                      Math.Abs(beforeSnap.Top - afterSnap.Top) < 0.01 AndAlso
+                                      Math.Abs(beforeSnap.Width - afterSnap.Width) < 0.01 AndAlso
+                                      Math.Abs(beforeSnap.Height - afterSnap.Height) < 0.01 AndAlso
+                                      ((beforeSnap.RenderTransform Is Nothing AndAlso afterSnap.RenderTransform Is Nothing) OrElse
+                                       (beforeSnap.RenderTransform IsNot Nothing AndAlso afterSnap.RenderTransform IsNot Nothing AndAlso beforeSnap.RenderTransform.Value = afterSnap.RenderTransform.Value))
+
+                If Not unchanged Then
+                    items.Add((drawable, beforeSnap, afterSnap))
+                End If
+            End If
+        Next
+
+        If items.Count = 0 Then Return
+
+        _undoRedoService.Push(New TransformAction(items))
+    End Sub
+
+    ' -----------------
+    ' Printer management
+    ' -----------------
     <RelayCommand>
     Public Sub AddPrinter(newPrinter As Printer)
         Printers.Add(newPrinter)
@@ -329,6 +318,9 @@ Partial Public Class MainViewModel
         End If
     End Sub
 
+    ' -----------------
+    ' Import / SVG handling
+    ' -----------------
     <RelayCommand>
     Private Sub BrowseSVG()
         Dim fs As New Microsoft.Win32.OpenFileDialog With {
@@ -380,6 +372,56 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
         OnPropertyChanged(NameOf(SelectedDrawable))
+    End Sub
+
+    ' -----------------
+    ' Drawable collection management (IDrawableManager)
+    ' -----------------
+    Public Sub AddDrawableToCollection(drawable As IDrawable, index As Integer) Implements IDrawableManager.AddDrawableToCollection
+        If drawable Is Nothing Then Return
+        If DrawableCollection.Contains(drawable) Then Return
+
+        If index >= 0 AndAlso index <= DrawableCollection.Count Then
+            DrawableCollection.Insert(index, drawable)
+        Else
+            DrawableCollection.Add(drawable)
+        End If
+    End Sub
+
+    Public Sub RemoveDrawableFromCollection(drawable As IDrawable) Implements IDrawableManager.RemoveDrawableFromCollection
+        If drawable Is Nothing Then Return
+        If DrawableCollection.Contains(drawable) Then
+            DrawableCollection.Remove(drawable)
+        End If
+    End Sub
+
+    Public Sub ClearDrawableParent(drawable As IDrawable) Implements IDrawableManager.ClearDrawableParent
+        If drawable IsNot Nothing Then
+            drawable.ParentGroup = Nothing
+        End If
+    End Sub
+
+    Public Sub CleanupEmptyGroup(group As IDrawable) Implements IDrawableManager.CleanupEmptyGroup
+        Dim drawableGroup = TryCast(group, DrawableGroup)
+        If drawableGroup Is Nothing Then Return
+
+        If drawableGroup Is DrawingGroup OrElse String.Equals(drawableGroup.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
+            Return
+        End If
+
+        If Not drawableGroup.GroupChildren.Any() Then
+            If ImportedGroups.Contains(drawableGroup) Then
+                ImportedGroups.Remove(drawableGroup)
+            End If
+
+            RemoveDrawableFromCollection(drawableGroup)
+
+            Dim parentGroup = TryCast(drawableGroup.ParentGroup, DrawableGroup)
+            If parentGroup IsNot Nothing Then
+                parentGroup.RemoveChild(drawableGroup)
+                CleanupEmptyGroup(parentGroup)
+            End If
+        End If
     End Sub
 
     Public Sub AddDrawableElement(element As FrameworkElement)
@@ -461,8 +503,11 @@ Partial Public Class MainViewModel
         Return cur
     End Function
 
+    ' -----------------
+    ' GCode Generation
+    ' -----------------
     <RelayCommand>
-    Private Async Sub GenerateGCode()
+    Private Async Function GenerateGCode() As Task
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
         Configuration.SoftwareVersion = SettingsHandler.Version
@@ -485,7 +530,7 @@ Partial Public Class MainViewModel
         GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
         _navigationService.Navigate(GetType(PreviewPage))
-    End Sub
+    End Function
 
     Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String
         Dim stringBuilder As New Text.StringBuilder()
@@ -522,55 +567,9 @@ Partial Public Class MainViewModel
         Return SVGImportService.SVGDocumentToString(outDoc)
     End Function
 
-    Public Sub AddDrawableToCollection(drawable As IDrawable, index As Integer) Implements IDrawableManager.AddDrawableToCollection
-        If drawable Is Nothing Then Return
-        If DrawableCollection.Contains(drawable) Then Return
-
-        If index >= 0 AndAlso index <= DrawableCollection.Count Then
-            DrawableCollection.Insert(index, drawable)
-        Else
-            DrawableCollection.Add(drawable)
-        End If
-    End Sub
-
-    Public Sub RemoveDrawableFromCollection(drawable As IDrawable) Implements IDrawableManager.RemoveDrawableFromCollection
-        If drawable Is Nothing Then Return
-        If DrawableCollection.Contains(drawable) Then
-            DrawableCollection.Remove(drawable)
-        End If
-    End Sub
-
-    Public Sub ClearDrawableParent(drawable As IDrawable) Implements IDrawableManager.ClearDrawableParent
-        If drawable IsNot Nothing Then
-            drawable.ParentGroup = Nothing
-        End If
-    End Sub
-
-    Public Sub CleanupEmptyGroup(group As IDrawable) Implements IDrawableManager.CleanupEmptyGroup
-        Dim drawableGroup = TryCast(group, DrawableGroup)
-        If drawableGroup Is Nothing Then Return
-
-        If drawableGroup Is DrawingGroup OrElse String.Equals(drawableGroup.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
-            Return
-        End If
-
-        If Not drawableGroup.GroupChildren.Any() Then
-            If ImportedGroups.Contains(drawableGroup) Then
-                ImportedGroups.Remove(drawableGroup)
-            End If
-
-            RemoveDrawableFromCollection(drawableGroup)
-
-            Dim parentGroup = TryCast(drawableGroup.ParentGroup, DrawableGroup)
-            If parentGroup IsNot Nothing Then
-                parentGroup.RemoveChild(drawableGroup)
-                CleanupEmptyGroup(parentGroup)
-            End If
-        End If
-    End Sub
-
-    Private _suspendTransformMessageHandling As Boolean = False
-
+    ' -----------------
+    ' Boolean / Geometry operations
+    ' -----------------
     Private Sub BooleanOperation(combineMode As GeometryCombineMode)
         Dim selectedItems = SelectedDrawables.ToList()
         If selectedItems.Count < 2 Then

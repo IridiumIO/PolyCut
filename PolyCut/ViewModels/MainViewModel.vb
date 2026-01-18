@@ -14,8 +14,7 @@ Imports PolyCut.RichCanvas
 Imports Svg
 
 Imports WPF.Ui
-
-Public Class MainViewModel
+Partial Public Class MainViewModel
     Inherits ObservableObject
     Implements IDrawableManager
 
@@ -27,33 +26,25 @@ Public Class MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
 
     ' State / configuration
-    Public Property UsingGCodePlot As Boolean
-    Public Property Printers As ObservableCollection(Of Printer)
-    Public Property Printer As Printer
-    Public Property CuttingMats As ObservableCollection(Of CuttingMat)
-    Public Property Configuration As ProcessorConfiguration
+    <ObservableProperty> Private _UsingGCodePlot As Boolean
+    <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
+    <ObservableProperty> Private _Printer As Printer
+    <ObservableProperty> Private _CuttingMats As ObservableCollection(Of CuttingMat)
+    <ObservableProperty> Private _Configuration As ProcessorConfiguration
 
-    Public Property GCode As String = Nothing
-    Public Property GCodeGeometry As GCodeGeometry
-    Public Property GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
-    Public Property GeneratedGCode As List(Of GCode)
+    <ObservableProperty> Private _GCode As String = Nothing
+    <ObservableProperty> Private _GCodeGeometry As GCodeGeometry
+    <ObservableProperty> Private _GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
+    <ObservableProperty> Private _GeneratedGCode As List(Of GCode)
 
-    Public Property DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable) Implements IDrawableManager.DrawableCollection
-    Public Property ImportedGroups As New ObservableCollection(Of DrawableGroup)
+    <ObservableProperty>
+    <ImplementsProperty(GetType(IDrawableManager), NameOf(IDrawableManager.DrawableCollection))>
+    Private _DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
+    <ObservableProperty> Private _ImportedGroups As New ObservableCollection(Of DrawableGroup)
 
     Friend DrawingGroup As DrawableGroup
 
-    Public Property SavePrinterCommand As ICommand = New RelayCommand(Of String)(AddressOf SavePrinter)
-    Public Property ConfigurePrinterCommand As ICommand = New RelayCommand(AddressOf ConfigurePrinter)
-    Public Property AddPrinterCommand As ICommand = New RelayCommand(Of Printer)(AddressOf AddPrinter)
-    Public Property DeletePrinterCommand As ICommand = New RelayCommand(AddressOf DeletePrinter)
-    Public Property BrowseSVGCommand As ICommand = New RelayCommand(AddressOf BrowseSVG)
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
-    Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
-    Public Property RemoveDrawableCommand As ICommand = New RelayCommand(Of DrawableGroup)(AddressOf RemoveGroup)
-    Public Property ApplyFillCommand As ICommand
-    Public Property ApplyStrokeCommand As ICommand
-    Public Property ApplyStrokeThicknessCommand As ICommand
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
     Public Property CopyGCodeToClipboardCommand As ICommand = New RelayCommand(Sub() Clipboard.SetText(GCode))
@@ -65,29 +56,17 @@ Public Class MainViewModel
     Public Property UndoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Undo()) ', Function() _undoRedoService.CanUndo)
     Public Property RedoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Redo()) ', Function() _undoRedoService.CanRedo)
 
-    ' UI meta properties
-    Private _PreviewRenderSpeed As Double = 0.48
-    Public Property PreviewRenderSpeed As Double
-        Get
-            Return _PreviewRenderSpeed
-        End Get
-        Set(value As Double)
-            _PreviewRenderSpeed = value
-            LogarithmicPreviewSpeed = CInt(30 * (Math.Exp(6 * value) - 1) + 30)
-            OnPropertyChanged(NameOf(LogarithmicPreviewSpeed))
-            OnPropertyChanged(NameOf(PreviewRenderSpeed))
-        End Set
-    End Property
 
-    Private _LogarithmicPreviewSpeed As Integer = 500
-    Public Property LogarithmicPreviewSpeed As Integer
-        Get
-            Return _LogarithmicPreviewSpeed
-        End Get
-        Set(value As Integer)
-            _LogarithmicPreviewSpeed = value
-        End Set
-    End Property
+    ' UI meta properties
+    <NotifyPropertyChangedFor(NameOf(LogarithmicPreviewSpeed))>
+    <ObservableProperty> Private _PreviewRenderSpeed As Double = 0.48
+
+    Private Sub OnPreviewRenderSpeedChanged(oldValue As Double, newValue As Double)
+        LogarithmicPreviewSpeed = CInt(30 * (Math.Exp(6 * newValue) - 1) + 30)
+    End Sub
+
+    <ObservableProperty> Private _LogarithmicPreviewSpeed As Integer = 500
+
 
     ' Convenience / computed properties
     Public ReadOnly Property SelectedDrawable As IDrawable
@@ -134,9 +113,6 @@ Public Class MainViewModel
         _svgImportService = svgImportService
         _undoRedoService = undoRedoService
 
-        ApplyFillCommand = New RelayCommand(Of System.Windows.Media.Brush)(AddressOf ApplyFill)
-        ApplyStrokeCommand = New RelayCommand(Of System.Windows.Media.Brush)(AddressOf ApplyStroke)
-        ApplyStrokeThicknessCommand = New RelayCommand(Of Double)(AddressOf ApplyStrokeThickness)
 
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnCanvasSelectionChanged
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
@@ -144,6 +120,7 @@ Public Class MainViewModel
         Initialise()
     End Sub
 
+    <RelayCommand>
     Private Sub ApplyFill(b As System.Windows.Media.Brush)
         ApplyFill(b, Nothing)
     End Sub
@@ -159,6 +136,7 @@ Public Class MainViewModel
         End If
     End Sub
 
+    <RelayCommand>
     Private Sub ApplyStroke(b As System.Windows.Media.Brush)
         ApplyStroke(b, Nothing)
     End Sub
@@ -172,6 +150,11 @@ Public Class MainViewModel
         If action.Execute() Then
             _undoRedoService.Push(action)
         End If
+    End Sub
+
+    <RelayCommand>
+    Public Sub ApplyStrokeThickness(th As Double)
+        ApplyStrokeThickness(th, Nothing)
     End Sub
 
     Public Sub ApplyStrokeThickness(th As Double, Optional previousThickness As Nullable(Of Double) = Nothing)
@@ -284,6 +267,7 @@ Public Class MainViewModel
         Next
     End Sub
 
+    <RelayCommand>
     Public Sub AddPrinter(newPrinter As Printer)
         Printers.Add(newPrinter)
         Printer = newPrinter
@@ -291,6 +275,7 @@ Public Class MainViewModel
         _snackbarService.GenerateSuccess("Added Preset", Printer.Name)
     End Sub
 
+    <RelayCommand>
     Public Sub SavePrinter(newName As String)
         Dim nameToSave = If(String.IsNullOrWhiteSpace(newName), Printer?.Name, newName)
 
@@ -322,6 +307,7 @@ Public Class MainViewModel
         _snackbarService.GenerateSuccess("Saved Preset", Printer.Name)
     End Sub
 
+    <RelayCommand>
     Public Sub ConfigurePrinter()
         Dim printerConfigWindow = Application.GetService(Of PrinterConfig)
         RaiseEvent PrinterConfigOpened()
@@ -333,6 +319,7 @@ Public Class MainViewModel
         Next
     End Sub
 
+    <RelayCommand>
     Public Sub DeletePrinter()
         If Printers.Count > 1 Then
             Dim toRemove = Printer
@@ -342,6 +329,7 @@ Public Class MainViewModel
         End If
     End Sub
 
+    <RelayCommand>
     Private Sub BrowseSVG()
         Dim fs As New Microsoft.Win32.OpenFileDialog With {
             .Filter = "*.svg|*.svg",
@@ -433,6 +421,7 @@ Public Class MainViewModel
         PolyCanvas.ClearSelection()
     End Sub
 
+    <RelayCommand>
     Private Sub RemoveGroup(group As DrawableGroup)
         If group Is Nothing Then Return
         If group Is DrawingGroup OrElse String.Equals(group.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
@@ -472,7 +461,8 @@ Public Class MainViewModel
         Return cur
     End Function
 
-    Private Async Sub GenerateGcode()
+    <RelayCommand>
+    Private Async Sub GenerateGCode()
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
         Configuration.SoftwareVersion = SettingsHandler.Version

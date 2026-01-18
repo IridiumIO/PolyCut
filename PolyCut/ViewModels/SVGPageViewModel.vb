@@ -179,9 +179,9 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         ApplyFill(b, Nothing)
     End Sub
 
-    Public Sub ApplyFill(b As Brush, previousFill As Brush)
+    Public Sub ApplyFill(b As Brush, previousFillOverrides As System.Collections.Generic.IDictionary(Of IDrawable, Brush))
         If b Is Nothing Then Return
-        ApplyStyle(b, Nothing, Nothing, previousFill, Nothing, Nothing)
+        ApplyStyle(b, Nothing, Nothing, previousFillOverrides, Nothing, Nothing)
     End Sub
 
     <RelayCommand>
@@ -189,9 +189,9 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         ApplyStroke(b, Nothing)
     End Sub
 
-    Public Sub ApplyStroke(b As Brush, previousStroke As Brush)
+    Public Sub ApplyStroke(b As Brush, previousStrokeOverrides As System.Collections.Generic.IDictionary(Of IDrawable, Brush))
         If b Is Nothing Then Return
-        ApplyStyle(Nothing, b, Nothing, Nothing, previousStroke, Nothing)
+        ApplyStyle(Nothing, b, Nothing, Nothing, previousStrokeOverrides, Nothing)
     End Sub
 
     <RelayCommand>
@@ -199,15 +199,14 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         ApplyStrokeThickness(th, Nothing)
     End Sub
 
-    Public Sub ApplyStrokeThickness(th As Double, Optional previousThickness As Nullable(Of Double) = Nothing)
+    Public Sub ApplyStrokeThickness(th As Double, previousThicknessOverrides As System.Collections.Generic.IDictionary(Of IDrawable, Double))
         If Double.IsNaN(th) Then Return
-        ApplyStyle(Nothing, Nothing, th, Nothing, Nothing, previousThickness)
+        ApplyStyle(Nothing, Nothing, th, Nothing, Nothing, previousThicknessOverrides)
     End Sub
 
-    Private Sub ApplyStyle(fill As Brush, stroke As Brush, thickness As Double?, previousFill As Brush, previousStroke As Brush, previousThickness As Double?)
+    Private Sub ApplyStyle(fill As Brush, stroke As Brush, thickness As Double?, previousFill As System.Collections.Generic.IDictionary(Of IDrawable, Brush), previousStroke As System.Collections.Generic.IDictionary(Of IDrawable, Brush), previousThickness As System.Collections.Generic.IDictionary(Of IDrawable, Double))
         Dim items = MainVM.SelectedDrawables.ToList()
         If items.Count < 1 Then Return
-
         Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
         If action.Execute() Then _undoRedoService.Push(action)
 

@@ -18,10 +18,38 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
 
         Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(ln.Data.ToString())
 
+        Dim fillServer As SvgColourServer = Nothing
+        Dim strokeServer As SvgColourServer = Nothing
+        Dim strokeW As Single = 0.001F
+
+        Try
+            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+        Catch
+        End Try
+        
+        ' Only set stroke if thickness > 0 and stroke is not Nothing
+        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
+            Try
+                strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                strokeW = CSng(Me.StrokeThickness)
+            Catch
+            End Try
+        End If
+
         Dim svgPath As New SvgPath With {
-        .PathData = paths,
-        .StrokeWidth = 0.001
-    }
+            .PathData = paths
+        }
+        
+        ' Set fill if available
+        If fillServer IsNot Nothing Then
+            svgPath.Fill = fillServer
+        End If
+        
+        ' Only set stroke properties if we have a stroke
+        If strokeServer IsNot Nothing Then
+            svgPath.Stroke = strokeServer
+            svgPath.StrokeWidth = strokeW
+        End If
 
         Return svgPath
     End Function

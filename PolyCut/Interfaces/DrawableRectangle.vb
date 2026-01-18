@@ -20,16 +20,41 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
 
         Dim rt = CType(DrawableElement, Rectangle)
 
-        Return New SvgRectangle With {
+        Dim fillServer As SvgColourServer = Nothing
+        Dim strokeServer As SvgColourServer = Nothing
+        Dim strokeW As Single = 0.001F
+
+        Try
+            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+        Catch
+        End Try
+
+        ' Only set stroke if thickness > 0 and stroke is not Nothing
+        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
+            Try
+                strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                strokeW = CSng(Me.StrokeThickness)
+            Catch
+            End Try
+        End If
+
+        Dim rect As New SvgRectangle With {
             .X = 0,
             .Y = 0,
             .Width = rt.ActualWidth,
-            .Height = rt.ActualHeight,  'Why do I need this stuff below?
+            .Height = rt.ActualHeight,
             .FillOpacity = 0.001,
-            .Fill = New SvgColourServer(System.Drawing.Color.White),
-            .Stroke = New SvgColourServer(System.Drawing.Color.Black),
-            .StrokeWidth = 0.001,
-            .StrokeLineCap = SvgStrokeLineCap.Round}
+            .Fill = If(fillServer, New SvgColourServer(System.Drawing.Color.White)),
+            .StrokeLineCap = SvgStrokeLineCap.Round
+        }
+
+        ' Only set stroke properties if we have a stroke
+        If strokeServer IsNot Nothing Then
+            rect.Stroke = strokeServer
+            rect.StrokeWidth = strokeW
+        End If
+
+        Return rect
 
     End Function
 

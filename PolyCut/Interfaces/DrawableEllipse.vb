@@ -17,18 +17,41 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
 
         Dim rt = CType(DrawableElement, Ellipse)
 
-        Dim svgE = New SvgEllipse With {
+        Dim fillServer As SvgColourServer = Nothing
+        Dim strokeServer As SvgColourServer = Nothing
+        Dim strokeW As Single = 0.001F
+
+        Try
+            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+        Catch
+        End Try
+
+        ' Only set stroke if thickness > 0 and stroke is not Nothing
+        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
+            Try
+                strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                strokeW = CSng(Me.StrokeThickness)
+            Catch
+            End Try
+        End If
+
+        Dim ellipse As New SvgEllipse With {
             .CenterX = rt.ActualWidth / 2,
             .CenterY = rt.ActualHeight / 2,
             .RadiusX = DrawableElement.ActualWidth / 2,
-            .RadiusY = DrawableElement.ActualHeight / 2,  'Why do I need this stuff below?
+            .RadiusY = DrawableElement.ActualHeight / 2,
             .FillOpacity = 0.001,
-            .Fill = New SvgColourServer(System.Drawing.Color.White),
-            .Stroke = New SvgColourServer(System.Drawing.Color.Black),
-            .StrokeWidth = 0.001,
-            .StrokeLineCap = SvgStrokeLineCap.Round}
+            .Fill = If(fillServer, Nothing),
+            .StrokeLineCap = SvgStrokeLineCap.Round
+        }
 
-        Return svgE
+        ' Only set stroke properties if we have a stroke
+        If strokeServer IsNot Nothing Then
+            ellipse.Stroke = strokeServer
+            ellipse.StrokeWidth = strokeW
+        End If
+
+        Return ellipse
 
     End Function
 

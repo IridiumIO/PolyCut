@@ -30,10 +30,10 @@
             VerticalScrollBarVisibility="Visible">
             <DockPanel>
 
-                <StackPanel DockPanel.Dock="Bottom">
+                <StackPanel Margin="0,-10,0,0" DockPanel.Dock="Bottom">
 
                     <ui:CardExpander
-                        Margin="-15,0"
+                        Margin="-15,-10"
                         VerticalAlignment="Top"
                         Background="Transparent"
                         BorderBrush="Transparent"
@@ -43,16 +43,14 @@
                         Style="{StaticResource CustomCardExpanderStyle}">
                         <ui:CardExpander.Header>
                             <Grid Margin="10,0" FlowDirection="LeftToRight">
-
                                 <TextBlock
                                     Padding="1,2,0,0"
                                     VerticalAlignment="Center"
                                     Text="Transform" />
-
                             </Grid>
                         </ui:CardExpander.Header>
 
-                        <StackPanel FlowDirection="LeftToRight">
+                        <StackPanel Margin="0,0,0,5" FlowDirection="LeftToRight">
 
                             <Grid Margin="15,0,15,0">
                                 <Grid.ColumnDefinitions>
@@ -215,13 +213,97 @@
                                     Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
 
                             </Grid>
+
+                            <Separator Margin="0,5" />
                         </StackPanel>
 
                     </ui:CardExpander>
-                    <Separator Margin="5" />
+
+
+
 
                     <ui:CardExpander
-                        Margin="-15,0"
+                        Margin="-15,-10"
+                        VerticalAlignment="Top"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        ContentPadding="0"
+                        FlowDirection="RightToLeft"
+                        IsExpanded="True"
+                        Style="{StaticResource CustomCardExpanderStyle}">
+                        <ui:CardExpander.Header>
+                            <Grid Margin="10,0" FlowDirection="LeftToRight">
+                                <TextBlock
+                                    Padding="1,2,0,0"
+                                    VerticalAlignment="Center"
+                                    Text="Style" />
+                            </Grid>
+                        </ui:CardExpander.Header>
+
+                        <StackPanel Margin="15,-5,15,0" FlowDirection="LeftToRight">
+
+
+                            <local:ColorPickerControl
+                                Margin="0,6,0,0"
+                                ColorSelected="FillColorPicker_ColorSelected"
+                                CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
+                                LabelText="Fill"
+                                PopupOpening="FillColorPicker_PopupOpening" />
+
+                            <local:ColorPickerControl
+                                Margin="0,6,0,0"
+                                ColorSelected="StrokeColorPicker_ColorSelected"
+                                CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
+                                LabelText="Stroke"
+                                PopupOpening="StrokeColorPicker_PopupOpening" />
+
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label VerticalAlignment="Center" Content="Stroke Thickness" />
+                                    <ui:SymbolIcon
+                                        Margin="2,-3,0,0"
+                                        Foreground="{StaticResource PaletteAmberBrush}"
+                                        Symbol="Important20" />
+                                    <StackPanel.ToolTip>
+                                        <ToolTip MaxWidth="544">
+                                            <TextBlock
+                                                Width="350"
+                                                Text="Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke."
+                                                TextAlignment="Left"
+                                                TextWrapping="Wrap" />
+                                        </ToolTip>
+
+                                    </StackPanel.ToolTip>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Slider
+                                        x:Name="ThicknessSlider"
+                                        Width="120"
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        Maximum="10"
+                                        Minimum="0"
+                                        TickFrequency="1" TickPlacement="BottomRight"
+                                        ValueChanged="ThicknessSlider_ValueChanged" />
+                                    <TextBlock
+                                        Width="25"  TextAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding ElementName=ThicknessSlider, Path=Tag, FallbackValue=0}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Separator Margin="0,5" />
+                        </StackPanel>
+                    </ui:CardExpander>
+
+
+                    <ui:CardExpander
+                        Margin="-15,-10"
                         VerticalAlignment="Top"
                         Background="Transparent"
                         BorderBrush="Transparent"
@@ -298,10 +380,12 @@
                                 </StackPanel>
 
                             </Grid>
+                            <Separator Margin="0,5" />
+
                         </StackPanel>
                     </ui:CardExpander>
                     <ui:CardExpander
-                        Margin="-15,0"
+                        Margin="-15,-10"
                         VerticalAlignment="Top"
                         Background="Transparent"
                         BorderBrush="Transparent"

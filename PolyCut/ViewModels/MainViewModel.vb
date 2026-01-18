@@ -51,6 +51,9 @@ Public Class MainViewModel
     Public Property OpenSnackbar_Save As ICommand = New RelayCommand(Of String)(Sub(x) _snackbarService.GenerateSuccess("Saved Preset", x))
     Public Property GenerateGCodeCommand As ICommand = New RelayCommand(AddressOf GenerateGcode)
     Public Property RemoveDrawableCommand As ICommand = New RelayCommand(Of DrawableGroup)(AddressOf RemoveGroup)
+    Public Property ApplyFillCommand As ICommand
+    Public Property ApplyStrokeCommand As ICommand
+    Public Property ApplyStrokeThicknessCommand As ICommand
     Public Property MainViewLoadedCommand As ICommand = New RelayCommand(Sub() If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args))
     Public Property MainViewClosingCommand As ICommand = New RelayCommand(Sub() SettingsHandler.WriteConfiguration(Configuration))
     Public Property CopyGCodeToClipboardCommand As ICommand = New RelayCommand(Sub() Clipboard.SetText(GCode))
@@ -131,10 +134,55 @@ Public Class MainViewModel
         _svgImportService = svgImportService
         _undoRedoService = undoRedoService
 
+        ApplyFillCommand = New RelayCommand(Of System.Windows.Media.Brush)(AddressOf ApplyFill)
+        ApplyStrokeCommand = New RelayCommand(Of System.Windows.Media.Brush)(AddressOf ApplyStroke)
+        ApplyStrokeThicknessCommand = New RelayCommand(Of Double)(AddressOf ApplyStrokeThickness)
+
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnCanvasSelectionChanged
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         Initialise()
+    End Sub
+
+    Private Sub ApplyFill(b As System.Windows.Media.Brush)
+        ApplyFill(b, Nothing)
+    End Sub
+
+    Public Sub ApplyFill(b As System.Windows.Media.Brush, previousFill As System.Windows.Media.Brush)
+        If b Is Nothing Then Return
+        Dim items = SelectedDrawables.ToList()
+        If items.Count = 0 Then Return
+
+        Dim action As New StyleAction(Me, items, b, Nothing, Nothing, Nothing, previousFill)
+        If action.Execute() Then
+            _undoRedoService.Push(action)
+        End If
+    End Sub
+
+    Private Sub ApplyStroke(b As System.Windows.Media.Brush)
+        ApplyStroke(b, Nothing)
+    End Sub
+
+    Public Sub ApplyStroke(b As System.Windows.Media.Brush, previousStroke As System.Windows.Media.Brush)
+        If b Is Nothing Then Return
+        Dim items = SelectedDrawables.ToList()
+        If items.Count = 0 Then Return
+
+        Dim action As New StyleAction(Me, items, Nothing, b, Nothing, Nothing, Nothing, previousStroke)
+        If action.Execute() Then
+            _undoRedoService.Push(action)
+        End If
+    End Sub
+
+    Public Sub ApplyStrokeThickness(th As Double, Optional previousThickness As Nullable(Of Double) = Nothing)
+        If Double.IsNaN(th) Then Return
+        Dim items = SelectedDrawables.ToList()
+        If items.Count = 0 Then Return
+
+        Dim action As New StyleAction(Me, items, Nothing, Nothing, th, previousThickness)
+        If action.Execute() Then
+            _undoRedoService.Push(action)
+        End If
     End Sub
 
     Private Sub OnCanvasSelectionChanged(sender As Object, e As EventArgs)

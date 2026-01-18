@@ -44,18 +44,38 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
         Dim baselineOffset = formattedText.Baseline
 
+        ' Convert fill (foreground) color
+        Dim fillServer As SvgColourServer = Nothing
+        Try
+            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+        Catch
+            fillServer = New SvgColourServer(System.Drawing.Color.Black)
+        End Try
+
         Dim svgText As New Svg.SvgText With {
-        .X = New SvgUnitCollection From {0},
-        .Y = New SvgUnitCollection From {CSng(baselineOffset)},
-        .Text = tb.Text,
-        .FontFamily = tb.FontFamily.Source,
-        .FontSize = tb.FontSize,
-        .FontWeight = SvgFontWeight.Normal,
-        .Fill = New Svg.SvgColourServer(System.Drawing.Color.Black),
-        .TextAnchor = SvgTextAnchor.Start,
-        .FontStyle = SvgFontStyle.Normal,
-        .LengthAdjust = SvgTextLengthAdjust.Spacing
-    }
+            .X = New SvgUnitCollection From {0},
+            .Y = New SvgUnitCollection From {CSng(baselineOffset)},
+            .Text = tb.Text,
+            .FontFamily = tb.FontFamily.Source,
+            .FontSize = tb.FontSize,
+            .FontWeight = SvgFontWeight.Normal,
+            .Fill = fillServer,
+            .TextAnchor = SvgTextAnchor.Start,
+            .FontStyle = SvgFontStyle.Normal,
+            .LengthAdjust = SvgTextLengthAdjust.Spacing
+        }
+
+        ' Only set stroke if thickness > 0 and stroke is not Nothing
+        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
+            Try
+                Dim strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                If strokeServer IsNot Nothing Then
+                    svgText.Stroke = strokeServer
+                    svgText.StrokeWidth = CSng(Me.StrokeThickness)
+                End If
+            Catch
+            End Try
+        End If
 
         svgText.Text = Nothing
 

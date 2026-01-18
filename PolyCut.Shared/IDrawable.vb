@@ -15,6 +15,9 @@ Public Interface IDrawable
     ReadOnly Property VisualName As String
 
     Property ParentGroup As IDrawable
+    Property Stroke As System.Windows.Media.Brush
+    Property Fill As System.Windows.Media.Brush
+    Property StrokeThickness As Double
     Function GetTransformedSVGElement() As SvgVisualElement
     Function DrawingToSVG() As SvgVisualElement
 

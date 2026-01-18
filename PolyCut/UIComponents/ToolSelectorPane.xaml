@@ -68,7 +68,5 @@
         Style="{StaticResource MyRadioButtonStyle}">
         <ui:SymbolIcon Symbol="Text12" />
     </RadioButton>
-    <ui:Button Command="{Binding MainVM.UndoCommand}" Content="Undo" />
-    <ui:Button Command="{Binding MainVM.RedoCommand}" Content="Redo" />
 
 </StackPanel>

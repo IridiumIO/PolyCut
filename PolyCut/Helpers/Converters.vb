@@ -1,5 +1,6 @@
 ﻿Imports System.Data
 Imports System.Globalization
+Imports System.Reflection
 Imports System.Text.RegularExpressions
 
 Imports PolyCut.Core
@@ -465,5 +466,43 @@ Public Class GCodeToFlowDocumentConverter
         Implements IValueConverter.ConvertBack
 
         Throw New NotImplementedException()
+    End Function
+End Class
+
+Public Class SelectedPageIsTypeConverter
+    Implements IValueConverter
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+        Try
+            If value Is Nothing OrElse parameter Is Nothing Then
+                Return Visibility.Collapsed
+            End If
+
+            ' parameter is expected to be a Type (from {x:Type local:SVGPage})
+            Dim expectedType As Type = TryCast(parameter, Type)
+            If expectedType Is Nothing Then
+                Return Visibility.Collapsed
+            End If
+
+            ' SelectedItem is a NavigationViewItem; try to read its TargetPageType property via reflection
+            Dim prop As PropertyInfo = value.GetType().GetProperty("TargetPageType")
+            If prop Is Nothing Then
+                Return Visibility.Collapsed
+            End If
+
+            Dim pageTypeObj = prop.GetValue(value)
+            Dim pageType As Type = TryCast(pageTypeObj, Type)
+            If pageType Is Nothing Then
+                Return Visibility.Collapsed
+            End If
+
+            Return If(pageType Is expectedType, Visibility.Visible, Visibility.Collapsed)
+        Catch
+            Return Visibility.Collapsed
+        End Try
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotSupportedException()
     End Function
 End Class

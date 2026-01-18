@@ -62,8 +62,8 @@ Public Class MainViewModel
     Public Property SubtractShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Exclude))
     Public Property XorShapesCommand As ICommand = New RelayCommand(Sub() BooleanOperation(GeometryCombineMode.Xor))
 
-    Public Property UndoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Undo())
-    Public Property RedoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Redo())
+    Public Property UndoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Undo()) ', Function() _undoRedoService.CanUndo)
+    Public Property RedoCommand As ICommand = New RelayCommand(Sub() _undoRedoService.Redo()) ', Function() _undoRedoService.CanRedo)
 
     ' UI meta properties
     Private _PreviewRenderSpeed As Double = 0.48

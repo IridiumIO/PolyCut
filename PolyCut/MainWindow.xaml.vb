@@ -23,6 +23,24 @@ Class MainWindow : Implements INavigationWindow
         NavigationView.SetServiceProvider(serviceProvider)
         snackbarService.SetSnackbarPresenter(RootSnackbar)
 
+        AddHandler NavigationView.Navigated, Sub(s, e)
+                                                 If TypeOf (e.Page) Is SVGPage Then
+                                                     UndoButtonGlobal.Visibility = Visibility.Visible
+                                                     RedoButtonGlobal.Visibility = Visibility.Visible
+                                                 Else
+                                                     UndoButtonGlobal.Visibility = Visibility.Collapsed
+                                                     RedoButtonGlobal.Visibility = Visibility.Collapsed
+
+                                                 End If
+
+                                                 If TypeOf (e.Page) Is SVGPage OrElse TypeOf (e.Page) Is PreviewPage Then
+                                                     GenerateGCodeButton.Visibility = Visibility.Visible
+                                                 Else
+                                                     GenerateGCodeButton.Visibility = Visibility.Collapsed
+
+                                                 End If
+
+                                             End Sub
 
     End Sub
 
@@ -54,5 +72,21 @@ Class MainWindow : Implements INavigationWindow
 
     Dim svg_file As String = ""
 
+    'Add handling for keyboard to handle Ctrl + Z
+    Public Sub Window_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles MainWindowView.KeyDown
+        Dim vm = TryCast(Me.DataContext, MainViewModel)
+        If vm Is Nothing Then Return
+        If e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.Z Then
+            If vm.UndoCommand.CanExecute(Nothing) Then
+                vm.UndoCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.Y Then
+            If vm.RedoCommand.CanExecute(Nothing) Then
+                vm.RedoCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        End If
+    End Sub
 
 End Class

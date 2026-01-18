@@ -3,13 +3,14 @@
 ## PolyCut 
 - [X] The visual indicator for the imported Elements list does not keep up with the actual list
 - [X] The toggle button to hide travel moves needs to be toggled twice to take effect
-- [ ] Significant lag when trying to copy GCode from the preview window when it has a lot of lines
+- [X] Significant lag when trying to copy GCode from the preview window when it has a lot of lines
 - [ ] Touchscreen scrolling/panning does not work
 - [ ] Monitor tab won't open if the URL on the Export tab is not prefixed with `http://` or `https://`
 - [x] Nested hidden elements are not visible in the editor but are still exported
 - [X] Shapes drawn on canvas directly are buggy
     - [X] creating a shape so that it extends beyond the canvas edges will cause it to get stuck and can leave a ghost element behind
     - [x] Text cannot be edited after it is created
+- [ ] Undo/Redo functionality: Editing transforms of a shape in the sidebar won't be undoable.  
 
 ## PolyCut.Core 
 - [x] Fills don't ignore open paths and will attempt to fill them regardless, using a naive algorithm
@@ -28,9 +29,9 @@
 - [X] Export to GCode File
 - [X] Switch between PolyCut.Core and GCodePlot for generation
 - [ ] Light mode (need to sort out transparency of canvas)
-- [ ] Allow saving copies of printers/cutting mats 
+- [X] Allow saving copies of printers/cutting mats 
 - [ ] Add additional default cutting mats
-- [ ] Add additional default printers
+- [X] Add additional default printers
 - [ ] Add selectable Pen to preview to adjust drawing width/color
 
 ### Editor
@@ -41,10 +42,11 @@
 	- [X] Mirror
 	- [X] Delete
 	- [ ] Duplicate
-	- [ ] Undo/Redo
+	- [X] Undo/Redo
+    	- [ ] Broken: Editing shape transforms via sidebar will not be undoable/redoable 
 	- [ ] Align
 	- [ ] Group/Ungroup	
-	- [ ] Multiple selection
+	- [X] Multiple selection
 - [ ] Allow grouping/ungrouping elements, and editing nested elements
 - [X] Hide cutting mat
 - [X] Basic tools: Line/Rectangle/Circle/Text
@@ -65,11 +67,11 @@
 	- [X] Crosshatch
 - [X] Optimised fill paths
     - [ ] Toggle optimisation
-- [ ] Boolean Modes
-    - [ ] Union
-	- [ ] Intersection
-	- [ ] Difference
-	- [ ] XOR
+- [X] Boolean Modes
+    - [X] Union
+	- [X] Intersection
+	- [X] Difference
+	- [X] XOR
 
 ### Development
 - [ ] Seperate Gcode generators into separate projects

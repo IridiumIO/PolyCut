@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>PolyCut.Core</RootNamespace>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>PolyCut.Core</RootNamespace>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU</Platforms>

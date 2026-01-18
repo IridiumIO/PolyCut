@@ -455,7 +455,6 @@ Public Class MainViewModel
 
             If actions.Count > 0 Then
                 _undoRedoService.Push(New CompositeAction(actions))
-                _snackbarService.GenerateSuccess("Success", $"Cleared Drawing Group ({actions.Count} items removed)")
             End If
         Else
             Dim action As New RemoveGroupAction(Me, group)
@@ -738,7 +737,6 @@ Public Class MainViewModel
                         operationName = "XOR"
                 End Select
 
-                _snackbarService.GenerateSuccess("Success", $"{operationName}: Combined {selectedItems.Count} shapes")
             End If
         End If
     End Sub

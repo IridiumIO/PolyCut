@@ -108,8 +108,8 @@ Public Class ProcessorManager
 
         Dim workingPath As New List(Of Line)
 
-        Dim currentLoopStartPoint As Windows.Point = figures.First.StartPoint
-        Dim workingEndPoint As Windows.Point = figures.First.EndPoint
+        Dim currentLoopStartPoint As System.Windows.Point = figures.First.StartPoint
+        Dim workingEndPoint As System.Windows.Point = figures.First.EndPoint
 
         workingPath.Add(figures(0))
 

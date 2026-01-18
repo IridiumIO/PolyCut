@@ -246,7 +246,7 @@ Partial Public Module Extensions
         Dim remaining As New List(Of List(Of Line))(figures)
         Dim orderedFigures As New List(Of List(Of Line))
 
-        Dim currentPoint As New Windows.Point(0, 0)
+        Dim currentPoint As New System.Windows.Point(0, 0)
 
         While remaining.Count > 0
             Dim bestIdx As Integer = -1

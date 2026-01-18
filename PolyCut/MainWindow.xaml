@@ -39,7 +39,7 @@
     <ui:TitleBar  Title="PolyCut"
                   Grid.Row="0"
                   Grid.ColumnSpan="2"
-                  IsHitTestVisible="False">
+                  IsHitTestVisible="True">
       <ui:TitleBar.Icon>
         <ui:ImageIcon Source="/PolyCut;component/Resources/logo.ico" Margin="-4,-2,-6,-3"/>
 

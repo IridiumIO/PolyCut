@@ -134,7 +134,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     End Sub
 
     Private Shared Sub ShortcutKeyHandler(Key As String)
-        If (Key = "]") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
+        If (Key = "]") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
             Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
             If selectedItem Is Nothing Then Return
 
@@ -146,7 +146,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
             textbox.FontSize += 1
 
-        ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(Windows.Input.Key.LeftCtrl) Then
+        ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
             Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
             If selectedItem Is Nothing Then Return
 

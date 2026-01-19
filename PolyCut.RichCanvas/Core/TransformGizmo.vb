@@ -610,25 +610,7 @@ Public Class TransformGizmo
                 If wrapper IsNot Nothing AndAlso _initialTransforms.ContainsKey(item) AndAlso _initialPositions.ContainsKey(item) Then
                     Dim initialState = _initialTransforms(item)
                     Dim initialPos = _initialPositions(item)
-
-                    wrapper.RenderTransform = New RotateTransform(initialState.Rotation + angle)
-
-                    Dim initialItemCenter = New Point(
-                        initialPos.X + wrapper.ActualWidth * wrapper.RenderTransformOrigin.X,
-                        initialPos.Y + wrapper.ActualHeight * wrapper.RenderTransformOrigin.Y)
-
-                    Dim offsetFromCenter = Point.Subtract(initialItemCenter, center)
-                    Dim angleRad = angle * Math.PI / 180
-                    Dim cosA = Math.Cos(angleRad)
-                    Dim sinA = Math.Sin(angleRad)
-
-                    Dim rotatedOffset = New Point(
-                        offsetFromCenter.X * cosA - offsetFromCenter.Y * sinA,
-                        offsetFromCenter.X * sinA + offsetFromCenter.Y * cosA)
-
-                    Dim newItemCenter = Point.Add(center, CType(rotatedOffset, Vector))
-                    Canvas.SetLeft(wrapper, newItemCenter.X - wrapper.ActualWidth * wrapper.RenderTransformOrigin.X)
-                    Canvas.SetTop(wrapper, newItemCenter.Y - wrapper.ActualHeight * wrapper.RenderTransformOrigin.Y)
+                    TransformAction.ApplyRotation(wrapper, center, initialState.Rotation, angle, initialPos)
                 End If
             End If
         Next
@@ -641,9 +623,7 @@ Public Class TransformGizmo
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing AndAlso _initialTransforms.ContainsKey(item) Then
-                    Dim initialState = _initialTransforms(item)
-                    Canvas.SetLeft(wrapper, Canvas.GetLeft(wrapper) + delta.X)
-                    Canvas.SetTop(wrapper, Canvas.GetTop(wrapper) + delta.Y)
+                    TransformAction.ApplyMove(wrapper, delta.X, delta.Y)
                 End If
             End If
         Next
@@ -676,181 +656,8 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub PerformSingleItemResize(wrapper As ContentControl, deltaX As Double, deltaY As Double)
-        Dim angle As Double = 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            angle = rotateTransform.Angle * Math.PI / 180.0
-        End If
-
-        Dim cosA = Math.Cos(-angle)
-        Dim sinA = Math.Sin(-angle)
-        Dim localDeltaX = deltaX * cosA - deltaY * sinA
-        Dim localDeltaY = deltaX * sinA + deltaY * cosA
-
-        Dim transformOrigin = wrapper.RenderTransformOrigin
-        Dim deltaVertical As Double = 0
-        Dim deltaHorizontal As Double = 0
-        Dim verticalAlignment As VerticalAlignment = VerticalAlignment.Center
-        Dim horizontalAlignment As HorizontalAlignment = HorizontalAlignment.Center
-
-        Select Case _activeHandle
-            Case "Top"
-                verticalAlignment = VerticalAlignment.Top
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-            Case "Bottom"
-                verticalAlignment = VerticalAlignment.Bottom
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-            Case "Left"
-                horizontalAlignment = HorizontalAlignment.Left
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-            Case "Right"
-                horizontalAlignment = HorizontalAlignment.Right
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-            Case "TopLeft"
-                verticalAlignment = VerticalAlignment.Top
-                horizontalAlignment = HorizontalAlignment.Left
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-            Case "TopRight"
-                verticalAlignment = VerticalAlignment.Top
-                horizontalAlignment = HorizontalAlignment.Right
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-            Case "BottomLeft"
-                verticalAlignment = VerticalAlignment.Bottom
-                horizontalAlignment = HorizontalAlignment.Left
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-            Case "BottomRight"
-                verticalAlignment = VerticalAlignment.Bottom
-                horizontalAlignment = HorizontalAlignment.Right
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
-        End Select
-
-        ' For corners, maintain aspect ratio
-        Dim isCorner = (verticalAlignment = VerticalAlignment.Top OrElse verticalAlignment = VerticalAlignment.Bottom) AndAlso
-                       (horizontalAlignment = HorizontalAlignment.Left OrElse horizontalAlignment = HorizontalAlignment.Right)
-
-        If isCorner Then
-            Dim aspectRatio = wrapper.ActualWidth / wrapper.ActualHeight
-            wrapper.Width = wrapper.Height * aspectRatio
-            deltaVertical = Math.Min(deltaVertical, wrapper.ActualHeight - wrapper.MinHeight)
-            deltaHorizontal = Math.Min(deltaVertical * aspectRatio, wrapper.ActualWidth - wrapper.MinWidth)
-        End If
-
-        Dim currentTop = Canvas.GetTop(wrapper)
-        Dim currentLeft = Canvas.GetLeft(wrapper)
-        Dim newTop = currentTop
-        Dim newLeft = currentLeft
-
-        If verticalAlignment <> VerticalAlignment.Center Then
-            newTop += GetCanvasTopOffsetForVertical(verticalAlignment, deltaVertical, angle, transformOrigin)
-            newLeft += GetCanvasLeftOffsetForVertical(verticalAlignment, deltaVertical, angle, transformOrigin)
-        End If
-
-        If horizontalAlignment <> HorizontalAlignment.Center Then
-            newTop += GetCanvasTopOffsetForHorizontal(horizontalAlignment, deltaHorizontal, angle, transformOrigin)
-            newLeft += GetCanvasLeftOffsetForHorizontal(horizontalAlignment, deltaHorizontal, angle, transformOrigin)
-        End If
-
-        wrapper.Height -= deltaVertical
-        wrapper.Width -= deltaHorizontal
-
-        Canvas.SetTop(wrapper, newTop)
-        Canvas.SetLeft(wrapper, newLeft)
+        TransformAction.ApplyResizeSingle(wrapper, _activeHandle, deltaX, deltaY)
     End Sub
-
-    Public Shared Function HandleTextBoxSizeChanged(wrapper As ContentControl, e As SizeChangedEventArgs) As Boolean
-        Dim textBox = TryCast(wrapper.Content, TextBox)
-        If textBox Is Nothing Then Return False
-
-        If Not (textBox.IsFocused OrElse textBox.IsKeyboardFocusWithin) Then
-            Return False
-        End If
-
-        If e.PreviousSize.Width <= 0 OrElse e.PreviousSize.Height <= 0 Then
-            Return True
-        End If
-
-        Dim deltaWidth = e.NewSize.Width - e.PreviousSize.Width
-        Dim deltaHeight = e.NewSize.Height - e.PreviousSize.Height
-
-        If Math.Abs(deltaWidth) < 0.01 AndAlso Math.Abs(deltaHeight) < 0.01 Then
-            Return True
-        End If
-
-        Dim angle As Double = 0
-        Dim rt = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rt IsNot Nothing Then
-            angle = rt.Angle * Math.PI / 180.0
-        End If
-
-        Dim transformOrigin = wrapper.RenderTransformOrigin
-
-        Dim deltaHorizontal = -deltaWidth
-        Dim deltaVertical = -deltaHeight
-
-        Dim newTop = Canvas.GetTop(wrapper)
-        If Double.IsNaN(newTop) Then newTop = 0
-        Dim newLeft = Canvas.GetLeft(wrapper)
-        If Double.IsNaN(newLeft) Then newLeft = 0
-
-        newTop += GetCanvasTopOffsetForVertical(VerticalAlignment.Bottom, deltaVertical, angle, transformOrigin)
-        newLeft += GetCanvasLeftOffsetForVertical(VerticalAlignment.Bottom, deltaVertical, angle, transformOrigin)
-
-        newTop += GetCanvasTopOffsetForHorizontal(HorizontalAlignment.Right, deltaHorizontal, angle, transformOrigin)
-        newLeft += GetCanvasLeftOffsetForHorizontal(HorizontalAlignment.Right, deltaHorizontal, angle, transformOrigin)
-
-        Canvas.SetTop(wrapper, newTop)
-        Canvas.SetLeft(wrapper, newLeft)
-
-        Return True
-    End Function
-
-    Private Shared Function GetCanvasTopOffsetForVertical(alignment As VerticalAlignment, deltaVertical As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case VerticalAlignment.Top
-                Return deltaVertical * Math.Cos(-angle) + (transformOrigin.Y * deltaVertical * (1 - Math.Cos(-angle)))
-            Case VerticalAlignment.Bottom
-                Return transformOrigin.Y * deltaVertical * (1 - Math.Cos(-angle))
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasTopOffsetForHorizontal(alignment As HorizontalAlignment, deltaHorizontal As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case HorizontalAlignment.Left
-                Return deltaHorizontal * Math.Sin(angle) - transformOrigin.X * deltaHorizontal * Math.Sin(angle)
-            Case HorizontalAlignment.Right
-                Return -transformOrigin.X * deltaHorizontal * Math.Sin(angle)
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasLeftOffsetForVertical(alignment As VerticalAlignment, deltaVertical As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case VerticalAlignment.Top
-                Return deltaVertical * Math.Sin(-angle) - (transformOrigin.Y * deltaVertical * Math.Sin(-angle))
-            Case VerticalAlignment.Bottom
-                Return -deltaVertical * transformOrigin.Y * Math.Sin(-angle)
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasLeftOffsetForHorizontal(alignment As HorizontalAlignment, deltaHorizontal As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case HorizontalAlignment.Left
-                Return deltaHorizontal * Math.Cos(angle) + (transformOrigin.X * deltaHorizontal * (1 - Math.Cos(angle)))
-            Case HorizontalAlignment.Right
-                Return deltaHorizontal * transformOrigin.X * (1 - Math.Cos(angle))
-            Case Else
-                Return 0
-        End Select
-    End Function
 
     Private Sub PerformMultiItemResize()
         Dim scaleX As Double = 1.0
@@ -915,21 +722,14 @@ Public Class TransformGizmo
                         rotation = _initialTransforms(item).Rotation
                     End If
 
-                    wrapper.Width = initialSize.Width * scaleX
-                    wrapper.Height = initialSize.Height * scaleY
-
-                    Dim offsetX = initialPos.X - anchorX
-                    Dim offsetY = initialPos.Y - anchorY
-                    Canvas.SetLeft(wrapper, anchorX + (offsetX * scaleX))
-                    Canvas.SetTop(wrapper, anchorY + (offsetY * scaleY))
-                    If Math.Abs(rotation) > 0.01 Then
-                        wrapper.RenderTransform = New RotateTransform(rotation)
-                    Else
-                        wrapper.RenderTransform = Nothing
-                    End If
+                    TransformAction.ApplyResizeMulti(wrapper, scaleX, scaleY, anchorX, anchorY, initialSize, initialPos, rotation)
                 End If
             End If
         Next
     End Sub
+
+    Public Shared Function HandleTextBoxSizeChanged(wrapper As ContentControl, e As SizeChangedEventArgs) As Boolean
+        Return TransformAction.HandleTextBoxSizeChanged(wrapper, e)
+    End Function
 
 End Class

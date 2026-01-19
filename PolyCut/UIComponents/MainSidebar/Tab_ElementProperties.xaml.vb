@@ -1,4 +1,6 @@
-﻿Imports System.ComponentModel
+Imports System.ComponentModel
+
+Imports PolyCut.RichCanvas
 
 Imports PolyCut.Shared
 
@@ -19,6 +21,8 @@ Public Class Tab_ElementProperties
     ' Track currently-selected drawable for change notifications
     Private _currentDrawable As BaseDrawable
     Private _subscribedDrawables As New List(Of BaseDrawable)()
+
+
 
     Public Sub New()
         InitializeComponent()
@@ -242,11 +246,37 @@ Public Class Tab_ElementProperties
 
 
 
+    Private _before As TransformAction.Snapshot
+    Private _after As TransformAction.Snapshot
+
+
     Private Sub TextBox_GotKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
+
+        _before = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+
+
         Dim tb = TryCast(sender, WPF.Ui.Controls.TextBox)
         If tb Is Nothing Then Return
         tb.SelectAll()
         e.Handled = True
     End Sub
 
+
+    Private Sub TextBox_LostKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
+
+        If MainVM.SelectedWrapper Is Nothing OrElse MainVM.SelectedDrawable Is Nothing Then Return
+
+        TransformAction.SetSizeAndPosition(MainVM.SelectedWrapper, WidthTextBox.Text, HeightTextBox.Text, XTextBox.Text, YTextBox.Text)
+        _after = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+
+        Dim items As New List(Of (IDrawable, Object, Object))()
+        items.Add((MainVM.SelectedDrawable, _before, _after))
+
+        Dim msg As New TransformCompletedMessage With {.Items = items}
+        EventAggregator.Publish(Of TransformCompletedMessage)(msg)
+
+        _before = Nothing
+        _after = Nothing
+
+    End Sub
 End Class

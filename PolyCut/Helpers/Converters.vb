@@ -506,3 +506,20 @@ Public Class SelectedPageIsTypeConverter
         Throw New NotSupportedException()
     End Function
 End Class
+
+
+'Converter to return true only if count = 1. This implementation is cursed and only for the visibility of transform boxes
+'because it technically uses the fact that the SelectedDrawables.Count() in MainVM doesn't update before the binding is evaluated
+'Should I fix it? Yes. Will I? Probably not.
+Public Class CountEqualsOneToBoolConverter
+    Implements IValueConverter
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
+        If TypeOf value Is Integer Then
+            Return CInt(value) = 0
+        End If
+        Return False
+    End Function
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+        Throw New NotSupportedException()
+    End Function
+End Class

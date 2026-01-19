@@ -1,5 +1,5 @@
-Imports PolyCut.Shared
-
+Imports System.Windows
+Imports System.Windows.Media
 
 Public Class TransformState
 

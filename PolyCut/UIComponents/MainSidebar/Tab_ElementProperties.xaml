@@ -15,6 +15,7 @@
     d:DesignHeight="800"
     d:DesignWidth="380"
     mc:Ignorable="d">
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
@@ -74,15 +75,18 @@
                                     VerticalAlignment="Center"
                                     Content="W" />
                                 <ui:TextBox
+                                    x:Name="WidthTextBox"
                                     Grid.Row="0"
                                     Grid.Column="1"
                                     ClearButtonEnabled="False"
-                                    GotKeyboardFocus="TextBox_GotKeyboardFocus">
+                                    GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                    LostKeyboardFocus="TextBox_LostKeyboardFocus">
                                     <ui:TextBox.Text>
                                         <PriorityBinding>
                                             <Binding
                                                 Converter="{StaticResource UnitConverter}"
-                                                Mode="TwoWay"
+                                                Mode="OneWay"
                                                 Path="MainVM.SelectedWrapper.Width" />
                                             <Binding
                                                 Converter="{StaticResource UnitConverter}"
@@ -98,15 +102,18 @@
                                     VerticalAlignment="Center"
                                     Content="H" />
                                 <ui:TextBox
+                                    x:Name="HeightTextBox"
                                     Grid.Row="0"
                                     Grid.Column="4"
                                     ClearButtonEnabled="False"
-                                    GotKeyboardFocus="TextBox_GotKeyboardFocus">
+                                    GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                    LostKeyboardFocus="TextBox_LostKeyboardFocus">
                                     <ui:TextBox.Text>
                                         <PriorityBinding>
                                             <Binding
                                                 Converter="{StaticResource UnitConverter}"
-                                                Mode="TwoWay"
+                                                Mode="OneWay"
                                                 Path="MainVM.SelectedWrapper.Height" />
                                             <Binding
                                                 Converter="{StaticResource UnitConverter}"
@@ -122,11 +129,14 @@
                                     VerticalAlignment="Center"
                                     Content="X" />
                                 <ui:TextBox
+                                    x:Name="XTextBox"
                                     Grid.Row="2"
                                     Grid.Column="1"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}}" />
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                    LostKeyboardFocus="TextBox_LostKeyboardFocus"
+                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=OneWay, Converter={StaticResource UnitConverter}}" />
                                 <Label
                                     Grid.Row="2"
                                     Grid.Column="3"
@@ -134,11 +144,14 @@
                                     VerticalAlignment="Center"
                                     Content="Y" />
                                 <ui:TextBox
+                                    x:Name="YTextBox"
                                     Grid.Row="2"
                                     Grid.Column="4"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}}" />
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                    LostKeyboardFocus="TextBox_LostKeyboardFocus"
+                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=OneWay, Converter={StaticResource UnitConverter}}" />
 
                                 <Label
                                     Grid.Row="4"
@@ -151,7 +164,7 @@
                                     AcceptsReturn="False"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    LostFocus="NumberBox_LostFocus"
+                                    LostKeyboardFocus="NumberBox_LostFocus"
                                     Maximum="360"
                                     Minimum="-360"
                                     SpinButtonPlacementMode="Compact"
@@ -288,12 +301,14 @@
                                         IsSnapToTickEnabled="True"
                                         Maximum="10"
                                         Minimum="0"
-                                        TickFrequency="1" TickPlacement="BottomRight"
+                                        TickFrequency="1"
+                                        TickPlacement="BottomRight"
                                         ValueChanged="ThicknessSlider_ValueChanged" />
                                     <TextBlock
-                                        Width="25"  TextAlignment="Right"
+                                        Width="25"
                                         VerticalAlignment="Center"
-                                        Text="{Binding ElementName=ThicknessSlider, Path=Tag, FallbackValue=0}" />
+                                        Text="{Binding ElementName=ThicknessSlider, Path=Tag, FallbackValue=0}"
+                                        TextAlignment="Right" />
                                 </StackPanel>
                             </Grid>
 

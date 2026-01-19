@@ -63,15 +63,27 @@
             </ui:TitleBar.Header>
             <ui:TitleBar.CenterContent>
 
-                <Menu Margin="-345,1,0,0" Visibility="{Binding ElementName=MWTitleBar, Path=IsMouseOver, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Menu
+                    Margin="-345,1,0,0"
+                    d:Visibility="Visible"
+                    Visibility="{Binding ElementName=MWTitleBar, Path=IsMouseOver, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Menu.Resources>
                         <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
                     </Menu.Resources>
 
                     <MenuItem Header="_File">
-                        <MenuItem Command="{Binding SaveProjectCommand}" Header="_Save Project..." />
-                        <MenuItem Command="{Binding SaveProjectAsCommand}" Header="S_ave Project As..." />
-                        <MenuItem Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
+                        <MenuItem
+                            Command="{Binding SaveProjectCommand}"
+                            Header="_Save Project..."
+                            Icon="{ui:SymbolIcon Symbol=Save16}" />
+                        <MenuItem
+                            Command="{Binding SaveProjectAsCommand}"
+                            Header="S_ave Project As..."
+                            Icon="{ui:SymbolIcon Symbol=SaveEdit24}" />
+                        <MenuItem
+                            Command="{Binding LoadProjectCommand}"
+                            Header="_Load Project..."
+                            Icon="{ui:SymbolIcon Symbol=FolderOpen16}" />
                     </MenuItem>
                     <MenuItem Header="_View">
                         <StackPanel Orientation="Horizontal">
@@ -267,6 +279,7 @@
             x:Name="RootContentDialog"
             Grid.Row="0"
             Grid.RowSpan="2"
+            d:Visibility="Collapsed"
             ClipToBounds="True" />
         <ui:SnackbarPresenter
             x:Name="RootSnackbar"

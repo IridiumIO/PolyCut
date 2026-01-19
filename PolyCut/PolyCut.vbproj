@@ -21,6 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Resources\235mm Cutting Mat.json" />
+    <None Remove="Resources\235mm Cutting Mat.svg" />
     <None Remove="Resources\banner_dark.svg" />
     <None Remove="Resources\banner_light.svg" />
     <None Remove="Resources\CuttingMat.Dark.svg" />
@@ -31,6 +33,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\235mm Cutting Mat.json" />
+    <EmbeddedResource Include="Resources\235mm Cutting Mat.svg" />
     <EmbeddedResource Include="Resources\CuttingMat.Dark.svg" />
     <EmbeddedResource Include="Resources\CuttingMat.svg" />
     <EmbeddedResource Include="Resources\gcodeplot.exe" />

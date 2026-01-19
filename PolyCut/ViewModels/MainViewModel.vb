@@ -975,10 +975,21 @@ Partial Public Class MainViewModel
 
     Public Property IsGridVisible As Boolean
         Get
+            If UIConfiguration.ShowGrid Then
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
+            Else
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
+            End If
             Return UIConfiguration.ShowGrid
         End Get
         Set(value As Boolean)
             UIConfiguration.ShowGrid = value
+            If value Then
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
+            Else
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
+            End If
+            Application.GetService(Of SVGPageViewModel).NotifyPropertyChangedForGrid()
         End Set
     End Property
 

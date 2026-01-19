@@ -15,6 +15,7 @@ Public Class CuttingMatSettings : Inherits SettingsBase : Implements ISettingsSe
         If cuttingmatSVGs.Count = 0 Then
             WriteDefaultCuttingMat()
             WriteDarkDefaultCuttingMat()
+            Write235mmCuttingMat()
             Return
         End If
 
@@ -22,11 +23,47 @@ Public Class CuttingMatSettings : Inherits SettingsBase : Implements ISettingsSe
             WriteDefaultCuttingMat()
         ElseIf Not cuttingmatSVGs.Contains(New FileInfo(IO.Path.Combine(SettingsFolder.FullName, "CuttingMat.Dark.svg"))) Then
             WriteDarkDefaultCuttingMat()
+        ElseIf Not cuttingmatSVGs.Contains(New FileInfo(IO.Path.Combine(SettingsFolder.FullName, "235mm Cutting Mat.svg"))) Then
+            Write235mmCuttingMat()
         End If
 
     End Function
 
+    Private Sub Write235mmCuttingMat()
+        Dim outputPath As String = IO.Path.Combine(SettingsFolder.FullName, "235mm Cutting Mat.svg")
+        Dim asx = Assembly.GetExecutingAssembly()
+        Using stream As Stream = asx.GetManifestResourceStream("PolyCut.235mm Cutting Mat.svg")
+            If stream IsNot Nothing Then
+                ' Read the content of the embedded resource
+                Using reader As New StreamReader(stream)
+                    Dim content As String = reader.ReadToEnd()
 
+                    ' Write the content to the specified file on disk
+                    File.WriteAllText(outputPath, content)
+                End Using
+            Else
+                Console.WriteLine("Embedded resource not found.")
+            End If
+        End Using
+
+        If Not IO.File.Exists(IO.Path.Combine(SettingsFolder.FullName, "235mm Cutting Mat.json")) Then
+            outputPath = IO.Path.Combine(SettingsFolder.FullName, "235mm Cutting Mat.json")
+            Using stream As Stream = asx.GetManifestResourceStream("PolyCut.235mm Cutting Mat.json")
+                If stream IsNot Nothing Then
+                    ' Read the content of the embedded resource
+                    Using reader As New StreamReader(stream)
+                        Dim content As String = reader.ReadToEnd()
+
+                        ' Write the content to the specified file on disk
+                        File.WriteAllText(outputPath, content)
+                    End Using
+                Else
+                    Console.WriteLine("Embedded resource not found.")
+                End If
+            End Using
+        End If
+
+    End Sub
 
     Private Sub WriteDefaultCuttingMat()
 

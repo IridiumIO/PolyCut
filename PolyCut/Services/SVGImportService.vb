@@ -233,32 +233,42 @@ Public Class SVGImportService : Implements ISvgImportService
         End Try
     End Function
 
-    Private Function ApplySvgTransforms(elem As SvgElement, matrix As Matrix) As Matrix
-        If elem.Transforms Is Nothing OrElse elem.Transforms.Count = 0 Then Return matrix
+    Private Function ApplySvgTransforms(elem As SvgElement, parentAccumulated As Matrix) As Matrix
+        If elem.Transforms Is Nothing OrElse elem.Transforms.Count = 0 Then Return parentAccumulated
 
-        Dim result As Matrix = matrix
-        For Each transform In elem.Transforms
-            If TypeOf transform Is SvgMatrix Then
-                Dim m = CType(transform, SvgMatrix)
-                Dim svgMatrix As New Matrix(m.Points(0), m.Points(1), m.Points(2), m.Points(3), m.Points(4), m.Points(5))
-                result = Matrix.Multiply(svgMatrix, result)
-            ElseIf TypeOf transform Is SvgTranslate Then
-                Dim t = CType(transform, SvgTranslate)
-                result.Translate(t.X, t.Y)
-            ElseIf TypeOf transform Is SvgScale Then
-                Dim s = CType(transform, SvgScale)
-                result.Scale(s.X, s.Y)
-            ElseIf TypeOf transform Is SvgRotate Then
-                Dim r = CType(transform, SvgRotate)
+        ' Build the element's local transform from identity
+        Dim local As Matrix = Matrix.Identity
+
+        For Each tr In elem.Transforms
+            Dim tm As Matrix = Matrix.Identity
+
+            If TypeOf tr Is SvgMatrix Then
+                Dim m = DirectCast(tr, SvgMatrix)
+                tm = New Matrix(m.Points(0), m.Points(1), m.Points(2), m.Points(3), m.Points(4), m.Points(5))
+
+            ElseIf TypeOf tr Is SvgTranslate Then
+                Dim t = DirectCast(tr, SvgTranslate)
+                tm.Translate(t.X, t.Y)
+
+            ElseIf TypeOf tr Is SvgScale Then
+                Dim s = DirectCast(tr, SvgScale)
+                tm.Scale(s.X, s.Y)
+
+            ElseIf TypeOf tr Is SvgRotate Then
+                Dim r = DirectCast(tr, SvgRotate)
                 If r.CenterX <> 0 OrElse r.CenterY <> 0 Then
-                    result.RotateAt(r.Angle, r.CenterX, r.CenterY)
+                    tm.RotateAt(r.Angle, r.CenterX, r.CenterY)
                 Else
-                    result.Rotate(r.Angle)
+                    tm.Rotate(r.Angle)
                 End If
             End If
+
+            ' SVG transform list applies left-to-right
+            local = Matrix.Multiply(local, tm)
         Next
 
-        Return result
+        ' IMPORTANT: child(local) first, then parent group/doc
+        Return Matrix.Multiply(local, parentAccumulated)
     End Function
 
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
@@ -276,13 +286,35 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim flattenedGeometry = TransformAndFlattenGeometry(geometry, matrix, FLATTENING_TOLERANCE)
             Dim bounds = flattenedGeometry.Bounds
 
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            ' Reject geometries with invalid bounds (NaN / Infinite) or explicitly empty
+            If Double.IsNaN(bounds.X) OrElse Double.IsNaN(bounds.Y) OrElse Double.IsNaN(bounds.Width) OrElse Double.IsNaN(bounds.Height) Then
+                Return Nothing
+            End If
+            If flattenedGeometry.IsEmpty() Then
+                Return Nothing
+            End If
+
+            Dim strokeWidthValue As Single = 0
+
+            Try
+                If svgPath.StrokeWidth <> Nothing Then strokeWidthValue = svgPath.StrokeWidth.Value
+            Catch
+                strokeWidthValue = 0
+            End Try
+
+            ' Use stroke-inclusive dimensions for the emptiness check so stroked lines are kept
+            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+            If dimensions.totalWidth <= 0 OrElse dimensions.totalHeight <= 0 Then
+                ' If stroke didn't produce area, allow if geometry actually contains segments (e.g. lines)
+                If flattenedGeometry.Figures Is Nothing OrElse flattenedGeometry.Figures.Count = 0 Then
+                    Return Nothing
+                End If
+            End If
 
             Dim translatedGeometry = flattenedGeometry.Clone()
             translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
             translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
-            Dim dimensions = CalculateStrokeDimensions(bounds, svgPath.StrokeWidth.Value, matrix)
 
             Dim wpfPath As New Shapes.Path With {
                 .Data = translatedGeometry,

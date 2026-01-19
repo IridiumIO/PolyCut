@@ -41,8 +41,9 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
             .RadiusX = DrawableElement.ActualWidth / 2,
             .RadiusY = DrawableElement.ActualHeight / 2,
             .FillOpacity = 0.001,
-            .Fill = If(fillServer, Nothing),
-            .StrokeLineCap = SvgStrokeLineCap.Round
+            .Fill = If(fillServer, SvgPaintServer.None),
+            .StrokeLineCap = SvgStrokeLineCap.Round,
+            .Stroke = SvgPaintServer.None
         }
 
         ' Only set stroke properties if we have a stroke

@@ -14,13 +14,17 @@ Public Class RectangleElement : Implements IPathBasedElement
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property Figures As New List(Of List(Of Line)) Implements IPathBasedElement.Figures
-
+    Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim rect = DirectCast(element, SvgRectangle)
         Config = cfg
         If rect.CornerRadiusX <> 0 OrElse rect.CornerRadiusY <> 0 Then
             Throw New NotImplementedException("Rounded corners not implemented for rectangle objects. Convert to a path")
         End If
+
+
+
+        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
 
         Figures.Add(New List(Of Line) From {
                     New Line With {
@@ -51,6 +55,11 @@ Public Class RectangleElement : Implements IPathBasedElement
 
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
 
+        For Each fig In Figures
+            For Each ln In fig
+                ln.Tag = IsFilled
+            Next
+        Next
     End Sub
 
 

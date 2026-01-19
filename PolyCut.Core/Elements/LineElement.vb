@@ -9,7 +9,7 @@ Public Class LineElement : Implements IPathBasedElement
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Figures As New List(Of List(Of Line)) Implements IPathBasedElement.Figures
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
-
+    Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim ln = DirectCast(element, SvgLine)
         Config = cfg
@@ -22,7 +22,11 @@ Public Class LineElement : Implements IPathBasedElement
                     .Y2 = ln.EndY.Value
                     }})
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms?.GetMatrix).ToList).ToList()
-
+        For Each fig In Figures
+            For Each lsn In fig
+                lsn.Tag = IsFilled
+            Next
+        Next
 
     End Sub
 End Class

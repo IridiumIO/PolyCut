@@ -15,10 +15,12 @@ Public Class TextElement : Implements IPathBasedElement
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property Figures As List(Of List(Of Line)) Implements IPathBasedElement.Figures
-
+    Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim text = DirectCast(element, SvgText)
         Config = cfg
+
+        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
 
         Figures = GenerateFigures(text)
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
@@ -38,6 +40,11 @@ Public Class TextElement : Implements IPathBasedElement
 
 
         Figures = BuildLinesFromGeometry(Geo, cfg.Tolerance)
+        For Each fig In Figures
+            For Each ln In fig
+                ln.Tag = IsFilled
+            Next
+        Next
 
     End Sub
 

@@ -37,14 +37,12 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
         End If
 
         Dim svgPath As New SvgPath With {
-            .PathData = paths
+            .PathData = paths,
+            .Stroke = SvgPaintServer.None,
+            .Fill = If(fillServer, SvgPaintServer.None)
         }
-        
-        ' Set fill if available
-        If fillServer IsNot Nothing Then
-            svgPath.Fill = fillServer
-        End If
-        
+
+
         ' Only set stroke properties if we have a stroke
         If strokeServer IsNot Nothing Then
             svgPath.Stroke = strokeServer

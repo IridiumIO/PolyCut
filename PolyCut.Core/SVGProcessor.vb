@@ -12,17 +12,29 @@ Public Class SVGProcessor
         Return "#" & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
     End Function
 
+    Public Shared Function SVGColorBullshitFixer(svgcolour As SvgPaintServer) As String
+
+        Dim colour As String
+
+        If svgcolour.ToString() = "none" OrElse svgcolour.GetType().Name.Contains("None") Then
+            colour = Nothing
+        Else
+            Dim casted = TryCast(svgcolour, SvgColourServer)?.Colour
+            colour = If(casted.HasValue, colourToHex(casted), Nothing)
+        End If
+
+        Return colour
+    End Function
+
 
     Shared Function CompileElementAndGetFigures(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of List(Of Line))
 
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim flc = TryCast(svgVisualElement.Fill, SvgColourServer)?.Colour
-        Dim slc = TryCast(svgVisualElement.Stroke, SvgColourServer)?.Colour
+        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
+        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
 
-        Dim fillcolour = If(flc.HasValue, colourToHex(flc), Nothing)
-        Dim strokecolour = If(slc.HasValue, colourToHex(slc), Nothing)
         If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
             Return element.Figures
@@ -37,11 +49,9 @@ Public Class SVGProcessor
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim flc = TryCast(svgVisualElement.Fill, SvgColourServer)?.Colour
-        Dim slc = TryCast(svgVisualElement.Stroke, SvgColourServer)?.Colour
+        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
+        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
 
-        Dim fillcolour = If(flc.HasValue, colourToHex(flc), Nothing)
-        Dim strokecolour = If(slc.HasValue, colourToHex(slc), Nothing)
         If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
             Return element.Figures.SelectMany(Of Line)(Function(x) x).ToList

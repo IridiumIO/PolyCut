@@ -59,10 +59,11 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             .FontFamily = tb.FontFamily.Source,
             .FontSize = tb.FontSize,
             .FontWeight = SvgFontWeight.Normal,
-            .Fill = fillServer,
+            .Fill = If(fillServer, SvgPaintServer.None),
             .TextAnchor = SvgTextAnchor.Start,
             .FontStyle = SvgFontStyle.Normal,
-            .LengthAdjust = SvgTextLengthAdjust.Spacing
+            .LengthAdjust = SvgTextLengthAdjust.Spacing,
+            .Stroke = SvgPaintServer.None
         }
 
         ' Only set stroke if thickness > 0 and stroke is not Nothing

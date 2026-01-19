@@ -183,7 +183,29 @@ Public Class FillProcessor : Implements IProcessor
 
         Dim scalingFactor = 100_000 'Define a scaling factor to offset the floating-point precision of working in millimetres. 1mm > 100m
 
-        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then
+
+        ' Respect per-element SVG fill presence when deciding to generate fills.
+        Dim hasSVGFill As Boolean = True
+        If lines IsNot Nothing AndAlso lines.Count > 0 Then
+            Dim tag = lines(0).Tag
+            If TypeOf tag Is Boolean Then
+                hasSVGFill = CType(tag, Boolean)
+            ElseIf tag Is Nothing Then
+                ' If no Tag is present, preserve existing behaviour (assume fillable)
+                hasSVGFill = True
+            Else
+                Dim parsed As Boolean = False
+                If Boolean.TryParse(tag.ToString(), parsed) Then
+                    hasSVGFill = parsed
+                Else
+                    hasSVGFill = True
+                End If
+            End If
+        End If
+
+
+
+        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None OrElse Not hasSVGFill Then
             Return lines
         End If
 

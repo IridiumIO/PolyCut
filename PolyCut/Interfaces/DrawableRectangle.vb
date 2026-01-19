@@ -43,9 +43,10 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
             .Y = 0,
             .Width = rt.ActualWidth,
             .Height = rt.ActualHeight,
-            .FillOpacity = 0.001,
-            .Fill = If(fillServer, New SvgColourServer(System.Drawing.Color.White)),
-            .StrokeLineCap = SvgStrokeLineCap.Round
+            .FillOpacity = 0.01,
+            .Fill = If(fillServer, SvgPaintServer.None),
+            .StrokeLineCap = SvgStrokeLineCap.Round,
+            .Stroke = SvgPaintServer.None
         }
 
         ' Only set stroke properties if we have a stroke

@@ -822,16 +822,22 @@ Partial Public Class MainViewModel
     End Function
 
 
+    <NotifyPropertyChangedFor(NameOf(CurrentProjectName))>
+    <ObservableProperty> Private _currentProjectPath As String = Nothing
 
-    Private _currentProjectPath As String = Nothing
+    Public ReadOnly Property CurrentProjectName As String
+        Get
+            Return Path.GetFileNameWithoutExtension(_currentProjectPath)
+        End Get
+    End Property
 
     <RelayCommand>
     Private Sub SaveProject()
-        If String.IsNullOrEmpty(_currentProjectPath) Then
+        If String.IsNullOrEmpty(CurrentProjectPath) Then
             SaveProjectAs()
         Else
-            If _projectService.SaveProject(_currentProjectPath, DrawableCollection, ImportedGroups) Then
-                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(_currentProjectPath))
+            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups) Then
+                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error", "Failed to save project", 3)
             End If
@@ -846,9 +852,9 @@ Partial Public Class MainViewModel
         }
 
         If saveDialog.ShowDialog() = True Then
-            _currentProjectPath = saveDialog.FileName
-            If _projectService.SaveProject(_currentProjectPath, DrawableCollection, ImportedGroups) Then
-                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(_currentProjectPath))
+            CurrentProjectPath = saveDialog.FileName
+            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups) Then
+                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error", "Failed to save project", 3)
             End If
@@ -856,16 +862,24 @@ Partial Public Class MainViewModel
     End Sub
 
     <RelayCommand>
-    Private Sub LoadProject()
+    Private Async Sub LoadProject()
         ' Warn if unsaved changes
         If DrawableCollection.Count > 1 Then
-            Dim result = MessageBox.Show(
-                "Loading a project will clear the current workspace. Continue?",
-                "Load Project",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning)
 
-            If result = MessageBoxResult.No Then Return
+            Dim nx As New WPF.Ui.Controls.MessageBox With {
+                .Title = "Load Project",
+                .Content = "Loading a project will clear the current workspace. Continue?",
+                .IsPrimaryButtonEnabled = True,
+                .PrimaryButtonText = "Yes",
+                .CloseButtonText = "No",
+                .Owner = Application.Current.MainWindow,
+                .WindowStartupLocation = WindowStartupLocation.CenterOwner}
+
+
+            Dim res = Await nx.ShowDialogAsync()
+
+
+            If res <> WPF.Ui.Controls.MessageBoxResult.Primary Then Return
         End If
 
         Dim openDialog As New Microsoft.Win32.OpenFileDialog With {
@@ -878,8 +892,8 @@ Partial Public Class MainViewModel
             If action.Execute() Then
                 _undoRedoService.Clear()
                 _undoRedoService.Push(action)
-                _currentProjectPath = openDialog.FileName
-                _snackbarService.GenerateSuccess("Project Loaded", IO.Path.GetFileName(_currentProjectPath))
+                CurrentProjectPath = openDialog.FileName
+                _snackbarService.GenerateSuccess("Project Loaded", IO.Path.GetFileName(CurrentProjectPath))
                 NotifyCollectionsChanged()
             Else
                 _snackbarService.GenerateError("Error", "Failed to load project", 3)
@@ -888,15 +902,23 @@ Partial Public Class MainViewModel
     End Sub
 
     <RelayCommand>
-    Private Sub NewProject()
+    Private Async Sub NewProject()
         If DrawableCollection.Count > 1 Then
-            Dim result = MessageBox.Show(
-                "Creating a new project will clear the current workspace. Continue?",
-                "New Project",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning)
+            Dim nx As New WPF.Ui.Controls.MessageBox With {
+                .Title = "New Project",
+                .Content = "Creating a new project will clear the current workspace. Continue?",
+                .IsPrimaryButtonEnabled = True,
+                .PrimaryButtonText = "Yes",
+                .CloseButtonText = "No",
+                .Owner = Application.Current.MainWindow,
+                .WindowStartupLocation = WindowStartupLocation.CenterOwner}
 
-            If result = MessageBoxResult.No Then Return
+
+            Dim res = Await nx.ShowDialogAsync()
+
+
+            If res <> WPF.Ui.Controls.MessageBoxResult.Primary Then Return
+
         End If
 
         ' Clear everything
@@ -917,7 +939,7 @@ Partial Public Class MainViewModel
         Next
 
         _suspendTransformMessageHandling = False
-        _currentProjectPath = Nothing
+        CurrentProjectPath = Nothing
 
         ' Reinitialize drawing group
         DrawingGroup = New DrawableGroup("Drawing Group")

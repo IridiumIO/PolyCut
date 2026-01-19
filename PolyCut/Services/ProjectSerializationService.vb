@@ -231,6 +231,9 @@ Public Class ProjectSerializationService
             shape.Stroke = DeserializeBrush(data.StrokeColor)
             shape.StrokeThickness = data.StrokeThickness
             shape.Fill = DeserializeBrush(data.FillColor)
+        ElseIf TypeOf element Is TextBox Then
+            Dim textBox = CType(element, TextBox)
+            textBox.Foreground = DeserializeBrush(data.FillColor)
         End If
 
         ' Apply scale transform to element (use 0.01 threshold because of floating point bullshit)
@@ -244,7 +247,7 @@ Public Class ProjectSerializationService
         Return element
     End Function
 
-    Private Function SerializeBrush(brush As Brush) As String
+    Public Shared Function SerializeBrush(brush As Brush) As String
         If brush Is Nothing Then Return Nothing
 
         If TypeOf brush Is SolidColorBrush Then
@@ -256,7 +259,7 @@ Public Class ProjectSerializationService
     End Function
 
 
-    Private Function DeserializeBrush(colorString As String) As Brush
+    Public Shared Function DeserializeBrush(colorString As String) As Brush
         If String.IsNullOrEmpty(colorString) Then Return Brushes.Black
 
         Try

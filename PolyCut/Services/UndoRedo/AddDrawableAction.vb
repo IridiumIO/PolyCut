@@ -38,6 +38,7 @@ Public Class AddDrawableAction : Implements IUndoableAction
             drawable = New DrawableEllipse(element)
         ElseIf TypeOf element Is System.Windows.Controls.TextBox Then
             drawable = New DrawableText(element)
+            drawable.StrokeThickness = 0
         ElseIf TypeOf element Is System.Windows.Shapes.Path Then
             drawable = New DrawablePath(element)
         End If

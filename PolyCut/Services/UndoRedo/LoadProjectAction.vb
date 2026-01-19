@@ -156,6 +156,8 @@ Namespace Services.UndoRedo
                         drawable = New DrawableLine(CType(element, Line))
                     ElseIf TypeOf element Is TextBox Then
                         drawable = New DrawableText(CType(element, TextBox))
+                        drawable.StrokeThickness = drawableData.StrokeThickness
+                        drawable.Stroke = ProjectSerializationService.DeserializeBrush(drawableData.StrokeColor)
                     End If
 
                     If drawable IsNot Nothing Then

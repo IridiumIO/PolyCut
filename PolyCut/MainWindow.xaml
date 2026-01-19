@@ -175,6 +175,50 @@
                                 <Label Margin="10,4,10,0" Content="Show Printer Working Area" />
                             </StackPanel>
 
+                            <StackPanel Orientation="Horizontal">
+                                <ToggleButton IsChecked="{Binding IsGridVisible, Mode=TwoWay}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate>
+                                            <ContentControl>
+                                                <ContentControl.Style>
+                                                    <Style TargetType="ContentControl">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                                <Setter Property="Content">
+                                                                    <Setter.Value>
+                                                                        <ui:Card
+                                                                            Padding="8,4"
+                                                                            Background="Transparent"
+                                                                            BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                            <ui:SymbolIcon Symbol="Eye24" />
+                                                                        </ui:Card>
+                                                                    </Setter.Value>
+                                                                </Setter>
+
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                                <Setter Property="Content">
+                                                                    <Setter.Value>
+                                                                        <ui:Card
+                                                                            Padding="8,4"
+                                                                            Background="Transparent"
+                                                                            BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                            <!--  Replace with your unchecked icon  -->
+                                                                            <ui:SymbolIcon Symbol="EyeOff24" />
+                                                                        </ui:Card>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ContentControl.Style>
+                                            </ContentControl>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <Label Margin="10,4,10,0" Content="Show Grid" />
+                            </StackPanel>
+
                         </MenuItem>
                         <Separator />
                         <ui:MenuItem

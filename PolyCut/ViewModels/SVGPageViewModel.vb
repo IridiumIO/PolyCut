@@ -232,4 +232,41 @@ Public Class SVGPageViewModel : Inherits ObservableObject
     End Sub
 
 
+    <ObservableProperty>
+    <NotifyPropertyChangedFor(NameOf(GridViewport), NameOf(GridLineVerticalEnd), NameOf(GridLineHorizontalEnd))>
+    Private _GridTileSizeMm As Double = 10.0
+
+    <ObservableProperty>
+    Private _GridLineThickness As Double = 0.1
+
+    <ObservableProperty>
+    Private _GridLineBrush As Brush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
+
+    Public ReadOnly Property GridViewport As Rect
+        Get
+            ' Viewport is 0,0 width,height in device units (mm in your usage)
+            Return New Rect(0, 0, GridTileSizeMm, GridTileSizeMm)
+        End Get
+    End Property
+
+    Public ReadOnly Property GridLineVerticalEnd As Point
+        Get
+            Return New Point(0, GridTileSizeMm)
+        End Get
+    End Property
+
+    Public ReadOnly Property GridLineHorizontalEnd As Point
+        Get
+            Return New Point(GridTileSizeMm, 0)
+        End Get
+    End Property
+
+
+    Public Sub NotifyPropertyChangedForGrid()
+        OnPropertyChanged(NameOf(GridViewport))
+        OnPropertyChanged(NameOf(GridLineVerticalEnd))
+        OnPropertyChanged(NameOf(GridLineHorizontalEnd))
+        OnPropertyChanged(NameOf(GridLineBrush))
+    End Sub
+
 End Class

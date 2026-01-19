@@ -969,4 +969,20 @@ Partial Public Class MainViewModel
         End Set
     End Property
 
+
+    Public Property IsGridVisible As Boolean
+        Get
+            Return Application.GetService(Of SVGPageViewModel).GridLineBrush IsNot Brushes.Transparent
+        End Get
+        Set(value As Boolean)
+            If value Then
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
+            Else
+                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
+            End If
+            Application.GetService(Of SVGPageViewModel).NotifyPropertyChangedForGrid()
+        End Set
+    End Property
+
+
 End Class

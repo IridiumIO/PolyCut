@@ -31,6 +31,7 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _Printer As Printer
     <ObservableProperty> Private _CuttingMats As ObservableCollection(Of CuttingMat)
     <ObservableProperty> Private _Configuration As ProcessorConfiguration
+    <ObservableProperty> Private _UIConfiguration As UIConfiguration
 
     <ObservableProperty> Private _GCode As String = Nothing
     <ObservableProperty> Private _GCodeGeometry As GCodeGeometry
@@ -104,6 +105,7 @@ Partial Public Class MainViewModel
 
     <RelayCommand> Public Sub MainViewClosing()
         SettingsHandler.WriteConfiguration(Configuration)
+        SettingsHandler.WriteUIConfiguration(UIConfiguration)
     End Sub
 
     <RelayCommand> Public Sub CopyGCodeToClipboard()
@@ -188,6 +190,7 @@ Partial Public Class MainViewModel
 
         Printer = Printers.First
         Configuration = (SettingsHandler.GetConfigurations).First
+        UIConfiguration = SettingsHandler.GetUIConfiguration()
 
         If DrawingGroup Is Nothing Then
             DrawingGroup = New DrawableGroup("Drawing Group")
@@ -953,34 +956,29 @@ Partial Public Class MainViewModel
 
     Public Property CuttingMatVisibility As Boolean
         Get
-            Return Application.GetService(Of SVGPageViewModel).CuttingMatIsVisible
+            Return UIConfiguration.ShowCuttingMat
         End Get
         Set(value As Boolean)
-            Application.GetService(Of SVGPageViewModel).CuttingMatIsVisible = value
+            UIConfiguration.ShowCuttingMat = value
         End Set
     End Property
 
     Public Property WorkingAreaVisibility As Boolean
         Get
-            Return Application.GetService(Of SVGPageViewModel).WorkingAreaIsVisible
+            Return UIConfiguration.ShowWorkArea
         End Get
         Set(value As Boolean)
-            Application.GetService(Of SVGPageViewModel).WorkingAreaIsVisible = value
+            UIConfiguration.ShowWorkArea = value
         End Set
     End Property
 
 
     Public Property IsGridVisible As Boolean
         Get
-            Return Application.GetService(Of SVGPageViewModel).GridLineBrush IsNot Brushes.Transparent
+            Return UIConfiguration.ShowGrid
         End Get
         Set(value As Boolean)
-            If value Then
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
-            Else
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
-            End If
-            Application.GetService(Of SVGPageViewModel).NotifyPropertyChangedForGrid()
+            UIConfiguration.ShowGrid = value
         End Set
     End Property
 

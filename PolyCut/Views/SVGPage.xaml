@@ -229,7 +229,7 @@
                             VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
                             EnsureViewboxSize="False"
                             Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}"
-                            Visibility="{Binding CuttingMatIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{Binding MainVM.CuttingMatVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="{Binding MainVM.Printer.CuttingMatRotation}" />
@@ -248,7 +248,7 @@
                         ClipToBounds="True"
                         IsHitTestVisible="False"
                         StrokeThickness="0.5"
-                        Visibility="{Binding WorkingAreaIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        Visibility="{Binding MainVM.WorkingAreaVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Path.Data>
                             <CombinedGeometry GeometryCombineMode="Xor">
                                 <CombinedGeometry.Geometry1>

@@ -10,7 +10,7 @@
     Title="Printer Configuration"
     Width="600"
     Height="900"
-    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+    d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     ExtendsContentIntoTitleBar="True"
@@ -170,7 +170,7 @@
 
                                 <Label Margin="0,4,10,0" Content="Working Area" />
 
-                                <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding WorkingAreaIsVisible}">
+                                <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding MainVM.WorkingAreaVisibility}">
                                     <ToggleButton.Template>
                                         <ControlTemplate>
                                             <ContentControl>
@@ -334,7 +334,7 @@
                                     <ToggleButton
                                         x:Name="CuttingMatVisibilityToggle"
                                         Grid.Column="1"
-                                        IsChecked="{Binding CuttingMatIsVisible}">
+                                        IsChecked="{Binding MainVM.CuttingMatVisibility}">
                                         <ToggleButton.Template>
                                             <ControlTemplate>
                                                 <ContentControl>

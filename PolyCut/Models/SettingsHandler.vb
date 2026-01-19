@@ -22,7 +22,7 @@ Public Class SettingsHandler : Inherits ObservableObject
     Public Shared Property ConfigurationSettings As ConfigurationsSettings = New ConfigurationsSettings
     Public Shared Property PrinterSettings As PrinterSettings = New PrinterSettings
     Public Shared Property CuttingMatSettings As CuttingMatSettings = New CuttingMatSettings
-
+    Public Shared Property UISettings As UISettings = New UISettings
 
     Shared Async Function InitialiseSettings() As Task
 
@@ -30,13 +30,14 @@ Public Class SettingsHandler : Inherits ObservableObject
         Await PrinterSettings.InitialiseSettings(Of Printer)("PolyCut", $"{NameOf(Printer)}s")
         Await CuttingMatSettings.InitialiseSettings(Of CuttingMat)("PolyCut", $"{NameOf(CuttingMat)}s")
         Await ConfigurationSettings.InitialiseSettings(Of ProcessorConfiguration)("PolyCut", $"{NameOf(ProcessorConfiguration)}s")
+        Await UISettings.InitialiseSettings(Of UIConfiguration)("PolyCut", $"UIConfiguration")
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
 
         GenerateEV()
 
     End Function
 
-    <MeasurePerformance>
+
     Private Shared Async Sub GenerateEV()
 
 
@@ -102,6 +103,14 @@ Public Class SettingsHandler : Inherits ObservableObject
 
     Shared Async Sub WriteConfiguration(Configuration As ProcessorConfiguration)
         Await ConfigurationSettings.SetValue(Configuration.Name, Configuration)
+    End Sub
+
+    Shared Function GetUIConfiguration() As UIConfiguration
+        Return UISettings.GetValue(Of UIConfiguration)(IO.Path.Combine(UISettings.SettingsFolder.FullName, $"UIConfiguration.json"))
+    End Function
+
+    Shared Async Sub WriteUIConfiguration(Configuration As UIConfiguration)
+        Await UISettings.SetValue(Configuration.Name, Configuration)
     End Sub
 
 End Class

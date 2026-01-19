@@ -91,42 +91,46 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
 
     Private Sub MirrorSelection(mirrorX As Boolean, mirrorY As Boolean)
-        Dim selected = PolyCanvas.SelectedItems?.FirstOrDefault()
-        If selected?.DrawableElement Is Nothing Then Return
 
-        Dim element = selected.DrawableElement
-        Dim wrapper = TryCast(element.Parent, ContentControl)
-        If wrapper Is Nothing Then Return
+        For Each selected In PolyCanvas.SelectedItems
+            If selected?.DrawableElement Is Nothing Then Return
 
-        ' Set transform origin to center for consistent mirroring
-        element.RenderTransformOrigin = New Point(0.5, 0.5)
+            Dim element = selected.DrawableElement
+            Dim wrapper = TryCast(element.Parent, ContentControl)
+            If wrapper Is Nothing Then Return
 
-        ' Get or create transform group on element
-        Dim tg = TryCast(element.RenderTransform, TransformGroup)
-        If tg Is Nothing Then
-            Dim existing = element.RenderTransform
-            tg = New TransformGroup()
-            If existing IsNot Nothing AndAlso Not TypeOf existing Is TransformGroup Then
-                tg.Children.Add(existing)
+            ' Set transform origin to center for consistent mirroring
+            element.RenderTransformOrigin = New Point(0.5, 0.5)
+
+            ' Get or create transform group on element
+            Dim tg = TryCast(element.RenderTransform, TransformGroup)
+            If tg Is Nothing Then
+                Dim existing = element.RenderTransform
+                tg = New TransformGroup()
+                If existing IsNot Nothing AndAlso Not TypeOf existing Is TransformGroup Then
+                    tg.Children.Add(existing)
+                End If
+                element.RenderTransform = tg
             End If
-            element.RenderTransform = tg
-        End If
 
-        ' Find or create scale transform
-        Dim scale = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-        If scale Is Nothing Then
-            scale = New ScaleTransform(1, 1)
-            tg.Children.Add(scale)
-        End If
+            ' Find or create scale transform
+            Dim scale = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+            If scale Is Nothing Then
+                scale = New ScaleTransform(1, 1)
+                tg.Children.Add(scale)
+            End If
 
-        ' Toggle mirror
-        If mirrorX Then scale.ScaleX *= -1
-        If mirrorY Then scale.ScaleY *= -1
+            ' Toggle mirror
+            If mirrorX Then scale.ScaleX *= -1
+            If mirrorY Then scale.ScaleY *= -1
 
-        ' Force visual update
-        wrapper.InvalidateMeasure()
-        wrapper.InvalidateArrange()
-        wrapper.UpdateLayout()
+            ' Force visual update
+            wrapper.InvalidateMeasure()
+            wrapper.InvalidateArrange()
+            wrapper.UpdateLayout()
+        Next
+
+
     End Sub
 
     Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService)

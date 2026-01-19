@@ -91,46 +91,61 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
 
     Private Sub MirrorSelection(mirrorX As Boolean, mirrorY As Boolean)
+        Dim selectedItems = PolyCanvas.SelectedItems.ToList()
+        If selectedItems.Count = 0 Then Return
 
-        For Each selected In PolyCanvas.SelectedItems
-            If selected?.DrawableElement Is Nothing Then Return
+        Dim selectionCenter = CalculateSelectionCenter(selectedItems)
+        Dim snapshots = New List(Of (Target As IDrawable, Before As Object, After As Object))
 
-            Dim element = selected.DrawableElement
-            Dim wrapper = TryCast(element.Parent, ContentControl)
-            If wrapper Is Nothing Then Return
+        For Each selected In selectedItems
+            If selected?.DrawableElement Is Nothing Then Continue For
+            Dim wrapper = TryCast(selected.DrawableElement.Parent, ContentControl)
+            If wrapper Is Nothing Then Continue For
 
-            ' Set transform origin to center for consistent mirroring
-            element.RenderTransformOrigin = New Point(0.5, 0.5)
+            Dim beforeSnapshot = TransformAction.MakeSnapshotFromWrapper(wrapper)
+            TransformAction.ApplyMirror(wrapper, selectionCenter, mirrorX, mirrorY)
+            Dim afterSnapshot = TransformAction.MakeSnapshotFromWrapper(wrapper)
 
-            ' Get or create transform group on element
-            Dim tg = TryCast(element.RenderTransform, TransformGroup)
-            If tg Is Nothing Then
-                Dim existing = element.RenderTransform
-                tg = New TransformGroup()
-                If existing IsNot Nothing AndAlso Not TypeOf existing Is TransformGroup Then
-                    tg.Children.Add(existing)
-                End If
-                element.RenderTransform = tg
+            If beforeSnapshot IsNot Nothing AndAlso afterSnapshot IsNot Nothing Then
+                snapshots.Add((selected, CType(beforeSnapshot, Object), CType(afterSnapshot, Object)))
             End If
-
-            ' Find or create scale transform
-            Dim scale = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-            If scale Is Nothing Then
-                scale = New ScaleTransform(1, 1)
-                tg.Children.Add(scale)
-            End If
-
-            ' Toggle mirror
-            If mirrorX Then scale.ScaleX *= -1
-            If mirrorY Then scale.ScaleY *= -1
-
-            ' Force visual update
-            wrapper.InvalidateMeasure()
-            wrapper.InvalidateArrange()
-            wrapper.UpdateLayout()
         Next
 
+        PublishTransformMessage(snapshots)
+    End Sub
 
+    Private Function CalculateSelectionCenter(selectedItems As List(Of IDrawable)) As Point
+        Dim minX As Double = Double.MaxValue
+        Dim minY As Double = Double.MaxValue
+        Dim maxX As Double = Double.MinValue
+        Dim maxY As Double = Double.MinValue
+
+        For Each selected In selectedItems
+            If selected?.DrawableElement Is Nothing Then Continue For
+            Dim wrapper = TryCast(selected.DrawableElement.Parent, ContentControl)
+            If wrapper Is Nothing Then Continue For
+
+            Dim rotatedCorners = TransformAction.GetRotatedCorners(wrapper)
+            For Each corner In rotatedCorners
+                minX = Math.Min(minX, corner.X)
+                minY = Math.Min(minY, corner.Y)
+                maxX = Math.Max(maxX, corner.X)
+                maxY = Math.Max(maxY, corner.Y)
+            Next
+        Next
+
+        Return New Point((minX + maxX) / 2, (minY + maxY) / 2)
+    End Function
+
+    Private Sub PublishTransformMessage(snapshots As List(Of (Target As IDrawable, Before As Object, After As Object)))
+        If snapshots.Count = 0 Then Return
+
+        Try
+            Dim msg As New TransformCompletedMessage With {.Items = snapshots}
+            EventAggregator.Publish(Of TransformCompletedMessage)(msg)
+        Catch ex As Exception
+            Debug.WriteLine($"MirrorSelection publish failed: {ex.Message}")
+        End Try
     End Sub
 
     Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService)

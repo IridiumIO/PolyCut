@@ -319,5 +319,136 @@ Public Class TransformAction
         End Select
     End Function
 
+    ' ====================
+    ' Mirror Operations
+    ' ====================
+
+
+    Public Shared Sub ApplyMirror(wrapper As ContentControl, selectionCenter As Point, mirrorX As Boolean, mirrorY As Boolean)
+        If wrapper Is Nothing Then Return
+
+        Dim currentRotation = GetRotationAngle(wrapper)
+        Dim transformOrigin = wrapper.RenderTransformOrigin
+
+        ' Mirror position
+        Dim currentLeft = Canvas.GetLeft(wrapper)
+        Dim currentTop = Canvas.GetTop(wrapper)
+        Dim objCenterX = currentLeft + wrapper.ActualWidth * transformOrigin.X
+        Dim objCenterY = currentTop + wrapper.ActualHeight * transformOrigin.Y
+
+        Dim offsetX = objCenterX - selectionCenter.X
+        Dim offsetY = objCenterY - selectionCenter.Y
+
+        If mirrorX Then offsetX = -offsetX
+        If mirrorY Then offsetY = -offsetY
+
+        Dim newCenterX = selectionCenter.X + offsetX
+        Dim newCenterY = selectionCenter.Y + offsetY
+        Canvas.SetLeft(wrapper, newCenterX - wrapper.ActualWidth * transformOrigin.X)
+        Canvas.SetTop(wrapper, newCenterY - wrapper.ActualHeight * transformOrigin.Y)
+
+        ' Mirror rotation
+        Dim newRotation = CalculateMirroredRotation(currentRotation, mirrorX, mirrorY)
+        wrapper.RenderTransform = New RotateTransform(newRotation)
+
+        ' Mirror visual appearance
+        ApplyScaleTransform(wrapper.Content, mirrorX, mirrorY)
+
+        wrapper.InvalidateMeasure()
+        wrapper.InvalidateArrange()
+        wrapper.UpdateLayout()
+    End Sub
+
+
+    Public Shared Function GetRotatedCorners(wrapper As ContentControl) As List(Of Point)
+        If wrapper Is Nothing Then Return New List(Of Point)
+
+        Dim left = Canvas.GetLeft(wrapper)
+        Dim top = Canvas.GetTop(wrapper)
+        Dim width = wrapper.ActualWidth
+        Dim height = wrapper.ActualHeight
+
+        Dim rotationAngle As Double = 0
+        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
+        If rotateTransform IsNot Nothing Then
+            rotationAngle = rotateTransform.Angle * Math.PI / 180.0
+        End If
+
+        Dim transformOrigin = wrapper.RenderTransformOrigin
+        Dim pivotX = left + width * transformOrigin.X
+        Dim pivotY = top + height * transformOrigin.Y
+
+        Dim corners As New List(Of Point) From {
+            New Point(left, top),
+            New Point(left + width, top),
+            New Point(left + width, top + height),
+            New Point(left, top + height)
+        }
+
+        Dim rotatedCorners As New List(Of Point)
+        For Each corner In corners
+            Dim dx = corner.X - pivotX
+            Dim dy = corner.Y - pivotY
+            Dim rotatedX = pivotX + (dx * Math.Cos(rotationAngle) - dy * Math.Sin(rotationAngle))
+            Dim rotatedY = pivotY + (dx * Math.Sin(rotationAngle) + dy * Math.Cos(rotationAngle))
+            rotatedCorners.Add(New Point(rotatedX, rotatedY))
+        Next
+
+        Return rotatedCorners
+    End Function
+
+
+    Public Shared Function CalculateMirroredRotation(currentRotation As Double, mirrorX As Boolean, mirrorY As Boolean) As Double
+        Dim newRotation As Double = currentRotation
+
+        If mirrorX AndAlso mirrorY Then
+            newRotation = currentRotation + 180
+        ElseIf mirrorX OrElse mirrorY Then
+            newRotation = -currentRotation
+        End If
+
+        ' Normalize to -180 to 180 range
+        While newRotation > 180
+            newRotation -= 360
+        End While
+        While newRotation < -180
+            newRotation += 360
+        End While
+
+        Return newRotation
+    End Function
+
+
+    Public Shared Sub ApplyScaleTransform(element As FrameworkElement, mirrorX As Boolean, mirrorY As Boolean)
+        If element Is Nothing Then Return
+
+        element.RenderTransformOrigin = New Point(0.5, 0.5)
+
+        Dim tg = TryCast(element.RenderTransform, TransformGroup)
+        If tg Is Nothing Then
+            tg = New TransformGroup()
+            If element.RenderTransform IsNot Nothing Then
+                tg.Children.Add(element.RenderTransform)
+            End If
+            element.RenderTransform = tg
+        End If
+
+        Dim scale = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+        If scale Is Nothing Then
+            scale = New ScaleTransform(1, 1)
+            tg.Children.Add(scale)
+        End If
+
+        If mirrorX Then scale.ScaleX *= -1
+        If mirrorY Then scale.ScaleY *= -1
+    End Sub
+
+
+    Public Shared Function GetRotationAngle(wrapper As ContentControl) As Double
+        If wrapper Is Nothing Then Return 0
+        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
+        Return If(rotateTransform IsNot Nothing, rotateTransform.Angle, 0)
+    End Function
+
 
 End Class

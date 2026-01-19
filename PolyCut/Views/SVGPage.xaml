@@ -1,25 +1,32 @@
-﻿<Page x:Class="SVGPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
-      xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
-      xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
-      xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
-      xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-      xmlns:system="clr-namespace:System;assembly=mscorlib"
-      xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      x:Name="SVGPageView" Title="SVGPage"
-      Margin="0,5,0,0"
-      d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
-      d:DesignHeight="1000" d:DesignWidth="1000" AllowDrop="True"
-      Background="{DynamicResource ControlFillColorTertiaryBrush}"
-      Drop="Page_Drop" ScrollViewer.CanContentScroll="False" Unloaded="SVGPageView_Unloaded"
-      mc:Ignorable="d">
+﻿<Page
+    x:Class="SVGPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:PolyCut"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
+    xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
+    xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
+    xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
+    xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
+    xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    x:Name="SVGPageView"
+    Title="SVGPage"
+    Margin="0,5,0,0"
+    d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
+    d:DesignHeight="1000"
+    d:DesignWidth="1000"
+    AllowDrop="True"
+    Background="{DynamicResource ControlFillColorTertiaryBrush}"
+    Drop="Page_Drop"
+    ScrollViewer.CanContentScroll="False"
+    Unloaded="SVGPageView_Unloaded"
+    mc:Ignorable="d">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded" SourceObject="{Binding ElementName=SVGPageView}">
             <i:InvokeCommandAction Command="{Binding MainVM.MainViewLoadedCommand}" />
@@ -44,16 +51,28 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="55" MinWidth="55" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800" />
+            <ColumnDefinition
+                Width="380"
+                MinWidth="380"
+                MaxWidth="800" />
         </Grid.ColumnDefinitions>
-        <GridSplitter Width="10"
-                      Margin="0,0,-10,0" Panel.ZIndex="1"
-                      Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
+        <GridSplitter
+            Width="10"
+            Margin="0,0,-10,0"
+            Panel.ZIndex="1"
+            Background="Transparent"
+            IsTabStop="False"
+            ResizeDirection="Columns" />
 
 
-        <ui:Card Grid.Column="0"
-                 Margin="5,5,0,5" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                 HorizontalContentAlignment="Center" VerticalContentAlignment="Top">
+        <ui:Card
+            Grid.Column="0"
+            Margin="5,5,0,5"
+            Padding="0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Top">
             <local:ToolSelectorPane x:Name="ToolSelectorPanel" />
         </ui:Card>
 
@@ -64,24 +83,35 @@
 
 
 
-        <ui:Card Grid.Column="1"
-                 Height="50"
-                 Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top"
-                 Panel.ZIndex="20"
-                 Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
-                 Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <ui:Card
+            Grid.Column="1"
+            Height="50"
+            Margin="5"
+            Padding="8"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Panel.ZIndex="20"
+            Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
+            Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
 
             <StackPanel Orientation="Horizontal">
-                <Label Content="Font"
-                       Margin="0,2,10,0" VerticalAlignment="Center" />
+                <Label
+                    Margin="0,2,10,0"
+                    VerticalAlignment="Center"
+                    Content="Font" />
                 <local:FontPickerComboBox Width="200" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
                 <Separator Margin="5,0" />
-                <Label Content="Size (pt)"
-                       Margin="0,2,10,0" VerticalAlignment="Center" />
-                <ComboBox Text="{Binding CanvasFontSize, Mode=OneWayToSource}"
-                          Width="80"
-                          Padding="7"
-                          Background="Transparent" IsEditable="True" SelectedIndex="6">
+                <Label
+                    Margin="0,2,10,0"
+                    VerticalAlignment="Center"
+                    Content="Size (pt)" />
+                <ComboBox
+                    Width="80"
+                    Padding="7"
+                    Background="Transparent"
+                    IsEditable="True"
+                    SelectedIndex="6"
+                    Text="{Binding CanvasFontSize, Mode=OneWayToSource}">
                     <ComboBoxItem Content="3" />
                     <ComboBoxItem Content="4" />
                     <ComboBoxItem Content="6" />
@@ -102,46 +132,56 @@
             </StackPanel>
         </ui:Card>
 
-        <rc:ZoomBorder x:Name="zoomPanControl"
-                       Grid.Column="1"
-                       Background="Transparent"
-                       CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
-                       CanvasTextBox="{Binding CanvasTextBox}"
-                       ClipToBounds="True"
-                       Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
-                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset"
-                       ScaleAmount="0.002" ScaleMax="40" ScaleMin="0.01">
+        <rc:ZoomBorder
+            x:Name="zoomPanControl"
+            Grid.Column="1"
+            Background="Transparent"
+            CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
+            CanvasTextBox="{Binding CanvasTextBox}"
+            ClipToBounds="True"
+            Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
+            LeftButtonAction="None"
+            MiddleButtonAction="Move"
+            RightButtonAction="Reset"
+            ScaleAmount="0.002"
+            ScaleMax="40"
+            ScaleMin="0.1">
 
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                 <AdornerDecorator>
-                    <rc:PolyCanvas x:Name="mainCanvas"
-                                   Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
-                                   Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                                   Margin="0,0,0,0"
-                                   Background="Transparent"
-                                   ChildrenCollection="{Binding MainVM.DrawableCollection}"
-                                   ClipToBounds="False"
-                                   IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />
+                    <rc:PolyCanvas
+                        x:Name="mainCanvas"
+                        Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                        Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                        Margin="0,0,0,0"
+                        Background="Transparent"
+                        ChildrenCollection="{Binding MainVM.DrawableCollection}"
+                        ClipToBounds="False"
+                        IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />
                 </AdornerDecorator>
 
 
 
-                <Canvas Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                <Canvas
+                    Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                    Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                    Panel.ZIndex="-1"
+                    IsHitTestVisible="False">
+
+                    <Border
+                        x:Name="DupCuttingMatBounds"
+                        Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                         Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                        Panel.ZIndex="-1"
-                        IsHitTestVisible="False">
+                        Panel.ZIndex="20"
+                        IsHitTestVisible="False"
+                        Opacity="0">
 
-                    <Border x:Name="DupCuttingMatBounds"
-                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
-                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                            Panel.ZIndex="20"
-                            IsHitTestVisible="False" Opacity="0">
-
-                        <svgc:SvgCanvas x:Name="DupCuttingMat"
-                                        HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
-                                        VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
-                                        Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}">
+                        <svgc:SvgCanvas
+                            x:Name="DupCuttingMat"
+                            HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
+                            VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
+                            Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="{Binding MainVM.Printer.CuttingMatRotation}" />
@@ -151,18 +191,23 @@
                         </svgc:SvgCanvas>
 
                     </Border>
-                    <Border x:Name="CuttingMatBounds"
-                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
-                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                            Background="{Binding CanvasThemeColor}"
-                            BorderBrush="#858585" BorderThickness="1" ClipToBounds="True" CornerRadius="0,0,0,0">
-                        <svgc:SvgCanvas x:Name="CuttingMat"
-                                        Margin="-1"
-                                        HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
-                                        VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
-                                        EnsureViewboxSize="False"
-                                        Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}"
-                                        Visibility="{Binding CuttingMatIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Border
+                        x:Name="CuttingMatBounds"
+                        Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                        Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                        Background="{Binding CanvasThemeColor}"
+                        BorderBrush="#858585"
+                        BorderThickness="1"
+                        ClipToBounds="True"
+                        CornerRadius="0,0,0,0">
+                        <svgc:SvgCanvas
+                            x:Name="CuttingMat"
+                            Margin="-1"
+                            HorizontalAlignment="{Binding MainVM.Printer.CuttingMatHorizontalAlignment}"
+                            VerticalAlignment="{Binding MainVM.Printer.CuttingMatVerticalAlignment}"
+                            EnsureViewboxSize="False"
+                            Source="{Binding MainVM.Printer.CuttingMat.QualifiedSVGSource}"
+                            Visibility="{Binding CuttingMatIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                             <svgc:SvgCanvas.RenderTransform>
                                 <TransformGroup>
                                     <RotateTransform Angle="{Binding MainVM.Printer.CuttingMatRotation}" />
@@ -175,9 +220,13 @@
 
 
                     <!--  Fill the offset outside space  -->
-                    <Path Canvas.Left="0" Canvas.Bottom="0"
-                          ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
-                          Visibility="{Binding WorkingAreaIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Path
+                        Canvas.Left="0"
+                        Canvas.Bottom="0"
+                        ClipToBounds="True"
+                        IsHitTestVisible="False"
+                        StrokeThickness="0.5"
+                        Visibility="{Binding WorkingAreaIsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Path.Data>
                             <CombinedGeometry GeometryCombineMode="Xor">
                                 <CombinedGeometry.Geometry1>
@@ -200,7 +249,11 @@
                         </Path.Stroke>
 
                         <Path.Effect>
-                            <DropShadowEffect BlurRadius="15" Direction="0" RenderingBias="Quality" ShadowDepth="0" />
+                            <DropShadowEffect
+                                BlurRadius="15"
+                                Direction="0"
+                                RenderingBias="Quality"
+                                ShadowDepth="0" />
 
                         </Path.Effect>
                         <Path.LayoutTransform>
@@ -242,22 +295,35 @@
 
 
 
-        <GridSplitter Grid.Column="1"
-                      Width="10"
-                      Margin="0,0,-10,0" Panel.ZIndex="1"
-                      Background="Transparent" IsTabStop="False" ResizeDirection="Columns" />
-        
-        <ui:Card Grid.Column="2"
-                 Margin="0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
-                 Background="Transparent" BorderThickness="0">
+        <GridSplitter
+            Grid.Column="1"
+            Width="10"
+            Margin="0,0,-10,0"
+            Panel.ZIndex="1"
+            Background="Transparent"
+            IsTabStop="False"
+            ResizeDirection="Columns" />
+
+        <ui:Card
+            Grid.Column="2"
+            Margin="0"
+            Padding="0"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            Background="Transparent"
+            BorderThickness="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <ui:Card Grid.Row="0"
-                         Margin="5,5,0,0" Padding="20 10" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <ui:Card
+                    Grid.Row="0"
+                    Margin="5,5,0,0"
+                    Padding="20,10"
+                    VerticalAlignment="Stretch"
+                    VerticalContentAlignment="Stretch">
                     <StackPanel Grid.Row="0" Orientation="Vertical">
                         <Grid Margin="0,0" FlowDirection="LeftToRight">
                             <Grid.ColumnDefinitions>
@@ -265,23 +331,31 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="Printer"
-                                   Padding="1,2,0,0" VerticalAlignment="Center" />
+                            <Label
+                                Padding="1,2,0,0"
+                                VerticalAlignment="Center"
+                                Content="Printer" />
                             <Grid Grid.Column="2" Margin="10,0,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Grid.Column="0"
-                                          Background="Transparent" DisplayMemberPath="Name"
-                                          ItemsSource="{Binding MainVM.Printers}"
-                                          SelectedItem="{Binding MainVM.Printer}" />
-                                <ui:Button Grid.Column="1"
-                                           Width="25" Height="35"
-                                           Margin="-55,0,-10,0" Padding="0"
-                                           Background="Transparent" BorderBrush="Transparent"
-                                           Command="{Binding MainVM.ConfigurePrinterCommand}"
-                                           CommandParameter="Ender 3 S1">
+                                <ComboBox
+                                    Grid.Column="0"
+                                    Background="Transparent"
+                                    DisplayMemberPath="Name"
+                                    ItemsSource="{Binding MainVM.Printers}"
+                                    SelectedItem="{Binding MainVM.Printer}" />
+                                <ui:Button
+                                    Grid.Column="1"
+                                    Width="25"
+                                    Height="35"
+                                    Margin="-55,0,-10,0"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Command="{Binding MainVM.ConfigurePrinterCommand}"
+                                    CommandParameter="Ender 3 S1">
                                     <ui:SymbolIcon Margin="0" Symbol="Settings24" />
                                 </ui:Button>
 
@@ -293,8 +367,11 @@
                     </StackPanel>
                 </ui:Card>
 
-                <ui:Card Grid.Row="1"
-                         Margin="5,5,0,5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <ui:Card
+                    Grid.Row="1"
+                    Margin="5,5,0,5"
+                    VerticalAlignment="Stretch"
+                    VerticalContentAlignment="Stretch">
                     <ui:Card.Background>
                         <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />
                     </ui:Card.Background>

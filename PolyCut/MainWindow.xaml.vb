@@ -72,7 +72,15 @@ Class MainWindow : Implements INavigationWindow
 
     Dim svg_file As String = ""
 
-    'Add handling for keyboard to handle Ctrl + Z
+    'Add handling for keyboard to handle:
+    'Ctrl + Z  => Undo
+    'Ctrl + Y  => Redo
+    'Ctrl + S  => Save
+    'Ctrl + Shift + S => Save As
+    'Ctrl + O  => Open File
+    'Ctrl + N  => New File
+    'Ctrl + I  => Import SVG File
+
     Public Sub Window_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles MainWindowView.KeyDown
         Dim vm = TryCast(Me.DataContext, MainViewModel)
         If vm Is Nothing Then Return
@@ -86,6 +94,41 @@ Class MainWindow : Implements INavigationWindow
                 vm.RedoCommand.Execute(Nothing)
                 e.Handled = True
             End If
+        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.S Then
+            If vm.SaveProjectCommand.CanExecute(Nothing) Then
+                vm.SaveProjectCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        ElseIf e.KeyboardDevice.Modifiers = (ModifierKeys.Control Or ModifierKeys.Shift) AndAlso e.Key = Key.S Then
+            If vm.SaveProjectAsCommand.CanExecute(Nothing) Then
+                vm.SaveProjectAsCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.O Then
+            If vm.LoadProjectCommand.CanExecute(Nothing) Then
+                vm.LoadProjectCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.N Then
+            If vm.NewProjectCommand.CanExecute(Nothing) Then
+                vm.NewProjectCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.I Then
+            If vm.BrowseSVGCommand.CanExecute(Nothing) Then
+                vm.BrowseSVGCommand.Execute(Nothing)
+                e.Handled = True
+            End If
+        End If
+
+    End Sub
+
+
+    Private Sub OpenMenu(sender As Object, e As MouseButtonEventArgs)
+        Dim sp = DirectCast(sender, StackPanel)
+        If sp.ContextMenu IsNot Nothing Then
+            sp.ContextMenu.PlacementTarget = sp
+            sp.ContextMenu.IsOpen = True
         End If
     End Sub
 

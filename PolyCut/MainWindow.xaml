@@ -20,6 +20,7 @@
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     RenderOptions.BitmapScalingMode="HighQuality"
     WindowBackdropType="Mica"
+    WindowChrome.IsHitTestVisibleInChrome="True"
     mc:Ignorable="d">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=MainWindowView}">
@@ -37,37 +38,149 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+
+
         <ui:TitleBar
-            Title="PolyCut"
+            x:Name="MWTitleBar"
             Grid.Row="0"
             Grid.ColumnSpan="2"
+            Background="Transparent"
             IsHitTestVisible="True">
-            <ui:TitleBar.Icon>
-                <ui:ImageIcon Margin="-4,-2,-6,-3" Source="/PolyCut;component/Resources/logo.ico" />
-            </ui:TitleBar.Icon>
-            <ui:TitleBar.CenterContent>
-                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                    <StackPanel.Resources>
-                        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
-                    </StackPanel.Resources>
 
-                    <ui:Button
+            <ui:TitleBar.Header>
+                <StackPanel Height="25" Orientation="Horizontal">
+                    <ui:ImageIcon Margin="15,2,8,0" Source="/PolyCut;component/Resources/logo.ico" />
+                    <Label
+                        Width="400"
+                        Margin="0,3,0,0"
+                        VerticalAlignment="Center"
+                        Content="PolyCut"
+                        Foreground="#40FFFFFF" />
+
+
+                </StackPanel>
+
+            </ui:TitleBar.Header>
+            <ui:TitleBar.CenterContent>
+
+                <Menu Margin="-345,1,0,0" Visibility="{Binding ElementName=MWTitleBar, Path=IsMouseOver, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Menu.Resources>
+                        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
+                    </Menu.Resources>
+
+                    <MenuItem Header="_File">
+                        <MenuItem Command="{Binding SaveProjectCommand}" Header="_Save Project..." />
+                        <MenuItem Command="{Binding SaveProjectAsCommand}" Header="S_ave Project As..." />
+                        <MenuItem Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
+                    </MenuItem>
+                    <MenuItem Header="_View">
+                        <StackPanel Orientation="Horizontal">
+                            <ToggleButton IsChecked="{Binding CuttingMatVisibility, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate>
+                                        <ContentControl>
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                        <ui:SymbolIcon Symbol="Eye24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                        <!--  Replace with your unchecked icon  -->
+                                                                        <ui:SymbolIcon Symbol="EyeOff24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Label Margin="10,4,10,0" Content="Show Cutting Mat" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ToggleButton IsChecked="{Binding WorkingAreaVisibility, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate>
+                                        <ContentControl>
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                        <ui:SymbolIcon Symbol="Eye24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                                            <Setter Property="Content">
+                                                                <Setter.Value>
+                                                                    <ui:Card
+                                                                        Padding="8,4"
+                                                                        Background="Transparent"
+                                                                        BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                        <!--  Replace with your unchecked icon  -->
+                                                                        <ui:SymbolIcon Symbol="EyeOff24" />
+                                                                    </ui:Card>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Label Margin="10,4,10,0" Content="Show Printer Working Area" />
+                        </StackPanel>
+
+                    </MenuItem>
+                    <Separator />
+                    <ui:MenuItem
                         x:Name="UndoButtonGlobal"
-                        Margin="10,0,0,0"
                         Background="Transparent"
                         BorderThickness="0"
-                        Command="{Binding UndoCommand}">
-                        <ui:SymbolIcon Symbol="ArrowUndo16" />
-                    </ui:Button>
-                    <ui:Button
+                        Command="{Binding UndoCommand}"
+                        Icon="{ui:SymbolIcon ArrowUndo16}" />
+                    <ui:MenuItem
                         x:Name="RedoButtonGlobal"
                         Background="Transparent"
                         BorderThickness="0"
-                        Command="{Binding RedoCommand}">
-                        <ui:SymbolIcon Symbol="ArrowRedo16" />
-                    </ui:Button>
+                        Command="{Binding RedoCommand}"
+                        Icon="{ui:SymbolIcon ArrowRedo16}" />
 
-                </StackPanel>
+                </Menu>
+
+
+
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 

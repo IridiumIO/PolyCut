@@ -7,6 +7,7 @@ Imports CommunityToolkit.Mvvm.Input
 
 Imports PolyCut.Core
 Imports PolyCut.RichCanvas
+Imports PolyCut.Services.UndoRedo
 Imports PolyCut.Shared
 
 Imports Svg
@@ -22,6 +23,7 @@ Partial Public Class MainViewModel
     Private ReadOnly _argsService As CommandLineArgsService
     Private ReadOnly _svgImportService As ISvgImportService
     Private ReadOnly _undoRedoService As UndoRedoService
+    Private ReadOnly _projectService As ProjectSerializationService
 
     ' State / configuration
     <ObservableProperty> Private _UsingGCodePlot As Boolean
@@ -136,12 +138,13 @@ Partial Public Class MainViewModel
 
 
     ' Constructor & initialization
-    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService)
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
         _svgImportService = svgImportService
         _undoRedoService = undoRedoService
+        _projectService = projectService
 
 
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnCanvasSelectionChanged
@@ -817,5 +820,131 @@ Partial Public Class MainViewModel
 
         Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
     End Function
+
+
+
+    Private _currentProjectPath As String = Nothing
+
+    <RelayCommand>
+    Private Sub SaveProject()
+        If String.IsNullOrEmpty(_currentProjectPath) Then
+            SaveProjectAs()
+        Else
+            If _projectService.SaveProject(_currentProjectPath, DrawableCollection, ImportedGroups) Then
+                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(_currentProjectPath))
+            Else
+                _snackbarService.GenerateError("Error", "Failed to save project", 3)
+            End If
+        End If
+    End Sub
+
+    <RelayCommand>
+    Private Sub SaveProjectAs()
+        Dim saveDialog As New Microsoft.Win32.SaveFileDialog With {
+            .Filter = "PolyCut Project (*.polycut)|*.polycut|All Files (*.*)|*.*",
+            .DefaultExt = ".polycut"
+        }
+
+        If saveDialog.ShowDialog() = True Then
+            _currentProjectPath = saveDialog.FileName
+            If _projectService.SaveProject(_currentProjectPath, DrawableCollection, ImportedGroups) Then
+                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(_currentProjectPath))
+            Else
+                _snackbarService.GenerateError("Error", "Failed to save project", 3)
+            End If
+        End If
+    End Sub
+
+    <RelayCommand>
+    Private Sub LoadProject()
+        ' Warn if unsaved changes
+        If DrawableCollection.Count > 1 Then
+            Dim result = MessageBox.Show(
+                "Loading a project will clear the current workspace. Continue?",
+                "Load Project",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning)
+
+            If result = MessageBoxResult.No Then Return
+        End If
+
+        Dim openDialog As New Microsoft.Win32.OpenFileDialog With {
+            .Filter = "PolyCut Project (*.polycut)|*.polycut|All Files (*.*)|*.*",
+            .CheckFileExists = True
+        }
+
+        If openDialog.ShowDialog() = True Then
+            Dim action As New LoadProjectAction(Me, _projectService, openDialog.FileName)
+            If action.Execute() Then
+                _undoRedoService.Clear()
+                _undoRedoService.Push(action)
+                _currentProjectPath = openDialog.FileName
+                _snackbarService.GenerateSuccess("Project Loaded", IO.Path.GetFileName(_currentProjectPath))
+                NotifyCollectionsChanged()
+            Else
+                _snackbarService.GenerateError("Error", "Failed to load project", 3)
+            End If
+        End If
+    End Sub
+
+    <RelayCommand>
+    Private Sub NewProject()
+        If DrawableCollection.Count > 1 Then
+            Dim result = MessageBox.Show(
+                "Creating a new project will clear the current workspace. Continue?",
+                "New Project",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning)
+
+            If result = MessageBoxResult.No Then Return
+        End If
+
+        ' Clear everything
+        _suspendTransformMessageHandling = True
+
+        ' Clear DrawingGroup children
+        If DrawingGroup IsNot Nothing Then
+            DrawingGroup.GroupChildren.Clear()
+        End If
+
+        ' Clear imported groups
+        ImportedGroups.Clear()
+
+        ' Remove all drawables
+        Dim drawablesToRemove = DrawableCollection.ToList()
+        For Each drawable In drawablesToRemove
+            RemoveDrawableFromCollection(drawable)
+        Next
+
+        _suspendTransformMessageHandling = False
+        _currentProjectPath = Nothing
+
+        ' Reinitialize drawing group
+        DrawingGroup = New DrawableGroup("Drawing Group")
+        DrawableCollection.Add(DrawingGroup)
+        ImportedGroups.Add(DrawingGroup)
+
+        NotifyCollectionsChanged()
+        _snackbarService.GenerateSuccess("New Project", "Workspace cleared")
+    End Sub
+
+
+    Public Property CuttingMatVisibility As Boolean
+        Get
+            Return Application.GetService(Of SVGPageViewModel).CuttingMatIsVisible
+        End Get
+        Set(value As Boolean)
+            Application.GetService(Of SVGPageViewModel).CuttingMatIsVisible = value
+        End Set
+    End Property
+
+    Public Property WorkingAreaVisibility As Boolean
+        Get
+            Return Application.GetService(Of SVGPageViewModel).WorkingAreaIsVisible
+        End Get
+        Set(value As Boolean)
+            Application.GetService(Of SVGPageViewModel).WorkingAreaIsVisible = value
+        End Set
+    End Property
 
 End Class

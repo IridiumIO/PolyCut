@@ -406,6 +406,10 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
     Private Sub PolyCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs)
         ' Only handle if clicking directly on canvas (not on a child wrapper)
+        If e.MiddleButton = MouseButtonState.Pressed Then
+            ' Middle mouse button pressed - do nothing (reserved for panning)
+            Return
+        End If
         If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
             Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
             If Not isShiftPressed Then

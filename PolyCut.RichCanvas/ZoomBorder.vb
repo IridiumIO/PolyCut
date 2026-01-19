@@ -179,6 +179,7 @@ Public Class ZoomBorder
         AddHandler Me.MouseUp, AddressOf ZoomBorder_MouseUp
         AddHandler Me.MouseMove, AddressOf ZoomBorder_MouseMove
         AddHandler Me.Loaded, AddressOf ZoomBorder_Loaded
+        AddHandler Me.PreviewMouseDown, AddressOf ZoomBorder_PreviewMouseDown
     End Sub
 
 
@@ -281,9 +282,35 @@ Public Class ZoomBorder
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
-            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
-            Dim position As Point = e.GetPosition(polyCanvas)
-            DrawingManager.StartDrawing(CanvasMode, position, polyCanvas)
+            Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim position As Point = e.GetPosition(_polyCanvas)
+            DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
+        Else
+            If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
+                Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+                If Not isShiftPressed Then
+                    Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+
+                    _polyCanvas.SelectionManager.ClearSelection()
+                End If
+                e.Handled = True
+            End If
+        End If
+
+        If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
+    End Sub
+
+
+    Private Sub ZoomBorder_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
+        EventAggregator.Publish(New ScaleChangedMessage(Scale))
+        EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
+
+        If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
+
+            Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim position As Point = e.GetPosition(_polyCanvas)
+            DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
+            e.Handled = True
         End If
 
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)

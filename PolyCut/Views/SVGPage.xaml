@@ -142,6 +142,7 @@
             Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
             LeftButtonAction="None"
             MiddleButtonAction="Move"
+            PreviewMouseDown="zoomPanControl_PreviewMouseDown"
             RightButtonAction="Reset"
             ScaleAmount="0.002"
             ScaleMax="40"
@@ -157,8 +158,8 @@
                         Margin="0,0,0,0"
                         Background="Transparent"
                         ChildrenCollection="{Binding MainVM.DrawableCollection}"
-                        ClipToBounds="False"
-                        IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />
+                        ClipToBounds="False" />
+                    <!--  IsHitTestVisible="{Binding CanvasToolMode, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static polycutShared:CanvasMode.Selection}}" />  -->
                 </AdornerDecorator>
 
 

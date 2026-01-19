@@ -342,4 +342,8 @@ Class SVGPage
         Return result
     End Function
 
+    Private Sub zoomPanControl_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
+        Dim rx = sender.GetHashCode
+        Debug.WriteLine($"zoomPanControl_PreviewMouseDown: Sender HashCode={rx}")
+    End Sub
 End Class

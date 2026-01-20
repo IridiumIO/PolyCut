@@ -1,0 +1,68 @@
+﻿<UserControl
+    x:Class="LabeledNumberBoxControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:PolyCut"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    x:Name="root"
+    d:DesignHeight="40"
+    d:DesignWidth="320"
+    Validation.ErrorTemplate="{x:Null}"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+
+        <!--  Optional: show tooltip from the *UserControl* validation error  -->
+        <Style
+            x:Key="InnerTextBoxShowsOuterValidation"
+            BasedOn="{StaticResource {x:Type ui:TextBox}}"
+            TargetType="{x:Type ui:TextBox}">
+            <Style.Triggers>
+
+                <!--  When the UserControl has a validation error, make the textbox look invalid  -->
+                <DataTrigger Binding="{Binding ElementName=root, Path=(Validation.HasError)}" Value="True">
+                    <Setter Property="BorderBrush" Value="Red" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="ToolTip" Value="{Binding ElementName=root, Path=(Validation.Errors)[0].ErrorContent}" />
+                </DataTrigger>
+
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Label
+            Grid.Column="0"
+            Padding="1,2,0,0"
+            VerticalAlignment="Center"
+            Content="{Binding LabelText, ElementName=root}" />
+
+        <ui:TextBox
+            Grid.Column="2"
+            Width="{Binding TextBoxWidth, ElementName=root}"
+            Margin="0,5,0,5"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            ClearButtonEnabled="False"
+            Style="{StaticResource InnerTextBoxShowsOuterValidation}"
+            Text="{Binding Text, ElementName=root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+        <Label
+            Grid.Column="2"
+            Margin="-36,0,0,0"
+            Padding="1,2,10,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Content="{Binding UnitText, ElementName=root}"
+            Foreground="{StaticResource ControlFillColorSecondaryBrush}"
+            IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

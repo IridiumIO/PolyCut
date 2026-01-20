@@ -86,6 +86,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="UIComponents\Custom Elements\LabeledControl.xaml.vb">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\PreviewPage.xaml.vb">
       <SubType>Code</SubType>
     </Compile>

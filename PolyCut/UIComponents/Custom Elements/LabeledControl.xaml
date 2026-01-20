@@ -1,0 +1,35 @@
+﻿<UserControl
+    x:Class="LabeledControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:PolyCut"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    x:Name="root"
+    d:DesignHeight="40"
+    d:DesignWidth="320"
+    Validation.ErrorTemplate="{x:Null}"
+    mc:Ignorable="d">
+
+    <Grid VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Label
+            Grid.Column="0"
+            Padding="1,2,0,0"
+            VerticalAlignment="Center"
+            Content="{Binding LabelText, ElementName=root}" />
+
+        <ContentPresenter
+            Grid.Column="1"
+            VerticalAlignment="Center"
+            Content="{Binding ValueContent, ElementName=root}" />
+
+
+    </Grid>
+</UserControl>

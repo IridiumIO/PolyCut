@@ -84,12 +84,11 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
     Public Property FillType As FillType = FillType.Hatch
 
     Public Property AllowDrawingOverOutlines As Boolean = True
-
-
-    ''' Currently only supported by GCodePlot
     Public Property MaxStrokeWidth As Double = 1
-    Public Property DrawingDirection As Integer? = Nothing
     Public Property ShadingThreshold As Double = 1
+    Public Property OutlinesBeforeFill As Boolean = False
+
+
 
     Public ReadOnly Property CrossHatch As Boolean
         Get
@@ -97,6 +96,9 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
         End Get
     End Property
 
+
+    ''' Currently only supported by GCodePlot
+    Public Property DrawingDirection As Integer? = Nothing
 End Class
 
 Partial Public Class GCodeConfiguration : Inherits ObservableObject

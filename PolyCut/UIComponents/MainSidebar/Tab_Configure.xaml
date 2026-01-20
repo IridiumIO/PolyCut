@@ -12,7 +12,7 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
-    d:DesignHeight="800"
+    d:DesignHeight="1200"
     d:DesignWidth="380"
     mc:Ignorable="d">
     <Grid>
@@ -457,6 +457,19 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
+                            <CheckBox
+                                Margin="0,5,0,0"
+                                Content="Draw Outlines Before Fill"
+                                IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}"
+                                IsEnabled="{Binding MainVM.UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}"
+                                ToolTipService.ShowOnDisabled="True">
+                                <CheckBox.ToolTip>
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                        Draws the outlines of shapes before filling them in.<LineBreak /><LineBreak />
+                                        Usually you want to draw outlines after filling.<LineBreak /><LineBreak />
+                                        For Polycut.Core Processor only</TextBlock>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
 
                         </StackPanel>
                     </ui:CardExpander>

@@ -220,7 +220,11 @@ Public Class FillProcessor : Implements IProcessor
         If cfg.OptimisedToolPath Then processedLines = OptimiseFills(processedLines, optimisedLines, cfg.DrawingConfig.AllowDrawingOverOutlines)
 
         If cfg.DrawingConfig.KeepOutlines Then
-            processedLines.InsertRange(0, optimisedLines)
+            If cfg.DrawingConfig.OutlinesBeforeFill Then
+                processedLines.InsertRange(0, optimisedLines)
+            Else
+                processedLines.AddRange(optimisedLines)
+            End If
         End If
 
         Dim finalLines As New List(Of Line)

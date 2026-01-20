@@ -16,7 +16,7 @@ Public Class SVGProcessor
 
         Dim colour As String
 
-        If svgcolour.ToString() = "none" OrElse svgcolour.GetType().Name.Contains("None") Then
+        If svgcolour Is Nothing OrElse svgcolour.ToString() = "none" OrElse svgcolour.GetType().Name.Contains("None") Then
             colour = Nothing
         Else
             Dim casted = TryCast(svgcolour, SvgColourServer)?.Colour

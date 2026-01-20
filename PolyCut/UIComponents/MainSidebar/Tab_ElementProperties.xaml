@@ -103,7 +103,7 @@
                                     Grid.Column="4"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}" 
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                     LostFocus="TextBox_LostFocus">
                                     <ui:TextBox.Text>
                                         <Binding
@@ -158,11 +158,11 @@
                                     AcceptsReturn="False"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    LostKeyboardFocus="NumberBox_LostFocus"
                                     Maximum="360"
                                     Minimum="-360"
                                     SpinButtonPlacementMode="Compact"
-                                    Value="{Binding MainVM.SelectedWrapper.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    ValueChanged="NumberBox_LostFocus"
+                                    Value="{Binding MainVM.SelectedWrapper.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
 
                                 <ui:Button
                                     Grid.Row="4"

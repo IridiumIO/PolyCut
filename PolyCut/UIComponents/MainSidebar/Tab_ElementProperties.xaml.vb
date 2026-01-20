@@ -1,5 +1,4 @@
 Imports System.ComponentModel
-Imports System.Globalization
 
 Imports PolyCut.RichCanvas
 
@@ -237,12 +236,34 @@ Public Class Tab_ElementProperties
     End Sub
 
 
-    Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)
+    Private Sub NumberBox_LostFocus(sender As Object, e As WPF.Ui.Controls.NumberBoxValueChangedEventArgs)
         Dim numberBox = TryCast(sender, WPF.Ui.Controls.NumberBox)
-        If numberBox Is Nothing Then Return
+        If numberBox Is Nothing OrElse _before Is Nothing Then Return
 
-        numberBox.RaiseEvent(New KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(numberBox), 0, Key.Enter) With {.RoutedEvent = Keyboard.KeyDownEvent})
-        numberBox.GetBindingExpression(WPF.Ui.Controls.NumberBox.ValueProperty)?.UpdateSource()
+        Dim center = New Point(_before.Left + _before.Width / 2, _before.Top + _before.Height / 2)
+        Dim startRotation As Double = CType(_before.RenderTransform, RotateTransform)?.Angle Or 0
+
+        Dim newRotation As Double = (numberBox.Value - startRotation) Mod 360
+
+        If Math.Abs(newRotation - startRotation) < 0.01 Then
+            _before = Nothing
+            Return
+        End If
+
+        TransformAction.ApplyRotation(MainVM.SelectedWrapper, center, startRotation, newRotation, New Point(_before.Left, _before.Top))
+        MainVM.SelectedWrapper.UpdateLayout()
+
+        _after = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+
+        Dim items As New List(Of (IDrawable, Object, Object)) From {
+            (MainVM.SelectedDrawable, _before, _after)
+        }
+        EventAggregator.Publish(Of TransformCompletedMessage)(
+                New TransformCompletedMessage With {.Items = items}
+            )
+
+        _before = Nothing
+        _after = Nothing
     End Sub
 
 

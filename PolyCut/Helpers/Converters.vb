@@ -275,30 +275,34 @@ Public Class PathTrimmerConverter
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
         If TypeOf value Is String AndAlso targetType Is GetType(String) Then
             Dim path As String = DirectCast(value, String)
-            Dim maxLength As Integer = 45
+            Dim maxLength As Integer = 40
 
-            If path.Length > maxLength Then
-                Dim parts As String() = path.Split("\"c)
-                Dim firstPart As String = parts.FirstOrDefault()
-                Dim lastPart As String = parts.LastOrDefault()
-
-                If String.IsNullOrEmpty(firstPart) OrElse String.IsNullOrEmpty(lastPart) Then Return path
-
-                If lastPart.Length > maxLength - firstPart.Length - 5 Then
-                    lastPart = lastPart.Substring(0, maxLength - firstPart.Length - 10)
-
-                End If
-
-                If firstPart.Length + lastPart.Length + 5 <= maxLength Then ' 5 for the "...\"
-                    Return $"{firstPart}\...\{lastPart}"
-                Else
-                    'Dim ellipsisLength As Integer = Math.Max(0, maxLength - lastPart.Length - 5)
-                    'Dim ret = $"{firstPart.Substring(0, ellipsisLength)}\...\{lastPart}"
-                    Return $"fuck"
-                End If
-            Else
+            If path.Length <= maxLength Then
                 Return path
             End If
+
+            Dim parts As String() = path.Split(New Char() {"\"c, "/"c}, StringSplitOptions.None)
+            Dim firstPart As String = parts.FirstOrDefault()
+            Dim lastPart As String = parts.LastOrDefault()
+
+            If String.IsNullOrEmpty(firstPart) OrElse String.IsNullOrEmpty(lastPart) Then
+                Dim take = Math.Max(0, maxLength - 3)
+                Return path.Substring(0, Math.Min(path.Length, take)) & "..."
+            End If
+
+            If firstPart.Length + 5 + lastPart.Length <= maxLength Then
+                Return $"{firstPart}\...\{lastPart}"
+            End If
+
+            Dim availableForLast = maxLength - firstPart.Length - 5 ' 5 for "\...\"
+            If availableForLast > 0 Then
+                Dim truncatedLast = lastPart.Substring(0, Math.Min(lastPart.Length, availableForLast))
+                Return $"{firstPart}\...\{truncatedLast}"
+            End If
+
+            Dim takeFirst = Math.Max(0, maxLength - 3)
+            Return firstPart.Substring(0, Math.Min(firstPart.Length, takeFirst)) & "..."
+
         End If
 
         Return value

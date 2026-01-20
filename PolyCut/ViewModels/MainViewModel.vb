@@ -703,6 +703,16 @@ Partial Public Class MainViewModel
 
                 _suspendTransformMessageHandling = True
 
+                Dim parentGroup = TryCast(selectedItems(0).ParentGroup, DrawableGroup)
+                If parentGroup Is Nothing Then
+                    parentGroup = ImportedGroups.FirstOrDefault(Function(g) g.GroupChildren.Contains(selectedItems(0)))
+                End If
+
+                Dim addAction As New AddDrawableAction(Me, newPath, parentGroup)
+                If addAction.Execute() Then
+                    actions.Add(addAction)
+                End If
+
                 For Each drawable In selectedItems
                     Dim removeAction As New RemoveDrawableAction(Me, drawable)
                     If removeAction.Execute() Then
@@ -710,10 +720,7 @@ Partial Public Class MainViewModel
                     End If
                 Next
 
-                Dim addAction As New AddDrawableAction(Me, newPath)
-                If addAction.Execute() Then
-                    actions.Add(addAction)
-                End If
+
 
                 _suspendTransformMessageHandling = False
 

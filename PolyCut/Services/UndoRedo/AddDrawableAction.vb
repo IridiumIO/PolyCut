@@ -12,6 +12,13 @@ Public Class AddDrawableAction : Implements IUndoableAction
         _element = element
     End Sub
 
+    Public Sub New(manager As IDrawableManager, element As FrameworkElement, parentGroup As DrawableGroup)
+        _manager = manager
+        _element = element
+        _parentGroup = parentGroup
+    End Sub
+
+
     Public ReadOnly Property Description As String Implements IUndoableAction.Description
         Get
             Return $"Add: {_drawable?.Name}"
@@ -101,7 +108,10 @@ Public Class AddDrawableAction : Implements IUndoableAction
         Dim mainVM = TryCast(_manager, MainViewModel)
         If mainVM Is Nothing Then Return
 
-        _parentGroup = mainVM.DrawingGroup
+        ' Respect a parent group if provided; otherwise fall back to DrawingGroup
+        If _parentGroup Is Nothing Then
+            _parentGroup = mainVM.DrawingGroup
+        End If
 
         _parentGroup.AddChild(_drawable)
         If Not _manager.DrawableCollection.Contains(_drawable) Then

@@ -527,7 +527,7 @@ Partial Public Class MainViewModel
         Return cur
     End Function
 
-    Private Function GetParentGroup(drawable As IDrawable) As DrawableGroup
+    Friend Function GetParentGroup(drawable As IDrawable) As DrawableGroup
         If drawable Is Nothing Then Return Nothing
         Dim pg = TryCast(drawable.ParentGroup, DrawableGroup)
         If pg Is Nothing Then
@@ -536,7 +536,7 @@ Partial Public Class MainViewModel
         Return pg
     End Function
 
-    Private Function IsAncestorOf(potentialAncestor As DrawableGroup, group As DrawableGroup) As Boolean
+    Friend Function IsAncestorOf(potentialAncestor As DrawableGroup, group As DrawableGroup) As Boolean
         If potentialAncestor Is Nothing OrElse group Is Nothing Then Return False
         Dim cur = group
         While cur IsNot Nothing
@@ -620,6 +620,7 @@ Partial Public Class MainViewModel
             Return
         End If
 
+        ' Validate shapes
         For Each drawable In selectedItems
             Dim element = drawable.DrawableElement
 
@@ -642,29 +643,13 @@ Partial Public Class MainViewModel
             End If
         Next
 
-        Dim geometries As New List(Of Geometry)
-        For Each drawable In selectedItems
-            Dim geometry = GetTransformedGeometry(drawable)
-            If geometry IsNot Nothing Then
-                geometries.Add(geometry)
-            End If
-        Next
+        _suspendTransformMessageHandling = True
 
-        If geometries.Count < 2 Then
-            _snackbarService.GenerateError("Error", "Could not convert shapes to geometries", 3)
-            Return
-        End If
-
-        Dim result As Geometry = geometries(0)
-        For i = 1 To geometries.Count - 1
-            result = New CombinedGeometry(combineMode, result, geometries(i))
-        Next
-
-        Dim pathGeometry = result.GetFlattenedPathGeometry(0.05, ToleranceType.Absolute)
-        If pathGeometry.Figures.Count = 0 OrElse pathGeometry.Bounds.IsEmpty Then
-
+        Dim action As New BooleanOperationAction(Me, selectedItems, combineMode)
+        If action.Execute() Then
+            _undoRedoService.Push(action)
+        Else
             Dim errorMessage = ""
-
             Select Case combineMode
                 Case GeometryCombineMode.Union
                     errorMessage = "Union operation resulted in an empty geometry. This should not happen."
@@ -675,221 +660,11 @@ Partial Public Class MainViewModel
                 Case GeometryCombineMode.Xor
                     errorMessage = "XOR operation resulted in an empty geometry. The shapes may be identical."
             End Select
-
             _snackbarService.GenerateError("Error", errorMessage, 4)
-            Return
         End If
 
-        Dim bounds = pathGeometry.Bounds
-
-        Dim localGeometry As New PathGeometry()
-        For Each figure In pathGeometry.Figures
-            Dim newFigure As New PathFigure() With {
-                .StartPoint = New Point(figure.StartPoint.X - bounds.Left, figure.StartPoint.Y - bounds.Top),
-                .IsClosed = figure.IsClosed,
-                .IsFilled = figure.IsFilled
-            }
-
-            For Each segment In figure.Segments
-                If TypeOf segment Is LineSegment Then
-                    Dim line = CType(segment, LineSegment)
-                    newFigure.Segments.Add(New LineSegment(
-                        New Point(line.Point.X - bounds.Left, line.Point.Y - bounds.Top), line.IsStroked))
-                ElseIf TypeOf segment Is PolyLineSegment Then
-                    Dim polyLine = CType(segment, PolyLineSegment)
-                    Dim newPoints As New PointCollection()
-                    For Each pt In polyLine.Points
-                        newPoints.Add(New Point(pt.X - bounds.Left, pt.Y - bounds.Top))
-                    Next
-                    newFigure.Segments.Add(New PolyLineSegment(newPoints, polyLine.IsStroked))
-                ElseIf TypeOf segment Is BezierSegment Then
-                    Dim bezier = CType(segment, BezierSegment)
-                    newFigure.Segments.Add(New BezierSegment(
-                        New Point(bezier.Point1.X - bounds.Left, bezier.Point1.Y - bounds.Top),
-                        New Point(bezier.Point2.X - bounds.Left, bezier.Point2.Y - bounds.Top),
-                        New Point(bezier.Point3.X - bounds.Left, bezier.Point3.Y - bounds.Top),
-                        bezier.IsStroked))
-                Else
-                    newFigure.Segments.Add(segment)
-                End If
-            Next
-
-            localGeometry.Figures.Add(newFigure)
-        Next
-
-        Dim localBounds = localGeometry.Bounds
-
-        Dim newPath As New System.Windows.Shapes.Path With {
-            .Data = localGeometry,
-            .Stroke = Brushes.Black,
-            .StrokeThickness = 0.5,
-            .Fill = Brushes.Transparent,
-            .Stretch = Stretch.None,
-            .Width = localBounds.Width,
-            .Height = localBounds.Height
-        }
-
-        Canvas.SetLeft(newPath, bounds.Left)
-        Canvas.SetTop(newPath, bounds.Top)
-
-        Dim firstWrapper = TryCast(selectedItems(0).DrawableElement?.Parent, ContentControl)
-        If firstWrapper IsNot Nothing Then
-            Dim canvas = TryCast(VisualTreeHelper.GetParent(firstWrapper), Canvas)
-            If canvas IsNot Nothing Then
-                Dim actions As New List(Of IUndoableAction)()
-
-                _suspendTransformMessageHandling = True
-
-                ' Capture parent groups and determine insertion target
-                Dim parentGroups As New HashSet(Of DrawableGroup)()
-                For Each drawable In selectedItems
-                    Dim pg = GetParentGroup(drawable)
-                    If pg IsNot Nothing Then parentGroups.Add(pg)
-                Next
-
-                Dim insertionGroup = GetTopLevelGroup(GetParentGroup(selectedItems(0)))
-                If insertionGroup Is Nothing Then insertionGroup = DrawingGroup
-
-                ' Add combined shape first
-                Dim addAction As New AddDrawableAction(Me, newPath, insertionGroup)
-                If addAction.Execute() Then
-                    actions.Add(addAction)
-                Else
-                    _suspendTransformMessageHandling = False
-                    _snackbarService.GenerateError("Error", "Failed to create combined shape. Operation aborted.", 4)
-                    Return
-                End If
-
-                ' Remove selected drawables
-                For Each drawable In selectedItems
-                    Dim removeAction As New RemoveDrawableAction(Me, drawable)
-                    If removeAction.Execute() Then
-                        actions.Add(removeAction)
-                    End If
-                Next
-
-                ' Remove empty parent groups (except DrawingGroup or ancestors of insertionGroup)
-                For Each grp In parentGroups
-                    If grp Is DrawingGroup Then Continue For
-                    If Not grp.GroupChildren.Any() AndAlso Not IsAncestorOf(grp, insertionGroup) Then
-                        Dim removeGroupAction As New RemoveGroupAction(Me, grp)
-                        If removeGroupAction.Execute() Then
-                            actions.Add(removeGroupAction)
-                        End If
-                    End If
-                Next
-
-
-
-                _suspendTransformMessageHandling = False
-
-                If actions.Count > 0 Then
-                    _undoRedoService.Push(New CompositeAction(actions))
-                End If
-                Dim operationName = ""
-                Select Case combineMode
-                    Case GeometryCombineMode.Union
-                        operationName = "Union"
-                    Case GeometryCombineMode.Intersect
-                        operationName = "Intersect"
-                    Case GeometryCombineMode.Exclude
-                        operationName = "Subtract"
-                    Case GeometryCombineMode.Xor
-                        operationName = "XOR"
-                End Select
-
-            End If
-        End If
+        _suspendTransformMessageHandling = False
     End Sub
-
-    Private Function GetTransformedGeometry(drawable As IDrawable) As Geometry
-        If drawable?.DrawableElement Is Nothing Then Return Nothing
-
-        Dim element = drawable.DrawableElement
-        Dim wrapper = TryCast(element.Parent, ContentControl)
-        If wrapper Is Nothing Then Return Nothing
-
-        Dim geometry As Geometry = Nothing
-
-        If TypeOf element Is Rectangle Then
-            Dim rect = CType(element, Rectangle)
-            geometry = New RectangleGeometry(New Rect(0, 0, rect.ActualWidth, rect.ActualHeight))
-
-        ElseIf TypeOf element Is Ellipse Then
-            Dim ellipse = CType(element, Ellipse)
-            Dim radiusX = ellipse.ActualWidth / 2
-            Dim radiusY = ellipse.ActualHeight / 2
-            geometry = New EllipseGeometry(New Point(radiusX, radiusY), radiusX, radiusY)
-
-        ElseIf TypeOf element Is Line Then
-            Dim line = CType(element, Line)
-            Dim lineGeometry As New LineGeometry(New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
-            Dim thickness = If(line.StrokeThickness > 0, line.StrokeThickness, 1.0)
-            geometry = lineGeometry.GetWidenedPathGeometry(New Pen(Brushes.Black, thickness))
-
-        ElseIf TypeOf element Is System.Windows.Shapes.Path Then
-            Dim path = CType(element, System.Windows.Shapes.Path)
-            If path.Data IsNot Nothing Then
-                geometry = path.Data.Clone()
-            End If
-
-        ElseIf TypeOf element Is TextBox Then
-            Dim textBox = CType(element, TextBox)
-            If Not String.IsNullOrEmpty(textBox.Text) Then
-                Dim formattedText As New FormattedText(
-                    textBox.Text,
-                    Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    New Typeface(textBox.FontFamily, textBox.FontStyle, textBox.FontWeight, textBox.FontStretch),
-                    textBox.FontSize,
-                    Brushes.Black,
-                    1.0)
-
-                geometry = formattedText.BuildGeometry(New Point(0, 0))
-            End If
-        End If
-
-        If geometry Is Nothing Then Return Nothing
-
-        Dim elementTransformGroup = TryCast(element.RenderTransform, TransformGroup)
-        If elementTransformGroup IsNot Nothing Then
-            Dim elementScale = elementTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-            If elementScale IsNot Nothing Then
-                Dim scaleTransform = New ScaleTransform(elementScale.ScaleX, elementScale.ScaleY,
-                    geometry.Bounds.Width / 2, geometry.Bounds.Height / 2)
-                geometry = Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, scaleTransform)
-            End If
-        End If
-
-        Dim transformGroup As New TransformGroup()
-
-        If Not TypeOf element Is TextBox Then
-            If geometry.Bounds.Width > 0 AndAlso geometry.Bounds.Height > 0 Then
-                Dim scaleX = wrapper.ActualWidth / geometry.Bounds.Width
-                Dim scaleY = wrapper.ActualHeight / geometry.Bounds.Height
-                transformGroup.Children.Add(New ScaleTransform(scaleX, scaleY))
-            End If
-        End If
-
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            transformGroup.Children.Add(New RotateTransform(rotateTransform.Angle,
-                wrapper.ActualWidth / 2, wrapper.ActualHeight / 2))
-        End If
-
-        Dim left = Canvas.GetLeft(wrapper)
-        Dim top = Canvas.GetTop(wrapper)
-        If Not Double.IsNaN(left) AndAlso Not Double.IsNaN(top) Then
-            If TypeOf element Is TextBox Then
-                transformGroup.Children.Add(New TranslateTransform(left + 3, top + 1))
-            Else
-                transformGroup.Children.Add(New TranslateTransform(left, top))
-            End If
-        End If
-
-        Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
-    End Function
-
 
     <NotifyPropertyChangedFor(NameOf(CurrentProjectName))>
     <ObservableProperty> Private _currentProjectPath As String = Nothing

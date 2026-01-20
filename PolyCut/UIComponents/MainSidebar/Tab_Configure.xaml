@@ -407,7 +407,11 @@
 
 
                             <local:LabeledNumberBoxControl
+                                x:Name="ShadingThresholdControl"
+                                Background="Transparent"
                                 LabelText="Shading Threshold"
+                                MouseEnter="LabeledNumberBoxControl_MouseEnter"
+                                MouseLeave="LabeledNumberBoxControl_MouseLeave"
                                 Text="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                 TextBoxWidth="120"
                                 ToolTipService.ShowOnDisabled="True">

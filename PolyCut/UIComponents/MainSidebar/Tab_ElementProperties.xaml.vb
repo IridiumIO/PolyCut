@@ -278,7 +278,14 @@ Public Class Tab_ElementProperties
 
 
         Dim tb = TryCast(sender, WPF.Ui.Controls.TextBox)
-        If tb Is Nothing Then Return
+        If tb Is Nothing Then
+            Dim nb = TryCast(sender, WPF.Ui.Controls.NumberBox)
+            If nb IsNot Nothing Then
+                nb.Value = nb.Value Mod 360
+            End If
+
+            Return
+        End If
         tb.SelectAll()
         e.Handled = True
     End Sub

@@ -67,8 +67,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         ' Watch for font / layout-related property changes so geometry updates automatically
         _fontPropertyDescriptors = New List(Of DependencyPropertyDescriptor)()
         Dim watchProps() As DependencyProperty = {
-            TextBox.FontSizeProperty,
-            TextBox.FontFamilyProperty,
             TextBox.FontStyleProperty,
             TextBox.FontWeightProperty,
             TextBox.FontStretchProperty,
@@ -84,11 +82,30 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             End If
         Next
 
+        Dim fontSizeDesc = DependencyPropertyDescriptor.FromProperty(TextBox.FontSizeProperty, GetType(TextBox))
+        If fontSizeDesc IsNot Nothing Then
+            fontSizeDesc.AddValueChanged(tb, AddressOf OnFontSizeChanged)
+        End If
+        Dim fontFamilyDesc = DependencyPropertyDescriptor.FromProperty(TextBox.FontFamilyProperty, GetType(TextBox))
+        If fontFamilyDesc IsNot Nothing Then
+            fontFamilyDesc.AddValueChanged(tb, AddressOf OnFontFamilyChanged)
+        End If
+
         ' Initial update (defer to allow control to be measured/rendered)
         tb.Dispatcher.BeginInvoke(New Action(Sub() UpdateTextGeometry()), DispatcherPriority.Loaded)
     End Sub
 
     Private Sub OnTextBoxVisualChanged(sender As Object, e As EventArgs)
+        UpdateTextGeometry()
+    End Sub
+
+    Private Sub OnFontSizeChanged(sender As Object, e As EventArgs)
+        RefreshVisualBox()
+        UpdateTextGeometry()
+    End Sub
+
+    Private Sub OnFontFamilyChanged(sender As Object, e As EventArgs)
+        RefreshVisualBox()
         UpdateTextGeometry()
     End Sub
 
@@ -148,6 +165,15 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         tb.Background = _drawingBrush
     End Sub
 
+    Public Sub RefreshVisualBox()
+        _attachedTextBox.Focus()
+        _attachedTextBox.UpdateLayout()
+        Dim wrapper As ContentControl = CType(_attachedTextBox.Parent, ContentControl)
+        wrapper.Width = _attachedTextBox.ActualWidth
+        wrapper.Height = _attachedTextBox.ActualHeight
+        wrapper.FocusVisualStyle = Nothing
+        wrapper.Focus()
+    End Sub
 
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG

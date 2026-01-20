@@ -162,9 +162,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
             If textbox Is Nothing Then Return
 
             textbox.FontSize += 1
-            textbox.UpdateLayout()
-            wrapper.Width = textbox.Width
-            wrapper.Height = textbox.Height
+
 
         ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
             Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
@@ -178,10 +176,6 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
             If textbox.FontSize > 1 Then
                 textbox.FontSize -= 1
-
-                textbox.UpdateLayout()
-                wrapper.Width = textbox.Width
-                wrapper.Height = textbox.Height
             End If
         End If
 

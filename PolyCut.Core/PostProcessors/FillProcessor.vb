@@ -76,6 +76,8 @@ Public Class FillProcessor : Implements IProcessor
         Dim currentPoint As Vector2
         If startPoint.HasValue Then
             currentPoint = startPoint.Value
+        ElseIf workingLines.Count > 0 Then
+            currentPoint = workingLines(0).StartPoint
         Else
             currentPoint = New Vector2(0, 0)
         End If

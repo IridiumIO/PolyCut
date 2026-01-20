@@ -211,18 +211,32 @@ Partial Module GeoLineExtensions
 
     <Extension>
     Public Function IsPointOnLineG(point As Vector2, line As GeoLine, tolerance As Double) As Boolean
-        ' Check if the point is on the line within the given tolerance
-        Dim crossProduct As Double = (point.Y - line.Y1) * (line.X2 - line.X1) - (point.X - line.X1) * (line.Y2 - line.Y1)
-        Dim squaredLength As Double = (line.X2 - line.X1) ^ 2 + (line.Y2 - line.Y1) ^ 2
-        Dim squaredTolerance = tolerance ^ 2
-        If Math.Abs(crossProduct ^ 2) > (squaredTolerance * squaredLength) Then Return False
+        Dim dx As Double = line.X2 - line.X1
+        Dim dy As Double = line.Y2 - line.Y1
 
+        Dim len2 As Double = dx * dx + dy * dy
+        Dim tol As Double = tolerance
 
-        Dim dotProduct As Double = (point.X - line.X1) * (line.X2 - line.X1) + (point.Y - line.Y1) * (line.Y2 - line.Y1)
-        If dotProduct + tolerance < 0 Then Return False
+        ' Degenerate segment: treat as "point within tolerance"
+        If len2 <= 0.0000000001 Then
+            Dim dist2 As Double = (point.X - line.X1) * (point.X - line.X1) + (point.Y - line.Y1) * (point.Y - line.Y1)
+            Return dist2 <= (tol * tol)
+        End If
 
-        If dotProduct > squaredLength + tolerance Then Return False
+        ' Perpendicular distance test (your current cross-product approach, but written directly as squared compare)
+        Dim cross As Double = (point.Y - line.Y1) * dx - (point.X - line.X1) * dy
+        ' Check: cross^2 <= tol^2 * len^2
+        If (cross * cross) > (tol * tol) * len2 Then Return False
 
+        ' Projection parameter t in [0,1] with tolerance margin
+        Dim dot As Double = (point.X - line.X1) * dx + (point.Y - line.Y1) * dy
+        Dim t As Double = dot / len2
+
+        Dim len As Double = Math.Sqrt(len2)
+        Dim eps As Double = tol / len   ' unitless
+
+        If t < -eps Then Return False
+        If t > 1.0 + eps Then Return False
 
         Return True
     End Function

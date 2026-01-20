@@ -81,18 +81,14 @@
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                     IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
-                                    LostKeyboardFocus="TextBox_LostKeyboardFocus">
+                                    LostFocus="TextBox_LostFocus">
                                     <ui:TextBox.Text>
-                                        <PriorityBinding>
-                                            <Binding
-                                                Converter="{StaticResource UnitConverter}"
-                                                Mode="OneWay"
-                                                Path="MainVM.SelectedWrapper.Width" />
-                                            <Binding
-                                                Converter="{StaticResource UnitConverter}"
-                                                Mode="OneWay"
-                                                Path="MainVM.SelectedWrapper.ActualWidth" />
-                                        </PriorityBinding>
+                                        <Binding
+                                            Converter="{StaticResource UnitConverter}"
+                                            Mode="TwoWay"
+                                            Path="MainVM.SelectedWrapper.Width"
+                                            UpdateSourceTrigger="Explicit" />
+
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
                                 <Label
@@ -107,19 +103,17 @@
                                     Grid.Column="4"
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
-                                    LostKeyboardFocus="TextBox_LostKeyboardFocus">
+                                    IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}" 
+                                    LostFocus="TextBox_LostFocus">
                                     <ui:TextBox.Text>
-                                        <PriorityBinding>
-                                            <Binding
-                                                Converter="{StaticResource UnitConverter}"
-                                                Mode="OneWay"
-                                                Path="MainVM.SelectedWrapper.Height" />
-                                            <Binding
-                                                Converter="{StaticResource UnitConverter}"
-                                                Mode="OneWay"
-                                                Path="MainVM.SelectedWrapper.ActualHeight" />
-                                        </PriorityBinding>
+                                        <Binding
+                                            Converter="{StaticResource UnitConverter}"
+                                            Mode="TwoWay"
+                                            NotifyOnValidationError="True"
+                                            Path="MainVM.SelectedWrapper.Height"
+                                            UpdateSourceTrigger="Explicit"
+                                            ValidatesOnExceptions="True" />
+
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
 
@@ -135,8 +129,8 @@
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                     IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
-                                    LostKeyboardFocus="TextBox_LostKeyboardFocus"
-                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=OneWay, Converter={StaticResource UnitConverter}}" />
+                                    LostFocus="TextBox_LostFocus"
+                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit}" />
                                 <Label
                                     Grid.Row="2"
                                     Grid.Column="3"
@@ -150,8 +144,8 @@
                                     ClearButtonEnabled="False"
                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                     IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
-                                    LostKeyboardFocus="TextBox_LostKeyboardFocus"
-                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=OneWay, Converter={StaticResource UnitConverter}}" />
+                                    LostFocus="TextBox_LostFocus"
+                                    Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit}" />
 
                                 <Label
                                     Grid.Row="4"

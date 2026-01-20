@@ -67,14 +67,26 @@ Public Class InputToMillimetresConverter
             Catch ex As Exception
                 ' Handle invalid expressions or other exceptions
                 Debug.WriteLine("error")
-                input = 0
+                Return DependencyProperty.UnsetValue
             End Try
 
         End If
 
         Dim convertedDecimal As Decimal = UnitConverter(input)
-        If convertedDecimal <= 0 Then Return 0
-        Return convertedDecimal
+        If convertedDecimal <= 0D Then
+
+            Return DependencyProperty.UnsetValue
+        End If
+
+        If targetType Is GetType(Double) OrElse targetType Is GetType(Double?) Then
+            Return CDbl(convertedDecimal)
+        End If
+
+        If targetType Is GetType(Decimal) OrElse targetType Is GetType(Decimal?) Then
+            Return convertedDecimal
+        End If
+
+        Return CDbl(convertedDecimal)
 
 
     End Function

@@ -1,4 +1,5 @@
 Imports System.ComponentModel
+Imports System.Globalization
 
 Imports PolyCut.RichCanvas
 
@@ -262,21 +263,43 @@ Public Class Tab_ElementProperties
     End Sub
 
 
-    Private Sub TextBox_LostKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
+
+    Private ReadOnly _mmConv As New InputToMillimetresConverter()
+
+    Private Sub TextBox_LostFocus(sender As Object, e As RoutedEventArgs)
 
         If MainVM.SelectedWrapper Is Nothing OrElse MainVM.SelectedDrawable Is Nothing Then Return
+        If _before Is Nothing Then Return
 
-        TransformAction.SetSizeAndPosition(MainVM.SelectedWrapper, WidthTextBox.Text, HeightTextBox.Text, XTextBox.Text, YTextBox.Text)
+        CommitTextBox(CType(sender, WPF.Ui.Controls.TextBox))
+
+
+
+        TransformAction.SetSizeAndPosition(MainVM.SelectedWrapper, MainVM.SelectedWrapper.Width,
+        MainVM.SelectedWrapper.Height,
+        Canvas.GetLeft(MainVM.SelectedWrapper),
+        Canvas.GetTop(MainVM.SelectedWrapper))
+
+        MainVM.SelectedWrapper.UpdateLayout()
         _after = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
 
-        Dim items As New List(Of (IDrawable, Object, Object))()
-        items.Add((MainVM.SelectedDrawable, _before, _after))
+        Dim items As New List(Of (IDrawable, Object, Object)) From {
+        (MainVM.SelectedDrawable, _before, _after)
+    }
 
-        Dim msg As New TransformCompletedMessage With {.Items = items}
-        EventAggregator.Publish(Of TransformCompletedMessage)(msg)
+        EventAggregator.Publish(Of TransformCompletedMessage)(
+                New TransformCompletedMessage With {.Items = items}
+            )
 
         _before = Nothing
         _after = Nothing
-
     End Sub
+
+
+    Private Function CommitTextBox(tb As WPF.Ui.Controls.TextBox) As Boolean
+        Dim be = tb.GetBindingExpression(WPF.Ui.Controls.TextBox.TextProperty)
+        If be Is Nothing Then Return True
+        be.UpdateSource()
+        Return Not Validation.GetHasError(tb)
+    End Function
 End Class

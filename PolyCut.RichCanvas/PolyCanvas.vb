@@ -185,9 +185,9 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
         If newCollection IsNot Nothing Then
             AddHandler newCollection.CollectionChanged, AddressOf canvas.OnCollectionChanged
-            ' Add existing items to the canvas
-            For Each item In newCollection
-                canvas.AddChild(item)
+            ' Add existing items to the canvas at their respective indices
+            For i As Integer = 0 To newCollection.Count - 1
+                canvas.InsertDrawableVisual(newCollection(i), i)
             Next
         End If
     End Sub
@@ -196,8 +196,13 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     Private Sub OnCollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
         Select Case e.Action
             Case NotifyCollectionChangedAction.Add
-                For Each newItem As IDrawable In e.NewItems
-                    AddChild(newItem)
+                Dim startIndex As Integer = e.NewStartingIndex
+                If startIndex < 0 Then startIndex = -1
+
+                For i As Integer = 0 To e.NewItems.Count - 1
+                    Dim newItem As IDrawable = CType(e.NewItems(i), IDrawable)
+                    Dim insertIndex As Integer = If(startIndex >= 0, startIndex + i, -1)
+                    InsertDrawableVisual(newItem, insertIndex)
                 Next
             Case NotifyCollectionChangedAction.Remove
                 For Each oldItem As IDrawable In e.OldItems
@@ -213,9 +218,13 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         End Select
     End Sub
 
-    Private Sub AddChild(child As FrameworkElement, Optional parentIDrawable As IDrawable = Nothing)
+    Private Sub AddChild(child As FrameworkElement, Optional parentIDrawable As IDrawable = Nothing, Optional insertIndex As Integer = -1)
         If TypeOf child Is ContentControl Then
-            Me.Children.Add(child)
+            If insertIndex >= 0 AndAlso insertIndex <= Me.Children.Count Then
+                Me.Children.Insert(insertIndex, child)
+            Else
+                Me.Children.Add(child)
+            End If
         Else
             Dim wrapper As New ContentControl With {
                     .Content = child,
@@ -262,7 +271,11 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
             End If
 
-            Me.Children.Add(wrapper)
+            If insertIndex >= 0 AndAlso insertIndex <= Me.Children.Count Then
+                Me.Children.Insert(insertIndex, wrapper)
+            Else
+                Me.Children.Add(wrapper)
+            End If
             AddHandler wrapper.SizeChanged, AddressOf DesignerItem_SizeChanged
         End If
     End Sub
@@ -388,6 +401,16 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     Private Sub AddChild(drawable As IDrawable)
         Dim child As FrameworkElement = drawable.DrawableElement
         AddChild(child, drawable)
+    End Sub
+
+    Private Sub AddChild(drawable As IDrawable, Optional insertIndex As Integer = -1)
+        Dim child As FrameworkElement = drawable.DrawableElement
+        AddChild(child, drawable, insertIndex)
+    End Sub
+
+    Private Sub InsertDrawableVisual(drawable As IDrawable, Optional insertIndex As Integer = -1)
+        Dim child As FrameworkElement = drawable.DrawableElement
+        AddChild(child, drawable, insertIndex)
     End Sub
 
     Private Sub RemoveChild(child As FrameworkElement)

@@ -452,14 +452,31 @@ Partial Public Class MainViewModel
         Dim actions As New List(Of IUndoableAction)()
 
         _suspendTransformMessageHandling = True
+
+        ' Capture parent groups
+        Dim parentGroups As New HashSet(Of DrawableGroup)()
         For Each drawable In selectedItems
-            If drawable IsNot Nothing Then
-                Dim action As New RemoveDrawableAction(Me, drawable)
-                If action.Execute() Then
-                    actions.Add(action)
+            Dim pg = GetParentGroup(drawable)
+            If pg IsNot Nothing Then parentGroups.Add(pg)
+        Next
+
+        For Each drawable In selectedItems
+            Dim action As New RemoveDrawableAction(Me, drawable)
+            If action.Execute() Then
+                actions.Add(action)
+            End If
+        Next
+
+        ' Remove empty parent groups
+        For Each grp In parentGroups
+            If grp IsNot DrawingGroup AndAlso Not grp.GroupChildren.Any() Then
+                Dim removeGroupAction As New RemoveGroupAction(Me, grp)
+                If removeGroupAction.Execute() Then
+                    actions.Add(removeGroupAction)
                 End If
             End If
         Next
+
         _suspendTransformMessageHandling = False
 
         If actions.Count > 0 Then
@@ -502,11 +519,31 @@ Partial Public Class MainViewModel
     End Sub
 
     Friend Function GetTopLevelGroup(g As DrawableGroup) As DrawableGroup
+        If g Is Nothing Then Return Nothing
         Dim cur As DrawableGroup = g
         While cur IsNot Nothing AndAlso cur.ParentGroup IsNot Nothing
             cur = TryCast(cur.ParentGroup, DrawableGroup)
         End While
         Return cur
+    End Function
+
+    Private Function GetParentGroup(drawable As IDrawable) As DrawableGroup
+        If drawable Is Nothing Then Return Nothing
+        Dim pg = TryCast(drawable.ParentGroup, DrawableGroup)
+        If pg Is Nothing Then
+            pg = ImportedGroups.FirstOrDefault(Function(g) g.GroupChildren.Contains(drawable))
+        End If
+        Return pg
+    End Function
+
+    Private Function IsAncestorOf(potentialAncestor As DrawableGroup, group As DrawableGroup) As Boolean
+        If potentialAncestor Is Nothing OrElse group Is Nothing Then Return False
+        Dim cur = group
+        While cur IsNot Nothing
+            If cur Is potentialAncestor Then Return True
+            cur = TryCast(cur.ParentGroup, DrawableGroup)
+        End While
+        Return False
     End Function
 
     ' -----------------
@@ -703,20 +740,42 @@ Partial Public Class MainViewModel
 
                 _suspendTransformMessageHandling = True
 
-                Dim parentGroup = TryCast(selectedItems(0).ParentGroup, DrawableGroup)
-                If parentGroup Is Nothing Then
-                    parentGroup = ImportedGroups.FirstOrDefault(Function(g) g.GroupChildren.Contains(selectedItems(0)))
-                End If
+                ' Capture parent groups and determine insertion target
+                Dim parentGroups As New HashSet(Of DrawableGroup)()
+                For Each drawable In selectedItems
+                    Dim pg = GetParentGroup(drawable)
+                    If pg IsNot Nothing Then parentGroups.Add(pg)
+                Next
 
-                Dim addAction As New AddDrawableAction(Me, newPath, parentGroup)
+                Dim insertionGroup = GetTopLevelGroup(GetParentGroup(selectedItems(0)))
+                If insertionGroup Is Nothing Then insertionGroup = DrawingGroup
+
+                ' Add combined shape first
+                Dim addAction As New AddDrawableAction(Me, newPath, insertionGroup)
                 If addAction.Execute() Then
                     actions.Add(addAction)
+                Else
+                    _suspendTransformMessageHandling = False
+                    _snackbarService.GenerateError("Error", "Failed to create combined shape. Operation aborted.", 4)
+                    Return
                 End If
 
+                ' Remove selected drawables
                 For Each drawable In selectedItems
                     Dim removeAction As New RemoveDrawableAction(Me, drawable)
                     If removeAction.Execute() Then
                         actions.Add(removeAction)
+                    End If
+                Next
+
+                ' Remove empty parent groups (except DrawingGroup or ancestors of insertionGroup)
+                For Each grp In parentGroups
+                    If grp Is DrawingGroup Then Continue For
+                    If Not grp.GroupChildren.Any() AndAlso Not IsAncestorOf(grp, insertionGroup) Then
+                        Dim removeGroupAction As New RemoveGroupAction(Me, grp)
+                        If removeGroupAction.Execute() Then
+                            actions.Add(removeGroupAction)
+                        End If
                     End If
                 Next
 

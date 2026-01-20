@@ -6,6 +6,7 @@ Public Class AddDrawableAction : Implements IUndoableAction
     Private ReadOnly _element As FrameworkElement
     Private _drawable As IDrawable
     Private _parentGroup As DrawableGroup
+    Private _indexInCollection As Integer = -1
 
     Public Sub New(manager As IDrawableManager, element As FrameworkElement)
         _manager = manager
@@ -30,6 +31,11 @@ Public Class AddDrawableAction : Implements IUndoableAction
         If _drawable Is Nothing Then Return False
 
         AddDrawableToManager()
+
+        ' Capture the index the drawable was placed at so redo can restore it exactly
+        If _manager.DrawableCollection IsNot Nothing Then
+            _indexInCollection = _manager.DrawableCollection.IndexOf(_drawable)
+        End If
 
         Return True
     End Function
@@ -113,9 +119,16 @@ Public Class AddDrawableAction : Implements IUndoableAction
             _parentGroup = mainVM.DrawingGroup
         End If
 
+        ' Ensure parent group is present in ImportedGroups if necessary
+        If _parentGroup IsNot Nothing AndAlso Not (_parentGroup Is mainVM.DrawingGroup) Then
+            If Not mainVM.ImportedGroups.Contains(_parentGroup) Then
+                mainVM.ImportedGroups.Add(_parentGroup)
+            End If
+        End If
+
         _parentGroup.AddChild(_drawable)
         If Not _manager.DrawableCollection.Contains(_drawable) Then
-            _manager.DrawableCollection.Add(_drawable)
+            _manager.AddDrawableToCollection(_drawable, -1)
         End If
     End Sub
 
@@ -126,7 +139,6 @@ Public Class AddDrawableAction : Implements IUndoableAction
 
         If _parentGroup IsNot Nothing Then
             _parentGroup.RemoveChild(_drawable)
-            _manager.CleanupEmptyGroup(_parentGroup)
         End If
 
         _manager.ClearDrawableParent(_drawable)
@@ -141,10 +153,10 @@ Public Class AddDrawableAction : Implements IUndoableAction
             End If
 
             If Not _manager.DrawableCollection.Contains(_drawable) Then
-                _manager.DrawableCollection.Add(_drawable)
+                _manager.AddDrawableToCollection(_drawable, _indexInCollection)
             End If
         Else
-            _manager.AddDrawableToCollection(_drawable, -1)
+            _manager.AddDrawableToCollection(_drawable, _indexInCollection)
         End If
     End Sub
 

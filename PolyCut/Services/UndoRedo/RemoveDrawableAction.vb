@@ -15,7 +15,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         _drawable = drawable
 
         _parentGroup = TryCast(drawable.ParentGroup, DrawableGroup)
-        _indexInCollection = If(_manager.DrawableCollection IsNot Nothing, Math.Max(0, _manager.DrawableCollection.IndexOf(drawable)), -1)
+        _indexInCollection = If(_manager.DrawableCollection IsNot Nothing, _manager.DrawableCollection.IndexOf(drawable), -1)
 
         Try
             Dim wrapper = TryCast(_drawable?.DrawableElement?.Parent, ContentControl)
@@ -47,7 +47,6 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         If _parentGroup IsNot Nothing Then
             _parentGroup.RemoveChild(_drawable)
-            _manager.CleanupEmptyGroup(_parentGroup)
         End If
 
         _manager.ClearDrawableParent(_drawable)
@@ -79,7 +78,11 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
             End If
 
             If Not _manager.DrawableCollection.Contains(_drawable) Then
-                _manager.DrawableCollection.Add(_drawable)
+                If _indexInCollection >= 0 Then
+                    _manager.AddDrawableToCollection(_drawable, _indexInCollection)
+                Else
+                    _manager.AddDrawableToCollection(_drawable, -1)
+                End If
             End If
         Else
             _manager.AddDrawableToCollection(_drawable, _indexInCollection)

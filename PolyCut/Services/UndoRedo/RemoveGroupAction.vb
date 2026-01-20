@@ -75,7 +75,6 @@ Public Class RemoveGroupAction : Implements IUndoableAction
 
         If _parentGroup IsNot Nothing Then
             _parentGroup.RemoveChild(_group)
-            _manager.CleanupEmptyGroup(_parentGroup)
         Else
             If mainVM IsNot Nothing AndAlso mainVM.ImportedGroups.Contains(_group) Then
                 mainVM.ImportedGroups.Remove(_group)

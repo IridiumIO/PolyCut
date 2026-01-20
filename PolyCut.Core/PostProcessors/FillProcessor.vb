@@ -47,26 +47,92 @@ Public Class FillProcessor : Implements IProcessor
     End Function
     Public Shared Function GetLinesWithinShape(shapeBoundaries As List(Of GeoLine), ray As GeoLine) As List(Of GeoLine)
 
-        Dim intersectionPoints As New List(Of Vector2)
+        Const interTol As Double = 0.000000001   ' intersection math tolerance intentioanlly small
+        Const mergeTol As Double = 1.0           ' in already scaled units (0.01mm at 100,000x scaling)
+        Dim mergeTol2 As Double = mergeTol * mergeTol
 
-        For Each line In shapeBoundaries
-            Dim intersection = ray.GetIntersectionPointWith(line, True)
-            If intersection IsNot Nothing Then
-                intersectionPoints.Add(intersection)
+        Dim dir As Vector2 = ray.EndPoint - ray.StartPoint
+        Dim dirLen2 As Double = dir.LengthSquared()
+        If dirLen2 <= 0 OrElse shapeBoundaries Is Nothing OrElse shapeBoundaries.Count = 0 Then Return New List(Of GeoLine)
+
+
+        ' Collect intersections with parameter t along the ray.
+        Dim hits As New List(Of (t As Double, p As Vector2))(shapeBoundaries.Count \ 2)
+        Dim rayStart As Vector2 = ray.StartPoint
+
+        For Each edge In shapeBoundaries
+            Dim hit = ray.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=interTol)
+            If hit.HasValue Then
+                Dim p As Vector2 = hit.Value
+                Dim t As Double = Vector2.Dot(p - rayStart, dir) / dirLen2
+                hits.Add((t, p))
             End If
         Next
 
-        Dim segments As New List(Of GeoLine)
+        If hits.Count < 2 Then Return New List(Of GeoLine)
+        hits.Sort(Function(a, b) a.t.CompareTo(b.t)) ' Sort along the ray.
 
-        intersectionPoints = intersectionPoints.OrderBy(Function(p) p.X).ThenBy(Function(p) p.Y).ToList()
+        ' Merge near-duplicate intersections (vertex hits).
+        Dim pts As New List(Of Vector2)(hits.Count)
+        Dim last As Vector2 = hits(0).p
+        pts.Add(last)
 
-        ' Iterate through pairs of intersection points to create segments
-        For i As Integer = 0 To intersectionPoints.Count - 2 Step 2
-            segments.Add(intersectionPoints(i).LineTo(intersectionPoints(i + 1)))
+        For i As Integer = 1 To hits.Count - 1
+            Dim p As Vector2 = hits(i).p
+            If Vector2.DistanceSquared(last, p) > mergeTol2 Then
+                pts.Add(p)
+                last = p
+            End If
+        Next
+
+        If pts.Count < 2 Then Return New List(Of GeoLine)
+
+        ' Build potential intervals and keep those whose midpoint is inside (even-odd).
+        Dim segments As New List(Of GeoLine)(Math.Max(0, pts.Count - 1))
+
+        For i As Integer = 0 To pts.Count - 2
+            Dim a As Vector2 = pts(i)
+            Dim b As Vector2 = pts(i + 1)
+
+            If Vector2.DistanceSquared(a, b) <= mergeTol2 Then Continue For
+
+            Dim mid As New Vector2((a.X + b.X) * 0.5, (a.Y + b.Y) * 0.5)
+
+            If IsPointInsideEvenOdd(mid, shapeBoundaries) Then
+                segments.Add(a.LineTo(b))
+            End If
         Next
 
         Return segments
+    End Function
 
+    Private Shared Function IsPointInsideEvenOdd(p As Vector2, edges As List(Of GeoLine)) As Boolean
+        Dim inside As Boolean = False
+        Dim py As Double = p.Y
+        Dim px As Double = p.X
+
+        For Each e In edges
+            Dim x1 As Double = e.X1
+            Dim y1 As Double = e.Y1
+            Dim x2 As Double = e.X2
+            Dim y2 As Double = e.Y2
+
+            ' Skip horizontal edges
+            If y1 = y2 Then Continue For
+
+            Dim yMin As Double, yMax As Double
+            If y1 < y2 Then
+                yMin = y1 : yMax = y2
+            Else
+                yMin = y2 : yMax = y1
+            End If
+
+            If py <= yMin OrElse py > yMax Then Continue For
+            Dim xInt As Double = x1 + (py - y1) * (x2 - x1) / (y2 - y1)
+            If xInt > px Then inside = Not inside
+        Next
+
+        Return inside
     End Function
 
 

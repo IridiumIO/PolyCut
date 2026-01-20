@@ -229,35 +229,28 @@ Partial Public Class MainViewModel
             Return
         End If
 
-        If msg Is Nothing OrElse msg.Items Is Nothing OrElse msg.Items.Count = 0 Then Return
+        If msg?.Items Is Nothing OrElse msg.Items.Count = 0 Then Return
 
-        Dim items As New List(Of (IDrawable, TransformAction.Snapshot, TransformAction.Snapshot))()
+        Dim items = msg.Items.
+            Where(Function(it) it.Drawable IsNot Nothing).
+            Select(Function(it) (drawable:=it.Drawable, before:=TryCast(it.Before, TransformAction.Snapshot), after:=TryCast(it.After, TransformAction.Snapshot))).
+            Where(Function(t) t.before IsNot Nothing AndAlso t.after IsNot Nothing AndAlso Not IsTransformUnchanged(t.before, t.after)).
+            Select(Function(t) (t.drawable, t.before, t.after)).
+            ToList()
 
-        For Each it In msg.Items
-            Dim drawable = it.Drawable
-            If drawable Is Nothing Then Continue For
-
-            Dim beforeSnap = TryCast(it.Before, TransformAction.Snapshot)
-            Dim afterSnap = TryCast(it.After, TransformAction.Snapshot)
-
-            If beforeSnap IsNot Nothing AndAlso afterSnap IsNot Nothing Then
-                Dim unchanged As Boolean = Math.Abs(beforeSnap.Left - afterSnap.Left) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Top - afterSnap.Top) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Width - afterSnap.Width) < 0.01 AndAlso
-                                      Math.Abs(beforeSnap.Height - afterSnap.Height) < 0.01 AndAlso
-                                      ((beforeSnap.RenderTransform Is Nothing AndAlso afterSnap.RenderTransform Is Nothing) OrElse
-                                       (beforeSnap.RenderTransform IsNot Nothing AndAlso afterSnap.RenderTransform IsNot Nothing AndAlso beforeSnap.RenderTransform.Value = afterSnap.RenderTransform.Value))
-
-                If Not unchanged Then
-                    items.Add((drawable, beforeSnap, afterSnap))
-                End If
-            End If
-        Next
-
-        If items.Count = 0 Then Return
-
-        _undoRedoService.Push(New TransformAction(items))
+        If items.Count > 0 Then
+            _undoRedoService.Push(New TransformAction(items))
+        End If
     End Sub
+
+    Private Function IsTransformUnchanged(before As TransformAction.Snapshot, after As TransformAction.Snapshot) As Boolean
+        Return Math.Abs(before.Left - after.Left) < 0.01 AndAlso
+               Math.Abs(before.Top - after.Top) < 0.01 AndAlso
+               Math.Abs(before.Width - after.Width) < 0.01 AndAlso
+               Math.Abs(before.Height - after.Height) < 0.01 AndAlso
+               ((before.RenderTransform Is Nothing AndAlso after.RenderTransform Is Nothing) OrElse
+                (before.RenderTransform IsNot Nothing AndAlso after.RenderTransform IsNot Nothing AndAlso before.RenderTransform.Value = after.RenderTransform.Value))
+    End Function
 
     ' -----------------
     ' Printer management
@@ -409,11 +402,7 @@ Partial Public Class MainViewModel
 
     Public Sub CleanupEmptyGroup(group As IDrawable) Implements IDrawableManager.CleanupEmptyGroup
         Dim drawableGroup = TryCast(group, DrawableGroup)
-        If drawableGroup Is Nothing Then Return
-
-        If drawableGroup Is DrawingGroup OrElse String.Equals(drawableGroup.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
-            Return
-        End If
+        If drawableGroup Is Nothing OrElse IsDrawingGroup(drawableGroup) Then Return
 
         If Not drawableGroup.GroupChildren.Any() Then
             If ImportedGroups.Contains(drawableGroup) Then
@@ -449,32 +438,24 @@ Partial Public Class MainViewModel
         Dim selectedItems = SelectedDrawables.ToList()
         If selectedItems.Count = 0 Then Return
 
+        PerformRemoveDrawables(selectedItems)
+        PolyCanvas.ClearSelection()
+    End Sub
+
+    Private Sub PerformRemoveDrawables(drawables As List(Of IDrawable))
         Dim actions As New List(Of IUndoableAction)()
+        Dim parentGroups = New HashSet(Of DrawableGroup)(drawables.Select(Function(d) GetParentGroup(d)).Where(Function(pg) pg IsNot Nothing))
 
         _suspendTransformMessageHandling = True
 
-        ' Capture parent groups
-        Dim parentGroups As New HashSet(Of DrawableGroup)()
-        For Each drawable In selectedItems
-            Dim pg = GetParentGroup(drawable)
-            If pg IsNot Nothing Then parentGroups.Add(pg)
-        Next
-
-        For Each drawable In selectedItems
+        For Each drawable In drawables
             Dim action As New RemoveDrawableAction(Me, drawable)
-            If action.Execute() Then
-                actions.Add(action)
-            End If
+            If action.Execute() Then actions.Add(action)
         Next
 
-        ' Remove empty parent groups
-        For Each grp In parentGroups
-            If grp IsNot DrawingGroup AndAlso Not grp.GroupChildren.Any() Then
-                Dim removeGroupAction As New RemoveGroupAction(Me, grp)
-                If removeGroupAction.Execute() Then
-                    actions.Add(removeGroupAction)
-                End If
-            End If
+        For Each grp In parentGroups.Where(Function(g) Not IsDrawingGroup(g) AndAlso Not g.GroupChildren.Any())
+            Dim removeGroupAction As New RemoveGroupAction(Me, grp)
+            If removeGroupAction.Execute() Then actions.Add(removeGroupAction)
         Next
 
         _suspendTransformMessageHandling = False
@@ -482,34 +463,19 @@ Partial Public Class MainViewModel
         If actions.Count > 0 Then
             _undoRedoService.Push(New CompositeAction(actions))
         End If
-
-        PolyCanvas.ClearSelection()
     End Sub
 
     <RelayCommand>
     Private Sub RemoveGroup(group As DrawableGroup)
         If group Is Nothing Then Return
-        If group Is DrawingGroup OrElse String.Equals(group.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
+
+        If IsDrawingGroup(group) Then
             Dim children = group.GroupChildren.ToList()
             If children.Count = 0 Then
                 _snackbarService.GenerateError("Error", "Drawing Group is already empty", 3)
                 Return
             End If
-
-            Dim actions As New List(Of IUndoableAction)()
-
-            _suspendTransformMessageHandling = True
-            For Each child In children
-                Dim action As New RemoveDrawableAction(Me, child)
-                If action.Execute() Then
-                    actions.Add(action)
-                End If
-            Next
-            _suspendTransformMessageHandling = False
-
-            If actions.Count > 0 Then
-                _undoRedoService.Push(New CompositeAction(actions))
-            End If
+            PerformRemoveDrawables(children)
         Else
             Dim action As New RemoveGroupAction(Me, group)
             If action.Execute() Then
@@ -544,6 +510,33 @@ Partial Public Class MainViewModel
             cur = TryCast(cur.ParentGroup, DrawableGroup)
         End While
         Return False
+    End Function
+
+    Private Function IsDrawingGroup(group As DrawableGroup) As Boolean
+        Return group Is DrawingGroup OrElse String.Equals(group?.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase)
+    End Function
+
+    Private Function ValidateShapesForBoolean(shapes As List(Of IDrawable)) As (isValid As Boolean, errorMessage As String)
+        For Each drawable In shapes
+            Dim element = drawable.DrawableElement
+
+            If TypeOf element Is Line Then
+                Return (False, "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.")
+            End If
+
+            If TypeOf element Is System.Windows.Shapes.Path Then
+                Dim path = CType(element, System.Windows.Shapes.Path)
+                Dim pathGeo = TryCast(path.Data, PathGeometry)
+                If pathGeo IsNot Nothing Then
+                    For Each figure In pathGeo.Figures
+                        If Not figure.IsClosed Then
+                            Return (False, "Cannot perform boolean operations on open paths. All shapes must be closed.")
+                        End If
+                    Next
+                End If
+            End If
+        Next
+        Return (True, Nothing)
     End Function
 
     ' -----------------
@@ -620,51 +613,36 @@ Partial Public Class MainViewModel
             Return
         End If
 
-        ' Validate shapes
-        For Each drawable In selectedItems
-            Dim element = drawable.DrawableElement
-
-            If TypeOf element Is Line Then
-                _snackbarService.GenerateError("Error", "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.", 4)
-                Return
-            End If
-
-            If TypeOf element Is System.Windows.Shapes.Path Then
-                Dim path = CType(element, System.Windows.Shapes.Path)
-                Dim pathGeo = TryCast(path.Data, PathGeometry)
-                If pathGeo IsNot Nothing Then
-                    For Each figure In pathGeo.Figures
-                        If Not figure.IsClosed Then
-                            _snackbarService.GenerateError("Error", "Cannot perform boolean operations on open paths. All shapes must be closed.", 4)
-                            Return
-                        End If
-                    Next
-                End If
-            End If
-        Next
+        Dim validation = ValidateShapesForBoolean(selectedItems)
+        If Not validation.isValid Then
+            _snackbarService.GenerateError("Error", validation.errorMessage, 4)
+            Return
+        End If
 
         _suspendTransformMessageHandling = True
-
         Dim action As New BooleanOperationAction(Me, selectedItems, combineMode)
         If action.Execute() Then
             _undoRedoService.Push(action)
         Else
-            Dim errorMessage = ""
-            Select Case combineMode
-                Case GeometryCombineMode.Union
-                    errorMessage = "Union operation resulted in an empty geometry. This should not happen."
-                Case GeometryCombineMode.Intersect
-                    errorMessage = "No intersection found. The selected shapes do not overlap."
-                Case GeometryCombineMode.Exclude
-                    errorMessage = "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted."
-                Case GeometryCombineMode.Xor
-                    errorMessage = "XOR operation resulted in an empty geometry. The shapes may be identical."
-            End Select
-            _snackbarService.GenerateError("Error", errorMessage, 4)
+            _snackbarService.GenerateError("Error", GetBooleanErrorMessage(combineMode), 4)
         End If
-
         _suspendTransformMessageHandling = False
     End Sub
+
+    Private Function GetBooleanErrorMessage(mode As GeometryCombineMode) As String
+        Select Case mode
+            Case GeometryCombineMode.Union
+                Return "Union operation resulted in an empty geometry. This should not happen."
+            Case GeometryCombineMode.Intersect
+                Return "No intersection found. The selected shapes do not overlap."
+            Case GeometryCombineMode.Exclude
+                Return "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted."
+            Case GeometryCombineMode.Xor
+                Return "XOR operation resulted in an empty geometry. The shapes may be identical."
+            Case Else
+                Return "Boolean operation failed."
+        End Select
+    End Function
 
     <NotifyPropertyChangedFor(NameOf(CurrentProjectName))>
     <ObservableProperty> Private _currentProjectPath As String = Nothing

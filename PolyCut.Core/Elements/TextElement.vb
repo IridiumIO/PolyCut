@@ -20,7 +20,7 @@ Public Class TextElement : Implements IPathBasedElement
         Dim text = DirectCast(element, SvgText)
         Config = cfg
 
-        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
+        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
 
         Figures = GenerateFigures(text)
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
@@ -42,7 +42,7 @@ Public Class TextElement : Implements IPathBasedElement
         Figures = BuildLinesFromGeometry(Geo, cfg.Tolerance)
         For Each fig In Figures
             For Each ln In fig
-                ln.Tag = IsFilled
+                ln.Tag = fillcolor
             Next
         Next
 

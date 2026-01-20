@@ -20,7 +20,7 @@ Public Class CircleElement : Implements IPathBasedElement
         Dim circleElement = DirectCast(element, SvgCircle)
         Config = cfg
 
-        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
+        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
 
         Dim eGeo As New EllipseGeometry(New Point(circleElement.CenterX, circleElement.CenterY), circleElement.Radius, circleElement.Radius)
         Geo = eGeo.GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
@@ -30,7 +30,7 @@ Public Class CircleElement : Implements IPathBasedElement
 
         For Each fig In Figures
             For Each ln In fig
-                ln.Tag = IsFilled
+                ln.Tag = fillcolor
             Next
         Next
 

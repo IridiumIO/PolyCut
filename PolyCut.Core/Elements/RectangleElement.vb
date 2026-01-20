@@ -24,7 +24,7 @@ Public Class RectangleElement : Implements IPathBasedElement
 
 
 
-        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
+        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
 
         Figures.Add(New List(Of Line) From {
                     New Line With {
@@ -57,7 +57,7 @@ Public Class RectangleElement : Implements IPathBasedElement
 
         For Each fig In Figures
             For Each ln In fig
-                ln.Tag = IsFilled
+                ln.Tag = fillcolor
             Next
         Next
     End Sub

@@ -20,7 +20,7 @@ Public Class PathElement : Implements IPathBasedElement
         Dim path = DirectCast(element, SvgPath)
         Config = cfg
 
-        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
+        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
 
         Geo = Geometry.Parse(path.PathData.ToString).GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
 
@@ -29,7 +29,7 @@ Public Class PathElement : Implements IPathBasedElement
 
         For Each fig In Figures
             For Each ln In fig
-                ln.Tag = IsFilled
+                ln.Tag = fillcolor
             Next
         Next
 

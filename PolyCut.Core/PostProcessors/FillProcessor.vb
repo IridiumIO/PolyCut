@@ -183,50 +183,39 @@ Public Class FillProcessor : Implements IProcessor
 
         Dim scalingFactor = 100_000 'Define a scaling factor to offset the floating-point precision of working in millimetres. 1mm > 100m
 
-
         ' Respect per-element SVG fill presence when deciding to generate fills.
-        Dim hasSVGFill As Boolean = True
+        Dim fillTag As Object = Nothing
         If lines IsNot Nothing AndAlso lines.Count > 0 Then
-            Dim tag = lines(0).Tag
-            If TypeOf tag Is Boolean Then
-                hasSVGFill = CType(tag, Boolean)
-            ElseIf tag Is Nothing Then
-                ' If no Tag is present, preserve existing behaviour (assume fillable)
-                hasSVGFill = True
-            Else
-                Dim parsed As Boolean = False
-                If Boolean.TryParse(tag.ToString(), parsed) Then
-                    hasSVGFill = parsed
-                Else
-                    hasSVGFill = True
-                End If
-            End If
+            fillTag = lines(0).Tag
         End If
 
-
-
-        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None OrElse Not hasSVGFill Then
+        ' If explicit no-fill -> return outlines only
+        If Not ShouldGenerateFill(fillTag) Then
             Return lines
         End If
 
-        'TODO ( in another processor, not here: Especially for text, process each of the shape outlines to see which one is nearest afterwards, and move to that shape next.
-        'Then consider aligning the end vector of the first shape's last line with the start vector of the next shape's first line, particularly useful to negate the effect of the swivelling toolhead when cutting
+        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then
+            Return lines
+        End If
 
+        Dim spacingNullable As Double? = ComputeSpacingFromTag(fillTag, cfg)
+        If Not spacingNullable.HasValue Then Return lines
+        Dim spacing = spacingNullable.Value
+
+        ' Continue with original fill generation using computed spacing
         Dim optimisedLines As New List(Of GeoLine)
         For Each ln In lines
             optimisedLines.Add(New GeoLine(ln.X1 * scalingFactor, ln.Y1 * scalingFactor, ln.X2 * scalingFactor, ln.Y2 * scalingFactor))
         Next
 
         Dim processedLines As New List(Of GeoLine)
-        processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle))
+        processedLines.AddRange(FillLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle))
 
         If cfg.DrawingConfig.FillType = FillType.CrossHatch Then
-            processedLines.AddRange(FillLines(optimisedLines, cfg.DrawingConfig.MinStrokeWidth * scalingFactor, cfg.DrawingConfig.ShadingAngle + 90))
+            processedLines.AddRange(FillLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle + 90))
         End If
 
-        'TODO: Choose whether to skip optimisation step
         If cfg.OptimisedToolPath Then processedLines = OptimiseFills(processedLines, optimisedLines, cfg.DrawingConfig.AllowDrawingOverOutlines)
-
 
         If cfg.DrawingConfig.KeepOutlines Then
             processedLines.InsertRange(0, optimisedLines)
@@ -235,14 +224,65 @@ Public Class FillProcessor : Implements IProcessor
         Dim finalLines As New List(Of Line)
         For Each ln In processedLines
             finalLines.Add(New Line With {
-                .X1 = ln.X1 / scalingFactor,
-                .Y1 = ln.Y1 / scalingFactor,
-                .X2 = ln.X2 / scalingFactor,
-                .Y2 = ln.Y2 / scalingFactor
-            })
+            .X1 = ln.X1 / scalingFactor,
+            .Y1 = ln.Y1 / scalingFactor,
+            .X2 = ln.X2 / scalingFactor,
+            .Y2 = ln.Y2 / scalingFactor
+        })
         Next
 
         Return finalLines
 
+    End Function
+
+    Private Function ShouldGenerateFill(fillTag As Object) As Boolean
+        If fillTag Is Nothing Then Return False
+        If TypeOf fillTag Is Boolean Then Return CType(fillTag, Boolean)
+        Return True
+    End Function
+
+    Private Function ComputeSpacingFromTag(fillTag As Object, cfg As ProcessorConfiguration) As Double?
+        ' Map tag (Color #RRGGBB) -> spacing value between MinStrokeWidth and MaxStrokeWidth.
+        Dim minW = cfg.DrawingConfig.MinStrokeWidth
+        Dim maxW = cfg.DrawingConfig.MaxStrokeWidth
+        If maxW < minW Then
+            Dim tmp = minW : minW = maxW : maxW = tmp
+        End If
+
+        Dim threshold As Double = Math.Clamp(cfg.DrawingConfig.ShadingThreshold, 0, 1)
+
+        ' Defaults
+        Dim spacing As Double = minW
+
+
+        If TypeOf fillTag Is String Then
+            Dim s = CType(fillTag, String)
+            If s.StartsWith("#") AndAlso s.Length = 7 Then
+                Try
+                    Dim r = Convert.ToInt32(s.Substring(1, 2), 16)
+                    Dim g = Convert.ToInt32(s.Substring(3, 2), 16)
+                    Dim b = Convert.ToInt32(s.Substring(5, 2), 16)
+                    Dim brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
+                    brightness = Math.Round(brightness, 3)
+                    If brightness < threshold Then Return Nothing
+
+                    ' Map brightness to spacing: brighter => wider spacing (lighter)
+                    spacing = minW + brightness * (maxW - minW)
+                    Return spacing
+                Catch
+                    Return (minW + maxW) / 2
+                End Try
+            Else
+                ' non-hex paint (gradient/pattern) -> fallback to mid
+                Dim brightness = 0.5
+                If brightness < threshold Then Return Nothing
+                Return (minW + maxW) / 2
+            End If
+        ElseIf TypeOf fillTag Is Boolean AndAlso CType(fillTag, Boolean) = True Then
+            ' Unknown colour but filled: use dense (min)
+            Return minW
+        End If
+
+        Return Nothing
     End Function
 End Class

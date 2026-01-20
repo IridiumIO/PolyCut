@@ -19,7 +19,7 @@ Public Class EllipseElement : Implements IPathBasedElement
         Config = cfg
         Dim eGeo As New EllipseGeometry(New Point(ellipse.CenterX, ellipse.CenterY), ellipse.RadiusX, ellipse.RadiusY)
 
-        IsFilled = SVGProcessor.SVGColorBullshitFixer(element.Fill) IsNot Nothing
+        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
 
         Geo = eGeo.GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
 
@@ -28,7 +28,7 @@ Public Class EllipseElement : Implements IPathBasedElement
 
         For Each fig In Figures
             For Each ln In fig
-                ln.Tag = IsFilled
+                ln.Tag = fillcolor
             Next
         Next
 

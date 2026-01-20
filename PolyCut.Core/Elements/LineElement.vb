@@ -24,7 +24,7 @@ Public Class LineElement : Implements IPathBasedElement
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms?.GetMatrix).ToList).ToList()
         For Each fig In Figures
             For Each lsn In fig
-                lsn.Tag = IsFilled
+                lsn.Tag = Nothing
             Next
         Next
 

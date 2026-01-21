@@ -145,7 +145,7 @@
             PreviewMouseDown="zoomPanControl_PreviewMouseDown"
             RightButtonAction="Reset"
             ScaleAmount="0.002"
-            ScaleMax="40"
+            ScaleMax="150"
             ScaleMin="0.1">
 
 

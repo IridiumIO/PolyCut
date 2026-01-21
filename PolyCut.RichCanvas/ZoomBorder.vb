@@ -340,7 +340,7 @@ Public Class ZoomBorder
         targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
 
         ' Early return if zooming out too much
-        If e.Delta <= 0 AndAlso (ScaleTransform.ScaleX < 0.4 OrElse ScaleTransform.ScaleY < 0.4) Then Return
+        If e.Delta <= 0 AndAlso (ScaleTransform.ScaleX < ScaleMin OrElse ScaleTransform.ScaleY < ScaleMin) Then Return
 
         Dim relative As Point = e.GetPosition(Child)
         ' Calculate the absolute positions based on the current scale

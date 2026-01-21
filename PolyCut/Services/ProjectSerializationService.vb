@@ -16,7 +16,16 @@ Public Class ProjectSerializationService
         Try
             Dim projectData = CreateProjectData(drawables, groups)
             Dim json = JsonSerializer.Serialize(projectData, _jsonOptions)
-            File.WriteAllText(filePath, json)
+
+            Using stream As New FileStream(filePath, FileMode.Create)
+                Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Compress)
+                    Using writer As New StreamWriter(gzip)
+                        writer.Write(json)
+                    End Using
+                End Using
+            End Using
+
+            ' File.WriteAllText(filePath, json)
             Return True
         Catch ex As Exception
             Debug.WriteLine($"Failed to save project: {ex.Message}")
@@ -28,7 +37,19 @@ Public Class ProjectSerializationService
     Public Function LoadProject(filePath As String) As ProjectData
         Try
             If Not File.Exists(filePath) Then Return Nothing
-            Dim json = File.ReadAllText(filePath)
+
+            Dim json As String
+
+            Using stream As New FileStream(filePath, FileMode.Open)
+                Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Decompress)
+                    Using reader As New StreamReader(gzip)
+                        json = reader.ReadToEnd()
+                    End Using
+                End Using
+            End Using
+
+            'Dim json = File.ReadAllText(filePath)
+
             Return JsonSerializer.Deserialize(Of ProjectData)(json, _jsonOptions)
         Catch ex As Exception
             Debug.WriteLine($"Failed to load project: {ex.Message}")

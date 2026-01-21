@@ -9,8 +9,8 @@
     </Style>
 
     <Style x:Key="DesignerItemStyle" TargetType="{x:Type ContentControl}">
-        <Setter Property="MinHeight" Value="1" />
-        <Setter Property="MinWidth" Value="1" />
+        <Setter Property="MinHeight" Value="0.001" />
+        <Setter Property="MinWidth" Value="0.001" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
         <Setter Property="SnapsToDevicePixels" Value="true" />
         <Setter Property="ClipToBounds" Value="False" />

@@ -289,9 +289,9 @@ Public Class ZoomBorder
             If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
                 Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
                 If Not isShiftPressed Then
-                    Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+                    Dim _polyCanvas = TryCast(Me.FindName("mainCanvas"), PolyCanvas)
 
-                    _polyCanvas.SelectionManager.ClearSelection()
+                    _polyCanvas?.SelectionManager.ClearSelection()
                 End If
                 e.Handled = True
             End If

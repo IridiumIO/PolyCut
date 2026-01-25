@@ -85,6 +85,140 @@ Public Class SVGImportService : Implements ISvgImportService
         End If
     End Sub
 
+    Private Function TransformPathGeometryPreserveOpenClosed(pg As PathGeometry, m As Matrix) As PathGeometry
+        If pg Is Nothing Then Return Nothing
+        If m.IsIdentity Then Return pg.Clone()
+
+        Dim result As New PathGeometry() With {.FillRule = pg.FillRule}
+
+        For Each fig In pg.Figures
+            Dim startLocal As Point = fig.StartPoint
+            Dim curLocal As Point = startLocal
+
+            Dim newFig As New PathFigure() With {
+                .StartPoint = m.Transform(startLocal),
+                .IsClosed = fig.IsClosed,
+                .IsFilled = fig.IsFilled
+            }
+
+            For Each seg In fig.Segments
+
+                If TypeOf seg Is LineSegment Then
+                    Dim ls = DirectCast(seg, LineSegment)
+                    newFig.Segments.Add(New LineSegment(m.Transform(ls.Point), ls.IsStroked))
+                    curLocal = ls.Point
+
+                ElseIf TypeOf seg Is PolyLineSegment Then
+                    Dim pls = DirectCast(seg, PolyLineSegment)
+                    Dim pts As New PointCollection(pls.Points.Select(Function(p) m.Transform(p)))
+                    newFig.Segments.Add(New PolyLineSegment(pts, pls.IsStroked))
+                    If pls.Points.Count > 0 Then curLocal = pls.Points(pls.Points.Count - 1)
+
+                ElseIf TypeOf seg Is BezierSegment Then
+                    Dim bs = DirectCast(seg, BezierSegment)
+                    newFig.Segments.Add(New BezierSegment(
+                    m.Transform(bs.Point1),
+                    m.Transform(bs.Point2),
+                    m.Transform(bs.Point3),
+                    bs.IsStroked))
+                    curLocal = bs.Point3
+
+                ElseIf TypeOf seg Is PolyBezierSegment Then
+                    Dim pbs = DirectCast(seg, PolyBezierSegment)
+                    Dim pts As New PointCollection(pbs.Points.Select(Function(p) m.Transform(p)))
+                    newFig.Segments.Add(New PolyBezierSegment(pts, pbs.IsStroked))
+                    If pbs.Points.Count > 0 Then curLocal = pbs.Points(pbs.Points.Count - 1)
+
+                ElseIf TypeOf seg Is QuadraticBezierSegment Then
+                    Dim qs = DirectCast(seg, QuadraticBezierSegment)
+                    newFig.Segments.Add(New QuadraticBezierSegment(
+                    m.Transform(qs.Point1),
+                    m.Transform(qs.Point2),
+                    qs.IsStroked))
+                    curLocal = qs.Point2
+
+                ElseIf TypeOf seg Is PolyQuadraticBezierSegment Then
+                    Dim pqs = DirectCast(seg, PolyQuadraticBezierSegment)
+                    Dim pts As New PointCollection(pqs.Points.Select(Function(p) m.Transform(p)))
+                    newFig.Segments.Add(New PolyQuadraticBezierSegment(pts, pqs.IsStroked))
+                    If pqs.Points.Count > 0 Then curLocal = pqs.Points(pqs.Points.Count - 1)
+
+                ElseIf TypeOf seg Is ArcSegment Then
+                    Dim a = DirectCast(seg, ArcSegment)
+
+                    Dim ptsX As PointCollection = SampleArcPoints(curLocal, a, m, FLATTENING_TOLERANCE)
+
+                    If ptsX Is Nothing Then
+                        newFig.Segments.Add(New LineSegment(m.Transform(a.Point), a.IsStroked))
+                    Else
+                        newFig.Segments.Add(New PolyLineSegment(ptsX, a.IsStroked))
+                    End If
+
+                    curLocal = a.Point
+
+
+                Else
+                    Dim tmp = PathGeometry.CreateFromGeometry(pg)
+                    tmp.Transform = New MatrixTransform(m)
+                    Return tmp.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+                End If
+
+
+            Next
+
+
+            result.Figures.Add(newFig)
+        Next
+
+        Return result
+    End Function
+
+
+
+    Private Function SampleArcPoints(startLocal As Point, arc As ArcSegment, m As Matrix, Optional tolerance As Double = 0.05) As PointCollection
+
+        If tolerance <= 0 Then tolerance = 0.05
+
+        Dim rx = Math.Abs(arc.Size.Width)
+        Dim ry = Math.Abs(arc.Size.Height)
+        If rx <= 0 OrElse ry <= 0 Then Return Nothing
+        If startLocal = arc.Point Then Return Nothing
+
+        ' Build geometry containing only this arc. IsFilled is needed otherwise GetFlattenedPathGeometry ignores it.
+        ' ASK ME HOW LONG IT TOOK TO FIGURE THIS OUT.
+        Dim fig As New PathFigure With {.StartPoint = startLocal, .IsClosed = False, .IsFilled = True}
+        fig.Segments.Add(arc)
+
+        Dim geom As New PathGeometry(New PathFigure() {fig})
+        Dim flat As PathGeometry = geom.GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute)
+
+        ' Extract flattened points (excluding start point)
+        Dim pts As New PointCollection()
+        Dim startX As Point = m.Transform(startLocal)
+
+        For Each f As PathFigure In flat.Figures
+            For Each s As PathSegment In f.Segments
+                Dim ls = TryCast(s, LineSegment)
+                If ls IsNot Nothing Then
+                    Dim p As Point = m.Transform(ls.Point)
+                    If p <> startX Then pts.Add(p)
+                    Continue For
+                End If
+
+                Dim ps = TryCast(s, PolyLineSegment)
+                If ps IsNot Nothing Then
+                    For Each lp As Point In ps.Points
+                        Dim p As Point = m.Transform(lp)
+                        If p <> startX Then pts.Add(p)
+                    Next
+                End If
+            Next
+        Next
+
+        Return If(pts.Count = 0, Nothing, pts)
+    End Function
+
+
     Private Function TransformAndFlattenGeometry(geometry As Geometry, matrix As Matrix, Optional tolerance As Double = 0) As PathGeometry
         Dim pathGeom As PathGeometry
         If TypeOf geometry Is PathGeometry Then
@@ -281,6 +415,7 @@ Public Class SVGImportService : Implements ISvgImportService
                 Else
                     tm.Rotate(r.Angle)
                 End If
+
             End If
 
             ' SVG transform list applies left-to-right
@@ -314,11 +449,11 @@ Public Class SVGImportService : Implements ISvgImportService
         Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
 
         Dim wpfPath As New Shapes.Path With {
-        .Data = translated,
-        .Stretch = Stretch.None,
-        .Width = dimensions.totalWidth,
-        .Height = dimensions.totalHeight
-    }
+            .Data = translated,
+            .Stretch = Stretch.None,
+            .Width = dimensions.totalWidth,
+            .Height = dimensions.totalHeight
+        }
 
         ApplyStrokeAndFill(wpfPath, svgElement, dimensions.transformedStroke)
         Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
@@ -341,9 +476,11 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
+
+
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
 
-            ' Apply clipping path if present (in SVG coordinate space, before transform)
+            ' Apply clipping path if present 
             If svgPath.ClipPath IsNot Nothing Then
                 Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPath.ClipPath, Matrix.Identity)
                 If clipGeometry IsNot Nothing Then
@@ -351,57 +488,62 @@ Public Class SVGImportService : Implements ISvgImportService
                 End If
             End If
 
-            Dim flattenedGeometry = TransformAndFlattenGeometry(geometry, matrix, FLATTENING_TOLERANCE)
-            Dim bounds = flattenedGeometry.Bounds
+            Dim pg As PathGeometry = If(TypeOf geometry Is PathGeometry, DirectCast(geometry, PathGeometry), PathGeometry.CreateFromGeometry(geometry))
+            pg = pg.Clone() 'cursed bullshit
 
-            ' Reject geometries with invalid bounds (NaN / Infinite) or explicitly empty
+            'Bake the SVG transform matrix into the geometry POINTS
+            Dim transformed As PathGeometry = TransformPathGeometryPreserveOpenClosed(pg, matrix)
+
+            'Bounds in canvas coords (post-transform)
+            Dim bounds As Rect = transformed.Bounds
+
             If Double.IsNaN(bounds.X) OrElse Double.IsNaN(bounds.Y) OrElse Double.IsNaN(bounds.Width) OrElse Double.IsNaN(bounds.Height) Then
                 Return Nothing
             End If
-            If flattenedGeometry.IsEmpty() Then
-                Return Nothing
-            End If
+
+            If bounds.IsEmpty Then Return Nothing
+            If transformed.Figures Is Nothing OrElse transformed.Figures.Count = 0 Then Return Nothing
+
 
             Dim strokeWidthValue As Single = 0
-
             Try
                 If svgPath.StrokeWidth <> Nothing Then strokeWidthValue = svgPath.StrokeWidth.Value
             Catch
                 strokeWidthValue = 0
             End Try
 
-            ' Use stroke-inclusive dimensions for the emptiness check so stroked lines are kept
             Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
-            If dimensions.totalWidth <= 0 OrElse dimensions.totalHeight <= 0 Then
-                ' If stroke didn't produce area, allow if geometry actually contains segments (e.g. lines)
-                If flattenedGeometry.Figures Is Nothing OrElse flattenedGeometry.Figures.Count = 0 Then
-                    Return Nothing
-                End If
-            End If
 
-            Dim translatedGeometry = flattenedGeometry.Clone()
-            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+            'Normalize to local (0,0) so Canvas.Left/Top is the world position
+            Dim t As Matrix = Matrix.Identity
+            t.Translate(-bounds.X, -bounds.Y)
+            Dim normalized As PathGeometry = TransformPathGeometryPreserveOpenClosed(transformed, t)
+
 
 
             Dim wpfPath As New Shapes.Path With {
-                .Data = translatedGeometry,
+                .Data = normalized,
                 .Stretch = Stretch.None,
                 .Width = dimensions.totalWidth,
                 .Height = dimensions.totalHeight
             }
 
             ApplyStrokeAndFill(wpfPath, svgPath, dimensions.transformedStroke)
+
             Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
             Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
 
             Dim drawable As New DrawablePath(wpfPath)
             AssignDrawableName(drawable, svgPath.ID)
             Return drawable
+
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
+
+
+
 
     Private Function ConvertRectangle(svgRect As SvgRectangle, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
@@ -627,12 +769,12 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim localP2 As New Point((p2.X - bounds.X) + strokeOffset, (p2.Y - bounds.Y) + strokeOffset)
 
             Dim wpfLine As New Line With {
-            .X1 = localP1.X,
-            .Y1 = localP1.Y,
-            .X2 = localP2.X,
-            .Y2 = localP2.Y,
-            .Width = dims.totalWidth,
-            .Height = dims.totalHeight
+                .X1 = localP1.X,
+                .Y1 = localP1.Y,
+                .X2 = localP2.X,
+                .Y2 = localP2.Y,
+                .Width = dims.totalWidth,
+                .Height = dims.totalHeight
             }
 
             ApplyStrokeAndFill(wpfLine, svgLine, dims.transformedStroke)
@@ -790,9 +932,9 @@ Public Class SVGImportService : Implements ISvgImportService
                 shape.Stroke = Nothing
                 shape.StrokeThickness = 0
             Else
-            Dim color = CType(svgElement.Stroke, SvgColourServer).Colour
-            shape.Stroke = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
-            shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 1)
+                Dim color = CType(svgElement.Stroke, SvgColourServer).Colour
+                shape.Stroke = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
+                shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 1)
             End If
 
         Else
@@ -856,5 +998,6 @@ Public Class SVGImportService : Implements ISvgImportService
             Return sw.ToString()
         End Using
     End Function
+
 
 End Class

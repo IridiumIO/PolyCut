@@ -258,6 +258,9 @@ Public Class SVGImportService : Implements ISvgImportService
         ElseIf TypeOf elem Is SvgText Then
             Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgPolyline Then
+            Dim drawable = ConvertPolyline(CType(elem, SvgPolyline), currentMatrix, svgDoc)
+            If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgPolygon Then
             Dim drawable = ConvertPolygon(CType(elem, SvgPolygon), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
@@ -787,6 +790,65 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim drawable As New DrawablePath(wpfPath)
             AssignDrawableName(drawable, svgPolygon.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ConvertPolyline(svgPolyline As SvgPolyline, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
+        Try
+            Dim polylineGeometry As Geometry = CreatePolylineGeometry(svgPolyline.Points)
+            If polylineGeometry Is Nothing Then Return Nothing
+
+            Dim wasClipped As Boolean = False
+
+            ' Apply clipping path if present
+            If svgPolyline.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPolyline.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    polylineGeometry = ApplyClipPath(polylineGeometry, clipGeometry)
+                    wasClipped = True
+                End If
+            End If
+
+            Dim pathGeom As PathGeometry = If(TypeOf polylineGeometry Is PathGeometry,
+                                               DirectCast(polylineGeometry, PathGeometry),
+                                               PathGeometry.CreateFromGeometry(polylineGeometry))
+
+
+            Dim transformedGeometry = TransformPathGeometryPreserveOpenClosed(pathGeom, matrix)
+            Dim bounds = transformedGeometry.Bounds
+
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            ' Normalize to local (0,0)
+            Dim t As Matrix = Matrix.Identity
+            t.Translate(-bounds.X, -bounds.Y)
+            Dim normalized = TransformPathGeometryPreserveOpenClosed(transformedGeometry, t)
+
+            Dim strokeWidthValue As Single = 0
+            Try
+                If svgPolyline.StrokeWidth <> Nothing Then strokeWidthValue = svgPolyline.StrokeWidth.Value
+            Catch
+                strokeWidthValue = 0
+            End Try
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+
+            Dim wpfPath As New Shapes.Path With {
+                .Data = normalized,
+                .Stretch = Stretch.None,
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfPath, svgPolyline, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawablePath(wpfPath)
+            AssignDrawableName(drawable, svgPolyline.ID)
             Return drawable
         Catch ex As Exception
             Return Nothing

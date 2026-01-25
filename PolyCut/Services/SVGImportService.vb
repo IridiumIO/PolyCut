@@ -35,22 +35,42 @@ Public Class SVGImportService : Implements ISvgImportService
     End Function
 
     Private Function CalculateDocumentTransform(svgDoc As SvgDocument) As Matrix
-        Dim matrix As New Matrix()
+        Dim m As Matrix = Matrix.Identity
 
         Dim docWidthMM As Double = ConvertToMM(svgDoc.Width.Value, svgDoc.Width.Type)
         Dim docHeightMM As Double = ConvertToMM(svgDoc.Height.Value, svgDoc.Height.Type)
 
-        If svgDoc.ViewBox.Width > 0 AndAlso svgDoc.ViewBox.Height > 0 Then
-            Dim scaleX As Double = docWidthMM / svgDoc.ViewBox.Width
-            Dim scaleY As Double = docHeightMM / svgDoc.ViewBox.Height
-            matrix.Scale(scaleX, scaleY)
-            matrix.Translate(-svgDoc.ViewBox.MinX, -svgDoc.ViewBox.MinY)
-        Else
-            Dim unitScale As Double = ConvertSVGScaleToMM(svgDoc.Width.Type)
-            matrix.Scale(unitScale, unitScale)
+        If svgDoc.ViewBox.Width > 0 AndAlso svgDoc.ViewBox.Height > 0 AndAlso docWidthMM > 0 AndAlso docHeightMM > 0 Then
+
+            Dim vbW As Double = svgDoc.ViewBox.Width
+            Dim vbH As Double = svgDoc.ViewBox.Height
+
+            Dim sx As Double = docWidthMM / vbW
+            Dim sy As Double = docHeightMM / vbH
+
+            ' SVG default preserveAspectRatio: xMidYMid meet (uniform scale)
+            Dim s As Double = Math.Min(sx, sy)
+
+            ' size of the scaled viewBox in mm
+            Dim scaledW As Double = vbW * s
+            Dim scaledH As Double = vbH * s
+
+            ' default alignment xMidYMid: center the leftover space
+            Dim extraX As Double = (docWidthMM - scaledW) / 2.0
+            Dim extraY As Double = (docHeightMM - scaledH) / 2.0
+
+            ' IMPORTANT: translate viewBox min first, THEN scale, THEN add centering offsets
+            m.Translate(-svgDoc.ViewBox.MinX, -svgDoc.ViewBox.MinY)
+            m.Scale(s, s)
+            m.Translate(extraX, extraY)
+
+            Return m
         End If
 
-        Return matrix
+        ' No viewBox: treat units as document units
+        Dim unitScale As Double = ConvertSVGScaleToMM(svgDoc.Width.Type)
+        m.Scale(unitScale, unitScale)
+        Return m
     End Function
 
     Private Function CalculateStrokeDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)

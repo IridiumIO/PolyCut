@@ -10,6 +10,25 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
 
     Public Property Name As String Implements IDrawable.Name
     Private _drawableElement As FrameworkElement
+
+
+    Public Shared Function DrawableFactory(element As FrameworkElement) As IDrawable
+        If TypeOf element Is Rectangle Then
+            Return New DrawableRectangle(element)
+        ElseIf TypeOf element Is Ellipse Then
+            Return New DrawableEllipse(element)
+        ElseIf TypeOf element Is Line Then
+            Return New DrawableLine(element)
+        ElseIf TypeOf element Is Path Then
+            Return New DrawablePath(element)
+        ElseIf TypeOf element Is TextBox Then
+            Return New DrawableText(element)
+        Else
+            Return New BaseDrawable() With {.DrawableElement = element}
+        End If
+    End Function
+
+
     Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
         Get
             Return _drawableElement

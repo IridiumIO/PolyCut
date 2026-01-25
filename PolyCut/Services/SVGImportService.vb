@@ -1,6 +1,7 @@
 ﻿
 
 Imports System.IO
+Imports System.Runtime.CompilerServices
 Imports System.Xml
 
 Imports PolyCut.[Shared]
@@ -321,10 +322,10 @@ Public Class SVGImportService : Implements ISvgImportService
                 Return New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
             ElseIf TypeOf element Is SvgPolygon Then
                 Dim svgPolygon = CType(element, SvgPolygon)
-                Return CreatePolygonGeometry(svgPolygon.Points)
+                Return CreatePathGeometryFromPoints(svgPolygon.Points, True)
             ElseIf TypeOf element Is SvgPolyline Then
                 Dim svgPolyline = CType(element, SvgPolyline)
-                Return CreatePolylineGeometry(svgPolyline.Points)
+                Return CreatePathGeometryFromPoints(svgPolyline.Points, False)
             ElseIf TypeOf element Is SvgLine Then
                 Dim svgLine = CType(element, SvgLine)
                 Dim pathGeom As New PathGeometry()
@@ -346,13 +347,13 @@ Public Class SVGImportService : Implements ISvgImportService
         Return Nothing
     End Function
 
-    Private Function CreatePolygonGeometry(points As SvgPointCollection) As Geometry
+    Private Function CreatePathGeometryFromPoints(points As SvgPointCollection, isClosed As Boolean) As Geometry
         If points Is Nothing OrElse points.Count < 2 Then Return Nothing
 
         Dim pathGeom As New PathGeometry()
         Dim figure As New PathFigure() With {
             .StartPoint = New Point(points(0), points(1)),
-            .IsClosed = True
+            .IsClosed = isClosed
         }
 
         For i As Integer = 2 To points.Count - 1 Step 2
@@ -365,24 +366,6 @@ Public Class SVGImportService : Implements ISvgImportService
         Return pathGeom
     End Function
 
-    Private Function CreatePolylineGeometry(points As SvgPointCollection) As Geometry
-        If points Is Nothing OrElse points.Count < 2 Then Return Nothing
-
-        Dim pathGeom As New PathGeometry()
-        Dim figure As New PathFigure() With {
-            .StartPoint = New Point(points(0), points(1)),
-            .IsClosed = False
-        }
-
-        For i As Integer = 2 To points.Count - 1 Step 2
-            If i + 1 < points.Count Then
-                figure.Segments.Add(New LineSegment(New Point(points(i), points(i + 1)), True))
-            End If
-        Next
-
-        pathGeom.Figures.Add(figure)
-        Return pathGeom
-    End Function
 
     Private Function ApplyClipPath(geometry As Geometry, clipGeometry As Geometry) As Geometry
         If clipGeometry Is Nothing Then Return geometry
@@ -433,9 +416,56 @@ Public Class SVGImportService : Implements ISvgImportService
     End Function
 
 
+    Private Function IsValidBounds(r As Rect, Optional requireNonZero As Boolean = True) As Boolean
+        Dim notEmpty = Not r.IsEmpty
+        Dim notNaN = Not (Double.IsNaN(r.X) OrElse Double.IsNaN(r.Y) OrElse Double.IsNaN(r.Width) OrElse Double.IsNaN(r.Height))
+        If requireNonZero Then
+            Return notEmpty AndAlso notNaN AndAlso r.Width > 0 AndAlso r.Height > 0
+        End If
+        Return notEmpty AndAlso notNaN
+    End Function
 
+
+    Private Function FinaliseDrawableElement(fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, matrixForStroke As Matrix, elementId As String) As IDrawable
+
+        If fe Is Nothing Then Return Nothing
+        If Not IsValidBounds(boundsWorld, requireNonZero:=False) Then Return Nothing
+
+        Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgVisual)
+        Dim dims = CalculateStrokeDimensions(boundsWorld, strokeWidthValue, matrixForStroke)
+
+        Return FinaliseDrawableElement(fe, boundsWorld, svgVisual, elementId, dims)
+
+    End Function
+
+    Private Function FinaliseDrawableElement(ByRef fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, elementId As String, dims As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)) As IDrawable
+        Dim shp As Shape = TryCast(fe, Shape)
+        If shp IsNot Nothing Then
+            ApplyStrokeAndFill(shp, svgVisual, dims.transformedStroke)
+        End If
+
+        fe.Width = dims.totalWidth
+        fe.Height = dims.totalHeight
+        Canvas.SetLeft(fe, boundsWorld.X - dims.strokeOffset)
+        Canvas.SetTop(fe, boundsWorld.Y - dims.strokeOffset)
+
+        Dim drawable As IDrawable = BaseDrawable.DrawableFactory(fe)
+        AssignDrawableName(drawable, elementId)
+        Return drawable
+    End Function
+
+
+    Private Function GetStrokeWidthOrZero(svg As SvgVisualElement) As Single
+        Try
+            If svg Is Nothing OrElse svg.StrokeWidth = Nothing Then Return 0.0F
+            Return svg.StrokeWidth.Value
+        Catch
+            Return 0.0F
+        End Try
+    End Function
 
     Private Function CreateBakedPathDrawableFromGeometry(srcGeometry As Geometry, matrix As Matrix, svgElement As SvgVisualElement, elementId As String) As IDrawable
+
 
         Dim flattened As PathGeometry = TransformAndFlattenGeometry(srcGeometry, matrix, FLATTENING_TOLERANCE)
         Dim bounds As Rect = flattened.Bounds
@@ -445,34 +475,12 @@ Public Class SVGImportService : Implements ISvgImportService
         translated.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
         translated = translated.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
 
-        Dim strokeWidthValue As Single = 0
-        Try
-            If svgElement.StrokeWidth <> Nothing Then strokeWidthValue = svgElement.StrokeWidth.Value
-        Catch
-            strokeWidthValue = 0
-        End Try
-
-        Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
-
         Dim wpfPath As New Shapes.Path With {
             .Data = translated,
-            .Stretch = Stretch.None,
-            .Width = dimensions.totalWidth,
-            .Height = dimensions.totalHeight
+            .Stretch = Stretch.None
         }
 
-        ApplyStrokeAndFill(wpfPath, svgElement, dimensions.transformedStroke)
-        Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-        Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-        Dim drawable As New DrawablePath(wpfPath)
-        AssignDrawableName(drawable, elementId)
-        Return drawable
-    End Function
-
-
-    Private Function HasShearOrRotation(m As Matrix, Optional eps As Double = 0.0000001) As Boolean
-        Return Math.Abs(m.M12) > eps OrElse Math.Abs(m.M21) > eps
+        Return FinaliseDrawableElement(wpfPath, bounds, svgElement, matrix, elementId)
     End Function
 
     Private Function IsAxisAlignedScaleTranslate(m As Matrix, Optional eps As Double = 0.0000001) As Boolean
@@ -480,19 +488,42 @@ Public Class SVGImportService : Implements ISvgImportService
         Return Math.Abs(m.M12) <= eps AndAlso Math.Abs(m.M21) <= eps
     End Function
 
+
+
+    Private Function BakeClipGeometry(ByRef geometry As Geometry, svgElement As SvgVisualElement, svgDoc As SvgDocument) As Boolean
+        If svgElement.ClipPath IsNot Nothing Then
+            Dim clipGeometry = GetClipPathGeometry(svgDoc, svgElement.ClipPath, Matrix.Identity)
+            If clipGeometry IsNot Nothing Then
+                geometry = ApplyClipPath(geometry, clipGeometry)
+                Return True
+            End If
+        End If
+        Return False
+    End Function
+
+
+    Private Function GeneratePathFromFlattened(flattenedGeometry As PathGeometry, bounds As Rect) As Shapes.Path
+
+        Dim translatedGeometry = flattenedGeometry.Clone()
+        translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+        translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+
+        Dim wpfPath As New Shapes.Path With {
+            .Data = translatedGeometry,
+            .Stretch = Stretch.None
+        }
+        Return wpfPath
+
+    End Function
+
+
+
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
 
-
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
+            Dim wasClipped As Boolean = BakeClipGeometry(geometry, svgPath, svgDoc)
 
-            ' Apply clipping path if present 
-            If svgPath.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPath.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    geometry = ApplyClipPath(geometry, clipGeometry)
-                End If
-            End If
 
             Dim pg As PathGeometry = If(TypeOf geometry Is PathGeometry, DirectCast(geometry, PathGeometry), PathGeometry.CreateFromGeometry(geometry))
             pg = pg.Clone() 'cursed bullshit
@@ -502,179 +533,71 @@ Public Class SVGImportService : Implements ISvgImportService
 
             'Bounds in canvas coords (post-transform)
             Dim bounds As Rect = transformed.Bounds
-
-            If Double.IsNaN(bounds.X) OrElse Double.IsNaN(bounds.Y) OrElse Double.IsNaN(bounds.Width) OrElse Double.IsNaN(bounds.Height) Then
-                Return Nothing
-            End If
-
-            If bounds.IsEmpty Then Return Nothing
+            If Not IsValidBounds(bounds) Then Return Nothing
             If transformed.Figures Is Nothing OrElse transformed.Figures.Count = 0 Then Return Nothing
-
-
-            Dim strokeWidthValue As Single = 0
-            Try
-                If svgPath.StrokeWidth <> Nothing Then strokeWidthValue = svgPath.StrokeWidth.Value
-            Catch
-                strokeWidthValue = 0
-            End Try
-
-            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
 
             'Normalize to local (0,0) so Canvas.Left/Top is the world position
             Dim t As Matrix = Matrix.Identity
             t.Translate(-bounds.X, -bounds.Y)
             Dim normalized As PathGeometry = TransformPathGeometryPreserveOpenClosed(transformed, t)
 
-
-
             Dim wpfPath As New Shapes.Path With {
                 .Data = normalized,
-                .Stretch = Stretch.None,
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
+                .Stretch = Stretch.None
             }
 
-            ApplyStrokeAndFill(wpfPath, svgPath, dimensions.transformedStroke)
+            Return FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
 
-            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-            Dim drawable As New DrawablePath(wpfPath)
-            AssignDrawableName(drawable, svgPath.ID)
-            Return drawable
 
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
-
 
 
 
     Private Function ConvertRectangle(svgRect As SvgRectangle, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim rectGeometry As Geometry = New RectangleGeometry(New Rect(svgRect.X, svgRect.Y, svgRect.Width, svgRect.Height))
-            Dim wasClipped As Boolean = False
+            Dim wasClipped As Boolean = BakeClipGeometry(rectGeometry, svgRect, svgDoc)
 
-            ' Apply clipping path if present
-            If svgRect.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgRect.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    rectGeometry = ApplyClipPath(rectGeometry, clipGeometry)
-                    wasClipped = True
-                End If
-            End If
-
-            If Not IsAxisAlignedScaleTranslate(matrix) Then
-                Return CreateBakedPathDrawableFromGeometry(rectGeometry, matrix, svgRect, svgRect.ID)
-            End If
-
+            If Not IsAxisAlignedScaleTranslate(matrix) Then Return CreateBakedPathDrawableFromGeometry(rectGeometry, matrix, svgRect, svgRect.ID)
 
             Dim flattenedGeometry = TransformAndFlattenGeometry(rectGeometry, matrix)
+            If flattenedGeometry Is Nothing OrElse flattenedGeometry.Figures.Count = 0 Then Return Nothing
             Dim bounds = flattenedGeometry.Bounds
+            If Not IsValidBounds(bounds) Then Return Nothing
 
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            Dim shp = If(wasClipped, GeneratePathFromFlattened(flattenedGeometry, bounds), New Rectangle())
 
-            Dim dimensions = CalculateStrokeDimensions(bounds, svgRect.StrokeWidth.Value, matrix)
+            Return FinaliseDrawableElement(shp, bounds, svgRect, matrix, svgRect.ID)
 
-            ' If clipped, return as Path instead of Rectangle
-            If wasClipped Then
-                Dim translatedGeometry = flattenedGeometry.Clone()
-                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
-
-                Dim wpfPath As New Shapes.Path With {
-                    .Data = translatedGeometry,
-                    .Stretch = Stretch.None,
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfPath, svgRect, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawablePath(wpfPath)
-                AssignDrawableName(drawable, svgRect.ID)
-                Return drawable
-            Else
-                Dim wpfRect As New Rectangle With {
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfRect, svgRect, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfRect, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfRect, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawableRectangle(wpfRect)
-                AssignDrawableName(drawable, svgRect.ID)
-                Return drawable
-            End If
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
 
+
+
     Private Function ConvertEllipse(svgEllipse As SvgEllipse, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim ellipseGeometry As Geometry = New EllipseGeometry(New Point(svgEllipse.CenterX, svgEllipse.CenterY), svgEllipse.RadiusX, svgEllipse.RadiusY)
-            Dim wasClipped As Boolean = False
+            Dim wasClipped As Boolean = BakeClipGeometry(ellipseGeometry, svgEllipse, svgDoc)
 
-            ' Apply clipping path if present
-            If svgEllipse.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgEllipse.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    ellipseGeometry = ApplyClipPath(ellipseGeometry, clipGeometry)
-                    wasClipped = True
-                End If
-            End If
 
             If Not IsAxisAlignedScaleTranslate(matrix) Then
                 Return CreateBakedPathDrawableFromGeometry(ellipseGeometry, matrix, svgEllipse, svgEllipse.ID)
             End If
 
             Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
+            If flattenedGeometry Is Nothing OrElse flattenedGeometry.Figures.Count = 0 Then Return Nothing
             Dim bounds = flattenedGeometry.Bounds
+            If Not IsValidBounds(bounds) Then Return Nothing
 
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            Dim shp = If(wasClipped, GeneratePathFromFlattened(flattenedGeometry, bounds), New Ellipse())
 
-            Dim dimensions = CalculateStrokeDimensions(bounds, svgEllipse.StrokeWidth.Value, matrix)
+            Return FinaliseDrawableElement(shp, bounds, svgEllipse, matrix, svgEllipse.ID)
 
-            ' If clipped, return as Path instead of Ellipse
-            If wasClipped Then
-                Dim translatedGeometry = flattenedGeometry.Clone()
-                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
-
-                Dim wpfPath As New Shapes.Path With {
-                    .Data = translatedGeometry,
-                    .Stretch = Stretch.None,
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfPath, svgEllipse, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawablePath(wpfPath)
-                AssignDrawableName(drawable, svgEllipse.ID)
-                Return drawable
-            Else
-                Dim wpfEllipse As New Ellipse With {
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfEllipse, svgEllipse, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawableEllipse(wpfEllipse)
-                AssignDrawableName(drawable, svgEllipse.ID)
-                Return drawable
-            End If
         Catch ex As Exception
             Return Nothing
         End Try
@@ -683,58 +606,16 @@ Public Class SVGImportService : Implements ISvgImportService
     Private Function ConvertCircle(svgCircle As SvgCircle, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim ellipseGeometry As Geometry = New EllipseGeometry(New Point(svgCircle.CenterX, svgCircle.CenterY), svgCircle.Radius, svgCircle.Radius)
-            Dim wasClipped As Boolean = False
-
-            ' Apply clipping path if present
-            If svgCircle.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgCircle.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    ellipseGeometry = ApplyClipPath(ellipseGeometry, clipGeometry)
-                    wasClipped = True
-                End If
-            End If
+            Dim wasClipped As Boolean = BakeClipGeometry(ellipseGeometry, svgCircle, svgDoc)
 
             Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)
             Dim bounds = flattenedGeometry.Bounds
+            If Not IsValidBounds(bounds) Then Return Nothing
 
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            Dim shp As Shape = If(wasClipped, GeneratePathFromFlattened(flattenedGeometry, bounds), New Ellipse())
 
-            Dim dimensions = CalculateStrokeDimensions(bounds, svgCircle.StrokeWidth.Value, matrix)
+            Return FinaliseDrawableElement(shp, bounds, svgCircle, matrix, svgCircle.ID)
 
-            ' If clipped, return as Path instead of Ellipse
-            If wasClipped Then
-                Dim translatedGeometry = flattenedGeometry.Clone()
-                translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-                translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
-
-                Dim wpfPath As New Shapes.Path With {
-                    .Data = translatedGeometry,
-                    .Stretch = Stretch.None,
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfPath, svgCircle, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawablePath(wpfPath)
-                AssignDrawableName(drawable, svgCircle.ID)
-                Return drawable
-            Else
-                Dim wpfEllipse As New Ellipse With {
-                    .Width = dimensions.totalWidth,
-                    .Height = dimensions.totalHeight
-                }
-
-                ApplyStrokeAndFill(wpfEllipse, svgCircle, dimensions.transformedStroke)
-                Canvas.SetLeft(wpfEllipse, bounds.X - dimensions.strokeOffset)
-                Canvas.SetTop(wpfEllipse, bounds.Y - dimensions.strokeOffset)
-
-                Dim drawable As New DrawableEllipse(wpfEllipse)
-                AssignDrawableName(drawable, svgCircle.ID)
-                Return drawable
-            End If
         Catch ex As Exception
             Return Nothing
         End Try
@@ -742,55 +623,18 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function ConvertPolygon(svgPolygon As SvgPolygon, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
-            Dim polygonGeometry As Geometry = CreatePolygonGeometry(svgPolygon.Points)
-            If polygonGeometry Is Nothing Then Return Nothing
-
-            Dim wasClipped As Boolean = False
-
-            ' Apply clipping path if present
-            If svgPolygon.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPolygon.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    polygonGeometry = ApplyClipPath(polygonGeometry, clipGeometry)
-                    wasClipped = True
-                End If
-            End If
+            Dim polygonGeometry As Geometry = CreatePathGeometryFromPoints(svgPolygon.Points, True)
+            Dim wasClipped As Boolean = BakeClipGeometry(polygonGeometry, svgPolygon, svgDoc)
 
             ' Polygons always need to be converted to paths since they're defined by points
             Dim flattenedGeometry = TransformAndFlattenGeometry(polygonGeometry, matrix, FLATTENING_TOLERANCE)
             Dim bounds = flattenedGeometry.Bounds
+            If Not IsValidBounds(bounds) Then Return Nothing
 
+            Dim flattenedPath = GeneratePathFromFlattened(flattenedGeometry, bounds)
 
-            'all this stuff is duplicated from path... TODO : refactor
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            Return FinaliseDrawableElement(flattenedPath, bounds, svgPolygon, matrix, svgPolygon.ID)
 
-            Dim translatedGeometry = flattenedGeometry.Clone()
-            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
-
-            Dim strokeWidthValue As Single = 0
-            Try
-                If svgPolygon.StrokeWidth <> Nothing Then strokeWidthValue = svgPolygon.StrokeWidth.Value
-            Catch
-                strokeWidthValue = 0
-            End Try
-
-            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
-
-            Dim wpfPath As New Shapes.Path With {
-                .Data = translatedGeometry,
-                .Stretch = Stretch.None,
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
-            }
-
-            ApplyStrokeAndFill(wpfPath, svgPolygon, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-            Dim drawable As New DrawablePath(wpfPath)
-            AssignDrawableName(drawable, svgPolygon.ID)
-            Return drawable
         Catch ex As Exception
             Return Nothing
         End Try
@@ -798,58 +642,28 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function ConvertPolyline(svgPolyline As SvgPolyline, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
-            Dim polylineGeometry As Geometry = CreatePolylineGeometry(svgPolyline.Points)
+            Dim polylineGeometry As Geometry = CreatePathGeometryFromPoints(svgPolyline.Points, False)
             If polylineGeometry Is Nothing Then Return Nothing
 
-            Dim wasClipped As Boolean = False
-
-            ' Apply clipping path if present
-            If svgPolyline.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPolyline.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    polylineGeometry = ApplyClipPath(polylineGeometry, clipGeometry)
-                    wasClipped = True
-                End If
-            End If
-
-            Dim pathGeom As PathGeometry = If(TypeOf polylineGeometry Is PathGeometry,
-                                               DirectCast(polylineGeometry, PathGeometry),
-                                               PathGeometry.CreateFromGeometry(polylineGeometry))
-
+            Dim wasClipped As Boolean = BakeClipGeometry(polylineGeometry, svgPolyline, svgDoc)
+            Dim pathGeom As PathGeometry = PathGeometry.CreateFromGeometry(polylineGeometry)
 
             Dim transformedGeometry = TransformPathGeometryPreserveOpenClosed(pathGeom, matrix)
             Dim bounds = transformedGeometry.Bounds
-
-            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+            If Not IsValidBounds(bounds) Then Return Nothing
 
             ' Normalize to local (0,0)
             Dim t As Matrix = Matrix.Identity
             t.Translate(-bounds.X, -bounds.Y)
             Dim normalized = TransformPathGeometryPreserveOpenClosed(transformedGeometry, t)
 
-            Dim strokeWidthValue As Single = 0
-            Try
-                If svgPolyline.StrokeWidth <> Nothing Then strokeWidthValue = svgPolyline.StrokeWidth.Value
-            Catch
-                strokeWidthValue = 0
-            End Try
-
-            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
-
             Dim wpfPath As New Shapes.Path With {
                 .Data = normalized,
-                .Stretch = Stretch.None,
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
+                .Stretch = Stretch.None
             }
 
-            ApplyStrokeAndFill(wpfPath, svgPolyline, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+            Return FinaliseDrawableElement(wpfPath, bounds, svgPolyline, matrix, svgPolyline.ID)
 
-            Dim drawable As New DrawablePath(wpfPath)
-            AssignDrawableName(drawable, svgPolyline.ID)
-            Return drawable
         Catch ex As Exception
             Return Nothing
         End Try
@@ -869,19 +683,9 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim maxY As Double = Math.Max(p1.Y, p2.Y)
 
             Dim bounds As New Rect(minX, minY, maxX - minX, maxY - minY)
+            If Not IsValidBounds(bounds) Then Return Nothing
 
-            If Double.IsNaN(bounds.X) OrElse Double.IsNaN(bounds.Y) OrElse
-           Double.IsNaN(bounds.Width) OrElse Double.IsNaN(bounds.Height) Then
-                Return Nothing
-            End If
-
-            Dim strokeWidthValue As Single = 0
-            Try
-                If svgLine.StrokeWidth <> Nothing Then strokeWidthValue = svgLine.StrokeWidth.Value
-            Catch
-                strokeWidthValue = 0
-            End Try
-
+            Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgLine)
             Dim dims = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
             Dim strokeOffset As Double = dims.strokeOffset
 
@@ -899,14 +703,7 @@ Public Class SVGImportService : Implements ISvgImportService
                 .Height = dims.totalHeight
             }
 
-            ApplyStrokeAndFill(wpfLine, svgLine, dims.transformedStroke)
-
-            Canvas.SetLeft(wpfLine, bounds.X - strokeOffset)
-            Canvas.SetTop(wpfLine, bounds.Y - strokeOffset)
-
-            Dim drawable As New DrawableLine(wpfLine)
-            AssignDrawableName(drawable, svgLine.ID)
-            Return drawable
+            Return FinaliseDrawableElement(wpfLine, bounds, svgLine, svgLine.ID, dims)
 
         Catch ex As Exception
             Return Nothing
@@ -922,15 +719,7 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim pathGeometry = BuildTextPathGeometry(svgText)
             If pathGeometry Is Nothing Then Return Nothing
 
-            ' Apply clipping path if present
-            If svgText.ClipPath IsNot Nothing Then
-                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgText.ClipPath, Matrix.Identity)
-                If clipGeometry IsNot Nothing Then
-                    Dim textGeometry As Geometry = pathGeometry
-                    textGeometry = ApplyClipPath(textGeometry, clipGeometry)
-                    pathGeometry = If(TypeOf textGeometry Is PathGeometry, CType(textGeometry, PathGeometry), PathGeometry.CreateFromGeometry(textGeometry))
-                End If
-            End If
+            Dim wasClipped As Boolean = BakeClipGeometry(pathGeometry, svgText, svgDoc)
 
 
             Dim flattenedGeometry = TransformAndFlattenGeometry(pathGeometry, matrix, FLATTENING_TOLERANCE)
@@ -938,26 +727,10 @@ Public Class SVGImportService : Implements ISvgImportService
 
             If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
 
-            Dim translatedGeometry = flattenedGeometry.Clone()
-            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
-            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+            Dim wpfPath = GeneratePathFromFlattened(flattenedGeometry, bounds)
 
-            Dim dimensions = CalculateStrokeDimensions(bounds, svgText.StrokeWidth.Value, matrix)
+            Return FinaliseDrawableElement(wpfPath, bounds, svgText, matrix, svgText.ID)
 
-            Dim wpfPath As New Shapes.Path With {
-                .Data = translatedGeometry,
-                .Stretch = Stretch.None,
-                .Width = dimensions.totalWidth,
-                .Height = dimensions.totalHeight
-            }
-
-            ApplyStrokeAndFill(wpfPath, svgText, dimensions.transformedStroke)
-            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
-            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
-
-            Dim drawable As New DrawablePath(wpfPath)
-            AssignDrawableName(drawable, svgText.ID)
-            Return drawable
         Catch ex As Exception
             Return Nothing
         End Try

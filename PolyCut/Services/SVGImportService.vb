@@ -254,7 +254,7 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim drawable = ConvertCircle(CType(elem, SvgCircle), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgLine Then
-            Dim drawable = ConvertLine(CType(elem, SvgLine), currentMatrix)
+            Dim drawable = ConvertLine(CType(elem, SvgLine), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
         ElseIf TypeOf elem Is SvgText Then
             Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix, svgDoc)
@@ -367,15 +367,6 @@ Public Class SVGImportService : Implements ISvgImportService
     End Function
 
 
-    Private Function ApplyClipPath(geometry As Geometry, clipGeometry As Geometry) As Geometry
-        If clipGeometry Is Nothing Then Return geometry
-        Try
-            Return Geometry.Combine(geometry, clipGeometry, GeometryCombineMode.Intersect, Nothing)
-        Catch ex As Exception
-            Return geometry
-        End Try
-    End Function
-
     Private Function ApplySvgTransforms(elem As SvgElement, parentAccumulated As Matrix) As Matrix
         If elem.Transforms Is Nothing OrElse elem.Transforms.Count = 0 Then Return parentAccumulated
 
@@ -438,9 +429,9 @@ Public Class SVGImportService : Implements ISvgImportService
 
     End Function
 
-    Private Function FinaliseDrawableElement(ByRef fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, elementId As String, dims As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)) As IDrawable
+    Private Function FinaliseDrawableElement(ByRef fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, elementId As String, dims As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double), Optional SkipApplyVisualStyle As Boolean = False) As IDrawable
         Dim shp As Shape = TryCast(fe, Shape)
-        If shp IsNot Nothing Then
+        If shp IsNot Nothing AndAlso Not SkipApplyVisualStyle Then
             ApplyStrokeAndFill(shp, svgVisual, dims.transformedStroke)
         End If
 
@@ -491,15 +482,52 @@ Public Class SVGImportService : Implements ISvgImportService
 
 
     Private Function BakeClipGeometry(ByRef geometry As Geometry, svgElement As SvgVisualElement, svgDoc As SvgDocument) As Boolean
-        If svgElement.ClipPath IsNot Nothing Then
-            Dim clipGeometry = GetClipPathGeometry(svgDoc, svgElement.ClipPath, Matrix.Identity)
-            If clipGeometry IsNot Nothing Then
-                geometry = ApplyClipPath(geometry, clipGeometry)
-                Return True
+        If geometry Is Nothing OrElse svgElement Is Nothing OrElse svgDoc Is Nothing Then Return False
+        If svgElement.ClipPath Is Nothing Then Return False
+
+        Try
+            Dim clipGeometry As Geometry = GetClipPathGeometry(svgDoc, svgElement.ClipPath, Matrix.Identity)
+            If clipGeometry Is Nothing Then Return False
+
+            ' f the geometry is a line (zero-area), widen it before intersecting ---
+            If TypeOf geometry Is LineGeometry Then
+                Dim sw As Single = GetStrokeWidthOrZero(svgElement)
+                If sw > 0 Then
+                    ' Widen in the SAME coordinate space as geometry+clipGeometry
+                    Dim pen As New Pen(Brushes.Black, sw)
+
+                    'map of SVG stroke style to WPF pen
+                    Try
+                        Select Case svgElement.StrokeLineCap
+                            Case SvgStrokeLineCap.Butt : pen.StartLineCap = PenLineCap.Flat : pen.EndLineCap = PenLineCap.Flat
+                            Case SvgStrokeLineCap.Round : pen.StartLineCap = PenLineCap.Round : pen.EndLineCap = PenLineCap.Round
+                            Case SvgStrokeLineCap.Square : pen.StartLineCap = PenLineCap.Square : pen.EndLineCap = PenLineCap.Square
+                        End Select
+
+                        Select Case svgElement.StrokeLineJoin
+                            Case SvgStrokeLineJoin.Miter : pen.LineJoin = PenLineJoin.Miter
+                            Case SvgStrokeLineJoin.Round : pen.LineJoin = PenLineJoin.Round
+                            Case SvgStrokeLineJoin.Bevel : pen.LineJoin = PenLineJoin.Bevel
+                        End Select
+                    Catch
+                        ' keep default pen styling
+                    End Try
+
+                    Dim widened As PathGeometry = geometry.GetWidenedPathGeometry(pen)
+                    If widened IsNot Nothing AndAlso widened.Figures.Count > 0 Then
+                        geometry = widened
+                    End If
+                End If
             End If
-        End If
-        Return False
+
+            geometry = Geometry.Combine(geometry, clipGeometry, GeometryCombineMode.Intersect, Nothing)
+            Return True
+
+        Catch
+            Return False
+        End Try
     End Function
+
 
 
     Private Function GeneratePathFromFlattened(flattenedGeometry As PathGeometry, bounds As Rect) As Shapes.Path
@@ -670,8 +698,40 @@ Public Class SVGImportService : Implements ISvgImportService
     End Function
 
 
-    Private Function ConvertLine(svgLine As SvgLine, matrix As Matrix) As IDrawable
+    Private Function ConvertLine(svgLine As SvgLine, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
+            ' Build local geometry for clipping (clip operates in local SVG space)
+            Dim geom As Geometry = New LineGeometry(New Point(svgLine.StartX, svgLine.StartY), New Point(svgLine.EndX, svgLine.EndY))
+
+            Dim wasClipped As Boolean = BakeClipGeometry(geom, svgLine, svgDoc)
+
+            If wasClipped Then
+                Dim flatWorld As PathGeometry = TransformAndFlattenGeometry(geom, matrix, FLATTENING_TOLERANCE)
+                If flatWorld Is Nothing OrElse flatWorld.Figures.Count = 0 Then Return Nothing
+
+                Dim bounds As Rect = flatWorld.Bounds
+                If Not IsValidBounds(bounds) Then Return Nothing
+
+                Dim wpfPath As Shapes.Path = GeneratePathFromFlattened(flatWorld, bounds)
+                If wpfPath Is Nothing Then Return Nothing
+
+                Try
+                    Dim color = CType(svgLine.Stroke, SvgColourServer).Colour
+                    wpfPath.Fill = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
+                Catch ex As Exception
+                    wpfPath.Fill = Nothing
+                End Try
+                wpfPath.Stroke = Nothing
+                wpfPath.StrokeThickness = 0.0
+
+                Dim clipDims = (totalWidth:=bounds.Width, totalHeight:=bounds.Height, strokeOffset:=0.0, transformedStroke:=0.0)
+
+
+                Return FinaliseDrawableElement(wpfPath, bounds, svgLine, svgLine.ID, clipDims, True)
+            End If
+
+            ' --- Unclipped: keep your existing native line logic ---
+
             ' Transform endpoints into world space
             Dim p1 As Point = matrix.Transform(New Point(svgLine.StartX, svgLine.StartY))
             Dim p2 As Point = matrix.Transform(New Point(svgLine.EndX, svgLine.EndY))
@@ -682,33 +742,31 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim maxX As Double = Math.Max(p1.X, p2.X)
             Dim maxY As Double = Math.Max(p1.Y, p2.Y)
 
-            Dim bounds As New Rect(minX, minY, maxX - minX, maxY - minY)
-            If Not IsValidBounds(bounds) Then Return Nothing
+            Dim boundsWorld As New Rect(minX, minY, maxX - minX, maxY - minY)
+            If Not IsValidBounds(boundsWorld) Then Return Nothing
 
             Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgLine)
-            Dim dims = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+            Dim dims = CalculateStrokeDimensions(boundsWorld, strokeWidthValue, matrix)
             Dim strokeOffset As Double = dims.strokeOffset
 
-            'Normalize endpoints into LOCAL wrapper space
-            '    (so the wrapper measures correctly and nothing drsws outside it)
-            Dim localP1 As New Point((p1.X - bounds.X) + strokeOffset, (p1.Y - bounds.Y) + strokeOffset)
-            Dim localP2 As New Point((p2.X - bounds.X) + strokeOffset, (p2.Y - bounds.Y) + strokeOffset)
+            ' Normalize endpoints into LOCAL wrapper space
+            Dim localP1 As New Point((p1.X - boundsWorld.X) + strokeOffset, (p1.Y - boundsWorld.Y) + strokeOffset)
+            Dim localP2 As New Point((p2.X - boundsWorld.X) + strokeOffset, (p2.Y - boundsWorld.Y) + strokeOffset)
 
             Dim wpfLine As New Line With {
-                .X1 = localP1.X,
-                .Y1 = localP1.Y,
-                .X2 = localP2.X,
-                .Y2 = localP2.Y,
-                .Width = dims.totalWidth,
-                .Height = dims.totalHeight
-            }
+            .X1 = localP1.X,
+            .Y1 = localP1.Y,
+            .X2 = localP2.X,
+            .Y2 = localP2.Y
+        }
 
-            Return FinaliseDrawableElement(wpfLine, bounds, svgLine, svgLine.ID, dims)
+            Return FinaliseDrawableElement(wpfLine, boundsWorld, svgLine, svgLine.ID, dims)
 
-        Catch ex As Exception
+        Catch
             Return Nothing
         End Try
     End Function
+
 
 
     Private Function ConvertText(svgText As SvgText, matrix As Matrix, svgDoc As SvgDocument) As IDrawable

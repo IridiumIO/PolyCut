@@ -29,7 +29,8 @@ Public Class SVGImportService : Implements ISvgImportService
         Dim results As New List(Of IDrawable)
 
         For Each child As SvgElement In svgDoc.Children
-            ProcessElement(child, rootMatrix, results, svgDoc)
+            Dim d = ProcessElement(child, rootMatrix, svgDoc)
+            If d IsNot Nothing Then results.Add(d)
         Next
 
         Return results
@@ -232,41 +233,49 @@ Public Class SVGImportService : Implements ISvgImportService
         Return If(tolerance > 0, pathGeom.GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute), pathGeom.GetFlattenedPathGeometry())
     End Function
 
-    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, results As List(Of IDrawable), svgDoc As SvgDocument)
+    Private Function ProcessElement(elem As SvgElement, parentMatrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Dim currentMatrix As Matrix = parentMatrix
         currentMatrix = ApplySvgTransforms(elem, currentMatrix)
 
         If TypeOf elem Is SvgGroup Then
-            Dim group = CType(elem, SvgGroup)
+            Dim group = DirectCast(elem, SvgGroup)
+
+            Dim children As New List(Of IDrawable)
             For Each child In group.Children
-                ProcessElement(child, currentMatrix, results, svgDoc)
+                Dim cd = ProcessElement(child, currentMatrix, svgDoc)
+                If cd IsNot Nothing Then children.Add(cd)
             Next
-        ElseIf TypeOf elem Is SvgPath Then
-            Dim drawable = ConvertPath(CType(elem, SvgPath), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgRectangle Then
-            Dim drawable = ConvertRectangle(CType(elem, SvgRectangle), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgEllipse Then
-            Dim drawable = ConvertEllipse(CType(elem, SvgEllipse), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgCircle Then
-            Dim drawable = ConvertCircle(CType(elem, SvgCircle), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgLine Then
-            Dim drawable = ConvertLine(CType(elem, SvgLine), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgText Then
-            Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgPolyline Then
-            Dim drawable = ConvertPolyline(CType(elem, SvgPolyline), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
-        ElseIf TypeOf elem Is SvgPolygon Then
-            Dim drawable = ConvertPolygon(CType(elem, SvgPolygon), currentMatrix, svgDoc)
-            If drawable IsNot Nothing Then results.Add(drawable)
+
+            If children.Count = 0 Then Return Nothing
+
+            ' You need a group drawable type in your project. Many apps already have something like this.
+            Dim dg As New DrawableGroup() With {.Children = children} ' <-- adjust to your actual constructor/API
+            AssignDrawableName(dg, group.ID)
+            Return dg
         End If
-    End Sub
+
+        ' Leaf elements convert exactly like before
+        If TypeOf elem Is SvgPath Then
+            Return ConvertPath(DirectCast(elem, SvgPath), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgRectangle Then
+            Return ConvertRectangle(DirectCast(elem, SvgRectangle), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgEllipse Then
+            Return ConvertEllipse(DirectCast(elem, SvgEllipse), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgCircle Then
+            Return ConvertCircle(DirectCast(elem, SvgCircle), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgLine Then
+            Return ConvertLine(DirectCast(elem, SvgLine), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgText Then
+            Return ConvertText(DirectCast(elem, SvgText), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgPolyline Then
+            Return ConvertPolyline(DirectCast(elem, SvgPolyline), currentMatrix, svgDoc)
+        ElseIf TypeOf elem Is SvgPolygon Then
+            Return ConvertPolygon(DirectCast(elem, SvgPolygon), currentMatrix, svgDoc)
+        End If
+
+        Return Nothing
+    End Function
+
 
     Private Function GetClipPathGeometry(svgDoc As SvgDocument, clipPathUri As Uri, matrix As Matrix) As Geometry
         If clipPathUri Is Nothing Then Return Nothing

@@ -291,6 +291,54 @@ Public Class SVGImportService : Implements ISvgImportService
         Return Matrix.Multiply(local, parentAccumulated)
     End Function
 
+
+
+
+    Private Function CreateBakedPathDrawableFromGeometry(srcGeometry As Geometry, matrix As Matrix, svgElement As SvgVisualElement, elementId As String) As IDrawable
+
+        Dim flattened As PathGeometry = TransformAndFlattenGeometry(srcGeometry, matrix, FLATTENING_TOLERANCE)
+        Dim bounds As Rect = flattened.Bounds
+        If bounds.IsEmpty OrElse bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+        Dim translated = flattened.Clone()
+        translated.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+        translated = translated.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+
+        Dim strokeWidthValue As Single = 0
+        Try
+            If svgElement.StrokeWidth <> Nothing Then strokeWidthValue = svgElement.StrokeWidth.Value
+        Catch
+            strokeWidthValue = 0
+        End Try
+
+        Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+
+        Dim wpfPath As New Shapes.Path With {
+        .Data = translated,
+        .Stretch = Stretch.None,
+        .Width = dimensions.totalWidth,
+        .Height = dimensions.totalHeight
+    }
+
+        ApplyStrokeAndFill(wpfPath, svgElement, dimensions.transformedStroke)
+        Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+        Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+        Dim drawable As New DrawablePath(wpfPath)
+        AssignDrawableName(drawable, elementId)
+        Return drawable
+    End Function
+
+
+    Private Function HasShearOrRotation(m As Matrix, Optional eps As Double = 0.0000001) As Boolean
+        Return Math.Abs(m.M12) > eps OrElse Math.Abs(m.M21) > eps
+    End Function
+
+    Private Function IsAxisAlignedScaleTranslate(m As Matrix, Optional eps As Double = 0.0000001) As Boolean
+        ' No rotation/shear. Allows non-uniform scale + translate.
+        Return Math.Abs(m.M12) <= eps AndAlso Math.Abs(m.M21) <= eps
+    End Function
+
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
@@ -369,6 +417,11 @@ Public Class SVGImportService : Implements ISvgImportService
                 End If
             End If
 
+            If Not IsAxisAlignedScaleTranslate(matrix) Then
+                Return CreateBakedPathDrawableFromGeometry(rectGeometry, matrix, svgRect, svgRect.ID)
+            End If
+
+
             Dim flattenedGeometry = TransformAndFlattenGeometry(rectGeometry, matrix)
             Dim bounds = flattenedGeometry.Bounds
 
@@ -427,6 +480,10 @@ Public Class SVGImportService : Implements ISvgImportService
                     ellipseGeometry = ApplyClipPath(ellipseGeometry, clipGeometry)
                     wasClipped = True
                 End If
+            End If
+
+            If Not IsAxisAlignedScaleTranslate(matrix) Then
+                Return CreateBakedPathDrawableFromGeometry(ellipseGeometry, matrix, svgEllipse, svgEllipse.ID)
             End If
 
             Dim flattenedGeometry = TransformAndFlattenGeometry(ellipseGeometry, matrix)

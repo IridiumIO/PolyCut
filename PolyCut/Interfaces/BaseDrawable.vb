@@ -78,9 +78,9 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
         Throw New NotImplementedException()
     End Function
 
-    Private _stroke As System.Windows.Media.Brush = Brushes.Black
+    Private _stroke As System.Windows.Media.Brush = Brushes.Transparent
     Private _fill As System.Windows.Media.Brush = Brushes.Transparent
-    Private _strokeThickness As Double = 0.5
+    Private _strokeThickness As Double = 0
 
     Public Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
         Get

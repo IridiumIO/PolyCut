@@ -692,9 +692,16 @@ Public Class SVGImportService : Implements ISvgImportService
         End If
 
         If svgElement.Stroke IsNot Nothing AndAlso TypeOf svgElement.Stroke Is SvgColourServer Then
+
+            If svgElement.Stroke.ToString() = "none" OrElse svgElement.Stroke.GetType().Name.Contains("None") Then
+                shape.Stroke = Nothing
+                shape.StrokeThickness = 0
+            Else
             Dim color = CType(svgElement.Stroke, SvgColourServer).Colour
             shape.Stroke = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
             shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 1)
+            End If
+
         Else
             shape.Stroke = Nothing
             shape.StrokeThickness = 0

@@ -537,25 +537,61 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function ConvertLine(svgLine As SvgLine, matrix As Matrix) As IDrawable
         Try
-            Dim pt1 = matrix.Transform(New Point(svgLine.StartX, svgLine.StartY))
-            Dim pt2 = matrix.Transform(New Point(svgLine.EndX, svgLine.EndY))
+            ' Transform endpoints into world space
+            Dim p1 As Point = matrix.Transform(New Point(svgLine.StartX, svgLine.StartY))
+            Dim p2 As Point = matrix.Transform(New Point(svgLine.EndX, svgLine.EndY))
+
+            'World-space bounds of the (unstroked) segment
+            Dim minX As Double = Math.Min(p1.X, p2.X)
+            Dim minY As Double = Math.Min(p1.Y, p2.Y)
+            Dim maxX As Double = Math.Max(p1.X, p2.X)
+            Dim maxY As Double = Math.Max(p1.Y, p2.Y)
+
+            Dim bounds As New Rect(minX, minY, maxX - minX, maxY - minY)
+
+            If Double.IsNaN(bounds.X) OrElse Double.IsNaN(bounds.Y) OrElse
+           Double.IsNaN(bounds.Width) OrElse Double.IsNaN(bounds.Height) Then
+                Return Nothing
+            End If
+
+            Dim strokeWidthValue As Single = 0
+            Try
+                If svgLine.StrokeWidth <> Nothing Then strokeWidthValue = svgLine.StrokeWidth.Value
+            Catch
+                strokeWidthValue = 0
+            End Try
+
+            Dim dims = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+            Dim strokeOffset As Double = dims.strokeOffset
+
+            'Normalize endpoints into LOCAL wrapper space
+            '    (so the wrapper measures correctly and nothing drsws outside it)
+            Dim localP1 As New Point((p1.X - bounds.X) + strokeOffset, (p1.Y - bounds.Y) + strokeOffset)
+            Dim localP2 As New Point((p2.X - bounds.X) + strokeOffset, (p2.Y - bounds.Y) + strokeOffset)
 
             Dim wpfLine As New Line With {
-                .X1 = pt1.X,
-                .Y1 = pt1.Y,
-                .X2 = pt2.X,
-                .Y2 = pt2.Y
+            .X1 = localP1.X,
+            .Y1 = localP1.Y,
+            .X2 = localP2.X,
+            .Y2 = localP2.Y,
+            .Width = dims.totalWidth,
+            .Height = dims.totalHeight
             }
 
-            ApplyStrokeAndFill(wpfLine, svgLine, 0)
+            ApplyStrokeAndFill(wpfLine, svgLine, dims.transformedStroke)
+
+            Canvas.SetLeft(wpfLine, bounds.X - strokeOffset)
+            Canvas.SetTop(wpfLine, bounds.Y - strokeOffset)
 
             Dim drawable As New DrawableLine(wpfLine)
             AssignDrawableName(drawable, svgLine.ID)
             Return drawable
+
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
+
 
     Private Function ConvertText(svgText As SvgText, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try

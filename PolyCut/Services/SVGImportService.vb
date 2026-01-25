@@ -258,6 +258,9 @@ Public Class SVGImportService : Implements ISvgImportService
         ElseIf TypeOf elem Is SvgText Then
             Dim drawable = ConvertText(CType(elem, SvgText), currentMatrix, svgDoc)
             If drawable IsNot Nothing Then results.Add(drawable)
+        ElseIf TypeOf elem Is SvgPolygon Then
+            Dim drawable = ConvertPolygon(CType(elem, SvgPolygon), currentMatrix, svgDoc)
+            If drawable IsNot Nothing Then results.Add(drawable)
         End If
     End Sub
 
@@ -733,6 +736,63 @@ Public Class SVGImportService : Implements ISvgImportService
             Return Nothing
         End Try
     End Function
+
+    Private Function ConvertPolygon(svgPolygon As SvgPolygon, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
+        Try
+            Dim polygonGeometry As Geometry = CreatePolygonGeometry(svgPolygon.Points)
+            If polygonGeometry Is Nothing Then Return Nothing
+
+            Dim wasClipped As Boolean = False
+
+            ' Apply clipping path if present
+            If svgPolygon.ClipPath IsNot Nothing Then
+                Dim clipGeometry = GetClipPathGeometry(svgDoc, svgPolygon.ClipPath, Matrix.Identity)
+                If clipGeometry IsNot Nothing Then
+                    polygonGeometry = ApplyClipPath(polygonGeometry, clipGeometry)
+                    wasClipped = True
+                End If
+            End If
+
+            ' Polygons always need to be converted to paths since they're defined by points
+            Dim flattenedGeometry = TransformAndFlattenGeometry(polygonGeometry, matrix, FLATTENING_TOLERANCE)
+            Dim bounds = flattenedGeometry.Bounds
+
+
+            'all this stuff is duplicated from path... TODO : refactor
+            If bounds.Width <= 0 OrElse bounds.Height <= 0 Then Return Nothing
+
+            Dim translatedGeometry = flattenedGeometry.Clone()
+            translatedGeometry.Transform = New TranslateTransform(-bounds.X, -bounds.Y)
+            translatedGeometry = translatedGeometry.GetFlattenedPathGeometry(FLATTENING_TOLERANCE, ToleranceType.Absolute)
+
+            Dim strokeWidthValue As Single = 0
+            Try
+                If svgPolygon.StrokeWidth <> Nothing Then strokeWidthValue = svgPolygon.StrokeWidth.Value
+            Catch
+                strokeWidthValue = 0
+            End Try
+
+            Dim dimensions = CalculateStrokeDimensions(bounds, strokeWidthValue, matrix)
+
+            Dim wpfPath As New Shapes.Path With {
+                .Data = translatedGeometry,
+                .Stretch = Stretch.None,
+                .Width = dimensions.totalWidth,
+                .Height = dimensions.totalHeight
+            }
+
+            ApplyStrokeAndFill(wpfPath, svgPolygon, dimensions.transformedStroke)
+            Canvas.SetLeft(wpfPath, bounds.X - dimensions.strokeOffset)
+            Canvas.SetTop(wpfPath, bounds.Y - dimensions.strokeOffset)
+
+            Dim drawable As New DrawablePath(wpfPath)
+            AssignDrawableName(drawable, svgPolygon.ID)
+            Return drawable
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
 
     Private Function ConvertLine(svgLine As SvgLine, matrix As Matrix) As IDrawable
         Try

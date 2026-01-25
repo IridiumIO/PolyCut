@@ -284,7 +284,7 @@ Public Class SVGImportService : Implements ISvgImportService
             End If
 
             ' SVG transform list applies left-to-right
-            local = Matrix.Multiply(local, tm)
+            local = Matrix.Multiply(tm, local)
         Next
 
         ' IMPORTANT: child(local) first, then parent group/doc

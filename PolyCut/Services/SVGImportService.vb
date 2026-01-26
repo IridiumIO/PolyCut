@@ -945,7 +945,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Public Shared Function SVGDocumentToString(svgdocument As SvgDocument) As String
         Using sw As New StringWriter()
-            Using writer As XmlWriter = XmlWriter.Create(sw, New XmlWriterSettings With {.Encoding = Text.Encoding.UTF8})
+            Using writer As XmlWriter = XmlWriter.Create(sw, New XmlWriterSettings With {.Encoding = Text.Encoding.UTF8, .OmitXmlDeclaration = True})
                 svgdocument.Write(writer)
             End Using
             Return sw.ToString()

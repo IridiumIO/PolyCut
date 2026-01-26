@@ -223,13 +223,31 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         ApplyStyle(Nothing, Nothing, th, Nothing, Nothing, previousThicknessOverrides)
     End Sub
 
-    Private Sub ApplyStyle(fill As Brush, stroke As Brush, thickness As Double?, previousFill As System.Collections.Generic.IDictionary(Of IDrawable, Brush), previousStroke As System.Collections.Generic.IDictionary(Of IDrawable, Brush), previousThickness As System.Collections.Generic.IDictionary(Of IDrawable, Double))
-        Dim items = MainVM.SelectedDrawables.ToList()
-        If items.Count < 1 Then Return
+    Private Sub ApplyStyle(fill As Brush,
+                       stroke As Brush,
+                       thickness As Double?,
+                       previousFill As IDictionary(Of IDrawable, Brush),
+                       previousStroke As IDictionary(Of IDrawable, Brush),
+                       previousThickness As IDictionary(Of IDrawable, Double))
+
+        Dim raw = MainVM.SelectedDrawables.ToList()
+        If raw.Count < 1 Then Return
+
+        Dim items As New List(Of IDrawable)()
+        For Each d In raw
+            Dim ng = TryCast(d, NestedDrawableGroup)
+            If ng IsNot Nothing Then
+                items.AddRange(ng.GetAllLeafChildren())
+            Else
+                items.Add(d)
+            End If
+        Next
+        items = items.Where(Function(x) x IsNot Nothing).Distinct().ToList()
+
         Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
         If action.Execute() Then _undoRedoService.Push(action)
-
     End Sub
+
 
 
     <ObservableProperty>

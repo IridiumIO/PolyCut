@@ -101,7 +101,7 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
     Private _fill As System.Windows.Media.Brush = Brushes.Transparent
     Private _strokeThickness As Double = 0
 
-    Public Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
+    Public Overridable Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
         Get
             Return _stroke
         End Get
@@ -112,7 +112,7 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
         End Set
     End Property
 
-    Public Property Fill As System.Windows.Media.Brush Implements IDrawable.Fill
+    Public Overridable Property Fill As System.Windows.Media.Brush Implements IDrawable.Fill
         Get
             Return _fill
         End Get
@@ -123,7 +123,7 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
         End Set
     End Property
 
-    Public Property StrokeThickness As Double Implements IDrawable.StrokeThickness
+    Public Overridable Property StrokeThickness As Double Implements IDrawable.StrokeThickness
         Get
             Return _strokeThickness
         End Get
@@ -134,7 +134,7 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
         End Set
     End Property
 
-    Private Sub ApplyVisualStyle()
+    Overridable Sub ApplyVisualStyle()
         If _drawableElement Is Nothing Then Return
 
         Try

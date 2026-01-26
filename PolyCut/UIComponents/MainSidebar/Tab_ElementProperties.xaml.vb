@@ -7,9 +7,9 @@ Imports PolyCut.Shared
 Public Class Tab_ElementProperties
 
     ' ===== Cached state for undo =====
-    Private _thicknessBeforeEditMap As IDictionary(Of IDrawable, Double)
-    Private _strokeBeforeEdit As IDictionary(Of IDrawable, Brush)
-    Private _fillBeforeEdit As IDictionary(Of IDrawable, Brush)
+    Private _fillBeforeEditMap As Dictionary(Of IDrawable, Brush)
+    Private _strokeBeforeEditMap As Dictionary(Of IDrawable, Brush)
+    Private _thicknessBeforeEditMap As Dictionary(Of IDrawable, Double)
 
 
     Private ReadOnly _thicknessValues As Double() = {0, 0.01, 0.1, 0.2, 0.5, 1, 2, 3, 4, 5, 10}
@@ -81,44 +81,26 @@ Public Class Tab_ElementProperties
     ' ===== Fill =====
 
     Private Sub FillColorPicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim items = MainVM.SelectedDrawables.ToList()
-        If items.Count = 0 Then
-            _fillBeforeEdit = Nothing
-            Return
-        End If
-
-        Dim map As New Dictionary(Of IDrawable, Brush)()
-        For Each d In items
-            map(d) = d.Fill
-        Next
-        _fillBeforeEdit = map
+        Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+        _fillBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Fill)
     End Sub
 
     Private Sub FillColorPicker_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        VM.ApplyFill(e.SelectedBrush, _fillBeforeEdit)
-        _fillBeforeEdit = Nothing
+        VM.ApplyFill(e.SelectedBrush, _fillBeforeEditMap)
+        _fillBeforeEditMap = Nothing
     End Sub
 
 
     ' ===== Stroke =====
 
     Private Sub StrokeColorPicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim items = MainVM.SelectedDrawables.ToList()
-        If items.Count = 0 Then
-            _strokeBeforeEdit = Nothing
-            Return
-        End If
-
-        Dim map As New Dictionary(Of IDrawable, Brush)()
-        For Each d In items
-            map(d) = d.Stroke
-        Next
-        _strokeBeforeEdit = map
+        Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+        _strokeBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Stroke)
     End Sub
 
     Private Sub StrokeColorPicker_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        VM.ApplyStroke(e.SelectedBrush, _strokeBeforeEdit)
-        _strokeBeforeEdit = Nothing
+        VM.ApplyStroke(e.SelectedBrush, _strokeBeforeEditMap)
+        _strokeBeforeEditMap = Nothing
     End Sub
 
 
@@ -138,12 +120,8 @@ Public Class Tab_ElementProperties
         If sd Is Nothing Then Return
 
         If _thicknessBeforeEditMap Is Nothing Then
-            Dim items = MainVM.SelectedDrawables.ToList()
-            Dim map As New Dictionary(Of IDrawable, Double)()
-            For Each d In items
-                map(d) = d.StrokeThickness
-            Next
-            _thicknessBeforeEditMap = map
+            Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+            _thicknessBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.StrokeThickness)
         End If
 
 
@@ -330,4 +308,26 @@ Public Class Tab_ElementProperties
         be.UpdateSource()
         Return Not Validation.GetHasError(tb)
     End Function
+
+
+    Private Shared Function ExpandSelectionToLeaves(items As IEnumerable(Of IDrawable)) As List(Of IDrawable)
+        Dim result As New List(Of IDrawable)()
+        If items Is Nothing Then Return result
+
+        For Each d In items
+            If d Is Nothing Then Continue For
+
+            Dim ng = TryCast(d, NestedDrawableGroup)
+            If ng IsNot Nothing Then
+                ' Perfect undo requires leaf-level snapshots
+                result.AddRange(ng.GetAllLeafChildren())
+            Else
+                result.Add(d)
+            End If
+        Next
+
+        Return result.Where(Function(x) x IsNot Nothing).Distinct().ToList()
+    End Function
+
+
 End Class

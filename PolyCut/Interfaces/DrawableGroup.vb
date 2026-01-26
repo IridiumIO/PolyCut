@@ -84,7 +84,7 @@ Public Class DrawableGroup : Inherits BaseDrawable
 
         Canvas.SetLeft(groupWrapper, bounds.Left)
         Canvas.SetTop(groupWrapper, bounds.Top)
-        groupWrapper.Style = CType(Application.Current.FindResource("DesignerItemStyle"), Style)
+        groupWrapper.Style = TryCast(Application.Current?.TryFindResource("DesignerItemStyle"), Style)
 
         parentCanvas.Children.Add(groupWrapper)
         tempGroup.DrawableElement = tempGroup._groupContainer

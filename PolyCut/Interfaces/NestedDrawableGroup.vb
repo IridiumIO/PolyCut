@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
+Imports System.Windows.Ink
 
 Imports PolyCut.RichCanvas
 
@@ -10,15 +11,7 @@ Imports Svg.Transforms
 
 Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
-    'Working:
-    '- SVG import
-    '- Canvas view/manipulation
-    '- GCode generation 
-    '- File project save
-    '- Undo/redo
-
     'Known Not working
-    '- Apply stroke/fill cascading to children elements
     '- Boolean ops with groups
 
 
@@ -62,12 +55,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         If items Is Nothing OrElse items.Count = 0 Then Return grp
 
-        Dim style As Style = Nothing
-        Try
-            style = CType(Application.Current.FindResource("DesignerItemStyle"), Style)
-        Catch
-            style = Nothing
-        End Try
+        Dim style As Style = TryCast(Application.Current?.TryFindResource("DesignerItemStyle"), Style)
 
         Dim wrappers As New List(Of (drawable As IDrawable, wrapper As ContentControl))
 
@@ -76,8 +64,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Dim w = DrawableWrapperFactory.CreateDesignerWrapperForChild(fe, d, style)
             If w Is Nothing Then Continue For
 
-            Dim left = Canvas.GetLeft(fe) : If Double.IsNaN(left) Then left = 0
-            Dim top = Canvas.GetTop(fe) : If Double.IsNaN(top) Then top = 0
+            Dim left = GetLeftSafe(fe)
+            Dim top = GetTopSafe(fe)
 
             Canvas.SetLeft(w, left)
             Canvas.SetTop(w, top)
@@ -94,8 +82,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         grp.InnerCanvas.Children.Clear()
         For Each pair In wrappers
             Dim w = pair.wrapper
-            Dim wLeft = Canvas.GetLeft(w) : If Double.IsNaN(wLeft) Then wLeft = 0
-            Dim wTop = Canvas.GetTop(w) : If Double.IsNaN(wTop) Then wTop = 0
+            Dim wLeft = GetLeftSafe(w)
+            Dim wTop = GetTopSafe(w)
 
             Canvas.SetLeft(w, wLeft - bounds.Left)
             Canvas.SetTop(w, wTop - bounds.Top)
@@ -557,6 +545,53 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
     End Function
 
+
+    Private _stroke As System.Windows.Media.Brush = Brushes.Transparent
+    Private _fill As System.Windows.Media.Brush = Brushes.Transparent
+    Private _strokeThickness As Double = 0
+
+    Public Overrides Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
+        Get
+            Return _stroke
+        End Get
+        Set(value As System.Windows.Media.Brush)
+            _stroke = value
+            For Each child As IDrawable In GroupChildren
+                child.Stroke = value
+            Next
+            ApplyVisualStyle()
+            OnPropertyChanged(NameOf(Stroke))
+        End Set
+    End Property
+
+    Public Overloads Property Fill As System.Windows.Media.Brush Implements IDrawable.Fill
+        Get
+            Return _fill
+        End Get
+        Set(value As System.Windows.Media.Brush)
+            _fill = value
+            For Each child As IDrawable In GroupChildren
+                child.Fill = value
+            Next
+            ApplyVisualStyle()
+            OnPropertyChanged(NameOf(Fill))
+        End Set
+    End Property
+
+    Public Overrides Property StrokeThickness As Double Implements IDrawable.StrokeThickness
+        Get
+
+            Return _strokeThickness
+        End Get
+        Set(value As Double)
+            _strokeThickness = value
+            For Each child As IDrawable In GroupChildren
+                child.StrokeThickness = value
+            Next
+            ApplyVisualStyle()
+            OnPropertyChanged(NameOf(StrokeThickness))
+        End Set
+    End Property
 
 
 End Class

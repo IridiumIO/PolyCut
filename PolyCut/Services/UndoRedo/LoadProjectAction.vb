@@ -135,7 +135,7 @@ Namespace Services.UndoRedo
                                                                               If groupWrapper Is Nothing Then Continue For
 
                                                                               groupWrapper.Visibility = If(gd.IsHidden, Visibility.Collapsed, Visibility.Visible)
-                                                                              ApplyWrapperState(groupWrapper, gd.Left, gd.Top, gd.Width, gd.Height, gd.ZIndex, gd.RotationAngle)
+                                                                              ApplyWrapperState(groupWrapper, gd.Left, gd.Top, gd.Width, gd.Height, gd.ZIndex, gd.RotationAngle, gd.ScaleX, gd.ScaleY, applyScaleToContent:=True)
                                                                           Next
 
                                                                           ' --- Apply DRAWABLE wrapper state ---
@@ -164,7 +164,14 @@ Namespace Services.UndoRedo
 
 
 
-        Private Shared Sub ApplyWrapperState(wrapper As ContentControl, left As Double, top As Double, width As Double, height As Double, z As Integer, rotationAngle As Double)
+        Private Shared Sub ApplyWrapperState(wrapper As ContentControl,
+                                    left As Double, top As Double,
+                                    width As Double, height As Double,
+                                    z As Integer,
+                                    rotationAngle As Double,
+                                    Optional scaleX As Double = 1.0,
+                                    Optional scaleY As Double = 1.0,
+                                    Optional applyScaleToContent As Boolean = False)
 
             wrapper.Width = width
             wrapper.Height = height
@@ -172,12 +179,41 @@ Namespace Services.UndoRedo
             Canvas.SetTop(wrapper, top)
             Panel.SetZIndex(wrapper, z)
 
-            If Math.Abs(rotationAngle) > 0.01 Then wrapper.RenderTransform = New RotateTransform(rotationAngle)
-            MetadataHelper.SetOriginalDimensions(wrapper, (width, height))
+            ' Rotation stays on wrapper
+            wrapper.RenderTransform = If(Math.Abs(rotationAngle) > 0.01, New RotateTransform(rotationAngle), Nothing)
 
+            ' Scale (mirror) lives on wrapper.Content for groups 
+            If applyScaleToContent Then
+                Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
+                If contentFe IsNot Nothing Then
+                    If Math.Abs(scaleX - 1.0) > 0.0001 OrElse Math.Abs(scaleY - 1.0) > 0.0001 Then
+                        Dim tg = TryCast(contentFe.RenderTransform, TransformGroup)
+                        If tg Is Nothing Then
+                            tg = New TransformGroup()
+                            contentFe.RenderTransform = tg
+                        End If
+
+                        Dim st = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+                        If st Is Nothing Then
+                            st = New ScaleTransform(1, 1)
+                            tg.Children.Add(st)
+                        End If
+
+                        st.ScaleX = scaleX
+                        st.ScaleY = scaleY
+                        contentFe.RenderTransformOrigin = New Point(0.5, 0.5)
+                    Else
+                        ' clear scale back to default if needed
+                        ' (optional: remove only the ScaleTransform child)
+                    End If
+                End If
+            End If
+
+            MetadataHelper.SetOriginalDimensions(wrapper, (width, height))
             wrapper.InvalidateMeasure()
             wrapper.InvalidateArrange()
         End Sub
+
 
 
     End Class

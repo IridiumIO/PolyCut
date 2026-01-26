@@ -354,6 +354,25 @@ Friend NotInheritable Class DrawableCodec
 
             Dim rt = TryCast(wrapper.RenderTransform, RotateTransform)
             If rt IsNot Nothing Then groupData.RotationAngle = rt.Angle
+
+            Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
+            If contentFe IsNot Nothing Then
+                Dim tg = TryCast(contentFe.RenderTransform, TransformGroup)
+                If tg IsNot Nothing Then
+                    Dim st = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+                    If st IsNot Nothing Then
+                        groupData.ScaleX = st.ScaleX
+                        groupData.ScaleY = st.ScaleY
+                    End If
+                Else
+                    Dim st = TryCast(contentFe.RenderTransform, ScaleTransform)
+                    If st IsNot Nothing Then
+                        groupData.ScaleX = st.ScaleX
+                        groupData.ScaleY = st.ScaleY
+                    End If
+                End If
+            End If
+
         Catch
         End Try
     End Sub

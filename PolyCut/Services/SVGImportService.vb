@@ -249,7 +249,7 @@ Public Class SVGImportService : Implements ISvgImportService
             If children.Count = 0 Then Return Nothing
 
             ' You need a group drawable type in your project. Many apps already have something like this.
-            Dim dg As New DrawableGroup() With {.Children = children} ' <-- adjust to your actual constructor/API
+            Dim dg As NestedDrawableGroup = NestedDrawableGroup.CreateNestedGroup(children, group.ID)
             AssignDrawableName(dg, group.ID)
             Return dg
         End If

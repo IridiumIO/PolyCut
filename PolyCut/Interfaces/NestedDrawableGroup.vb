@@ -10,18 +10,16 @@ Imports Svg.Transforms
 
 Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
-
     'Working:
     '- SVG import
     '- Canvas view/manipulation
     '- GCode generation 
+    '- File project save
+    '- Undo/redo
 
     'Known Not working
-    '- Undo/redo
-    '- File project save
     '- Apply stroke/fill cascading to children elements
     '- Boolean ops with groups
-
 
 
     Public Property GroupChildren As New ObservableCollection(Of IDrawable)
@@ -30,10 +28,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
     Public ReadOnly Property DisplayChildren As New ObservableCollection(Of IDrawable)
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
-
-    Private ReadOnly _innerCanvas As New Canvas With {
-        .ClipToBounds = False
-    }
+    Private ReadOnly _innerCanvas As New Canvas With {.ClipToBounds = False}
 
     Public ReadOnly Property InnerCanvas As Canvas
         Get
@@ -93,7 +88,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             grp.AddChild(d)
         Next
 
-        Dim bounds As Rect = CalculateBoundsFromCreatedWrappers(wrappers.Select(Function(x) x.wrapper))
+        Dim bounds As Rect = GetBoundsFromWrappers(wrappers.Select(Function(x) x.wrapper))
 
         ' Localize wrappers into group-local space and insert into INNER canvas (not DrawableElement)
         grp.InnerCanvas.Children.Clear()
@@ -125,72 +120,30 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
     End Function
 
 
-    Private Shared Function CalculateBoundsFromCreatedWrappers(wrappers As IEnumerable(Of ContentControl)) As Rect
-        Dim minX = Double.MaxValue, minY = Double.MaxValue
-        Dim maxX = Double.MinValue, maxY = Double.MinValue
-
-        For Each w In wrappers
-            If w Is Nothing Then Continue For
-            Dim left = Canvas.GetLeft(w) : If Double.IsNaN(left) Then left = 0
-            Dim top = Canvas.GetTop(w) : If Double.IsNaN(top) Then top = 0
-
-            Dim ww = If(w.Width > 0 AndAlso Not Double.IsNaN(w.Width), w.Width, w.ActualWidth)
-            Dim hh = If(w.Height > 0 AndAlso Not Double.IsNaN(w.Height), w.Height, w.ActualHeight)
-
-            minX = Math.Min(minX, left)
-            minY = Math.Min(minY, top)
-            maxX = Math.Max(maxX, left + ww)
-            maxY = Math.Max(maxY, top + hh)
-        Next
-
-        If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
-        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
-    End Function
-
-
-    Private Shared Function CalculateElementBounds(items As IEnumerable(Of IDrawable)) As Rect
-        Dim minX = Double.MaxValue, minY = Double.MaxValue
-        Dim maxX = Double.MinValue, maxY = Double.MinValue
-
-        For Each item In items
-            Dim fe = item.DrawableElement
-            If fe Is Nothing Then Continue For
-
-            Dim left = Canvas.GetLeft(fe) : If Double.IsNaN(left) Then left = 0
-            Dim top = Canvas.GetTop(fe) : If Double.IsNaN(top) Then top = 0
-
-            Dim w As Double =
-            If(Not Double.IsNaN(fe.Width) AndAlso fe.Width > 0, fe.Width, fe.ActualWidth)
-            Dim h As Double =
-            If(Not Double.IsNaN(fe.Height) AndAlso fe.Height > 0, fe.Height, fe.ActualHeight)
-
-            minX = Math.Min(minX, left)
-            minY = Math.Min(minY, top)
-            maxX = Math.Max(maxX, left + w)
-            maxY = Math.Max(maxY, top + h)
-        Next
-
-        If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
-        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
-    End Function
-
-
     Private Sub OnGroupChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
         RebuildDisplayChildren()
     End Sub
 
-    Public Sub RebuildDisplayChildren()
-        DisplayChildren.Clear()
-        For Each child In GroupChildren
-            If TypeOf child Is DrawableGroup Then
-                Dim nested = CType(child, DrawableGroup)
-                nested.RebuildDisplayChildren()
-                For Each nd In nested.DisplayChildren
-                    DisplayChildren.Add(nd)
+
+    Private Iterator Function EnumerateLeafChildren() As IEnumerable(Of IDrawable)
+        For Each ch In GroupChildren
+            If ch Is Nothing Then Continue For
+
+            Dim nested = TryCast(ch, NestedDrawableGroup)
+            If nested IsNot Nothing Then
+                For Each leaf In nested.EnumerateLeafChildren()
+                    Yield leaf
                 Next
             Else
-                DisplayChildren.Add(child)
+                Yield ch
             End If
+        Next
+    End Function
+
+    Public Sub RebuildDisplayChildren()
+        DisplayChildren.Clear()
+        For Each leaf In EnumerateLeafChildren()
+            DisplayChildren.Add(leaf)
         Next
     End Sub
 
@@ -233,17 +186,10 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Function GetAllLeafChildren() As List(Of IDrawable)
-        Dim results As New List(Of IDrawable)
-        For Each ch In GroupChildren
-            Dim nested = TryCast(ch, DrawableGroup)
-            If nested IsNot Nothing Then
-                results.AddRange(nested.GetAllLeafChildren())
-            Else
-                results.Add(ch)
-            End If
-        Next
-        Return results
+        Return EnumerateLeafChildren().ToList()
     End Function
+
+
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim g As New SvgGroup()
@@ -274,29 +220,16 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         If gScaled.Transforms Is Nothing Then gScaled.Transforms = New SvgTransformCollection()
 
         If vb IsNot Nothing AndAlso inner IsNot Nothing Then
-            Dim baseW = inner.Width
-            Dim baseH = inner.Height
-            If baseW <= 0 OrElse Double.IsNaN(baseW) Then baseW = inner.ActualWidth
-            If baseH <= 0 OrElse Double.IsNaN(baseH) Then baseH = inner.ActualHeight
+            Dim baseW = GetWidthSafe(inner)
+            Dim baseH = GetHeightSafe(inner)
 
-            Dim finalW As Double = 0
-            Dim finalH As Double = 0
-
-            If groupWrapper IsNot Nothing Then
-                finalW = If(groupWrapper.Width > 0 AndAlso Not Double.IsNaN(groupWrapper.Width), groupWrapper.Width, groupWrapper.ActualWidth)
-                finalH = If(groupWrapper.Height > 0 AndAlso Not Double.IsNaN(groupWrapper.Height), groupWrapper.Height, groupWrapper.ActualHeight)
-            Else
-                finalW = If(vb.Width > 0 AndAlso Not Double.IsNaN(vb.Width), vb.Width, vb.ActualWidth)
-                finalH = If(vb.Height > 0 AndAlso Not Double.IsNaN(vb.Height), vb.Height, vb.ActualHeight)
-            End If
+            Dim finalW As Double = If(groupWrapper IsNot Nothing, GetWidthSafe(groupWrapper), GetWidthSafe(vb))
+            Dim finalH As Double = If(groupWrapper IsNot Nothing, GetHeightSafe(groupWrapper), GetHeightSafe(vb))
 
             If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
-                Dim sx As Single = CSng(finalW / baseW)
-                Dim sy As Single = CSng(finalH / baseH)
-
-                ' Viewbox scale happens from top-left (0,0) of its child space
-                gScaled.Transforms.Add(New SvgScale(sx, sy))
+                gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
             End If
+
         End If
 
         ' 3) Export children under gScaled so their translations/centers scale correctly
@@ -345,13 +278,11 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         ' --- Viewbox scale (Stretch.Fill) ---
         If vb IsNot Nothing AndAlso inner IsNot Nothing AndAlso selfWrapper IsNot Nothing Then
-            Dim baseW = inner.Width
-            Dim baseH = inner.Height
-            If baseW <= 0 OrElse Double.IsNaN(baseW) Then baseW = inner.ActualWidth
-            If baseH <= 0 OrElse Double.IsNaN(baseH) Then baseH = inner.ActualHeight
+            Dim baseW = GetWidthSafe(inner)
+            Dim baseH = GetHeightSafe(inner)
 
-            Dim finalW = If(selfWrapper.Width > 0 AndAlso Not Double.IsNaN(selfWrapper.Width), selfWrapper.Width, selfWrapper.ActualWidth)
-            Dim finalH = If(selfWrapper.Height > 0 AndAlso Not Double.IsNaN(selfWrapper.Height), selfWrapper.Height, selfWrapper.ActualHeight)
+            Dim finalW = GetWidthSafe(selfWrapper)
+            Dim finalH = GetHeightSafe(selfWrapper)
 
             If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
                 gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
@@ -391,36 +322,34 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
 
         ' 1) Canvas translate
-        Dim left = Canvas.GetLeft(wrapper) : If Double.IsNaN(left) Then left = 0
-        Dim top = Canvas.GetTop(wrapper) : If Double.IsNaN(top) Then top = 0
-        If left <> 0 OrElse top <> 0 Then
-            g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
-        End If
+        Dim left = GetLeftSafe(wrapper)
+        Dim top = GetTopSafe(wrapper)
+        If left <> 0 OrElse top <> 0 Then g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
 
         ' 2) RenderTransform about wrapper center
         Dim rt As Transform = wrapper.RenderTransform
         If rt Is Nothing OrElse rt.Value.IsIdentity Then Return
 
-        Dim w = If(wrapper.Width > 0 AndAlso Not Double.IsNaN(wrapper.Width), wrapper.Width, wrapper.ActualWidth)
-        Dim h = If(wrapper.Height > 0 AndAlso Not Double.IsNaN(wrapper.Height), wrapper.Height, wrapper.ActualHeight)
-        Dim cx As Single = CSng(w / 2.0)
-        Dim cy As Single = CSng(h / 2.0)
-
+        Dim w = GetWidthSafe(wrapper)
+        Dim h = GetHeightSafe(wrapper)
+        Dim cx As Single = w / 2.0
+        Dim cy As Single = h / 2.0
         Dim r = TryCast(rt, RotateTransform)
+
         If r IsNot Nothing Then
-            g.Transforms.Add(New SvgRotate(CSng(r.Angle), cx, cy))
+            g.Transforms.Add(New SvgRotate(r.Angle, cx, cy))
             Return
         End If
 
         Dim s = TryCast(rt, ScaleTransform)
         If s IsNot Nothing Then
             g.Transforms.Add(New SvgTranslate(cx, cy))
-            g.Transforms.Add(New SvgScale(CSng(s.ScaleX), CSng(s.ScaleY)))
+            g.Transforms.Add(New SvgScale(s.ScaleX, s.ScaleY))
             g.Transforms.Add(New SvgTranslate(-cx, -cy))
             Return
         End If
 
-        ' Fallback: matrix (Svg.NET expects List(Of Single))
+        ' Fallback: matrix 
         Dim m As Matrix = rt.Value
         Dim composed As Matrix = Matrix.Identity
         composed.Translate(cx, cy)
@@ -432,20 +361,131 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Private Shared Sub ApplySvgMatrixTransform(svgElem As SvgVisualElement, m As Matrix)
         If svgElem.Transforms Is Nothing Then svgElem.Transforms = New SvgTransformCollection()
-        Dim values As New List(Of Single) From {
-        CSng(m.M11), CSng(m.M12),
-        CSng(m.M21), CSng(m.M22),
-        CSng(m.OffsetX), CSng(m.OffsetY)
-    }
+        Dim values As New List(Of Single) From {m.M11, m.M12, m.M21, m.M22, m.OffsetX, m.OffsetY}
         svgElem.Transforms.Add(New SvgMatrix(values))
     End Sub
 
     Private Shared Sub ApplyCanvasTranslateIfAny(g As SvgGroup, fe As FrameworkElement)
         If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
-        Dim left = Canvas.GetLeft(fe) : If Double.IsNaN(left) Then left = 0
-        Dim top = Canvas.GetTop(fe) : If Double.IsNaN(top) Then top = 0
+        Dim left = GetLeftSafe(fe)
+        Dim top = GetTopSafe(fe)
         If left <> 0 OrElse top <> 0 Then g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
     End Sub
+    Public Sub SetNativeSize(w As Double, h As Double)
+        Dim inner = GetInnerCanvas()
+        If inner Is Nothing Then Return
+
+        If w > 0 AndAlso Not Double.IsNaN(w) Then inner.Width = w
+        If h > 0 AndAlso Not Double.IsNaN(h) Then inner.Height = h
+    End Sub
+
+    Public Function GetNativeSize() As (Double, Double)
+        Dim inner = GetInnerCanvas()
+        If inner Is Nothing Then Return (0, 0)
+        Return (inner.Width, inner.Height)
+    End Function
+
+    Public Sub RebuildGroupVisualFromChildren(designerItemStyle As Style)
+        Dim vb = TryCast(Me.DrawableElement, Viewbox)
+        If vb Is Nothing Then Return
+
+        Dim inner = TryCast(vb.Child, Canvas)
+        If inner Is Nothing Then
+            inner = New Canvas With {.ClipToBounds = False}
+            vb.Child = inner
+        End If
+
+        inner.Children.Clear()
+
+        ' Compute bounds in WORLD space based on child element positions + sizes
+        Dim bounds = CalculateWorldBoundsFromChildren()
+
+        ' Set native size if not already present (needed for Viewbox scaling)
+        If (inner.Width <= 0 OrElse Double.IsNaN(inner.Width)) AndAlso bounds.Width > 0 Then inner.Width = bounds.Width
+        If (inner.Height <= 0 OrElse Double.IsNaN(inner.Height)) AndAlso bounds.Height > 0 Then inner.Height = bounds.Height
+
+        ' Ensure the Viewbox has a concrete size if missing
+        Dim vbe = DirectCast(vb, FrameworkElement)
+        If (vbe.Width <= 0 OrElse Double.IsNaN(vbe.Width)) AndAlso bounds.Width > 0 Then vbe.Width = bounds.Width
+        If (vbe.Height <= 0 OrElse Double.IsNaN(vbe.Height)) AndAlso bounds.Height > 0 Then vbe.Height = bounds.Height
+
+        ' World position for the group element (PolyCanvas wrappering reads this)
+        Canvas.SetLeft(vbe, bounds.Left)
+        Canvas.SetTop(vbe, bounds.Top)
+
+        ' Create child wrappers and place them in LOCAL space
+        For Each child In GroupChildren
+            If child?.DrawableElement Is Nothing Then Continue For
+
+            Dim fe = child.DrawableElement
+
+            Dim left = GetLeftSafe(fe)
+            Dim top = GetTopSafe(fe)
+
+            Dim wrapper = DrawableWrapperFactory.CreateDesignerWrapperForChild(fe, child, designerItemStyle)
+            If wrapper Is Nothing Then Continue For
+
+            ' Localize into group space
+            Canvas.SetLeft(wrapper, left - bounds.Left)
+            Canvas.SetTop(wrapper, top - bounds.Top)
+
+            wrapper.IsHitTestVisible = False
+            inner.Children.Add(wrapper)
+
+            ' Keep model links consistent
+            child.ParentGroup = Me
+        Next
+    End Sub
+
+    Private Function GetInnerCanvas() As Canvas
+        Dim vb = TryCast(Me.DrawableElement, Viewbox)
+        Return TryCast(vb?.Child, Canvas)
+    End Function
+
+    Private Function CalculateWorldBoundsFromChildren() As Rect
+        Dim minX = Double.MaxValue, minY = Double.MaxValue
+        Dim maxX = Double.MinValue, maxY = Double.MinValue
+
+        For Each child In GroupChildren
+            Dim fe = child?.DrawableElement
+            If fe Is Nothing Then Continue For
+
+            Dim left = GetLeftSafe(fe)
+            Dim top = GetTopSafe(fe)
+            Dim w = GetWidthSafe(fe)
+            Dim h = GetHeightSafe(fe)
+
+            minX = Math.Min(minX, left)
+            minY = Math.Min(minY, top)
+            maxX = Math.Max(maxX, left + w)
+            maxY = Math.Max(maxY, top + h)
+        Next
+
+        If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
+        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
+    End Function
+
+    Private Shared Function GetBoundsFromWrappers(wrappers As IEnumerable(Of ContentControl)) As Rect
+        Dim minX = Double.MaxValue, minY = Double.MaxValue
+        Dim maxX = Double.MinValue, maxY = Double.MinValue
+
+        For Each w In wrappers
+            If w Is Nothing Then Continue For
+            Dim left = CanvasUtil.GetLeftSafe(w)
+            Dim top = CanvasUtil.GetTopSafe(w)
+            Dim ww = CanvasUtil.GetWidthSafe(w)
+            Dim hh = CanvasUtil.GetHeightSafe(w)
+
+            minX = Math.Min(minX, left)
+            minY = Math.Min(minY, top)
+            maxX = Math.Max(maxX, left + ww)
+            maxY = Math.Max(maxY, top + hh)
+        Next
+
+        If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
+        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
+    End Function
+
 
 
 End Class
@@ -465,27 +505,24 @@ Public Module DrawableWrapperFactory
 
         Dim wrapper As New ContentControl With {
             .Content = child,
-            .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
-            .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight),
+            .Width = If(Not Double.IsNaN(child.Width) AndAlso child.Width > 0, child.Width, child.ActualWidth),
+            .Height = If(Not Double.IsNaN(child.Height) AndAlso child.Height > 0, child.Height, child.ActualHeight),
             .RenderTransform = New RotateTransform(0),
             .Background = Brushes.Transparent,
             .IsHitTestVisible = True,
-            .ClipToBounds = False
+            .ClipToBounds = False,
+            .Style = designerItemStyle
         }
 
-        ' Match PolyCanvas special cases
-        If TypeOf child Is Canvas Then
-            CType(child, Canvas).ClipToBounds = True
-        End If
+        If TypeOf child Is Canvas Then DirectCast(child, Canvas).ClipToBounds = True
 
         If TypeOf child Is Line Then
             Dim line = DirectCast(child, Line)
-            wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
-            wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
+            wrapper.Width = Math.Abs(line.X2 - line.X1) + line.StrokeThickness
+            wrapper.Height = Math.Abs(line.Y2 - line.Y1) + line.StrokeThickness
             MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
         ElseIf TypeOf child Is Path Then
-            Dim path = DirectCast(child, Path)
-            path.Stretch = Stretch.Fill
+            DirectCast(child, Path).Stretch = Stretch.Fill
         End If
 
         MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
@@ -494,15 +531,7 @@ Public Module DrawableWrapperFactory
         child.Width = Double.NaN
         child.Height = Double.NaN
 
-        ' IMPORTANT:
-        ' We do NOT set Canvas.Left/Top here, because group creation wants to compute bounds first,
-        ' then localize positions. We'll set positions later.
-
-        wrapper.Style = designerItemStyle
-
-        If parentIDrawable IsNot Nothing Then
-            MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
-        End If
+        If parentIDrawable IsNot Nothing Then MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
 
         Return wrapper
     End Function

@@ -75,163 +75,110 @@ Namespace Services.UndoRedo
         Private Function RestoreProjectState(projectData As ProjectData) As Boolean
             Try
                 Dim mainVM = TryCast(_manager, MainViewModel)
+                Dim designerStyle = TryCast(Application.Current?.TryFindResource("DesignerItemStyle"), Style)
+                Dim built As RuntimeProjectModel = _projectService.BuildRuntimeModel(projectData, designerStyle)
 
-                ' Step 1: Restore all groups first
-                Dim groupIdMap As New Dictionary(Of Guid, DrawableGroup)
+                Dim allGroups As List(Of IDrawable) = built.Groups
+                Dim allDrawables As List(Of IDrawable) = built.Drawables
 
-                For Each groupData In projectData.Groups
-                    Dim group As New DrawableGroup(groupData.Name)
-                    groupIdMap(groupData.Id) = group
-                Next
-
-                ' Step 2:  parent-child relationships between groups
-                For Each groupData In projectData.Groups
-                    Dim group = groupIdMap(groupData.Id)
-
-                    If groupData.ParentGroupId.HasValue AndAlso groupIdMap.ContainsKey(groupData.ParentGroupId.Value) Then
-                        Dim parentGroup = groupIdMap(groupData.ParentGroupId.Value)
-                        parentGroup.AddChild(group)
-                    End If
-                Next
-
-                ' Step 3: Add top-level groups to manager and iportedGroups
+                ' Populate VM group list (top-level groups only)
                 If mainVM IsNot Nothing Then
-                    For Each kvp In groupIdMap
-                        Dim group = kvp.Value
+                    mainVM.ImportedGroups.Clear()
 
-                        ' Only add top-level groups  to ImportedGroups
-                        If group.ParentGroup Is Nothing Then
-                            _manager.AddDrawableToCollection(group, -1)
+                    For Each g In allGroups
+                        If g.ParentGroup Is Nothing Then
+                            mainVM.ImportedGroups.Add(g)
+                        End If
+                    Next
+                End If
 
-                            If Not mainVM.ImportedGroups.Contains(group) Then
-                                mainVM.ImportedGroups.Add(group)
-                            End If
+                ' --- Ensure DrawingGroup exists 
+                If mainVM IsNot Nothing Then
+                    mainVM.DrawingGroup = Nothing
 
-                            ' Set DrawingGroup if this is the Drawing Group
-                            If String.Equals(group.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
-                                mainVM.DrawingGroup = group
-                            End If
+                    ' Prefer: find by name among existing DrawableGroup groups
+                    For Each g In allGroups.OfType(Of DrawableGroup)()
+                        If String.Equals(g.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then
+                            mainVM.DrawingGroup = g
+                            Exit For
                         End If
                     Next
 
-                    ' Ensure DrawingGroup exists even if not in saved data
                     If mainVM.DrawingGroup Is Nothing Then
                         mainVM.DrawingGroup = New DrawableGroup("Drawing Group")
-                        _manager.AddDrawableToCollection(mainVM.DrawingGroup, 0)
-
-                        If Not mainVM.ImportedGroups.Contains(mainVM.DrawingGroup) Then
-                            mainVM.ImportedGroups.Add(mainVM.DrawingGroup)
-                        End If
+                        mainVM.ImportedGroups.Add(mainVM.DrawingGroup)
+                        allGroups.Add(mainVM.DrawingGroup)
                     End If
                 End If
 
-                ' Step 4: Create drawables and map them by ID
-                Dim drawableIdMap As New Dictionary(Of Guid, IDrawable)
-                Dim drawableDataMap As New Dictionary(Of IDrawable, DrawableData)
-
-                For Each drawableData In projectData.Drawables
-                    Dim element = _projectService.DeserializeDrawable(drawableData)
-                    If element Is Nothing Then Continue For
-
-                    ' Pre-set position on element (before wrapper is created)
-                    Canvas.SetLeft(element, drawableData.Left)
-                    Canvas.SetTop(element, drawableData.Top)
-
-                    ' For TextBox, set dimensions on the element itself
-                    If TypeOf element Is TextBox Then
-                        element.Width = drawableData.Width
-                        element.Height = drawableData.Height
+                For Each g In allGroups
+                    If TypeOf g Is NestedDrawableGroup AndAlso Not HasNestedAncestor(g) Then
+                        _manager.AddDrawableToCollection(g, -1)
                     End If
-
-                    ' Create drawable from element
-                    Dim drawable As IDrawable = Nothing
-
-                    If TypeOf element Is System.Windows.Shapes.Path Then
-                        drawable = New DrawablePath(CType(element, System.Windows.Shapes.Path))
-                    ElseIf TypeOf element Is Rectangle Then
-                        drawable = New DrawableRectangle(CType(element, Rectangle))
-                    ElseIf TypeOf element Is Ellipse Then
-                        drawable = New DrawableEllipse(CType(element, Ellipse))
-                    ElseIf TypeOf element Is Line Then
-                        drawable = New DrawableLine(CType(element, Line))
-                    ElseIf TypeOf element Is TextBox Then
-                        drawable = New DrawableText(CType(element, TextBox))
-                        drawable.StrokeThickness = drawableData.StrokeThickness
-                        drawable.Stroke = ProjectSerializationService.DeserializeBrush(drawableData.StrokeColor)
-                    End If
-
-                    If drawable IsNot Nothing Then
-                        drawable.IsHidden = drawableData.IsHidden
-                        drawableIdMap(drawableData.Id) = drawable
-                        drawableDataMap(drawable) = drawableData
-                    End If
-
-                    drawable.Name = drawableData.Name
                 Next
 
-                ' Step 5: Add drawables to their correct parent groups
-                For Each drawableData In projectData.Drawables
-                    If Not drawableIdMap.ContainsKey(drawableData.Id) Then Continue For
-
-                    Dim drawable = drawableIdMap(drawableData.Id)
-                    Dim targetGroup As DrawableGroup = Nothing
-
-                    ' Find the correct parent group
-                    If drawableData.ParentGroupId.HasValue AndAlso groupIdMap.ContainsKey(drawableData.ParentGroupId.Value) Then
-                        targetGroup = groupIdMap(drawableData.ParentGroupId.Value)
-                    ElseIf mainVM IsNot Nothing Then
-                        ' No parent specified, add to DrawingGroup
-                        targetGroup = mainVM.DrawingGroup
+                For Each d In allDrawables
+                    If Not HasNestedAncestor(d) Then
+                        _manager.AddDrawableToCollection(d, -1)
                     End If
-
-                    If targetGroup IsNot Nothing Then
-                        targetGroup.AddChild(drawable)
-                    End If
-
-                    ' Add to collection (triggers PolyCanvas to create wrapper)
-                    _manager.AddDrawableToCollection(drawable, -1)
                 Next
 
-                ' Step 6: Configure wrappers in next dispatcher cycle
                 Application.Current.Dispatcher.BeginInvoke(New Action(Sub()
-                                                                          For Each kvp In drawableDataMap
-                                                                              Dim drawable = kvp.Key
-                                                                              Dim drawableData = kvp.Value
 
-                                                                              If drawable?.DrawableElement Is Nothing Then Continue For
-                                                                              Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
-                                                                              If wrapper Is Nothing Then Continue For
+                                                                          ' --- Apply GROUP wrapper state (includes NestedDrawableGroup wrapper) ---
+                                                                          For Each gd In projectData.Groups
+                                                                              Dim grp As IDrawable = Nothing
+                                                                              If Not built.GroupById.TryGetValue(gd.Id, grp) Then Continue For
+                                                                              If grp?.DrawableElement Is Nothing Then Continue For
 
-                                                                              ' Apply wrapper-specific properties
-                                                                              wrapper.Width = drawableData.Width
-                                                                              wrapper.Height = drawableData.Height
+                                                                              Dim groupWrapper = TryCast(grp.DrawableElement.Parent, ContentControl)
+                                                                              If groupWrapper Is Nothing Then Continue For
 
-                                                                              Canvas.SetLeft(wrapper, drawableData.Left)
-                                                                              Canvas.SetTop(wrapper, drawableData.Top)
-                                                                              Panel.SetZIndex(wrapper, drawableData.ZIndex)
-
-                                                                              If Math.Abs(drawableData.RotationAngle) > 0.01 Then
-                                                                                  wrapper.RenderTransform = New RotateTransform(drawableData.RotationAngle)
-                                                                              End If
-
-                                                                              MetadataHelper.SetOriginalDimensions(wrapper, (drawableData.Width, drawableData.Height))
-
-                                                                              wrapper.InvalidateMeasure()
-                                                                              wrapper.InvalidateArrange()
-                                                                              wrapper.UpdateLayout()
+                                                                              groupWrapper.Visibility = If(gd.IsHidden, Visibility.Collapsed, Visibility.Visible)
+                                                                              ApplyWrapperState(groupWrapper, gd.Left, gd.Top, gd.Width, gd.Height, gd.ZIndex, gd.RotationAngle)
                                                                           Next
 
-                                                                          If mainVM IsNot Nothing Then
-                                                                              mainVM.NotifyCollectionsChanged()
-                                                                          End If
+                                                                          ' --- Apply DRAWABLE wrapper state ---
+                                                                          For Each dd In projectData.Drawables
+                                                                              Dim d As IDrawable = Nothing
+                                                                              If Not built.DrawableById.TryGetValue(dd.Id, d) Then Continue For
+                                                                              If d?.DrawableElement Is Nothing Then Continue For
+
+                                                                              Dim wrapper = TryCast(d.DrawableElement.Parent, ContentControl)
+                                                                              If wrapper Is Nothing Then Continue For
+
+                                                                              ApplyWrapperState(wrapper, dd.Left, dd.Top, dd.Width, dd.Height, dd.ZIndex, dd.RotationAngle)
+                                                                          Next
+
+                                                                          Try : Application.Current.MainWindow?.UpdateLayout() : Catch : End Try
+                                                                          mainVM?.NotifyCollectionsChanged()
                                                                       End Sub), Threading.DispatcherPriority.Loaded)
 
                 Return True
+
             Catch ex As Exception
                 Debug.WriteLine($"Failed to restore project state: {ex.Message}")
                 Return False
             End Try
         End Function
+
+
+
+        Private Shared Sub ApplyWrapperState(wrapper As ContentControl, left As Double, top As Double, width As Double, height As Double, z As Integer, rotationAngle As Double)
+
+            wrapper.Width = width
+            wrapper.Height = height
+            Canvas.SetLeft(wrapper, left)
+            Canvas.SetTop(wrapper, top)
+            Panel.SetZIndex(wrapper, z)
+
+            If Math.Abs(rotationAngle) > 0.01 Then wrapper.RenderTransform = New RotateTransform(rotationAngle)
+            MetadataHelper.SetOriginalDimensions(wrapper, (width, height))
+
+            wrapper.InvalidateMeasure()
+            wrapper.InvalidateArrange()
+        End Sub
+
 
     End Class
 
@@ -264,7 +211,7 @@ Namespace Services.UndoRedo
 
             For Each snap In DrawableSnapshots
                 If snap.Data IsNot Nothing Then
-                    Dim element = projectService.DeserializeDrawable(snap.Data)
+                    Dim element = DrawableCodec.DeserializeDrawable(snap.Data)
                 End If
             Next
         End Sub

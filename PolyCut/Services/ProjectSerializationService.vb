@@ -2,21 +2,22 @@ Imports System.IO
 Imports System.Text.Json
 
 Imports PolyCut.Shared
-Imports PolyCut.Shared.Project
 
 Public Class ProjectSerializationService
 
-        Private ReadOnly _jsonOptions As New JsonSerializerOptions With {
-            .WriteIndented = True,
-            .PropertyNameCaseInsensitive = True
-        }
+    Private ReadOnly _jsonOptions As New JsonSerializerOptions With {
+        .WriteIndented = True,
+        .PropertyNameCaseInsensitive = True
+    }
 
+    ' --------------------
+    ' SAVE / LOAD ProjectData
+    ' --------------------
 
-    Public Function SaveProject(filePath As String, drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of DrawableGroup)) As Boolean
+    Public Function SaveProject(filePath As String, drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of IDrawable)) As Boolean
         Try
             Dim projectData = CreateProjectData(drawables, groups)
             Dim json = JsonSerializer.Serialize(projectData, _jsonOptions)
-
             Using stream As New FileStream(filePath, FileMode.Create)
                 Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Compress)
                     Using writer As New StreamWriter(gzip)
@@ -25,21 +26,20 @@ Public Class ProjectSerializationService
                 End Using
             End Using
 
-            ' File.WriteAllText(filePath, json)
+            'File.WriteAllText(filePath, json)
+
             Return True
         Catch ex As Exception
-            Debug.WriteLine($"Failed to save project: {ex.Message}")
+            Application.GetService(Of SnackbarService)?.Show($"Failed to save project", ex.Message, WPF.Ui.Controls.ControlAppearance.Danger, Nothing, TimeSpan.FromSeconds(5))
             Return False
         End Try
     End Function
-
 
     Public Function LoadProject(filePath As String) As ProjectData
         Try
             If Not File.Exists(filePath) Then Return Nothing
 
             Dim json As String
-
             Using stream As New FileStream(filePath, FileMode.Open)
                 Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Decompress)
                     Using reader As New StreamReader(gzip)
@@ -48,75 +48,212 @@ Public Class ProjectSerializationService
                 End Using
             End Using
 
-            'Dim json = File.ReadAllText(filePath)
+            'json = File.ReadAllText(filePath)
 
             Return JsonSerializer.Deserialize(Of ProjectData)(json, _jsonOptions)
         Catch ex As Exception
-            Debug.WriteLine($"Failed to load project: {ex.Message}")
+            Application.GetService(Of SnackbarService)?.Show($"Failed to load project", ex.Message, WPF.Ui.Controls.ControlAppearance.Danger, Nothing, TimeSpan.FromSeconds(5))
             Return Nothing
         End Try
     End Function
 
+    ' --------------------
+    ' Build runtime objects
+    ' --------------------
+    Public Function BuildRuntimeModel(projectData As ProjectData, designerItemStyle As Style) As RuntimeProjectModel
 
-    Private Function CreateProjectData(drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of DrawableGroup)) As ProjectData
-        Dim projectData As New ProjectData()
-        Dim drawableIdMap As New Dictionary(Of IDrawable, Guid)
-        Dim groupIdMap As New Dictionary(Of DrawableGroup, Guid)
+        If projectData Is Nothing Then Return New RuntimeProjectModel With {
+            .Drawables = New List(Of IDrawable)(),
+            .Groups = New List(Of IDrawable)()
+        }
 
-        ' Assign IDs to all groups first
-        For Each group In groups
-            groupIdMap(group) = Guid.NewGuid()
+        Dim drawableById As New Dictionary(Of Guid, IDrawable)
+        Dim groupById As New Dictionary(Of Guid, IDrawable)
+
+        ' 1) Create leaf drawables
+        For Each dd In projectData.Drawables
+            Dim fe = DrawableCodec.DeserializeDrawable(dd)
+            If fe Is Nothing Then Continue For
+
+            ' IMPORTANT: seed size for group-bound calculations BEFORE anything is measured
+            If dd.Width > 0 AndAlso Not Double.IsNaN(dd.Width) Then fe.Width = dd.Width
+            If dd.Height > 0 AndAlso Not Double.IsNaN(dd.Height) Then fe.Height = dd.Height
+
+            Canvas.SetLeft(fe, dd.Left)
+            Canvas.SetTop(fe, dd.Top)
+
+            Dim d As IDrawable = BaseDrawable.DrawableFactory(fe)
+            d.Name = dd.Name
+            d.IsHidden = dd.IsHidden
+
+            drawableById(dd.Id) = d
         Next
 
-        ' Assign IDs to all drawables
-        For Each drawable In drawables
-            If TypeOf drawable Is DrawableGroup Then Continue For ' Skip groups in drawable collection..need to do this at spme point
-            drawableIdMap(drawable) = Guid.NewGuid()
-        Next
+        ' 2) Create groups
+        For Each gd In projectData.Groups
+            Dim g As IDrawable
+            If String.Equals(gd.GroupType, "NestedDrawableGroup", StringComparison.OrdinalIgnoreCase) Then
+                Dim ng As New NestedDrawableGroup(gd.Name)
+                ng.SetNativeSize(gd.NativeWidth, gd.NativeHeight)
 
-        ' Serialize groups with hierarchy
-        For Each group In groups
-            Dim groupData As New GroupData With {
-                .Id = groupIdMap(group),
-                .Name = group.Name
-            }
+                Dim fe = TryCast(ng.DrawableElement, FrameworkElement)
+                If fe IsNot Nothing Then
+                    fe.Width = gd.Width
+                    fe.Height = gd.Height
+                    Canvas.SetLeft(fe, gd.Left)
+                    Canvas.SetTop(fe, gd.Top)
+                End If
 
-            ' Set parent group ID if exists
-            Dim parentGroup = TryCast(group.ParentGroup, DrawableGroup)
-            If parentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(parentGroup) Then
-                groupData.ParentGroupId = groupIdMap(parentGroup)
+                g = ng
+            Else
+                g = New DrawableGroup(gd.Name)
             End If
 
-            ' Add child drawable IDs
-            For Each child In group.GroupChildren
-                If drawableIdMap.ContainsKey(child) Then
-                    groupData.ChildIds.Add(drawableIdMap(child))
+            g.Name = gd.Name
+            groupById(gd.Id) = g
+        Next
+
+        ' 3) Wire group membership
+        For Each gd In projectData.Groups
+            Dim g = groupById(gd.Id)
+
+            For Each cid In gd.ChildIds
+                If drawableById.ContainsKey(cid) Then
+                    AddChildToGroup(g, drawableById(cid))
+                ElseIf groupById.ContainsKey(cid) Then
+                    AddChildToGroup(g, groupById(cid))
+                End If
+            Next
+        Next
+
+        ' 4) Wire parent groups
+        For Each gd In projectData.Groups
+            If Not gd.ParentGroupId.HasValue Then Continue For
+            If groupById.ContainsKey(gd.Id) AndAlso groupById.ContainsKey(gd.ParentGroupId.Value) Then
+                groupById(gd.Id).ParentGroup = groupById(gd.ParentGroupId.Value)
+            End If
+        Next
+
+        ' 5) Rebuild nested visuals (deepest-first)
+        Dim nestedGroups = groupById.Values.OfType(Of NestedDrawableGroup)().
+                            OrderByDescending(Function(g) GetNestedDepth(g)).
+                            ToList()
+
+        For Each ng In nestedGroups
+            ng.RebuildGroupVisualFromChildren(designerItemStyle)
+        Next
+
+        Return New RuntimeProjectModel With {
+            .Drawables = drawableById.Values.ToList(),
+            .Groups = groupById.Values.ToList(),
+            .DrawableById = drawableById,
+            .GroupById = groupById
+        }
+    End Function
+
+    Private Shared Function GetNestedDepth(g As NestedDrawableGroup) As Integer
+        Dim depth As Integer = 0
+        Dim p = TryCast(g.ParentGroup, NestedDrawableGroup)
+        While p IsNot Nothing
+            depth += 1
+            p = TryCast(p.ParentGroup, NestedDrawableGroup)
+        End While
+        Return depth
+    End Function
+
+    Private Shared Sub AddChildToGroup(group As IDrawable, child As IDrawable)
+        If group Is Nothing OrElse child Is Nothing Then Return
+
+        If TypeOf group Is NestedDrawableGroup Then
+            DirectCast(group, NestedDrawableGroup).AddChild(child)
+        ElseIf TypeOf group Is DrawableGroup Then
+            DirectCast(group, DrawableGroup).AddChild(child)
+        End If
+        child.ParentGroup = group
+    End Sub
+
+
+    ' --------------------
+    ' Serialize
+    ' --------------------
+    Private Function CreateProjectData(drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of IDrawable)) As ProjectData
+
+        Dim projectData As New ProjectData()
+
+        Dim allGroups As HashSet(Of IDrawable) = Nothing
+        Dim allLeaves As HashSet(Of IDrawable) = Nothing
+
+        ProjectGraph.WalkGraph(drawables, allGroups, allLeaves)
+        ProjectGraph.WalkGraph(groups, allGroups, allLeaves)
+
+        Dim groupList = allGroups.ToList()
+        Dim leafList = allLeaves.ToList()
+
+        Dim groupIdMap As New Dictionary(Of IDrawable, Guid)()
+        For Each g In groupList
+            groupIdMap(g) = Guid.NewGuid()
+        Next
+
+        Dim drawableIdMap As New Dictionary(Of IDrawable, Guid)()
+        For Each d In leafList
+            drawableIdMap(d) = Guid.NewGuid()
+        Next
+
+        For Each g In groupList
+            Dim gd As New GroupData With {
+            .Id = groupIdMap(g),
+            .Name = g.Name,
+            .GroupType = If(TypeOf g Is NestedDrawableGroup, "NestedDrawableGroup", "DrawableGroup"),
+            .IsHidden = g.IsHidden
+        }
+
+            If g.ParentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(g.ParentGroup) Then
+                gd.ParentGroupId = groupIdMap(g.ParentGroup)
+            End If
+
+            DrawableCodec.SerializeGroupWrapperState(g, gd)
+
+            Dim ng = TryCast(g, NestedDrawableGroup)
+            If ng IsNot Nothing Then
+                Dim native = ng.GetNativeSize()
+                gd.NativeWidth = native.Item1
+                gd.NativeHeight = native.Item2
+            End If
+
+            For Each ch In ProjectGraph.GetGroupChildren(g)
+                If ch Is Nothing Then Continue For
+                If ch.IsAnyGroup() Then
+                    If groupIdMap.ContainsKey(ch) Then gd.ChildIds.Add(groupIdMap(ch))
+                Else
+                    If drawableIdMap.ContainsKey(ch) Then gd.ChildIds.Add(drawableIdMap(ch))
                 End If
             Next
 
-            projectData.Groups.Add(groupData)
+            projectData.Groups.Add(gd)
         Next
 
-        ' Serialize drawables
-        For Each drawable In drawables
-            If TypeOf drawable Is DrawableGroup Then Continue For
+        For Each d In leafList
+            Dim dd = DrawableCodec.SerializeDrawable(d, drawableIdMap(d))
+            If dd Is Nothing Then Continue For
 
-            Dim drawableData = SerializeDrawable(drawable, drawableIdMap(drawable))
-            If drawableData IsNot Nothing Then
-                ' Set parent group ID
-                Dim parentGroup = TryCast(drawable.ParentGroup, DrawableGroup)
-                If parentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(parentGroup) Then
-                    drawableData.ParentGroupId = groupIdMap(parentGroup)
-                End If
-
-                projectData.Drawables.Add(drawableData)
+            If d.ParentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(d.ParentGroup) Then
+                dd.ParentGroupId = groupIdMap(d.ParentGroup)
             End If
+
+            projectData.Drawables.Add(dd)
         Next
 
         Return projectData
     End Function
 
-    Private Function SerializeDrawable(drawable As IDrawable, id As Guid) As DrawableData
+
+
+End Class
+
+
+Friend NotInheritable Class DrawableCodec
+
+    Protected Friend Shared Function SerializeDrawable(drawable As IDrawable, id As Guid) As DrawableData
         If drawable?.DrawableElement Is Nothing Then Return Nothing
 
         Dim element = drawable.DrawableElement
@@ -186,14 +323,42 @@ Public Class ProjectSerializationService
             data.FontSize = textBox.FontSize
 
         Else
-            Return Nothing ' Unknown type
+            Return Nothing
         End If
 
         Return data
     End Function
 
+    Protected Friend Shared Sub SerializeGroupWrapperState(group As IDrawable, groupData As GroupData)
+        Try
+            Dim element = TryCast(group.DrawableElement, FrameworkElement)
+            If element Is Nothing Then Return
 
-    Public Function DeserializeDrawable(data As DrawableData) As FrameworkElement
+            Dim wrapper = TryCast(element.Parent, ContentControl)
+            If wrapper Is Nothing Then
+                ' Not on canvas yet; fall back to element's Canvas position/size
+                groupData.Left = CanvasUtil.GetLeftSafe(element)
+                groupData.Top = CanvasUtil.GetTopSafe(element)
+                groupData.Width = CanvasUtil.GetWidthSafe(element)
+                groupData.Height = CanvasUtil.GetHeightSafe(element)
+                Return
+            End If
+
+            groupData.Left = CanvasUtil.GetLeftSafe(wrapper)
+            groupData.Top = CanvasUtil.GetTopSafe(wrapper)
+            groupData.Width = wrapper.ActualWidth
+            groupData.Height = wrapper.ActualHeight
+
+            groupData.ZIndex = Panel.GetZIndex(wrapper)
+            groupData.IsHidden = group.IsHidden
+
+            Dim rt = TryCast(wrapper.RenderTransform, RotateTransform)
+            If rt IsNot Nothing Then groupData.RotationAngle = rt.Angle
+        Catch
+        End Try
+    End Sub
+
+    Protected Friend Shared Function DeserializeDrawable(data As DrawableData) As FrameworkElement
         If data Is Nothing Then Return Nothing
 
         Dim element As FrameworkElement = Nothing
@@ -246,7 +411,6 @@ Public Class ProjectSerializationService
 
         If element Is Nothing Then Return Nothing
 
-        ' Apply visual properties
         If TypeOf element Is Shape Then
             Dim shape = CType(element, Shape)
             shape.Stroke = DeserializeBrush(data.StrokeColor)
@@ -257,11 +421,10 @@ Public Class ProjectSerializationService
             textBox.Foreground = DeserializeBrush(data.FillColor)
         End If
 
-        ' Apply scale transform to element (use 0.01 threshold because of floating point bullshit)
         If Math.Abs(data.ScaleX - 1.0) > 0.01 OrElse Math.Abs(data.ScaleY - 1.0) > 0.01 Then
-            Dim transformGroup As New TransformGroup()
-            transformGroup.Children.Add(New ScaleTransform(data.ScaleX, data.ScaleY))
-            element.RenderTransform = transformGroup
+            Dim tg As New TransformGroup()
+            tg.Children.Add(New ScaleTransform(data.ScaleX, data.ScaleY))
+            element.RenderTransform = tg
             element.RenderTransformOrigin = New Point(0.5, 0.5)
         End If
 
@@ -270,19 +433,15 @@ Public Class ProjectSerializationService
 
     Public Shared Function SerializeBrush(brush As Brush) As String
         If brush Is Nothing Then Return Nothing
-
         If TypeOf brush Is SolidColorBrush Then
             Dim solidBrush = CType(brush, SolidColorBrush)
             Return solidBrush.Color.ToString()
         End If
-
         Return Nothing
     End Function
 
-
     Public Shared Function DeserializeBrush(colorString As String) As Brush
         If String.IsNullOrEmpty(colorString) Then Return Brushes.Black
-
         Try
             Dim converter As New BrushConverter()
             Return CType(converter.ConvertFromString(colorString), Brush)
@@ -290,5 +449,4 @@ Public Class ProjectSerializationService
             Return Brushes.Black
         End Try
     End Function
-
 End Class

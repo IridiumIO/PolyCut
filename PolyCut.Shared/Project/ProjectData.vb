@@ -46,10 +46,36 @@ Public Class ProjectData
 
 
 Public Class GroupData
-        Public Property Id As Guid = Guid.NewGuid()
-        Public Property Name As String
-        Public Property ChildIds As List(Of Guid) = New List(Of Guid)
-        Public Property ParentGroupId As Guid?
-    End Class
+    Public Property Id As Guid = Guid.NewGuid()
+    Public Property Name As String
 
+    ' "DrawableGroup" or "NestedDrawableGroup"
+    Public Property GroupType As String = "DrawableGroup"
+
+    ' Hierarchy
+    Public Property ChildIds As List(Of Guid) = New List(Of Guid)
+    Public Property ParentGroupId As Guid?
+
+    ' Visual state for the group's WRAPPER (so transforms persist)
+    Public Property Left As Double
+    Public Property Top As Double
+    Public Property Width As Double
+    Public Property Height As Double
+    Public Property RotationAngle As Double
+    Public Property IsHidden As Boolean
+    Public Property ZIndex As Integer
+
+    ' For NestedDrawableGroup with Viewbox: inner-canvas "native" size (pre-scale)
+    Public Property NativeWidth As Double
+    Public Property NativeHeight As Double
+End Class
+
+Public Class RuntimeProjectModel
+    Public Property Drawables As List(Of IDrawable)
+    Public Property Groups As List(Of IDrawable)
+
+    ' Exact lookup by saved IDs:
+    Public Property DrawableById As Dictionary(Of Guid, IDrawable)
+    Public Property GroupById As Dictionary(Of Guid, IDrawable)
+End Class
 

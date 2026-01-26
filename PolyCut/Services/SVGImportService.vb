@@ -584,7 +584,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
             'Bounds in canvas coords (post-transform)
             Dim bounds As Rect = transformed.Bounds
-            If Not IsValidBounds(bounds) Then Return Nothing
+            If Not IsValidBounds(bounds, False) Then Return Nothing
             If transformed.Figures Is Nothing OrElse transformed.Figures.Count = 0 Then Return Nothing
 
             'Normalize to local (0,0) so Canvas.Left/Top is the world position

@@ -182,6 +182,17 @@ Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
                 Return
             End If
 
+            'Dim nestedDrawable = TryCast(Me, NestedDrawableGroup)
+            'If nestedDrawable IsNot Nothing AndAlso _drawableElement IsNot Nothing Then
+            '    For Each childDrawable In nestedDrawable.Children
+            '        childDrawable.Stroke = _stroke
+            '        childDrawable.Fill = _fill
+            '        childDrawable.StrokeThickness = _strokeThickness
+            '    Next
+            '    _drawableElement.InvalidateVisual()
+            '    Return
+            'End If
+
             Dim childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(_drawableElement)
             For i = 0 To childCount - 1
                 Dim child = System.Windows.Media.VisualTreeHelper.GetChild(_drawableElement, i)

@@ -273,11 +273,20 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Dim gScaled As New SvgGroup()
         If gScaled.Transforms Is Nothing Then gScaled.Transforms = New SvgTransformCollection()
 
-        Dim vb = TryCast(Me.DrawableElement, Viewbox)
-        Dim inner = TryCast(vb?.Child, Canvas)
+        Dim vbOuter = TryCast(selfWrapper?.Content, Viewbox)
+        If vbOuter Is Nothing Then vbOuter = TryCast(Me.DrawableElement, Viewbox)
+
+        Dim vbScan As DependencyObject = vbOuter
+        Dim inner As Canvas = Nothing
+
+        While vbScan IsNot Nothing AndAlso inner Is Nothing
+            inner = TryCast(TryCast(vbScan, Viewbox)?.Child, Canvas)
+            If inner IsNot Nothing Then Exit While
+            vbScan = TryCast(TryCast(vbScan, Viewbox)?.Child, Viewbox)
+        End While
 
         ' --- Viewbox scale (Stretch.Fill) ---
-        If vb IsNot Nothing AndAlso inner IsNot Nothing AndAlso selfWrapper IsNot Nothing Then
+        If vbScan IsNot Nothing AndAlso inner IsNot Nothing AndAlso selfWrapper IsNot Nothing Then
             Dim baseW = GetWidthSafe(inner)
             Dim baseH = GetHeightSafe(inner)
 
@@ -286,6 +295,19 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
             If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
                 gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
+
+                Dim rt = vbOuter.RenderTransform
+                If rt IsNot Nothing AndAlso Not rt.Value.IsIdentity Then
+                    Dim ox As Double = finalW * vbOuter.RenderTransformOrigin.X
+                    Dim oy As Double = finalH * vbOuter.RenderTransformOrigin.Y
+
+                    Dim m As Matrix = Matrix.Identity
+                    m.Translate(-ox, -oy)
+                    m = Matrix.Multiply(m, rt.Value)
+                    m.Translate(ox, oy)
+                    ApplySvgMatrixTransform(gScaled, m)
+                End If
+
             End If
         End If
 
@@ -319,6 +341,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
     End Function
 
     Private Shared Sub ApplyWrapperTransformAsSvgGroup(g As SvgGroup, wrapper As ContentControl)
+        If g Is Nothing OrElse wrapper Is Nothing Then Return
         If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
 
         ' 1) Canvas translate
@@ -326,16 +349,66 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Dim top = GetTopSafe(wrapper)
         If left <> 0 OrElse top <> 0 Then g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
 
-        ' 2) RenderTransform about wrapper center
-        Dim rt As Transform = wrapper.RenderTransform
+        ' Use wrapper dimensions as the layout reference space
+        Dim w As Double = GetWidthSafe(wrapper)
+        Dim h As Double = GetHeightSafe(wrapper)
+
+        ' 2) Wrapper RenderTransform about wrapper center (existing behavior)
+        Dim cx As Single = CSng(w / 2.0)
+        Dim cy As Single = CSng(h / 2.0)
+        ApplyTransformAboutPoint(g, wrapper.RenderTransform, cx, cy)
+
+        ' 3) Content RenderTransform (Mirror lives here) about content.RenderTransformOrigin
+        Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
+        If contentFe IsNot Nothing Then
+            Dim ox As Single = CSng(w * contentFe.RenderTransformOrigin.X)
+            Dim oy As Single = CSng(h * contentFe.RenderTransformOrigin.Y)
+            ApplyTransformAboutPoint(g, contentFe.RenderTransform, ox, oy)
+        End If
+    End Sub
+
+    Private Shared Sub ApplyTransformAboutPoint(g As SvgGroup, rt As Transform, ox As Single, oy As Single)
+        If rt Is Nothing OrElse rt.Value.IsIdentity Then Return
+        If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
+
+        Dim tg = TryCast(rt, TransformGroup)
+        If tg IsNot Nothing Then
+            ' Emit each child transform about the SAME pivot in the SAME order
+            For Each child In tg.Children
+                ApplyTransformAboutPoint(g, child, ox, oy)
+            Next
+            Return
+        End If
+
+        ' Prefer specific transforms when possible, but ALWAYS apply about (ox,oy)
+        Dim r = TryCast(rt, RotateTransform)
+        If r IsNot Nothing Then
+            g.Transforms.Add(New SvgRotate(r.Angle, ox, oy))
+            Return
+        End If
+
+        Dim s = TryCast(rt, ScaleTransform)
+        If s IsNot Nothing Then
+            g.Transforms.Add(New SvgTranslate(ox, oy))
+            g.Transforms.Add(New SvgScale(s.ScaleX, s.ScaleY))
+            g.Transforms.Add(New SvgTranslate(-ox, -oy))
+            Return
+        End If
+
+        ' General case: pivoted matrix
+        Dim m As Matrix = rt.Value
+        Dim composed As Matrix = Matrix.Identity
+        composed.Translate(-ox, -oy)
+        composed = Matrix.Multiply(composed, m)
+        composed.Translate(ox, oy)
+        ApplySvgMatrixTransform(g, composed)
+    End Sub
+
+
+    Private Shared Sub ApplyTransformAboutCenter(g As SvgGroup, rt As Transform, cx As Single, cy As Single)
         If rt Is Nothing OrElse rt.Value.IsIdentity Then Return
 
-        Dim w = GetWidthSafe(wrapper)
-        Dim h = GetHeightSafe(wrapper)
-        Dim cx As Single = w / 2.0
-        Dim cy As Single = h / 2.0
         Dim r = TryCast(rt, RotateTransform)
-
         If r IsNot Nothing Then
             g.Transforms.Add(New SvgRotate(r.Angle, cx, cy))
             Return
@@ -349,13 +422,11 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Return
         End If
 
-        ' Fallback: matrix 
         Dim m As Matrix = rt.Value
         Dim composed As Matrix = Matrix.Identity
         composed.Translate(cx, cy)
         composed = Matrix.Multiply(m, composed)
         composed.Translate(-cx, -cy)
-
         ApplySvgMatrixTransform(g, composed)
     End Sub
 

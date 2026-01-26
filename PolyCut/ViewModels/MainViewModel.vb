@@ -581,6 +581,34 @@ Partial Public Class MainViewModel
         Return stringBuilder.ToString()
     End Function
 
+    <RelayCommand>
+    Sub ExportSVG()
+        Dim outDoc As New Svg.SvgDocument With {
+            .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),
+            .Height = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedHeight),
+            .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)
+        }
+
+        For Each drawableL In DrawableCollection
+            If TypeOf (drawableL) Is DrawableGroup Then Continue For
+            Debug.WriteLine(drawableL.Name)
+            Dim finalElement = drawableL?.GetTransformedSVGElement
+            outDoc.Children.Add(finalElement)
+        Next
+
+        Dim svgText = SVGImportService.SVGDocumentToString(outDoc)
+        Dim saveDialog As New Microsoft.Win32.SaveFileDialog With {
+            .Filter = "SVG File (*.svg)|*.svg",
+            .DefaultExt = ".svg",
+            .FileName = "PolyCut_Export.svg"
+        }
+        If saveDialog.ShowDialog() = True Then
+            IO.File.WriteAllText(saveDialog.FileName, svgText)
+            _snackbarService.GenerateSuccess("SVG Exported", Path.GetFileName(saveDialog.FileName))
+        End If
+    End Sub
+
+
     Function GenerateSVGText() As String
         Dim outDoc As New Svg.SvgDocument With {
             .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),

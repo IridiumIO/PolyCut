@@ -113,6 +113,7 @@
                                 <MenuItem Command="{Binding SaveProjectAsCommand}" Header="S_ave As..." />
                                 <MenuItem Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
                                 <MenuItem Command="{Binding BrowseSVGCommand}" Header="_Import SVG..." />
+                                <MenuItem Command="{Binding ExportSVGCommand}" Header="_Export As SVG..." />
                             </MenuItem>
                             <MenuItem Header="_View">
                                 <StackPanel Orientation="Horizontal">

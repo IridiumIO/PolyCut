@@ -246,8 +246,6 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
     End Function
 
     Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
-        ' For groups, "DrawingToSVG" returns a group with UNTRANSFORMED children.
-        ' Transforms are applied in GetTransformedSVGElement where we have access to wrappers.
         Dim g As New SvgGroup()
         Return g
     End Function
@@ -266,7 +264,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         If groupWrapper IsNot Nothing Then
             ApplyWrapperTransformAsSvgGroup(gRoot, groupWrapper)
         Else
-            ' Fallback if you ever export before it’s wrapped
+            ' Fallback if export before it’s wrapped (I forget why I needed this)
             Dim fe = TryCast(Me.DrawableElement, FrameworkElement)
             If fe IsNot Nothing Then ApplyCanvasTranslateIfAny(gRoot, fe)
         End If
@@ -315,7 +313,14 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
                 Dim childSvg As SvgVisualElement = Nothing
                 Try
-                    childSvg = childDrawable.DrawingToSVG()
+                    Dim nested = TryCast(childDrawable, NestedDrawableGroup)
+                    If nested IsNot Nothing Then
+                        ' IMPORTANT: nested groups export their !!contents!! (viewbox scale + children),
+                        ' NOT their outer wrapper transform (already applied it via gChild)
+                        childSvg = nested.GetSvgContentsOnly(childWrapper)
+                    Else
+                        childSvg = childDrawable.DrawingToSVG()
+                    End If
                 Catch
                     childSvg = Nothing
                 End Try
@@ -330,6 +335,57 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Return gRoot
     End Function
     ' --- Helpers ---
+
+    Friend Function GetSvgContentsOnly(selfWrapper As ContentControl) As SvgGroup
+        Dim gScaled As New SvgGroup()
+        If gScaled.Transforms Is Nothing Then gScaled.Transforms = New SvgTransformCollection()
+
+        Dim vb = TryCast(Me.DrawableElement, Viewbox)
+        Dim inner = TryCast(vb?.Child, Canvas)
+
+        ' --- Viewbox scale (Stretch.Fill) ---
+        If vb IsNot Nothing AndAlso inner IsNot Nothing AndAlso selfWrapper IsNot Nothing Then
+            Dim baseW = inner.Width
+            Dim baseH = inner.Height
+            If baseW <= 0 OrElse Double.IsNaN(baseW) Then baseW = inner.ActualWidth
+            If baseH <= 0 OrElse Double.IsNaN(baseH) Then baseH = inner.ActualHeight
+
+            Dim finalW = If(selfWrapper.Width > 0 AndAlso Not Double.IsNaN(selfWrapper.Width), selfWrapper.Width, selfWrapper.ActualWidth)
+            Dim finalH = If(selfWrapper.Height > 0 AndAlso Not Double.IsNaN(selfWrapper.Height), selfWrapper.Height, selfWrapper.ActualHeight)
+
+            If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
+                gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
+            End If
+        End If
+
+        ' --- Children (recurse groups) ---
+        For Each childDrawable In Me.GroupChildren
+            If childDrawable Is Nothing Then Continue For
+
+            Dim childWrapper = TryCast(childDrawable.DrawableElement?.Parent, ContentControl)
+            If childWrapper Is Nothing Then Continue For
+
+            Dim gChild As New SvgGroup()
+            ApplyWrapperTransformAsSvgGroup(gChild, childWrapper)
+
+            Dim childSvg As SvgVisualElement = Nothing
+
+            Dim nested = TryCast(childDrawable, NestedDrawableGroup)
+            If nested IsNot Nothing Then
+                ' Nested group: export its CONTENTS only (so wrapper transform isn't doubled)
+                childSvg = nested.GetSvgContentsOnly(childWrapper)
+            Else
+                ' Leaf: local SVG
+                childSvg = childDrawable.DrawingToSVG()
+            End If
+
+            If childSvg Is Nothing Then Continue For
+            gChild.Children.Add(childSvg)
+            gScaled.Children.Add(gChild)
+        Next
+
+        Return gScaled
+    End Function
 
     Private Shared Sub ApplyWrapperTransformAsSvgGroup(g As SvgGroup, wrapper As ContentControl)
         If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
@@ -398,6 +454,7 @@ End Class
 
 Public Module DrawableWrapperFactory
 
+    'TODO: Merge with Polycanvas.AddChild creation so it's all in one place
     Public Function CreateDesignerWrapperForChild(
         child As FrameworkElement,
         parentIDrawable As IDrawable,
@@ -416,7 +473,7 @@ Public Module DrawableWrapperFactory
             .ClipToBounds = False
         }
 
-        ' Match your PolyCanvas special cases
+        ' Match PolyCanvas special cases
         If TypeOf child Is Canvas Then
             CType(child, Canvas).ClipToBounds = True
         End If
@@ -446,9 +503,6 @@ Public Module DrawableWrapperFactory
         If parentIDrawable IsNot Nothing Then
             MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
         End If
-
-        ' NOTE: We are NOT wiring PolyCanvas mouse events here.
-        ' Group-level wrapper should handle selection; children wrappers can be non-hit-testable.
 
         Return wrapper
     End Function

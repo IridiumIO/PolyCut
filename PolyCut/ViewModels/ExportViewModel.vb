@@ -88,7 +88,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         If Double.IsInfinity(minX) OrElse Double.IsInfinity(minY) Then Return String.Empty
 
         Dim sb As New Text.StringBuilder()
-        sb.AppendLine(MainVM.Printer.StartGCode.Trim)
+        sb.AppendLine(MainVM.Printer.PreviewStartGCode.Trim)
 
         Dim lines As New List(Of GCode) From {
             Core.GCode.GZ(MainVM.Configuration.TravelZ),
@@ -100,7 +100,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         }
 
         sb.AppendLine(String.Join(Environment.NewLine, lines.Select(Function(g) g.ToString())))
-        sb.AppendLine(MainVM.Printer.EndGCode.Trim)
+        sb.AppendLine(MainVM.Printer.PreviewEndGCode.Trim)
 
         Return sb.ToString()
 

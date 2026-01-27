@@ -105,6 +105,25 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         End Set
     End Property
 
+    Public Property PreviewStartGCode As String
+        Get
+            Return _PreviewStartGCode
+        End Get
+        Set(value As String)
+            _PreviewStartGCode = value
+        End Set
+    End Property
+
+    Public Property PreviewEndGCode As String
+        Get
+            Return _PreviewEndGCode
+        End Get
+        Set(value As String)
+            _PreviewEndGCode = value
+        End Set
+    End Property
+
+
     Private _BedWidth As Decimal = 235
     Private _BedHeight As Decimal = 235
     Private _WorkingWidth As Decimal = 235
@@ -114,6 +133,8 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
 
     Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
     Private _EndGCode As String = $""
+    Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
+    Private _PreviewEndGCode As String = $""
 
     Public Function Clone() As Printer
         Dim p As New Printer With {

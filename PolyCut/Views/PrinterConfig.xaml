@@ -34,7 +34,8 @@
                 Grid.RowSpan="5"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                Panel.ZIndex="200" />
+                Panel.ZIndex="200"
+                d:Visibility="Collapsed" />
             <ui:TitleBar
                 Grid.Row="0"
                 Margin="-20"
@@ -67,8 +68,7 @@
                     Padding="0"
                     Background="Transparent"
                     BorderBrush="Transparent"
-                    Click="AddPrinterBtn_Click"
-                    CommandParameter="{Binding Text, ElementName=PrinterName}">
+                    Click="AddPrinterBtn_Click">
                     <ui:SymbolIcon Margin="0" Symbol="Add16" />
                 </ui:Button>
                 <ui:Button
@@ -79,8 +79,7 @@
                     Padding="0"
                     Background="Transparent"
                     BorderBrush="Transparent"
-                    Command="{Binding MainVM.DeletePrinterCommand}"
-                    CommandParameter="{Binding Text, ElementName=PrinterName}">
+                    Command="{Binding MainVM.DeletePrinterCommand}">
                     <ui:SymbolIcon
                         Margin="0"
                         Foreground="{StaticResource PaletteRedBrush}"
@@ -504,6 +503,44 @@
                                     Margin="0,5,0,0"
                                     AcceptsReturn="True"
                                     Text="{Binding MainVM.Printer.EndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextAlignment="Left"
+                                    TextWrapping="NoWrap"
+                                    VerticalScrollBarVisibility="Auto" />
+
+                                <Label
+                                    Margin="0,20,0,0"
+                                    VerticalAlignment="Center"
+                                    Content="Preview Start GCode (?)">
+                                    <Label.ToolTip>
+                                        <ToolTip Content="Start GCode used when sending the bounding box preview to Klipper" />
+                                    </Label.ToolTip>
+                                </Label>
+
+                                <ui:TextBox
+                                    x:Name="PreviewStartGCodeTextBox"
+                                    Height="100"
+                                    Margin="0,5,0,0"
+                                    AcceptsReturn="True"
+                                    Text="{Binding MainVM.Printer.PreviewStartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextAlignment="Left"
+                                    TextWrapping="NoWrap"
+                                    VerticalScrollBarVisibility="Auto" />
+
+                                <Label
+                                    Margin="0,20,0,0"
+                                    VerticalAlignment="Center"
+                                    Content="Preview End GCode (?)">
+                                    <Label.ToolTip>
+                                        <ToolTip Content="End GCode used when sending the bounding box preview to Klipper" />
+                                    </Label.ToolTip>
+                                </Label>
+
+                                <ui:TextBox
+                                    x:Name="PreviewEndGCodeTextBox"
+                                    Height="100"
+                                    Margin="0,5,0,0"
+                                    AcceptsReturn="True"
+                                    Text="{Binding MainVM.Printer.PreviewEndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     TextAlignment="Left"
                                     TextWrapping="NoWrap"
                                     VerticalScrollBarVisibility="Auto" />

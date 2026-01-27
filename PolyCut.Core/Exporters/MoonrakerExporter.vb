@@ -19,17 +19,8 @@ Public Class MoonrakerExporter : Implements INetworkExporter
 
     End Sub
 
-
-    Public Async Function Export(gcodes As List(Of GCode), fileName As String) As Task(Of Integer) Implements INetworkExporter.Export
-
-        If gcodes Is Nothing OrElse gcodes.Count = 0 Then Return 418
-
-        Dim flattenedGCode As String = ""
-        For Each gcode In gcodes
-            flattenedGCode &= gcode.ToString & Environment.NewLine
-        Next
-
-        Dim virtualFile As New MemoryStream(Encoding.UTF8.GetBytes(flattenedGCode))
+    Public Async Function Export(gcodes As String, fileName As String) As Task(Of Integer)
+        Dim virtualFile As New MemoryStream(Encoding.UTF8.GetBytes(gcodes))
 
         Using client As New HttpClient With {.BaseAddress = BuildURI(DestinationHost, DestinationPort)}
 
@@ -38,22 +29,28 @@ Public Class MoonrakerExporter : Implements INetworkExporter
                     formdata.Add(New StreamContent(virtualFile), "file", $"{fileName}")
                     formdata.Add(New StringContent(AutoPrint.ToString.ToLower), "print")
                     Dim response As HttpResponseMessage = Await client.PostAsync(UploadEndpoint, formdata)
-                    If response.StatusCode = HttpStatusCode.Created Then
-                        Return 0
-                    Else
-                        Return response.StatusCode
-                    End If
+                    Return If(response.StatusCode = HttpStatusCode.Created, 0, response.StatusCode)
                 Catch ex As HttpRequestException
                     Return -1
                 End Try
-
-
             End Using
-
         End Using
 
         Return 1
 
+    End Function
+
+    Public Async Function Export(gcodes As List(Of GCode), fileName As String) As Task(Of Integer) Implements INetworkExporter.Export
+
+        If gcodes Is Nothing OrElse gcodes.Count = 0 Then Return 418
+
+        Dim sb As New StringBuilder()
+        For Each gcode In gcodes
+            sb.AppendLine(gcode.ToString)
+        Next
+        Dim flattenedGCode As String = sb.ToString()
+
+        Return Await Export(flattenedGCode, fileName)
     End Function
 
 

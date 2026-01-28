@@ -539,3 +539,112 @@ Public Class CountEqualsOneToBoolConverter
         Throw New NotSupportedException()
     End Function
 End Class
+
+
+Public Class BrushToHexStringConverter : Inherits Markup.MarkupExtension
+    Implements IValueConverter
+
+    Public Overrides Function ProvideValue(serviceProvider As IServiceProvider) As Object
+        Return Me
+    End Function
+
+    Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object _
+        Implements IValueConverter.Convert
+
+        If value Is Nothing Then Return Nothing
+
+        ' ---- Target is Brush: accept Brush or String and return Brush ----
+        If GetType(Brush).IsAssignableFrom(targetType) Then
+            If TypeOf value Is Brush Then
+                Return DirectCast(value, Brush)
+            End If
+
+            If TypeOf value Is String Then
+                Dim s = DirectCast(value, String).Trim()
+                If s.Length = 0 Then Return Nothing
+                If Not s.StartsWith("#") Then s = "#" & s
+
+                Try
+                    Dim conv As New BrushConverter()
+                    Return DirectCast(conv.ConvertFromString(Nothing, culture, s), Brush)
+                Catch
+                    Return Binding.DoNothing
+                End Try
+            End If
+
+            Return Binding.DoNothing
+        End If
+
+        If targetType Is GetType(String) Then
+            Dim scb = TryCast(value, SolidColorBrush)
+            If scb IsNot Nothing Then
+                Dim c = scb.Color
+                Return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}"
+            End If
+
+            If TypeOf value Is Brush Then
+                Try
+                    Dim conv As New BrushConverter()
+                    Return conv.ConvertToString(Nothing, culture, value)
+                Catch
+                    Return Nothing
+                End Try
+            End If
+
+            Return Nothing
+        End If
+
+        ' Unknown target type
+        Return Binding.DoNothing
+    End Function
+
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object _
+        Implements IValueConverter.ConvertBack
+
+        If value Is Nothing Then Return Nothing
+
+        If GetType(Brush).IsAssignableFrom(targetType) Then
+            If TypeOf value Is Brush Then
+                Return DirectCast(value, Brush)
+            End If
+
+            If TypeOf value Is String Then
+                Dim s = DirectCast(value, String).Trim()
+                If s.Length = 0 Then Return Nothing
+                If Not s.StartsWith("#"c) Then s = "#" & s
+
+                Try
+                    Dim conv As New BrushConverter()
+                    Return DirectCast(conv.ConvertFromString(Nothing, culture, s), Brush)
+                Catch
+                    Return Binding.DoNothing
+                End Try
+            End If
+
+            Return Binding.DoNothing
+        End If
+
+        If targetType Is GetType(String) Then
+            If TypeOf value Is String Then Return DirectCast(value, String)
+
+            Dim scb = TryCast(value, SolidColorBrush)
+            If scb IsNot Nothing Then
+                Dim c = scb.Color
+                Return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}"
+            End If
+
+            If TypeOf value Is Brush Then
+                Try
+                    Dim conv As New BrushConverter()
+                    Return conv.ConvertToString(Nothing, culture, value)
+                Catch
+                    Return Binding.DoNothing
+                End Try
+            End If
+
+            Return Binding.DoNothing
+        End If
+
+        Return Binding.DoNothing
+    End Function
+End Class

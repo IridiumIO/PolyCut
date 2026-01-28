@@ -113,4 +113,7 @@ Public Class Tab_Configure
 
     End Sub
 
+    Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        _mainVM.Configuration.ExtractionColor = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
 End Class

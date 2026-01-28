@@ -169,23 +169,30 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-
-                            <CheckBox
-                                x:Name="extractSingleColor"
-                                Grid.Row="2"
-                                Content="Extract one colour"
-                                IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
-                                <CheckBox.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Processes only objects with the specified colour, and ignores all others.
-                                    </TextBlock>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            <ui:TextBox
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Text="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay}"
-                                Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Margin="-10 0 0 0"
+                                    x:Name="extractSingleColor"
+                                    Grid.Row="2"
+                                    Content="Extract one colour"
+                                    IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                            Processes only objects with the specified colour, and ignores all others.
+                                        </TextBlock>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                                <local:ColorPickerControl
+                                    Grid.Column="1"
+                                    Margin="0,0,0,0"
+                                    ColorSelected="ColorPickerControl_ColorSelected"
+                                    CurrentColor="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                    LabelText=""
+                                    Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </Grid>
 
 
                         </StackPanel>

@@ -96,6 +96,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock
                             Margin="0,0,8,0"
@@ -112,6 +113,15 @@
                                 <ToolTip Content="Enter hex color (e.g., #FFFF0000 or #FF0000)" />
                             </ui:TextBox.ToolTip>
                         </ui:TextBox>
+
+                        <ui:Button
+                            x:Name="EyedropperButton"
+                            Grid.Column="2" Height="35" Width="35"
+                            Margin="8,0,0,0"
+                            Padding="4"
+                            Click="EyedropperButton_Click">
+                            <ui:SymbolIcon Symbol="Eyedropper20" />
+                        </ui:Button>
                     </Grid>
                 </StackPanel>
             </Border>

@@ -117,7 +117,7 @@ Public Class ColorPickerControl
         If String.IsNullOrWhiteSpace(HexColor) Then Return
 
         Dim hexValue = HexColor.Trim()
-        If Not hexValue.StartsWith("#") Then
+        If Not hexValue.StartsWith("#"c) Then
             hexValue = "#" & hexValue
         End If
 
@@ -135,12 +135,46 @@ Public Class ColorPickerControl
 
     Private Function IsValidHex(hex As String) As Boolean
         If String.IsNullOrWhiteSpace(hex) Then Return False
-        If Not hex.StartsWith("#") Then Return False
+        If Not hex.StartsWith("#"c) Then Return False
 
         Dim hexDigits = hex.Substring(1)
         Return (hexDigits.Length = 6 OrElse hexDigits.Length = 8) AndAlso
                hexDigits.All(Function(c) "0123456789ABCDEFabcdef".Contains(c))
     End Function
+
+
+    Private _eyedropper As Eyedropper
+
+    Private Async Sub EyedropperButton_Click(sender As Object, e As RoutedEventArgs)
+        Dim before As Brush = CloneBrush(TryCast(CurrentColor, Brush))
+        RaiseEvent PopupOpening(Me, EventArgs.Empty)
+        Debug.WriteLine("Eyedropper started")
+        If _eyedropper Is Nothing Then
+            _eyedropper = New Eyedropper(Window.GetWindow(Me))
+        End If
+
+        Dim picked As Color? = Await _eyedropper.BeginAsync()
+
+        If Not picked.HasValue Then
+            If before IsNot Nothing Then SetCurrentValue(CurrentColorProperty, before)
+            UpdateHexFromColor()
+            Debug.WriteLine("Eyedropper cancelled")
+            Return
+        End If
+
+        Dim b As New SolidColorBrush(picked.Value)
+        b.Freeze()
+        SetCurrentValue(CurrentColorProperty, b)
+        RaiseEvent ColorSelected(Me, New ColorSelectedEventArgs(b))
+    End Sub
+
+    Private Shared Function CloneBrush(b As Brush) As Brush
+        If b Is Nothing Then Return Nothing
+        Dim clone = b.Clone()
+        clone.Freeze()
+        Return clone
+    End Function
+
 End Class
 
 Public Class ColorSelectedEventArgs

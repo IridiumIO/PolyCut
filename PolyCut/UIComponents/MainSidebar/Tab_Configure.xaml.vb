@@ -39,8 +39,7 @@ Public Class Tab_Configure
     Private Sub RefreshThresholdPreview()
         If Not _thresholdPreviewActive Then Return
 
-        ' Restore originals first
-        For Each d In _mainVM.DrawableCollection
+        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next
@@ -56,14 +55,11 @@ Public Class Tab_Configure
     End Sub
 
     Private Sub ApplyThresholdPreview()
-
         Dim t As Double
-        Dim res = Double.TryParse(ShadingThresholdControl.Text, t)
-        If Not res Then Return
+        If Not Double.TryParse(ShadingThresholdControl.Text, t) Then Return
 
-        For Each d In _mainVM.DrawableCollection
+        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
             Dim brightness = GetBrightness01(d)
-
             If brightness < t Then
                 Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
                 If cc IsNot Nothing Then cc.Opacity = 0.2
@@ -75,11 +71,10 @@ Public Class Tab_Configure
         If Not _thresholdPreviewActive Then Return
         _thresholdPreviewActive = False
 
-        For Each d In _mainVM.DrawableCollection
+        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next
-
     End Sub
 
     Private Function GetBrightness01(d As IDrawable) As Double
@@ -116,4 +111,19 @@ Public Class Tab_Configure
     Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
         _mainVM.Configuration.ExtractionColor = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
+
+    Private Iterator Function EnumerateDrawablesForPreview(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)
+        For Each d In items
+            Dim g = TryCast(d, NestedDrawableGroup)
+            If g IsNot Nothing Then
+                ' flattened children
+                For Each ch In g.DisplayChildren
+                    Yield ch
+                Next
+            Else
+                Yield d
+            End If
+        Next
+    End Function
+
 End Class

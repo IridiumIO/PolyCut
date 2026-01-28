@@ -2,6 +2,7 @@
     x:Class="SVGPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:beh="clr-namespace:PolyCut"
     xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
@@ -72,8 +73,22 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Center"
-            VerticalContentAlignment="Top">
-            <local:ToolSelectorPane x:Name="ToolSelectorPanel" />
+            VerticalContentAlignment="Stretch"
+            Panel.ZIndex="1"
+            beh:BackdropSampler.IsEnabled="True"
+            beh:BackdropSampler.TintColor="#14FFFFFF"
+            Background="#323232"
+            BorderThickness="0">
+            <ui:Card.Effect>
+                <DropShadowEffect
+                    BlurRadius="10"
+                    Direction="0"
+                    Opacity="0.4"
+                    ShadowDepth="0" />
+            </ui:Card.Effect>
+
+            <local:ToolSelectorPane x:Name="ToolSelectorPanel" Background="Transparent" />
+
         </ui:Card>
 
 
@@ -91,50 +106,64 @@
             HorizontalAlignment="Left"
             VerticalAlignment="Top"
             Panel.ZIndex="20"
-            Background="{DynamicResource ControlAltFillColorQuarternaryBrush}"
+            beh:BackdropSampler.IsEnabled="True"
+            beh:BackdropSampler.TintColor="#14FFFFFF"
+            Background="#323232"
+            BorderThickness="0"
             Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ui:Card.Effect>
+                <DropShadowEffect
+                    BlurRadius="10"
+                    Direction="0"
+                    Opacity="0.4"
+                    ShadowDepth="0" />
+            </ui:Card.Effect>
+            <Grid>
 
-            <StackPanel Orientation="Horizontal">
-                <Label
-                    Margin="0,2,10,0"
-                    VerticalAlignment="Center"
-                    Content="Font" />
-                <local:FontPickerComboBox Width="200" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
-                <Separator Margin="5,0" />
-                <Label
-                    Margin="0,2,10,0"
-                    VerticalAlignment="Center"
-                    Content="Size (pt)" />
-                <ComboBox
-                    Width="80"
-                    Padding="7"
-                    Background="Transparent"
-                    IsEditable="True"
-                    SelectedIndex="6"
-                    Text="{Binding CanvasFontSize, Mode=OneWayToSource}">
-                    <ComboBoxItem Content="3" />
-                    <ComboBoxItem Content="4" />
-                    <ComboBoxItem Content="6" />
-                    <ComboBoxItem Content="8" />
-                    <ComboBoxItem Content="10" />
-                    <ComboBoxItem Content="12" />
-                    <ComboBoxItem Content="14" />
-                    <ComboBoxItem Content="16" />
-                    <ComboBoxItem Content="18" />
-                    <ComboBoxItem Content="20" />
-                    <ComboBoxItem Content="24" />
-                    <ComboBoxItem Content="28" />
-                    <ComboBoxItem Content="32" />
-                    <ComboBoxItem Content="36" />
-                    <ComboBoxItem Content="48" />
-                    <ComboBoxItem Content="72" />
-                </ComboBox>
-            </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label
+                        Margin="0,2,10,0"
+                        VerticalAlignment="Center"
+                        Content="Font" />
+                    <local:FontPickerComboBox Width="200" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
+                    <Separator Margin="5,0" />
+                    <Label
+                        Margin="0,2,10,0"
+                        VerticalAlignment="Center"
+                        Content="Size (pt)" />
+                    <ComboBox
+                        Width="80"
+                        Padding="7"
+                        Background="Transparent"
+                        IsEditable="True"
+                        SelectedIndex="6"
+                        Text="{Binding CanvasFontSize, Mode=OneWayToSource}">
+                        <ComboBoxItem Content="3" />
+                        <ComboBoxItem Content="4" />
+                        <ComboBoxItem Content="6" />
+                        <ComboBoxItem Content="8" />
+                        <ComboBoxItem Content="10" />
+                        <ComboBoxItem Content="12" />
+                        <ComboBoxItem Content="14" />
+                        <ComboBoxItem Content="16" />
+                        <ComboBoxItem Content="18" />
+                        <ComboBoxItem Content="20" />
+                        <ComboBoxItem Content="24" />
+                        <ComboBoxItem Content="28" />
+                        <ComboBoxItem Content="32" />
+                        <ComboBoxItem Content="36" />
+                        <ComboBoxItem Content="48" />
+                        <ComboBoxItem Content="72" />
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
         </ui:Card>
 
         <rc:ZoomBorder
             x:Name="zoomPanControl"
-            Grid.Column="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
             Background="Transparent"
             CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
             CanvasTextBox="{Binding CanvasTextBox}"

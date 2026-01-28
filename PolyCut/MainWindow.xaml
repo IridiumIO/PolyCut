@@ -281,7 +281,11 @@
             Grid.ColumnSpan="2"
             IsBackButtonVisible="Collapsed"
             PaneDisplayMode="Top"
-            PaneTitle="PlotPrint">
+            PaneTitle="PlotPrint"
+            SnapsToDevicePixels="True"
+            Transition="FadeIn"
+            TransitionDuration="250"
+            UseLayoutRounding="True">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem
                     Margin="15,2"
@@ -330,7 +334,7 @@
 
             <ui:NavigationView.FooterMenuItems>
 
-                <ui:NavigationViewItem x:Name="GenerateGCodeButton">
+                <ui:NavigationViewItem x:Name="GenerateGCodeButton" >
                     <ui:Button Command="{Binding GenerateGCodeCommand}" Content="Generate GCode" />
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem

@@ -28,15 +28,15 @@ Class MainWindow : Implements INavigationWindow
                                                      UndoButtonGlobal.Visibility = Visibility.Visible
                                                      RedoButtonGlobal.Visibility = Visibility.Visible
                                                  Else
-                                                     UndoButtonGlobal.Visibility = Visibility.Collapsed
-                                                     RedoButtonGlobal.Visibility = Visibility.Collapsed
+                                                     UndoButtonGlobal.Visibility = Visibility.Hidden
+                                                     RedoButtonGlobal.Visibility = Visibility.Hidden
 
                                                  End If
 
                                                  If TypeOf (e.Page) Is SVGPage OrElse TypeOf (e.Page) Is PreviewPage Then
                                                      GenerateGCodeButton.Visibility = Visibility.Visible
                                                  Else
-                                                     GenerateGCodeButton.Visibility = Visibility.Collapsed
+                                                     GenerateGCodeButton.Visibility = Visibility.Hidden
 
                                                  End If
 

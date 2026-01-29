@@ -49,7 +49,9 @@ Partial Public Class Application
                                services.AddSingleton(Of ExportViewModel)()
 
                                services.AddSingleton(Of PreviewPage)()
+
                                services.AddSingleton(Of SettingsPage)()
+                               services.AddSingleton(Of SettingsPageViewModel)()
                            End Sub) _
         .Build()
 

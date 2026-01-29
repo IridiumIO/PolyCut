@@ -185,30 +185,9 @@
                         Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                         Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                         Margin="0,0,0,0"
+                        Background="Transparent"
                         ChildrenCollection="{Binding MainVM.DrawableCollection}"
-                        ClipToBounds="False">
-                        <rc:PolyCanvas.Background>
-                            <DrawingBrush
-                                Stretch="None"
-                                TileMode="Tile"
-                                Viewport="{Binding DataContext.GridViewport, ElementName=SVGPageView}"
-                                ViewportUnits="Absolute">
-                                <DrawingBrush.Drawing>
-                                    <GeometryDrawing>
-                                        <GeometryDrawing.Geometry>
-                                            <GeometryGroup>
-                                                <LineGeometry StartPoint="0,0" EndPoint="{Binding DataContext.GridLineVerticalEnd, ElementName=SVGPageView}" />
-                                                <LineGeometry StartPoint="0,0" EndPoint="{Binding DataContext.GridLineHorizontalEnd, ElementName=SVGPageView}" />
-                                            </GeometryGroup>
-                                        </GeometryDrawing.Geometry>
-                                        <GeometryDrawing.Pen>
-                                            <Pen Brush="{Binding DataContext.GridLineBrush, ElementName=SVGPageView}" Thickness="{Binding DataContext.GridLineThickness, ElementName=SVGPageView}" />
-                                        </GeometryDrawing.Pen>
-                                    </GeometryDrawing>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </rc:PolyCanvas.Background>
-                    </rc:PolyCanvas>
+                        ClipToBounds="False" />
 
                 </AdornerDecorator>
 
@@ -267,6 +246,38 @@
                             </svgc:SvgCanvas.RenderTransform>
                         </svgc:SvgCanvas>
 
+                    </Border>
+
+                    <Border
+                        Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
+                        Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
+                        Panel.ZIndex="-1"
+                        IsHitTestVisible="False"
+                        Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border.Clip>
+                            <RectangleGeometry Rect="{Binding GridClipRect}" />
+                        </Border.Clip>
+                        <Border.Background>
+                            <DrawingBrush
+                                Stretch="None"
+                                TileMode="Tile"
+                                Viewport="{Binding PrinterGridPreviewViewport}"
+                                ViewportUnits="Absolute">
+                                <DrawingBrush.Drawing>
+                                    <GeometryDrawing>
+                                        <GeometryDrawing.Geometry>
+                                            <GeometryGroup>
+                                                <LineGeometry StartPoint="-1,0" EndPoint="{Binding GridLineHorizontalEnd}" />
+                                                <LineGeometry StartPoint="0,-1" EndPoint="{Binding GridLineVerticalEnd}" />
+                                            </GeometryGroup>
+                                        </GeometryDrawing.Geometry>
+                                        <GeometryDrawing.Pen>
+                                            <Pen Brush="{Binding MainVM.UIConfiguration.GridConfig.GridBrush}" Thickness="{Binding GridLineThickness}" />
+                                        </GeometryDrawing.Pen>
+                                    </GeometryDrawing>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Border.Background>
                     </Border>
 
 

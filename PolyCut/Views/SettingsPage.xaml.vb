@@ -6,14 +6,13 @@ Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
 Imports WPF.Ui.Abstractions.Controls
-Class SettingsPage : Implements INavigableView(Of MainViewModel)
+Class SettingsPage
 
-    Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
+    Public ReadOnly Property _viewModel As SettingsPageViewModel
 
 
-    Sub New(viewmodel As MainViewModel)
+    Sub New(viewmodel As SettingsPageViewModel)
 
-        Me.ViewModel = viewmodel
         DataContext = viewmodel
         ' This call is required by the designer.
         InitializeComponent()
@@ -21,4 +20,14 @@ Class SettingsPage : Implements INavigableView(Of MainViewModel)
         ' Add any initialization after the InitializeComponent() call.
 
     End Sub
+
+    Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
+        mv.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
+
+    Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)
+
+    End Sub
+
 End Class

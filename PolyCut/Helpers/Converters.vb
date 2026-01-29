@@ -73,10 +73,15 @@ Public Class InputToMillimetresConverter
         End If
 
         Dim convertedDecimal As Decimal = UnitConverter(input)
-        If convertedDecimal <= 0D Then
 
+        If convertedDecimal = 0D AndAlso (CStr(parameter) <> "allowzero" AndAlso CStr(parameter) <> "allownegative") Then
             Return DependencyProperty.UnsetValue
         End If
+        If convertedDecimal < 0D AndAlso CStr(parameter) <> "allownegative" Then
+            Return DependencyProperty.UnsetValue
+        End If
+
+
 
         If targetType Is GetType(Double) OrElse targetType Is GetType(Double?) Then
             Return CDbl(convertedDecimal)

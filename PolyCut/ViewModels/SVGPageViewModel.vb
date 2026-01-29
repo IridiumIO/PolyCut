@@ -145,9 +145,22 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         End Try
     End Sub
 
+    Private _UIConfiguration As UIConfiguration
+
     Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService)
         Me.MainVM = mainvm
         Me._undoRedoService = undoRedoService
+        _UIConfiguration = mainvm.UIConfiguration
+
+        AddHandler _UIConfiguration.GridConfig.PropertyChanged, AddressOf NotifyPropertyChangedForGrid
+        AddHandler _UIConfiguration.PropertyChanged, AddressOf NotifyPropertyChangedForGrid
+        AddHandler mainvm.Printer.PropertyChanged, Sub(sender, e)
+                                                       If e.PropertyName = NameOf(Printer.BedWidth) OrElse e.PropertyName = NameOf(Printer.BedHeight) Then
+                                                           NotifyPropertyChangedForGrid()
+                                                       End If
+                                                   End Sub
+
+
     End Sub
 
     Private Shared Sub ShortcutKeyHandler(Key As String)
@@ -250,38 +263,45 @@ Public Class SVGPageViewModel : Inherits ObservableObject
 
 
 
-    <ObservableProperty>
-    <NotifyPropertyChangedFor(NameOf(GridViewport), NameOf(GridLineVerticalEnd), NameOf(GridLineHorizontalEnd))>
-    Private _GridTileSizeMm As Double = 10.0
 
     <ObservableProperty>
-    Private _GridLineThickness As Double = 0.1
+    Private _GridLineThickness As Single = 0.3
 
     <ObservableProperty>
     Private _GridLineBrush As Brush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
 
-    Public ReadOnly Property GridViewport As Rect
+
+    Public ReadOnly Property PrinterGridPreviewViewport As Rect
         Get
-            ' Viewport is 0,0 width,height in device units (mm in your usage)
-            Return New Rect(0, 0, GridTileSizeMm, GridTileSizeMm)
-        End Get
+            Return New Rect(_UIConfiguration.GridConfig.InsetLeft, _UIConfiguration.GridConfig.InsetTop, _UIConfiguration.GridConfig.Spacing, _UIConfiguration.GridConfig.Spacing) : End Get
     End Property
 
     Public ReadOnly Property GridLineVerticalEnd As Point
         Get
-            Return New Point(0, GridTileSizeMm)
+            Return New Point(0, _UIConfiguration.GridConfig.Spacing + 1)
         End Get
     End Property
 
     Public ReadOnly Property GridLineHorizontalEnd As Point
         Get
-            Return New Point(GridTileSizeMm, 0)
+            Return New Point(_UIConfiguration.GridConfig.Spacing + 1, 0)
+        End Get
+    End Property
+
+    Public ReadOnly Property GridClipRect As Rect
+        Get
+            Dim left = Math.Max(_UIConfiguration.GridConfig.InsetLeft, 0)
+            Dim top = Math.Max(_UIConfiguration.GridConfig.InsetTop, 0)
+            Dim right = Math.Max(MainVM.Printer.BedWidth - _UIConfiguration.GridConfig.InsetRight, 0)
+            Dim bottom = Math.Max(MainVM.Printer.BedHeight - _UIConfiguration.GridConfig.InsetBottom, 0)
+            Return New Rect(left, top, right - left + GridLineThickness / 2, bottom - top + GridLineThickness / 2) ' extra 0.05 to avoid clipping last line 
         End Get
     End Property
 
 
     Public Sub NotifyPropertyChangedForGrid()
-        OnPropertyChanged(NameOf(GridViewport))
+        OnPropertyChanged(NameOf(GridClipRect))
+        OnPropertyChanged(NameOf(PrinterGridPreviewViewport))
         OnPropertyChanged(NameOf(GridLineVerticalEnd))
         OnPropertyChanged(NameOf(GridLineHorizontalEnd))
         OnPropertyChanged(NameOf(GridLineBrush))

@@ -46,6 +46,7 @@
             Content="{Binding LabelText, ElementName=root}" />
 
         <ui:TextBox
+            x:Name="ValueBox"
             Grid.Column="2"
             Width="{Binding TextBoxWidth, ElementName=root}"
             Margin="0,5,0,5"

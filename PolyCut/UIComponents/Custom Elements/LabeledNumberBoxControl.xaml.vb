@@ -78,4 +78,8 @@
     Public Shared ReadOnly TextBoxWidthProperty As DependencyProperty =
         DependencyProperty.Register(NameOf(TextBoxWidth), GetType(Double), GetType(LabeledNumberBoxControl), New PropertyMetadata(Double.NaN))
 
+
+    Private Sub ValueBox_GotFocus(sender As Object, e As RoutedEventArgs) Handles ValueBox.GotFocus
+        Dispatcher.BeginInvoke(New Action(Sub() CType(sender, TextBox).SelectAll()))
+    End Sub
 End Class

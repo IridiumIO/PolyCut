@@ -54,17 +54,17 @@ Public Class TransformOverlay
 
         If shouldBeVisible Then
             For Each item In _selectionManager.SelectedItems
-                If item?.DrawableElement IsNot Nothing Then
-                    Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
-                    If wrapper IsNot Nothing AndAlso TypeOf wrapper.Content Is TextBox Then
-                        Dim textBox = CType(wrapper.Content, TextBox)
-                        If textBox.IsFocused OrElse textBox.IsKeyboardFocusWithin Then
-                            shouldBeVisible = False
-                            isTextBoxFocused = True
-                            Exit For
-                        End If
-                    End If
-                End If
+                If (item?.DrawableElement) Is Nothing Then Continue For
+
+                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
+                If wrapper Is Nothing OrElse (TypeOf wrapper.Content IsNot TextBox) Then Continue For
+
+                Dim textBox = CType(wrapper.Content, TextBox)
+                If Not textBox.IsFocused AndAlso Not textBox.IsKeyboardFocusWithin Then Continue For
+
+                shouldBeVisible = False
+                isTextBoxFocused = True
+                Exit For
             Next
         End If
 

@@ -18,15 +18,15 @@ Public Class ProjectSerializationService
         Try
             Dim projectData = CreateProjectData(drawables, groups)
             Dim json = JsonSerializer.Serialize(projectData, _jsonOptions)
-            'Using stream As New FileStream(filePath, FileMode.Create)
-            '    Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Compress)
-            '        Using writer As New StreamWriter(gzip)
-            '            writer.Write(json)
-            '        End Using
-            '    End Using
-            'End Using
+            Using stream As New FileStream(filePath, FileMode.Create)
+                Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Compress)
+                    Using writer As New StreamWriter(gzip)
+                        writer.Write(json)
+                    End Using
+                End Using
+            End Using
 
-            File.WriteAllText(filePath, json)
+            'File.WriteAllText(filePath, json)
 
             Return True
         Catch ex As Exception
@@ -40,15 +40,15 @@ Public Class ProjectSerializationService
             If Not File.Exists(filePath) Then Return Nothing
 
             Dim json As String
-            'Using stream As New FileStream(filePath, FileMode.Open)
-            '    Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Decompress)
-            '        Using reader As New StreamReader(gzip)
-            '            json = reader.ReadToEnd()
-            '        End Using
-            '    End Using
-            'End Using
+            Using stream As New FileStream(filePath, FileMode.Open)
+                Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Decompress)
+                    Using reader As New StreamReader(gzip)
+                        json = reader.ReadToEnd()
+                    End Using
+                End Using
+            End Using
 
-            json = File.ReadAllText(filePath)
+            'json = File.ReadAllText(filePath)
 
             Return JsonSerializer.Deserialize(Of ProjectData)(json, _jsonOptions)
         Catch ex As Exception

@@ -7,8 +7,15 @@ Public Class ProjectData
         Public Property CreatedDate As DateTime = DateTime.Now
         Public Property ModifiedDate As DateTime = DateTime.Now
         Public Property Drawables As List(Of DrawableData) = New List(Of DrawableData)
-        Public Property Groups As List(Of GroupData) = New List(Of GroupData)
-    End Class
+    Public Property Groups As List(Of GroupData) = New List(Of GroupData)
+
+    Public ReadOnly Property Hash As String
+        Get
+            Return $"{Drawables.Count}-{Groups.Count}-{CreatedDate.Ticks}-{ModifiedDate.Ticks}".GetHashCode().ToString("X")
+        End Get
+    End Property
+
+End Class
 
 
     Public Class DrawableData

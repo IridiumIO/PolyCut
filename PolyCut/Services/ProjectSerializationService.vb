@@ -176,9 +176,29 @@ Public Class ProjectSerializationService
     ' --------------------
     ' Serialize
     ' --------------------
-    Private Function CreateProjectData(drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of IDrawable)) As ProjectData
 
-        Dim projectData As New ProjectData()
+    Public Function CreateProjectDataForClipboard(selected As IEnumerable(Of IDrawable), drawingGroup As DrawableGroup) As ProjectData
+
+        Dim allGroups As HashSet(Of IDrawable) = Nothing
+        Dim allLeaves As HashSet(Of IDrawable) = Nothing
+
+        ProjectGraph.WalkGraph(selected, allGroups, allLeaves)
+
+        Dim g = If(allGroups, New HashSet(Of IDrawable)())
+        Dim l = If(allLeaves, New HashSet(Of IDrawable)())
+
+        For Each d In l
+            AddAncestors(d, g, drawingGroup)
+        Next
+        For Each grp In g.ToList()
+            AddAncestors(grp, g, drawingGroup)
+        Next
+
+        Return CreateProjectDataFromSets(g.ToList(), l.ToList())
+    End Function
+
+    Public Function CreateProjectData(drawables As IEnumerable(Of IDrawable),
+                                  groups As IEnumerable(Of IDrawable)) As ProjectData
 
         Dim allGroups As HashSet(Of IDrawable) = Nothing
         Dim allLeaves As HashSet(Of IDrawable) = Nothing
@@ -186,19 +206,37 @@ Public Class ProjectSerializationService
         ProjectGraph.WalkGraph(drawables, allGroups, allLeaves)
         ProjectGraph.WalkGraph(groups, allGroups, allLeaves)
 
-        Dim groupList = allGroups.ToList()
-        Dim leafList = allLeaves.ToList()
+        Dim groupList = If(allGroups, New HashSet(Of IDrawable)()).ToList()
+        Dim leafList = If(allLeaves, New HashSet(Of IDrawable)()).ToList()
 
-        Dim groupIdMap As New Dictionary(Of IDrawable, Guid)()
+        Return CreateProjectDataFromSets(groupList, leafList)
+    End Function
+
+
+    Private Shared Function CreateProjectDataFromSets(groupList As List(Of IDrawable),
+                                                  leafList As List(Of IDrawable)) As ProjectData
+
+        Dim projectData As New ProjectData()
+
+        If groupList Is Nothing OrElse groupList.Count = 0 Then
+            ' still serialize drawables if any
+            groupList = New List(Of IDrawable)
+        End If
+        If leafList Is Nothing OrElse leafList.Count = 0 Then
+            leafList = New List(Of IDrawable)
+        End If
+
+        Dim groupIdMap As New Dictionary(Of IDrawable, Guid)(groupList.Count)
         For Each g In groupList
             groupIdMap(g) = Guid.NewGuid()
         Next
 
-        Dim drawableIdMap As New Dictionary(Of IDrawable, Guid)()
+        Dim drawableIdMap As New Dictionary(Of IDrawable, Guid)(leafList.Count)
         For Each d In leafList
             drawableIdMap(d) = Guid.NewGuid()
         Next
 
+        ' --- Groups ---
         For Each g In groupList
             Dim gd As New GroupData With {
             .Id = groupIdMap(g),
@@ -207,8 +245,12 @@ Public Class ProjectSerializationService
             .IsHidden = g.IsHidden
         }
 
-            If g.ParentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(g.ParentGroup) Then
-                gd.ParentGroupId = groupIdMap(g.ParentGroup)
+            Dim parent = TryCast(g.ParentGroup, IDrawable)
+            If parent IsNot Nothing Then
+                Dim pid As Guid = Nothing
+                If groupIdMap.TryGetValue(parent, pid) Then
+                    gd.ParentGroupId = pid
+                End If
             End If
 
             DrawableCodec.SerializeGroupWrapperState(g, gd)
@@ -222,22 +264,30 @@ Public Class ProjectSerializationService
 
             For Each ch In ProjectGraph.GetGroupChildren(g)
                 If ch Is Nothing Then Continue For
+
                 If ch.IsAnyGroup() Then
-                    If groupIdMap.ContainsKey(ch) Then gd.ChildIds.Add(groupIdMap(ch))
+                    Dim cid As Guid = Nothing
+                    If groupIdMap.TryGetValue(ch, cid) Then gd.ChildIds.Add(cid)
                 Else
-                    If drawableIdMap.ContainsKey(ch) Then gd.ChildIds.Add(drawableIdMap(ch))
+                    Dim cid As Guid = Nothing
+                    If drawableIdMap.TryGetValue(ch, cid) Then gd.ChildIds.Add(cid)
                 End If
             Next
 
             projectData.Groups.Add(gd)
         Next
 
+        ' --- Drawables ---
         For Each d In leafList
             Dim dd = DrawableCodec.SerializeDrawable(d, drawableIdMap(d))
             If dd Is Nothing Then Continue For
 
-            If d.ParentGroup IsNot Nothing AndAlso groupIdMap.ContainsKey(d.ParentGroup) Then
-                dd.ParentGroupId = groupIdMap(d.ParentGroup)
+            Dim parent = TryCast(d.ParentGroup, IDrawable)
+            If parent IsNot Nothing Then
+                Dim pid As Guid = Nothing
+                If groupIdMap.TryGetValue(parent, pid) Then
+                    dd.ParentGroupId = pid
+                End If
             End If
 
             projectData.Drawables.Add(dd)
@@ -247,6 +297,23 @@ Public Class ProjectSerializationService
     End Function
 
 
+
+
+    Private Shared Sub AddAncestors(item As IDrawable,
+                               groups As HashSet(Of IDrawable),
+                               drawingGroup As DrawableGroup)
+
+        Dim p As IDrawable = item?.ParentGroup
+        While p IsNot Nothing
+            ' Never include Drawing Group in clipboard data; pasted loose items attach to current DrawingGroup.
+            If drawingGroup IsNot Nothing AndAlso Object.ReferenceEquals(p, drawingGroup) Then Exit While
+
+            ' Only groups matter as ancestors
+            If p.IsAnyGroup() Then groups.Add(p)
+
+            p = p.ParentGroup
+        End While
+    End Sub
 
 End Class
 

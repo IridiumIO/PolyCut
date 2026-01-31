@@ -25,6 +25,7 @@ Partial Public Class MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
 
+
     ' State / configuration
     <ObservableProperty> Private _UsingGCodePlot As Boolean
     <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
@@ -204,6 +205,28 @@ Partial Public Class MainViewModel
                 If Not ImportedGroups.Contains(grp) Then ImportedGroups.Add(grp)
             End If
         Next
+    End Sub
+
+    ' -----------------
+    ' Clipboard operations
+    ' -----------------
+    <RelayCommand>
+    Private Sub CopySelection()
+        Application.GetService(Of ClipboardService)().CopySelectionToClipboard()
+    End Sub
+
+    <RelayCommand>
+    Private Sub CutSelection()
+        Application.GetService(Of ClipboardService)().CutSelectionToClipboard()
+    End Sub
+    <RelayCommand>
+    Private Sub PasteClipboard()
+        Application.GetService(Of ClipboardService)().PasteFromClipboard()
+    End Sub
+
+    <RelayCommand>
+    Private Sub SelectAll()
+        DrawableCollection.ForEach(Sub(d) PolyCanvas.AddToSelection(d))
     End Sub
 
 
@@ -425,6 +448,7 @@ Partial Public Class MainViewModel
             _undoRedoService.Push(action)
         End If
     End Sub
+
 
     Friend Sub NotifyCollectionsChanged()
         OnPropertyChanged(NameOf(ImportedGroups))

@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Margin="5"
     d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
     d:DesignHeight="450"
     mc:Ignorable="d">
@@ -68,5 +69,6 @@
         Style="{StaticResource MyRadioButtonStyle}">
         <ui:SymbolIcon Symbol="Text12" />
     </RadioButton>
+
 
 </StackPanel>

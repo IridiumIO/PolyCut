@@ -1,11 +1,6 @@
-﻿Imports System.Xml
-
-Imports SharpVectors.Renderers.Utils
-Imports SharpVectors.Renderers.Wpf
-
-Imports WPF.Ui
-Imports Wpf.Ui.Controls
+﻿Imports WPF.Ui
 Imports WPF.Ui.Abstractions
+Imports WPF.Ui.Controls
 Class MainWindow : Implements INavigationWindow
 
 
@@ -72,56 +67,33 @@ Class MainWindow : Implements INavigationWindow
 
     Dim svg_file As String = ""
 
-    'Add handling for keyboard to handle:
-    'Ctrl + Z  => Undo
-    'Ctrl + Y  => Redo
-    'Ctrl + S  => Save
-    'Ctrl + Shift + S => Save As
-    'Ctrl + O  => Open File
-    'Ctrl + N  => New File
-    'Ctrl + I  => Import SVG File
+    Private Sub AnyPreviewKeyDown(sender As Object, e As KeyEventArgs)
+        If e.Key = Key.F5 Then
+            Dim fe = TryCast(Keyboard.FocusedElement, DependencyObject)
+            Debug.WriteLine($"F5 seen. Handled={e.Handled}. Focus={TryCast(fe, FrameworkElement)?.GetType().Name}")
+            Debug.WriteLine($"OriginalSource={TryCast(e.OriginalSource, FrameworkElement)?.GetType().Name}")
+        End If
+    End Sub
 
-    Public Sub Window_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles MainWindowView.KeyDown
-        Dim vm = TryCast(Me.DataContext, MainViewModel)
-        If vm Is Nothing Then Return
-        If e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.Z Then
-            If vm.UndoCommand.CanExecute(Nothing) Then
-                vm.UndoCommand.Execute(Nothing)
+
+    Protected Overrides Sub OnPreviewKeyDown(e As KeyEventArgs)
+
+        Dim k As Key = If(e.Key = Key.System, e.SystemKey, e.Key)
+
+        If k = Key.F5 Then
+            Dim vm = TryCast(DataContext, MainViewModel)
+            Dim cmd = vm?.GenerateGCodeCommand
+
+            If cmd IsNot Nothing AndAlso cmd.CanExecute(Nothing) Then
+                cmd.Execute(Nothing)
                 e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.Y Then
-            If vm.RedoCommand.CanExecute(Nothing) Then
-                vm.RedoCommand.Execute(Nothing)
-                e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.S Then
-            If vm.SaveProjectCommand.CanExecute(Nothing) Then
-                vm.SaveProjectCommand.Execute(Nothing)
-                e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = (ModifierKeys.Control Or ModifierKeys.Shift) AndAlso e.Key = Key.S Then
-            If vm.SaveProjectAsCommand.CanExecute(Nothing) Then
-                vm.SaveProjectAsCommand.Execute(Nothing)
-                e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.O Then
-            If vm.LoadProjectCommand.CanExecute(Nothing) Then
-                vm.LoadProjectCommand.Execute(Nothing)
-                e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.N Then
-            If vm.NewProjectCommand.CanExecute(Nothing) Then
-                vm.NewProjectCommand.Execute(Nothing)
-                e.Handled = True
-            End If
-        ElseIf e.KeyboardDevice.Modifiers = ModifierKeys.Control AndAlso e.Key = Key.I Then
-            If vm.BrowseSVGCommand.CanExecute(Nothing) Then
-                vm.BrowseSVGCommand.Execute(Nothing)
-                e.Handled = True
+                Return
             End If
         End If
 
+        MyBase.OnPreviewKeyDown(e)
     End Sub
+
 
 
     Private Sub OpenMenu(sender As Object, e As MouseButtonEventArgs)

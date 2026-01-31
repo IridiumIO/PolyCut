@@ -1,28 +1,27 @@
-﻿<ui:FluentWindow
-    x:Class="MainWindow"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-    xmlns:local="clr-namespace:PolyCut"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
-    xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    x:Name="MainWindowView"
-    Title="PolyCut"
-    Width="1300"
-    Height="700"
-    MinWidth="700"
-    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
-    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-    ExtendsContentIntoTitleBar="True"
-    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-    RenderOptions.BitmapScalingMode="HighQuality"
-    WindowBackdropType="Mica"
-    WindowChrome.IsHitTestVisibleInChrome="True"
-    mc:Ignorable="d">
+﻿<ui:FluentWindow x:Class="MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                 xmlns:local="clr-namespace:PolyCut"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
+                 xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 x:Name="MainWindowView"
+                 Title="PolyCut"
+                 Width="1300"
+                 Height="700"
+                 MinWidth="700"
+                 d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+                 ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+                 ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 ExtendsContentIntoTitleBar="True"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 RenderOptions.BitmapScalingMode="HighQuality"
+                 WindowBackdropType="Mica"
+                 WindowChrome.IsHitTestVisibleInChrome="True"
+                 mc:Ignorable="d">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing" SourceObject="{Binding ElementName=MainWindowView}">
             <i:InvokeCommandAction Command="{Binding MainViewClosingCommand}" />
@@ -40,30 +39,20 @@
         </Grid.RowDefinitions>
 
 
-        <Label
-            Margin="0,15,0,0"
-            HorizontalAlignment="Center"
-            Content="{Binding CurrentProjectName, FallbackValue=Project 1}"
-            Foreground="#40FFFFFF"
-            IsHitTestVisible="False" />
+        <Label Margin="0 15 0 0" HorizontalAlignment="Center"
+               Content="{Binding CurrentProjectName, FallbackValue=Project 1}"
+               Foreground="#40FFFFFF" IsHitTestVisible="False" />
 
-        <ui:TitleBar
-            x:Name="MWTitleBar"
-            Grid.Row="0"
-            Grid.ColumnSpan="2"
-            Background="Transparent"
-            IsHitTestVisible="True">
+        <ui:TitleBar x:Name="MWTitleBar"
+                     Grid.Row="0" Grid.ColumnSpan="2"
+                     Background="Transparent" IsHitTestVisible="True">
 
             <ui:TitleBar.Header>
                 <StackPanel Height="25" Orientation="Horizontal">
-                    <ui:ImageIcon Margin="15,2,8,0" Source="/PolyCut;component/Resources/logo.ico" />
-                    <Label
-                        Width="350"
-                        Margin="0,3,0,0"
-                        VerticalAlignment="Center"
-                        Content="PolyCut"
-                        Foreground="#40FFFFFF"
-                        IsHitTestVisible="True" />
+                    <ui:ImageIcon Margin="15 2 8 0" Source="/PolyCut;component/Resources/logo.ico" />
+                    <Label Width="350"
+                           Margin="0 3 0 0" VerticalAlignment="Center"
+                           Content="PolyCut" Foreground="#40FFFFFF" IsHitTestVisible="True" />
 
 
                 </StackPanel>
@@ -79,20 +68,14 @@
                                         <DataTrigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <DoubleAnimation
-                                                        Storyboard.TargetProperty="Opacity"
-                                                        To="1"
-                                                        Duration="0:0:0.15" />
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </DataTrigger.EnterActions>
                                         <DataTrigger.ExitActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <DoubleAnimation
-                                                        Storyboard.TargetProperty="Opacity"
-                                                        To="0.2"
-                                                        Duration="0:0:0.15" />
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.2" Duration="0:0:0.15" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </DataTrigger.ExitActions>
@@ -100,21 +83,40 @@
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
-                        <Menu Margin="-295,1,0,0" d:Visibility="Visible">
+                        <Menu Margin="-295 1 0 0" d:Visibility="Visible">
 
                             <Menu.Resources>
                                 <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
                             </Menu.Resources>
 
                             <MenuItem Header="_File">
-                                <ui:MenuItem Command="{Binding NewProjectCommand}" Header="_New" />
+                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + N" Command="{Binding NewProjectCommand}" Header="_New" />
                                 <Separator />
-                                <MenuItem Command="{Binding SaveProjectCommand}" Header="_Save" />
-                                <MenuItem Command="{Binding SaveProjectAsCommand}" Header="S_ave As..." />
-                                <MenuItem Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
-                                <MenuItem Command="{Binding BrowseSVGCommand}" Header="_Import SVG..." />
-                                <MenuItem Command="{Binding ExportSVGCommand}" Header="_Export As SVG..." />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" Header="_Save" />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" Header="S_ave As..." />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG..." />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" Header="_Export As SVG..." />
                             </MenuItem>
+
+                            <MenuItem Header="_Edit">
+                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + X"
+                                             Command="{Binding CutSelectionCommand}"
+                                             Header="Cut"
+                                             Icon="{ui:SymbolIcon Symbol=Cut20}" />
+
+                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + C"
+                                             Command="{Binding CopySelectionCommand}"
+                                             Header="Copy"
+                                             Icon="{ui:SymbolIcon Copy20}" />
+
+                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + V"
+                                             Command="{Binding PasteClipboardCommand}"
+                                             Header="_Paste"
+                                             Icon="{ui:SymbolIcon Symbol=ClipboardPaste20}" />
+                            </MenuItem>
+
+
                             <MenuItem Header="_View">
                                 <StackPanel Orientation="Horizontal">
                                     <ToggleButton IsChecked="{Binding CuttingMatVisibility, Mode=TwoWay}">
@@ -127,10 +129,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource PaletteBlueBrush}">
                                                                                 <ui:SymbolIcon Symbol="Eye24" />
                                                                             </ui:Card>
                                                                         </Setter.Value>
@@ -140,10 +139,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
                                                                                 <!--  Replace with your unchecked icon  -->
                                                                                 <ui:SymbolIcon Symbol="EyeOff24" />
                                                                             </ui:Card>
@@ -157,7 +153,7 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
                                     </ToggleButton>
-                                    <Label Margin="10,4,10,0" Content="Show Cutting Mat" />
+                                    <Label Margin="10 4 10 0" Content="Show Cutting Mat" />
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal">
@@ -171,10 +167,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource PaletteBlueBrush}">
                                                                                 <ui:SymbolIcon Symbol="Eye24" />
                                                                             </ui:Card>
                                                                         </Setter.Value>
@@ -184,10 +177,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
                                                                                 <!--  Replace with your unchecked icon  -->
                                                                                 <ui:SymbolIcon Symbol="EyeOff24" />
                                                                             </ui:Card>
@@ -201,7 +191,7 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
                                     </ToggleButton>
-                                    <Label Margin="10,4,10,0" Content="Show Printer Working Area" />
+                                    <Label Margin="10 4 10 0" Content="Show Printer Working Area" />
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal">
@@ -215,10 +205,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource PaletteBlueBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource PaletteBlueBrush}">
                                                                                 <ui:SymbolIcon Symbol="Eye24" />
                                                                             </ui:Card>
                                                                         </Setter.Value>
@@ -228,10 +215,7 @@
                                                                 <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <ui:Card
-                                                                                Padding="8,4"
-                                                                                Background="Transparent"
-                                                                                BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
+                                                                            <ui:Card Padding="8 4" Background="Transparent" BorderBrush="{StaticResource ControlFillColorSecondaryBrush}">
                                                                                 <!--  Replace with your unchecked icon  -->
                                                                                 <ui:SymbolIcon Symbol="EyeOff24" />
                                                                             </ui:Card>
@@ -245,23 +229,20 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
                                     </ToggleButton>
-                                    <Label Margin="10,4,10,0" Content="Show Grid" />
+                                    <Label Margin="10 4 10 0" Content="Show Grid" />
                                 </StackPanel>
 
                             </MenuItem>
                             <Separator />
-                            <ui:MenuItem
-                                x:Name="UndoButtonGlobal"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Command="{Binding UndoCommand}"
-                                Icon="{ui:SymbolIcon ArrowUndo16}" />
-                            <ui:MenuItem
-                                x:Name="RedoButtonGlobal"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Command="{Binding RedoCommand}"
-                                Icon="{ui:SymbolIcon ArrowRedo16}" />
+                            <ui:MenuItem x:Name="UndoButtonGlobal"
+                                         Background="Transparent" BorderThickness="0"
+                                         Command="{Binding UndoCommand}"
+                                         Icon="{ui:SymbolIcon ArrowUndo16}" />
+                            <ui:MenuItem x:Name="RedoButtonGlobal"
+                                         Background="Transparent" BorderThickness="0"
+                                         Command="{Binding RedoCommand}"
+                                         Icon="{ui:SymbolIcon ArrowRedo16}" />
+
 
                         </Menu>
                     </Grid>
@@ -274,58 +255,39 @@
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 
-        <ui:NavigationView
-            x:Name="NavigationView"
-            Grid.Row="1"
-            Grid.RowSpan="2"
-            Grid.ColumnSpan="2"
-            IsBackButtonVisible="Collapsed"
-            PaneDisplayMode="Top"
-            PaneTitle="PlotPrint"
-            SnapsToDevicePixels="True"
-            Transition="FadeIn"
-            TransitionDuration="250"
-            UseLayoutRounding="True">
+        <ui:NavigationView x:Name="NavigationView"
+                           Grid.Row="1" Grid.RowSpan="2" Grid.ColumnSpan="2"
+                           IsBackButtonVisible="Collapsed" PaneDisplayMode="Top" PaneTitle="PlotPrint" SnapsToDevicePixels="True" Transition="FadeIn"
+                           TransitionDuration="250" UseLayoutRounding="True">
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem
-                    Margin="15,2"
-                    Content="Home"
-                    NavigationCacheMode="Required"
-                    Tag="{Binding}"
-                    TargetPageType="{x:Type local:SVGPage}">
+                <ui:NavigationViewItem Margin="15 2"
+                                       Content="Home" NavigationCacheMode="Required"
+                                       Tag="{Binding}"
+                                       TargetPageType="{x:Type local:SVGPage}">
                     <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon
-                            Filled="True"
-                            Foreground="{StaticResource PaletteLightBlueBrush}"
-                            Symbol="Home12" />
+                        <ui:SymbolIcon Filled="True" Foreground="{StaticResource PaletteLightBlueBrush}" Symbol="Home12" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem
-                    Margin="15,2"
-                    Content="Preview"
-                    NavigationCacheMode="Required"
-                    Tag="{Binding}"
-                    TargetPageType="{x:Type local:PreviewPage}">
+                <ui:NavigationViewItem Margin="15 2"
+                                       Content="Preview" NavigationCacheMode="Required"
+                                       Tag="{Binding}"
+                                       TargetPageType="{x:Type local:PreviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="DrawShape24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem
-                    Margin="15,2"
-                    Content="Export"
-                    NavigationCacheMode="Required"
-                    Tag="{Binding}"
-                    TargetPageType="{x:Type local:ExportPage}">
+                <ui:NavigationViewItem Margin="15 2"
+                                       Content="Export" NavigationCacheMode="Required"
+                                       Tag="{Binding}"
+                                       TargetPageType="{x:Type local:ExportPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="SaveArrowRight20" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem
-                    Margin="15,2"
-                    Content="Monitor"
-                    NavigationCacheMode="Required"
-                    Tag="{Binding}"
-                    TargetPageType="{x:Type local:MonitorPage}">
+                <ui:NavigationViewItem Margin="15 2"
+                                       Content="Monitor" NavigationCacheMode="Required"
+                                       Tag="{Binding}"
+                                       TargetPageType="{x:Type local:MonitorPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Screenshot20" />
                     </ui:NavigationViewItem.Icon>
@@ -334,19 +296,15 @@
 
             <ui:NavigationView.FooterMenuItems>
 
-                <ui:NavigationViewItem x:Name="GenerateGCodeButton" >
+                <ui:NavigationViewItem x:Name="GenerateGCodeButton">
                     <ui:Button Command="{Binding GenerateGCodeCommand}" Content="Generate GCode" />
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem
-                    Margin="-5,0,15,1"
-                    NavigationCacheMode="Required"
-                    Tag="{Binding}"
-                    TargetPageType="{x:Type local:SettingsPage}">
+                <ui:NavigationViewItem Margin="-5 0 15 1"
+                                       NavigationCacheMode="Required"
+                                       Tag="{Binding}"
+                                       TargetPageType="{x:Type local:SettingsPage}">
 
-                    <ui:SymbolIcon
-                        Margin="0,0,-3,0"
-                        FontSize="16"
-                        Symbol="Settings48" />
+                    <ui:SymbolIcon Margin="0 0 -3 0" FontSize="16" Symbol="Settings48" />
 
                 </ui:NavigationViewItem>
             </ui:NavigationView.FooterMenuItems>
@@ -357,17 +315,29 @@
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
-        <ContentPresenter
-            x:Name="RootContentDialog"
-            Grid.Row="0"
-            Grid.RowSpan="2"
-            d:Visibility="Collapsed"
-            ClipToBounds="True" />
-        <ui:SnackbarPresenter
-            x:Name="RootSnackbar"
-            Grid.Row="2"
-            Grid.Column="0"
-            Grid.ColumnSpan="2" />
+        <ContentPresenter x:Name="RootContentDialog"
+                          Grid.Row="0" Grid.RowSpan="2"
+                          d:Visibility="Collapsed" ClipToBounds="True" />
+        <ui:SnackbarPresenter x:Name="RootSnackbar"
+                              Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />
 
     </Grid>
+    <ui:FluentWindow.InputBindings>
+
+        <KeyBinding Command="{Binding UndoCommand}" Gesture="Ctrl+Z" />
+        <KeyBinding Command="{Binding RedoCommand}" Gesture="Ctrl+Y" />
+        <KeyBinding Command="{Binding CopySelectionCommand}" Gesture="Ctrl+C" />
+        <KeyBinding Command="{Binding CutSelectionCommand}" Gesture="Ctrl+X" />
+        <KeyBinding Command="{Binding PasteClipboardCommand}" Gesture="Ctrl+V" />
+        <KeyBinding Command="{Binding SaveProjectCommand}" Gesture="Ctrl+S" />
+        <KeyBinding Command="{Binding SaveProjectAsCommand}" Gesture="Ctrl+Shift+S" />
+        <KeyBinding Command="{Binding LoadProjectCommand}" Gesture="Ctrl+O" />
+        <KeyBinding Command="{Binding NewProjectCommand}" Gesture="Ctrl+N" />
+        <KeyBinding Command="{Binding ExportSVGCommand}" Gesture="Ctrl+E" />
+        <KeyBinding Command="{Binding BrowseSVGCommand}" Gesture="Ctrl+I" />
+        <KeyBinding Command="{Binding SelectAllCommand}" Gesture="Ctrl+A" />
+        <KeyBinding Command="{Binding GenerateGCodeCommand}" Gesture="F5" />
+    </ui:FluentWindow.InputBindings>
+
+
 </ui:FluentWindow>

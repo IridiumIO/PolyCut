@@ -1,7 +1,10 @@
-﻿Imports Svg
-Imports System.Windows
+﻿Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
+Imports Svg
 
 Public Class EllipseElement : Implements IPathBasedElement
 
@@ -19,7 +22,7 @@ Public Class EllipseElement : Implements IPathBasedElement
         Config = cfg
         Dim eGeo As New EllipseGeometry(New Point(ellipse.CenterX, ellipse.CenterY), ellipse.RadiusX, ellipse.RadiusY)
 
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
+        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Geo = eGeo.GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
 

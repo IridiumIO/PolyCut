@@ -61,4 +61,32 @@ Public Module GeometryHelpers
     End Function
 
 
+
+    Public Function LinesToPathGeometry(lines As List(Of Line)) As PathGeometry
+        Dim geometry As New PathGeometry()
+        Dim figure As PathFigure = Nothing
+
+        For i As Integer = 0 To lines.Count - 1
+            Dim line = lines(i)
+
+            If figure Is Nothing Then
+                figure = New PathFigure() With {
+                .StartPoint = New Point(line.X1, line.Y1),
+                .IsClosed = False
+            }
+                geometry.Figures.Add(figure)
+            End If
+
+            figure.Segments.Add(New LineSegment() With {
+            .Point = New Point(line.X2, line.Y2)
+        })
+
+            If i < lines.Count - 1 AndAlso Not (line.X2 = lines(i + 1).X1 AndAlso line.Y2 = lines(i + 1).Y1) Then
+                figure = Nothing
+            End If
+        Next
+
+        Return geometry
+    End Function
+
 End Module

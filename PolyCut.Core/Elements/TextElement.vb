@@ -3,6 +3,9 @@ Imports System.Globalization
 Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
 Imports Svg
 
 Public Class TextElement : Implements IPathBasedElement
@@ -20,12 +23,12 @@ Public Class TextElement : Implements IPathBasedElement
         Dim text = DirectCast(element, SvgText)
         Config = cfg
 
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
+        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Figures = GenerateFigures(text)
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
 
-        Dim pgl As List(Of PathGeometry) = Figures.Select(Function(fig) LinesToPathGeometry(fig)).ToList
+        Dim pgl As List(Of PathGeometry) = Figures.Select(Function(fig) GeometryHelpers.LinesToPathGeometry(fig)).ToList
 
         If cfg.AutoUnionText Then
             Geo = UnionGeometries(pgl)
@@ -81,32 +84,7 @@ Public Class TextElement : Implements IPathBasedElement
         Return unionedGeos
     End Function
 
-    Public Shared Function LinesToPathGeometry(lines As List(Of Line)) As PathGeometry
-        Dim geometry As New PathGeometry()
-        Dim figure As PathFigure = Nothing
 
-        For i As Integer = 0 To lines.Count - 1
-            Dim line = lines(i)
-
-            If figure Is Nothing Then
-                figure = New PathFigure() With {
-                .StartPoint = New Point(line.X1, line.Y1),
-                .IsClosed = False
-            }
-                geometry.Figures.Add(figure)
-            End If
-
-            figure.Segments.Add(New LineSegment() With {
-            .Point = New Point(line.X2, line.Y2)
-        })
-
-            If i < lines.Count - 1 AndAlso Not (line.X2 = lines(i + 1).X1 AndAlso line.Y2 = lines(i + 1).Y1) Then
-                figure = Nothing
-            End If
-        Next
-
-        Return geometry
-    End Function
     Private Function GenerateFigures(text As SvgText) As List(Of List(Of Line))
 
         Dim tp = text.Path(Nothing).PathData.Points.ToList

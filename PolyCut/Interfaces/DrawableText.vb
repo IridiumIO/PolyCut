@@ -209,7 +209,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         ' Convert fill (foreground) color
         Dim fillServer As SvgColourServer = Nothing
         Try
-            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+            fillServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
         Catch
         End Try
 
@@ -230,7 +230,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         ' Only set stroke if thickness > 0 and stroke is not Nothing
         If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
             Try
-                Dim strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                Dim strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
                 If strokeServer IsNot Nothing Then
                     svgText.Stroke = strokeServer
                     svgText.StrokeWidth = CSng(Me.StrokeThickness)

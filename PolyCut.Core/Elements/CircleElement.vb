@@ -1,6 +1,9 @@
 ﻿Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
 Imports Svg
 
 Public Class CircleElement : Implements IPathBasedElement
@@ -20,7 +23,7 @@ Public Class CircleElement : Implements IPathBasedElement
         Dim circleElement = DirectCast(element, SvgCircle)
         Config = cfg
 
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
+        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Dim eGeo As New EllipseGeometry(New Point(circleElement.CenterX, circleElement.CenterY), circleElement.Radius, circleElement.Radius)
         Geo = eGeo.GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)

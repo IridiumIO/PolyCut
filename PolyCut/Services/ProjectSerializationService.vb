@@ -358,9 +358,9 @@ Friend NotInheritable Class DrawableCodec
         End If
 
         ' Visual properties
-        data.StrokeColor = SerializeBrush(drawable.Stroke)
+        data.StrokeColor = ColorAndBrushHelpers.SerializeBrush(drawable.Stroke)
         data.StrokeThickness = drawable.StrokeThickness
-        data.FillColor = SerializeBrush(drawable.Fill)
+        data.FillColor = ColorAndBrushHelpers.SerializeBrush(drawable.Fill)
 
         ' Type-specific serialization
         If TypeOf element Is Shapes.Path Then
@@ -499,12 +499,12 @@ Friend NotInheritable Class DrawableCodec
 
         If TypeOf element Is Shape Then
             Dim shape = CType(element, Shape)
-            shape.Stroke = DeserializeBrush(data.StrokeColor)
+            shape.Stroke = ColorAndBrushHelpers.DeserializeBrush(data.StrokeColor)
             shape.StrokeThickness = data.StrokeThickness
-            shape.Fill = DeserializeBrush(data.FillColor)
+            shape.Fill = ColorAndBrushHelpers.DeserializeBrush(data.FillColor)
         ElseIf TypeOf element Is TextBox Then
             Dim textBox = CType(element, TextBox)
-            textBox.Foreground = DeserializeBrush(data.FillColor)
+            textBox.Foreground = ColorAndBrushHelpers.DeserializeBrush(data.FillColor)
         End If
 
         If Math.Abs(data.ScaleX - 1.0) > 0.01 OrElse Math.Abs(data.ScaleY - 1.0) > 0.01 Then
@@ -517,22 +517,7 @@ Friend NotInheritable Class DrawableCodec
         Return element
     End Function
 
-    Public Shared Function SerializeBrush(brush As Brush) As String
-        If brush Is Nothing Then Return Nothing
-        If TypeOf brush Is SolidColorBrush Then
-            Dim solidBrush = CType(brush, SolidColorBrush)
-            Return solidBrush.Color.ToString()
-        End If
-        Return Nothing
-    End Function
 
-    Public Shared Function DeserializeBrush(colorString As String) As Brush
-        If String.IsNullOrEmpty(colorString) Then Return Brushes.Black
-        Try
-            Dim converter As New BrushConverter()
-            Return CType(converter.ConvertFromString(colorString), Brush)
-        Catch
-            Return Brushes.Black
-        End Try
-    End Function
+
+
 End Class

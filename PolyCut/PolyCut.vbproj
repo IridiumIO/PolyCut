@@ -12,6 +12,8 @@
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
+  
+  
 
   <ItemGroup>
     <Compile Remove="Resources\Controls\**" />

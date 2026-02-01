@@ -1,7 +1,10 @@
-﻿Imports Svg
-Imports System.Windows
+﻿Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
+Imports Svg
 
 Public Class RectangleElement : Implements IPathBasedElement
 
@@ -24,7 +27,7 @@ Public Class RectangleElement : Implements IPathBasedElement
 
 
 
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
+        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Figures.Add(New List(Of Line) From {
                     New Line With {

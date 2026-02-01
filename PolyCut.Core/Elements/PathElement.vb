@@ -1,8 +1,11 @@
 ﻿
-Imports Svg
 Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
+Imports Svg
 
 Public Class PathElement : Implements IPathBasedElement
 
@@ -20,7 +23,7 @@ Public Class PathElement : Implements IPathBasedElement
         Dim path = DirectCast(element, SvgPath)
         Config = cfg
 
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
+        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Geo = Geometry.Parse(path.PathData.ToString).GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
 

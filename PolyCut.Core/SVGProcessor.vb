@@ -3,28 +3,10 @@
 Imports System.Windows
 Imports System.Windows.Documents
 Imports System.Windows.Shapes
+Imports PolyCut.shared
 
 Public Class SVGProcessor
 
-
-    Shared Function colourToHex(colour As Drawing.Color) As String
-        If colour = Nothing Then Return Nothing
-        Return "#" & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
-    End Function
-
-    Public Shared Function SVGColorBullshitFixer(svgcolour As SvgPaintServer) As String
-
-        Dim colour As String
-
-        If svgcolour Is Nothing OrElse svgcolour.ToString() = "none" OrElse svgcolour.GetType().Name.Contains("None") Then
-            colour = Nothing
-        Else
-            Dim casted = TryCast(svgcolour, SvgColourServer)?.Colour
-            colour = If(casted.HasValue, colourToHex(casted), Nothing)
-        End If
-
-        Return colour
-    End Function
 
 
     Shared Function CompileElementAndGetFigures(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of List(Of Line))
@@ -32,10 +14,10 @@ Public Class SVGProcessor
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
-        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
+        Dim fillcolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Fill)
+        Dim strokecolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Stroke)
 
-        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = ColorAndBrushHelpers.ColourToHex(configClr) OrElse strokecolour = ColorAndBrushHelpers.ColourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
             Return element.Figures
         End If
@@ -49,10 +31,10 @@ Public Class SVGProcessor
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
-        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
+        Dim fillcolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Fill)
+        Dim strokecolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Stroke)
 
-        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = ColorAndBrushHelpers.ColourToHex(configClr) OrElse strokecolour = ColorAndBrushHelpers.ColourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
             Return element.Figures.SelectMany(Of Line)(Function(x) x).ToList
         End If

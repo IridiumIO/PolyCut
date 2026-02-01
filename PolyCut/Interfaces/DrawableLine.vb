@@ -22,7 +22,7 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
         ' Lines must have a stroke to be visible
         If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
             Try
-                strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
+                strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
                 strokeW = CSng(Me.StrokeThickness)
             Catch
                 strokeServer = New SvgColourServer(System.Drawing.Color.Black)

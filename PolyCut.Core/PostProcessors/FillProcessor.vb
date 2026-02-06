@@ -1,4 +1,5 @@
 ﻿Imports System.Numerics
+Imports System.Windows
 Imports System.Windows.Shapes
 
 Imports MeasurePerformance.IL.Weaver
@@ -106,12 +107,12 @@ Public Class FillProcessor : Implements IProcessor
         Dim traverseAngleRad = Math.PI * fillangle / 180 + (Math.PI / 2)
         Dim fillAngleRad = Math.PI * fillangle / 180
 
-        Dim bounds As Bounds2D = ComputeBounds(lines)
-        Dim centerX = (bounds.MinX + bounds.MaxX) * 0.5
-        Dim centerY = (bounds.MinY + bounds.MaxY) * 0.5
+        Dim bounds As Rect = ComputeBounds(lines)
+        Dim centerX = (bounds.Left + bounds.Right) * 0.5
+        Dim centerY = (bounds.Top + bounds.Bottom) * 0.5
 
-        Dim dx = bounds.MaxX - bounds.MinX
-        Dim dy = bounds.MaxY - bounds.MinY
+        Dim dx = bounds.Right - bounds.Left
+        Dim dy = bounds.Bottom - bounds.Top
 
         Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
         Dim scaleFactor = 10 * Math.Max(dx, dy)
@@ -183,12 +184,12 @@ Public Class FillProcessor : Implements IProcessor
         Dim nx As Double = -sinFill
         Dim ny As Double = cosFill
 
-        Dim bounds As Bounds2D = ComputeBounds(lines)
-        Dim centerX = (bounds.MinX + bounds.MaxX) * 0.5
-        Dim centerY = (bounds.MinY + bounds.MaxY) * 0.5
+        Dim bounds As Rect = ComputeBounds(lines)
+        Dim centerX = (bounds.Left + bounds.Right) * 0.5
+        Dim centerY = (bounds.Top + bounds.Bottom) * 0.5
 
-        Dim dx = bounds.MaxX - bounds.MinX
-        Dim dy = bounds.MaxY - bounds.MinY
+        Dim dx = bounds.Right - bounds.Left
+        Dim dy = bounds.Bottom - bounds.Top
         Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
         Dim scaleFactor = 10.0 * Math.Max(dx, dy)
 
@@ -236,9 +237,9 @@ Public Class FillProcessor : Implements IProcessor
         Dim fills As New List(Of GeoLine)
         If lines Is Nothing OrElse lines.Count = 0 OrElse density <= 0 Then Return fills
 
-        Dim bounds As Bounds2D = ComputeBounds(lines)
-        Dim centerX = (bounds.MinX + bounds.MaxX) / 2
-        Dim centerY = (bounds.MinY + bounds.MaxY) / 2
+        Dim bounds As Rect = ComputeBounds(lines)
+        Dim centerX = (bounds.Left + bounds.Right) / 2
+        Dim centerY = (bounds.Top + bounds.Bottom) / 2
         Dim center As New Vector2(CSng(centerX), CSng(centerY))
 
         ' Determine max radius from center to cover the shape (kept as before)
@@ -293,14 +294,14 @@ Public Class FillProcessor : Implements IProcessor
         Dim fills As New List(Of GeoLine)
         If lines Is Nothing OrElse lines.Count = 0 OrElse spacing <= 0 Then Return fills
 
-        Dim bounds As Bounds2D = ComputeBounds(lines)
-        Dim cx As Double = (bounds.MinX + bounds.MaxX) * 0.5
-        Dim cy As Double = (bounds.MinY + bounds.MaxY) * 0.5
+        Dim bounds As Rect = ComputeBounds(lines)
+        Dim cx As Double = (bounds.Left + bounds.Right) * 0.5
+        Dim cy As Double = (bounds.Top + bounds.Bottom) * 0.5
         Dim center As New Vector2(CSng(cx), CSng(cy))
 
         ' Radius large enough to cover the whole shape
-        Dim dx = bounds.MaxX - bounds.MinX
-        Dim dy = bounds.MaxY - bounds.MinY
+        Dim dx = bounds.Right - bounds.Left
+        Dim dy = bounds.Bottom - bounds.Top
         Dim radius As Double = 0.5 * Math.Sqrt(dx * dx + dy * dy)
 
         If radius <= 0 Then Return fills
@@ -652,48 +653,26 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    Private Structure Bounds2D
-        Public ReadOnly MinX As Double
-        Public ReadOnly MinY As Double
-        Public ReadOnly MaxX As Double
-        Public ReadOnly MaxY As Double
 
-        Public Sub New(minX As Double, minY As Double, maxX As Double, maxY As Double)
-            Me.MinX = minX
-            Me.MinY = minY
-            Me.MaxX = maxX
-            Me.MaxY = maxY
-        End Sub
-    End Structure
+    Private Shared Function ComputeBounds(lines As List(Of GeoLine)) As Rect
+        If lines Is Nothing OrElse lines.Count = 0 Then Return New Rect(0, 0, 0, 0)
 
-    Private Shared Function ComputeBounds(lines As List(Of GeoLine)) As Bounds2D
-        Dim minX As Double = Double.PositiveInfinity
-        Dim minY As Double = Double.PositiveInfinity
-        Dim maxX As Double = Double.NegativeInfinity
-        Dim maxY As Double = Double.NegativeInfinity
-
-        If lines Is Nothing OrElse lines.Count = 0 Then
-            Return New Bounds2D(0, 0, 0, 0)
-        End If
+        Dim minX = Double.PositiveInfinity
+        Dim minY = Double.PositiveInfinity
+        Dim maxX = Double.NegativeInfinity
+        Dim maxY = Double.NegativeInfinity
 
         For Each ln In lines
-            Dim x1 = ln.X1
-            Dim y1 = ln.Y1
-            Dim x2 = ln.X2
-            Dim y2 = ln.Y2
+            Dim x1 = ln.X1, y1 = ln.Y1
+            Dim x2 = ln.X2, y2 = ln.Y2
 
-            If x1 < minX Then minX = x1
-            If x2 < minX Then minX = x2
-            If y1 < minY Then minY = y1
-            If y2 < minY Then minY = y2
-
-            If x1 > maxX Then maxX = x1
-            If x2 > maxX Then maxX = x2
-            If y1 > maxY Then maxY = y1
-            If y2 > maxY Then maxY = y2
+            minX = Math.Min(minX, Math.Min(x1, x2))
+            minY = Math.Min(minY, Math.Min(y1, y2))
+            maxX = Math.Max(maxX, Math.Max(x1, x2))
+            maxY = Math.Max(maxY, Math.Max(y1, y2))
         Next
 
-        Return New Bounds2D(minX, minY, maxX, maxY)
+        Return New Rect(minX, minY, maxX - minX, maxY - minY)
     End Function
 
 

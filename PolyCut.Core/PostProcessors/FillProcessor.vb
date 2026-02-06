@@ -16,7 +16,7 @@ Public Class FillProcessor : Implements IProcessor
     Private Const MergeTolerance As Double = 1.0
 
     ' Optimiser tuning (converts angular difference into a distance-like penalty - units: squared distance. Higher values = try harder to continue directioin)
-    Private Const DirectionPreferenceWeight As Double = 2000.0
+    Private Const DirectionPreferenceWeight As Double = 5000.0
 
 
 
@@ -69,10 +69,23 @@ Public Class FillProcessor : Implements IProcessor
         Select Case fillType
             Case FillType.Spiral
                 result.AddRange(GenerateSpiralFill(outline, spacingScaled, angle))
+            Case FillType.Radial
+                result.AddRange(GenerateRadialFill(outline, spacingScaled, angle))
 
             Case FillType.CrossHatch
                 result.AddRange(GenerateHatchFill(outline, spacingScaled, angle))
                 result.AddRange(GenerateHatchFill(outline, spacingScaled, angle + 90))
+
+            Case FillType.TriangularHatch
+                result.AddRange(GenerateTriangleAlignedHatchFill(outline, spacingScaled, angle))
+                result.AddRange(GenerateTriangleAlignedHatchFill(outline, spacingScaled, angle + 60))
+                result.AddRange(GenerateTriangleAlignedHatchFill(outline, spacingScaled, angle + 120))
+
+            Case FillType.DiamondCrossHatch
+                result.AddRange(GenerateSquareAlignedHatchFill(outline, spacingScaled, 0))
+                result.AddRange(GenerateSquareAlignedHatchFill(outline, spacingScaled, 45))
+                result.AddRange(GenerateSquareAlignedHatchFill(outline, spacingScaled, 90))
+                result.AddRange(GenerateSquareAlignedHatchFill(outline, spacingScaled, 135))
 
             Case Else 'regular hatch
                 result.AddRange(GenerateHatchFill(outline, spacingScaled, angle))
@@ -94,8 +107,8 @@ Public Class FillProcessor : Implements IProcessor
         Dim fillAngleRad = Math.PI * fillangle / 180
 
         Dim bounds As Bounds2D = ComputeBounds(lines)
-        Dim centerX = (bounds.MinX + bounds.MaxX) / 2
-        Dim centerY = (bounds.MinY + bounds.MaxY) / 2
+        Dim centerX = (bounds.MinX + bounds.MaxX) * 0.5
+        Dim centerY = (bounds.MinY + bounds.MaxY) * 0.5
 
         Dim dx = bounds.MaxX - bounds.MinX
         Dim dy = bounds.MaxY - bounds.MinY
@@ -118,6 +131,95 @@ Public Class FillProcessor : Implements IProcessor
                 X2:=sx + scaleFactor * cosFill,
                 Y2:=sy + scaleFactor * sinFill
             )
+
+            fills.AddRange(ClipLineAgainstShape(lines, ray, isSegment:=False))
+        Next
+
+        Return fills
+    End Function
+
+
+    Private Shared Function GenerateTriangleAlignedHatchFill(lines As List(Of GeoLine), baseSpacing As Double, fillangle As Double) As List(Of GeoLine)
+
+        If lines Is Nothing OrElse lines.Count = 0 OrElse baseSpacing <= 0 Then Return New List(Of GeoLine)
+
+        ' Triangular lattice: perpendicular spacing = S * sin(60) = S * √3/2
+        Const Sin60 As Double = 0.86602540378444
+        Dim densityEff As Double = baseSpacing * Sin60
+
+        Return GenerateAlignedHatchFillCore(lines, densityEff, fillangle)
+    End Function
+
+
+    Private Shared Function GenerateSquareAlignedHatchFill(lines As List(Of GeoLine), baseSpacing As Double, fillangle As Double) As List(Of GeoLine)
+
+        If lines Is Nothing OrElse lines.Count = 0 OrElse baseSpacing <= 0 Then Return New List(Of GeoLine)
+
+        Dim fillAngleRad = Math.PI * fillangle / 180.0
+        Dim cosFill = Math.Cos(fillAngleRad)
+        Dim sinFill = Math.Sin(fillAngleRad)
+
+        ' Square lattice factor: 0/90 => 1, 45/135 => 1/√2
+        Dim factor As Double = Math.Max(Math.Abs(sinFill), Math.Abs(cosFill))
+        Dim densityEff As Double = baseSpacing * factor
+        If densityEff <= 0 Then densityEff = baseSpacing
+
+        Return GenerateAlignedHatchFillCore(lines, densityEff, fillangle)
+    End Function
+
+
+    Private Shared Function GenerateAlignedHatchFillCore(lines As List(Of GeoLine), densityEff As Double, fillangle As Double) As List(Of GeoLine)
+
+        Dim fills As New List(Of GeoLine)
+        If lines Is Nothing OrElse lines.Count = 0 OrElse densityEff <= 0 Then Return fills
+
+        Dim fillAngleRad = Math.PI * fillangle / 180.0
+
+        ' Fill direction u
+        Dim cosFill = Math.Cos(fillAngleRad)
+        Dim sinFill = Math.Sin(fillAngleRad)
+
+        ' Traverse normal n
+        Dim nx As Double = -sinFill
+        Dim ny As Double = cosFill
+
+        Dim bounds As Bounds2D = ComputeBounds(lines)
+        Dim centerX = (bounds.MinX + bounds.MaxX) * 0.5
+        Dim centerY = (bounds.MinY + bounds.MaxY) * 0.5
+
+        Dim dx = bounds.MaxX - bounds.MinX
+        Dim dy = bounds.MaxY - bounds.MinY
+        Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
+        Dim scaleFactor = 10.0 * Math.Max(dx, dy)
+
+        ' Anchor at center 
+        Dim anchorX As Double = centerX
+        Dim anchorY As Double = centerY
+
+        ' Traverse coordinate of center and anchor
+        Dim tCenter As Double = centerX * nx + centerY * ny
+        Dim tAnchor As Double = anchorX * nx + anchorY * ny
+
+        Dim tMin As Double = tCenter - maxExtent
+        Dim tMax As Double = tCenter + maxExtent
+
+        Dim kMin As Integer = CInt(Math.Floor((tMin - tAnchor) / densityEff))
+        Dim kMax As Integer = CInt(Math.Ceiling((tMax - tAnchor) / densityEff))
+        If kMin > kMax Then
+            Dim tmp = kMin : kMin = kMax : kMax = tmp
+        End If
+
+        For k As Integer = kMin To kMax
+            Dim off As Double = k * densityEff
+            Dim sx As Double = anchorX + off * nx
+            Dim sy As Double = anchorY + off * ny
+
+            Dim ray As New GeoLine(
+            X1:=sx - scaleFactor * cosFill,
+            Y1:=sy - scaleFactor * sinFill,
+            X2:=sx + scaleFactor * cosFill,
+            Y2:=sy + scaleFactor * sinFill
+        )
 
             fills.AddRange(ClipLineAgainstShape(lines, ray, isSegment:=False))
         Next
@@ -177,6 +279,55 @@ Public Class FillProcessor : Implements IProcessor
         For i As Integer = 0 To points.Count - 2
             Dim segment As New GeoLine(points(i), points(i + 1))
             fills.AddRange(ClipLineAgainstShape(lines, segment, isSegment:=True))
+        Next
+
+        Return fills
+    End Function
+
+
+
+    ' -------------------------
+    ' Radial fill
+    ' -------------------------
+    Public Shared Function GenerateRadialFill(lines As List(Of GeoLine), spacing As Double, angleDeg As Double) As List(Of GeoLine)
+        Dim fills As New List(Of GeoLine)
+        If lines Is Nothing OrElse lines.Count = 0 OrElse spacing <= 0 Then Return fills
+
+        Dim bounds As Bounds2D = ComputeBounds(lines)
+        Dim cx As Double = (bounds.MinX + bounds.MaxX) * 0.5
+        Dim cy As Double = (bounds.MinY + bounds.MaxY) * 0.5
+        Dim center As New Vector2(CSng(cx), CSng(cy))
+
+        ' Radius large enough to cover the whole shape
+        Dim dx = bounds.MaxX - bounds.MinX
+        Dim dy = bounds.MaxY - bounds.MinY
+        Dim radius As Double = 0.5 * Math.Sqrt(dx * dx + dy * dy)
+
+        If radius <= 0 Then Return fills
+
+        ' Make rays long enough that the segment definitely crosses the outline
+        Dim rayLen As Double = radius * 3.0
+
+        Dim dTheta As Double = spacing / radius
+        dTheta = Math.Clamp(dTheta, 0.01, 0.5)
+
+        Dim theta0 As Double = Math.PI * angleDeg / 180.0
+
+        ' Cover full circle.  include endpoint so pattern is stable.
+        Dim steps As Integer = Math.Max(1, CInt(Math.Ceiling((2.0 * Math.PI) / dTheta)))
+
+        For i As Integer = 0 To steps - 1
+            Dim theta As Double = theta0 + i * (2.0 * Math.PI / steps)
+
+            Dim ux As Double = Math.Cos(theta)
+            Dim uy As Double = Math.Sin(theta)
+
+            Dim p1 As New Vector2(CSng(cx - rayLen * ux), CSng(cy - rayLen * uy))
+            Dim p2 As New Vector2(CSng(cx + rayLen * ux), CSng(cy + rayLen * uy))
+
+            Dim ray As New GeoLine(p1, p2)
+
+            fills.AddRange(ClipLineAgainstShape(lines, ray, isSegment:=False))
         Next
 
         Return fills

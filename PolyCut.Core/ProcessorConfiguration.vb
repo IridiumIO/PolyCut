@@ -74,7 +74,10 @@ Public Enum FillType
     None
     Hatch
     CrossHatch
+    TriangularHatch
+    DiamondCrossHatch
     Spiral
+    Radial
 End Enum
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject

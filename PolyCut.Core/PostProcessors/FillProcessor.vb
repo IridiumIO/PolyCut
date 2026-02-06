@@ -1,6 +1,8 @@
 ﻿Imports System.Numerics
 Imports System.Windows.Shapes
 
+Imports MeasurePerformance.IL.Weaver
+
 Public Class FillProcessor : Implements IProcessor
 
     ' -------------------------
@@ -9,13 +11,12 @@ Public Class FillProcessor : Implements IProcessor
 
     Private Const DefaultScalingFactor As Double = 100_000 ' 1mm -> 100m in scaled units
 
-    ' Intersection tolerances (kept exactly as before)
+    ' Intersection tolerances
     Private Const IntersectionTolerance As Double = 0.000000001
     Private Const MergeTolerance As Double = 1.0
 
-    ' Optimiser tuning (kept exactly as before)
+    ' Optimiser tuning (converts angular difference into a distance-like penalty - units: squared distance. Higher values = try harder to continue directioin)
     Private Const DirectionPreferenceWeight As Double = 2000.0
-
 
 
 
@@ -24,138 +25,133 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
 
-        Dim scalingFactor = 100_000 'Define a scaling factor to offset the floating-point precision of working in millimetres. 1mm > 100m
-
         ' Respect per-element SVG fill presence when deciding to generate fills.
         Dim fillTag As Object = Nothing
-        If lines IsNot Nothing AndAlso lines.Count > 0 Then
-            fillTag = lines(0).Tag
-        End If
+        If lines IsNot Nothing AndAlso lines.Count > 0 Then fillTag = lines(0).Tag
 
-        ' If explicit no-fill -> return outlines only
-        If Not ShouldGenerateFill(fillTag) Then
-            Return lines
-        End If
-
-        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then
-            Return lines
-        End If
+        If Not ShouldGenerateFill(fillTag) Then Return lines
+        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then Return lines
 
         Dim spacingNullable As Double? = ComputeSpacingFromTag(fillTag, cfg)
         If Not spacingNullable.HasValue Then Return lines
-        Dim spacing = spacingNullable.Value
 
-        ' Continue with original fill generation using computed spacing
-        Dim optimisedLines As New List(Of GeoLine)
-        For Each ln In lines
-            optimisedLines.Add(New GeoLine(ln.X1 * scalingFactor, ln.Y1 * scalingFactor, ln.X2 * scalingFactor, ln.Y2 * scalingFactor))
-        Next
+        Dim spacing As Double = spacingNullable.Value
+        Dim spacingScaled As Double = spacing * DefaultScalingFactor
 
-        Dim processedLines As New List(Of GeoLine)
-        Select Case cfg.DrawingConfig.FillType
-            Case FillType.Spiral
-                processedLines.AddRange(FillSpiralLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle))
-            Case FillType.CrossHatch
-                processedLines.AddRange(FillLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle))
-                processedLines.AddRange(FillLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle + 90))
-            Case Else
-                processedLines.AddRange(FillLines(optimisedLines, spacing * scalingFactor, cfg.DrawingConfig.ShadingAngle))
-        End Select
+        Dim outlineGeo As List(Of GeoLine) = ToGeoLines(lines, DefaultScalingFactor)
 
-        If cfg.OptimisedToolPath Then processedLines = OptimiseFills(processedLines, optimisedLines, cfg.DrawingConfig.AllowDrawingOverOutlines)
+        Dim processedGeo As List(Of GeoLine) = GenerateFill(outlineGeo, spacingScaled, cfg.DrawingConfig.FillType, cfg.DrawingConfig.ShadingAngle)
+
+        If cfg.OptimisedToolPath Then
+            processedGeo = OptimiseFills(processedGeo, outlineGeo, cfg.DrawingConfig.AllowDrawingOverOutlines)
+        End If
 
         If cfg.DrawingConfig.KeepOutlines Then
             If cfg.DrawingConfig.OutlinesBeforeFill Then
-                processedLines.InsertRange(0, optimisedLines)
+                processedGeo.InsertRange(0, outlineGeo)
             Else
-                processedLines.AddRange(optimisedLines)
+                processedGeo.AddRange(outlineGeo)
             End If
         End If
 
-        Dim finalLines As New List(Of Line)
-        For Each ln In processedLines
-            finalLines.Add(New Line With {
-            .X1 = ln.X1 / scalingFactor,
-            .Y1 = ln.Y1 / scalingFactor,
-            .X2 = ln.X2 / scalingFactor,
-            .Y2 = ln.Y2 / scalingFactor
-        })
-        Next
-
-        Return finalLines
-
+        Return ToWpfLines(processedGeo, DefaultScalingFactor)
     End Function
 
 
 
-    Public Shared Function FillLines(lines As List(Of GeoLine), density As Double, fillangle As Double) As List(Of GeoLine)
+    ' -------------------------
+    ' Fill type generation
+    ' -------------------------
+    <MeasurePerformance>
+    Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double) As List(Of GeoLine)
+        Dim result As New List(Of GeoLine)
 
-        Dim fills As New List(Of GeoLine) ' Thread-safe collection for storing results
+        Select Case fillType
+            Case FillType.Spiral
+                result.AddRange(GenerateSpiralFill(outline, spacingScaled, angle))
+
+            Case FillType.CrossHatch
+                result.AddRange(GenerateHatchFill(outline, spacingScaled, angle))
+                result.AddRange(GenerateHatchFill(outline, spacingScaled, angle + 90))
+
+            Case Else 'regular hatch
+                result.AddRange(GenerateHatchFill(outline, spacingScaled, angle))
+        End Select
+
+        Return result
+    End Function
+
+
+
+    ' -------------------------
+    ' Hatch/Crosshatch fill
+    ' -------------------------
+    Public Shared Function GenerateHatchFill(lines As List(Of GeoLine), density As Double, fillangle As Double) As List(Of GeoLine)
+        Dim fills As New List(Of GeoLine)
+        If lines Is Nothing OrElse lines.Count = 0 OrElse density <= 0 Then Return fills
 
         Dim traverseAngleRad = Math.PI * fillangle / 180 + (Math.PI / 2)
         Dim fillAngleRad = Math.PI * fillangle / 180
 
-        ' Step 1: Calculate the bounding box of the shape
-        Dim minX = lines.Min(Function(line) Math.Min(line.X1, line.X2))
-        Dim minY = lines.Min(Function(line) Math.Min(line.Y1, line.Y2))
-        Dim maxX = lines.Max(Function(line) Math.Max(line.X1, line.X2))
-        Dim maxY = lines.Max(Function(line) Math.Max(line.Y1, line.Y2))
-        Dim centerX = (minX + maxX) / 2
-        Dim centerY = (minY + maxY) / 2
+        Dim bounds As Bounds2D = ComputeBounds(lines)
+        Dim centerX = (bounds.MinX + bounds.MaxX) / 2
+        Dim centerY = (bounds.MinY + bounds.MaxY) / 2
 
-        ' Step 2: Calculate the maximum traverse extent and scale factor to create rays long enough to cover the shape
-        Dim maxExtent = Math.Sqrt((maxX - minX) ^ 2 + (maxY - minY) ^ 2)
-        Dim scaleFactor = 10 * Math.Max(maxX - minX, maxY - minY)
+        Dim dx = bounds.MaxX - bounds.MinX
+        Dim dy = bounds.MaxY - bounds.MinY
 
-        ' Step 3: Traverse across the shape
+        Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
+        Dim scaleFactor = 10 * Math.Max(dx, dy)
+
+        Dim cosTrav = Math.Cos(traverseAngleRad)
+        Dim sinTrav = Math.Sin(traverseAngleRad)
+        Dim cosFill = Math.Cos(fillAngleRad)
+        Dim sinFill = Math.Sin(fillAngleRad)
+
         For traversePosition = -maxExtent To maxExtent Step density
-
-            Dim rayStart = New Vector2(
-                centerX + traversePosition * Math.Cos(traverseAngleRad),
-                centerY + traversePosition * Math.Sin(traverseAngleRad)
-            )
-
+            Dim sx = centerX + traversePosition * cosTrav
+            Dim sy = centerY + traversePosition * sinTrav
 
             Dim ray As New GeoLine(
-                X1:=rayStart.X - scaleFactor * Math.Cos(fillAngleRad),
-                Y1:=rayStart.Y - scaleFactor * Math.Sin(fillAngleRad),
-                X2:=rayStart.X + scaleFactor * Math.Cos(fillAngleRad),
-                Y2:=rayStart.Y + scaleFactor * Math.Sin(fillAngleRad)
+                X1:=sx - scaleFactor * cosFill,
+                Y1:=sy - scaleFactor * sinFill,
+                X2:=sx + scaleFactor * cosFill,
+                Y2:=sy + scaleFactor * sinFill
             )
 
-            ' Step 4: Get the valid segments of the ray inside the shape
-            fills.AddRange(GetLinesWithinShape(lines, ray))
+            fills.AddRange(ClipLineAgainstShape(lines, ray, isSegment:=False))
         Next
-
 
         Return fills
     End Function
 
-    Public Shared Function FillSpiralLines(lines As List(Of GeoLine), density As Double, fillangle As Double) As List(Of GeoLine)
 
+
+    ' -------------------------
+    ' Spiral fill
+    ' -------------------------
+    Public Shared Function GenerateSpiralFill(lines As List(Of GeoLine), density As Double, fillangle As Double) As List(Of GeoLine)
         Dim fills As New List(Of GeoLine)
         If lines Is Nothing OrElse lines.Count = 0 OrElse density <= 0 Then Return fills
 
-        ' Step 1: Calculate the bounding box and center
-        Dim minX = lines.Min(Function(line) Math.Min(line.X1, line.X2))
-        Dim minY = lines.Min(Function(line) Math.Min(line.Y1, line.Y2))
-        Dim maxX = lines.Max(Function(line) Math.Max(line.X1, line.X2))
-        Dim maxY = lines.Max(Function(line) Math.Max(line.Y1, line.Y2))
-        Dim centerX = (minX + maxX) / 2
-        Dim centerY = (minY + maxY) / 2
+        Dim bounds As Bounds2D = ComputeBounds(lines)
+        Dim centerX = (bounds.MinX + bounds.MaxX) / 2
+        Dim centerY = (bounds.MinY + bounds.MaxY) / 2
         Dim center As New Vector2(CSng(centerX), CSng(centerY))
 
-        ' Step 2: Determine max radius from center to cover the shape
+        ' Determine max radius from center to cover the shape (kept as before)
         Dim maxRadius As Double = 0
-        For Each line In lines
-            Dim d1 = Vector2.Distance(center, line.StartPoint)
-            Dim d2 = Vector2.Distance(center, line.EndPoint)
-            maxRadius = Math.Max(maxRadius, Math.Max(d1, d2))
+        For Each ln In lines
+            Dim d1 = Vector2.Distance(center, ln.StartPoint)
+            Dim d2 = Vector2.Distance(center, ln.EndPoint)
+            Dim localMax = If(d1 > d2, d1, d2)
+            If localMax > maxRadius Then maxRadius = localMax
         Next
 
-        ' Step 3: Build an Archimedean spiral (r = b * theta)
+        ' Archimedean spiral r = b * theta
         Dim b As Double = density / (2 * Math.PI)
         Dim thetaOffset As Double = Math.PI * fillangle / 180
+
         Dim theta As Double = 0
         Dim maxRadiusExtended = maxRadius + density
 
@@ -165,8 +161,9 @@ Public Class FillProcessor : Implements IProcessor
             Dim r = b * theta
             If r > maxRadiusExtended Then Exit While
 
-            Dim x = center.X + CSng(r * Math.Cos(theta + thetaOffset))
-            Dim y = center.Y + CSng(r * Math.Sin(theta + thetaOffset))
+            Dim ang = theta + thetaOffset
+            Dim x = center.X + CSng(r * Math.Cos(ang))
+            Dim y = center.Y + CSng(r * Math.Sin(ang))
             points.Add(New Vector2(x, y))
 
             Dim ds = Math.Sqrt(r * r + b * b)
@@ -176,69 +173,51 @@ Public Class FillProcessor : Implements IProcessor
             theta += dTheta
         End While
 
-        ' Step 4: Clip spiral segments to the shape
+        ' Clip spiral segments to the shape
         For i As Integer = 0 To points.Count - 2
             Dim segment As New GeoLine(points(i), points(i + 1))
-            fills.AddRange(GetSegmentsWithinShape(lines, segment))
+            fills.AddRange(ClipLineAgainstShape(lines, segment, isSegment:=True))
         Next
 
         Return fills
     End Function
 
-    Private Shared Function GetSegmentsWithinShape(shapeBoundaries As List(Of GeoLine), segment As GeoLine) As List(Of GeoLine)
 
-        Const interTol As Double = 0.000000001   ' intersection math tolerance intentioanlly small
-        Const mergeTol As Double = 1.0           ' in already scaled units (0.01mm at 100,000x scaling)
-        Dim mergeTol2 As Double = mergeTol * mergeTol
 
-        Dim dir As Vector2 = segment.EndPoint - segment.StartPoint
+    ' -------------------------
+    ' Clipping
+    ' -------------------------
+    Private Shared Function ClipLineAgainstShape(shapeBoundaries As List(Of GeoLine), line As GeoLine, isSegment As Boolean) As List(Of GeoLine)
+        Dim mergeTol2 As Double = MergeTolerance * MergeTolerance
+
+        Dim dir As Vector2 = line.EndPoint - line.StartPoint
         Dim dirLen2 As Double = dir.LengthSquared()
         If dirLen2 <= 0 OrElse shapeBoundaries Is Nothing OrElse shapeBoundaries.Count = 0 Then Return New List(Of GeoLine)
 
-        Dim hits As New List(Of (t As Double, p As Vector2))(shapeBoundaries.Count \ 2 + 2)
-        Dim segStart As Vector2 = segment.StartPoint
+        Dim hits As New List(Of (t As Double, p As Vector2))(shapeBoundaries.Count \ 2 + If(isSegment, 2, 0))
+        Dim start As Vector2 = line.StartPoint
 
         For Each edge In shapeBoundaries
-            Dim hit = segment.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=interTol)
-            If hit.HasValue Then
-                Dim p As Vector2 = hit.Value
-                Dim t As Double = Vector2.Dot(p - segStart, dir) / dirLen2
-                If t >= -interTol AndAlso t <= 1 + interTol Then
-                    hits.Add((t, p))
-                End If
+            Dim hit = line.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=IntersectionTolerance)
+            If Not hit.HasValue Then Continue For
+
+            Dim p As Vector2 = hit.Value
+            Dim t As Double = Vector2.Dot(p - start, dir) / dirLen2
+
+            If isSegment Then
+                If t >= -IntersectionTolerance AndAlso t <= 1 + IntersectionTolerance Then hits.Add((t, p))
+            Else : hits.Add((t, p))
             End If
         Next
 
-        hits.Add((0.0, segment.StartPoint))
-        hits.Add((1.0, segment.EndPoint))
+        If isSegment Then
+            hits.Add((0.0, line.StartPoint))
+            hits.Add((1.0, line.EndPoint))
+        End If
 
         Return BuildSegmentsFromHits(hits, shapeBoundaries, mergeTol2)
     End Function
 
-    Public Shared Function GetLinesWithinShape(shapeBoundaries As List(Of GeoLine), ray As GeoLine) As List(Of GeoLine)
-
-        Const interTol As Double = 0.000000001   ' intersection math tolerance intentioanlly small
-        Const mergeTol As Double = 1.0           ' in already scaled units (0.01mm at 100,000x scaling)
-        Dim mergeTol2 As Double = mergeTol * mergeTol
-
-        Dim dir As Vector2 = ray.EndPoint - ray.StartPoint
-        Dim dirLen2 As Double = dir.LengthSquared()
-        If dirLen2 <= 0 OrElse shapeBoundaries Is Nothing OrElse shapeBoundaries.Count = 0 Then Return New List(Of GeoLine)
-
-        Dim hits As New List(Of (t As Double, p As Vector2))(shapeBoundaries.Count \ 2)
-        Dim rayStart As Vector2 = ray.StartPoint
-
-        For Each edge In shapeBoundaries
-            Dim hit = ray.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=interTol)
-            If hit.HasValue Then
-                Dim p As Vector2 = hit.Value
-                Dim t As Double = Vector2.Dot(p - rayStart, dir) / dirLen2
-                hits.Add((t, p))
-            End If
-        Next
-
-        Return BuildSegmentsFromHits(hits, shapeBoundaries, mergeTol2)
-    End Function
 
     Private Shared Function BuildSegmentsFromHits(hits As List(Of (t As Double, p As Vector2)), shapeBoundaries As List(Of GeoLine), mergeTol2 As Double) As List(Of GeoLine)
         If hits Is Nothing OrElse hits.Count < 2 Then Return New List(Of GeoLine)
@@ -280,6 +259,10 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
+
+    ' -------------------------
+    ' Point-in-polygon
+    ' -------------------------
     Private Shared Function IsPointInsideEvenOdd(p As Vector2, edges As List(Of GeoLine)) As Boolean
         Dim inside As Boolean = False
         Dim py As Double = p.Y
@@ -310,6 +293,10 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
+
+    ' -------------------------
+    ' Optimiser 
+    ' -------------------------
     Public Shared Function OptimiseFills(lines As List(Of GeoLine), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean, Optional preferDirection As Boolean = True, Optional startPoint As Nullable(Of Vector2) = Nothing) As List(Of GeoLine)
 
         Dim workingLines As New List(Of GeoLine)(lines)
@@ -328,9 +315,6 @@ Public Class FillProcessor : Implements IProcessor
         Dim previousDirection As Vector2 = New Vector2(0, 0)
         Dim havePreviousDirection As Boolean = False
 
-        ' Tunable weight that converts angular difference into a distance-like penalty (units: squared distance).
-        ' Increase to prefer directional continuation more strongly.
-        Dim directionPreferenceWeight As Double = 2000.0
 
         While workingLines.Count > 0
             Dim bestLine As GeoLine = Nothing
@@ -361,10 +345,13 @@ Public Class FillProcessor : Implements IProcessor
                     Dim candNorm As Vector2 = Vector2.Normalize(candidateDir)
                     Dim prevNorm As Vector2 = Vector2.Normalize(previousDirection)
                     ' dot in [-1,1]; We use absolute dot so opposite-direction (same line vector reversed) also counts as aligned.
-                    Dim dot As Double = Math.Max(-1.0, Math.Min(1.0, Vector2.Dot(prevNorm, candNorm)))
+                    Dim dot As Double = Vector2.Dot(prevNorm, candNorm)
+                    If dot < -1.0 Then dot = -1.0
+                    If dot > 1.0 Then dot = 1.0
+
                     Dim alignment As Double = Math.Abs(dot) ' 1.0 means perfect alignment, 0 means perpendicular
                     ' penalty decreases with better alignment
-                    directionPenalty = (1.0 - alignment) * directionPreferenceWeight
+                    directionPenalty = (1.0 - alignment) * DirectionPreferenceWeight
                 End If
 
                 Dim totalCost As Double = chosenDistance + directionPenalty
@@ -409,7 +396,12 @@ Public Class FillProcessor : Implements IProcessor
 
     End Function
 
-    Public Function IsShapeClosed(lines As List(Of Line)) As Boolean
+
+
+    ' -------------------------
+    ' Closure test
+    ' -------------------------
+    Public Shared Function IsShapeClosed(lines As List(Of Line)) As Boolean
 
         For i = 0 To lines.Count - 1
             For j = i To lines.Count - 1
@@ -422,6 +414,9 @@ Public Class FillProcessor : Implements IProcessor
 
 
 
+    ' -------------------------
+    ' Tag policy 
+    ' -------------------------
     Private Function ShouldGenerateFill(fillTag As Object) As Boolean
         If fillTag Is Nothing Then Return False
         If TypeOf fillTag Is Boolean Then Return CType(fillTag, Boolean)
@@ -472,4 +467,83 @@ Public Class FillProcessor : Implements IProcessor
 
         Return Nothing
     End Function
+
+
+
+    ' -------------------------
+    ' Conversions + bounds
+    ' -------------------------
+    Private Shared Function ToGeoLines(lines As List(Of Line), scale As Double) As List(Of GeoLine)
+        Dim result As New List(Of GeoLine)(If(lines?.Count, 0))
+        If lines Is Nothing Then Return result
+
+        For Each ln In lines
+            result.Add(New GeoLine(ln.X1 * scale, ln.Y1 * scale, ln.X2 * scale, ln.Y2 * scale))
+        Next
+
+        Return result
+    End Function
+
+    Private Shared Function ToWpfLines(lines As List(Of GeoLine), scale As Double) As List(Of Line)
+        Dim result As New List(Of Line)(If(lines?.Count, 0))
+        If lines Is Nothing Then Return result
+
+        For Each ln In lines
+            result.Add(New Line With {
+                .X1 = ln.X1 / scale,
+                .Y1 = ln.Y1 / scale,
+                .X2 = ln.X2 / scale,
+                .Y2 = ln.Y2 / scale
+            })
+        Next
+
+        Return result
+    End Function
+
+
+    Private Structure Bounds2D
+        Public ReadOnly MinX As Double
+        Public ReadOnly MinY As Double
+        Public ReadOnly MaxX As Double
+        Public ReadOnly MaxY As Double
+
+        Public Sub New(minX As Double, minY As Double, maxX As Double, maxY As Double)
+            Me.MinX = minX
+            Me.MinY = minY
+            Me.MaxX = maxX
+            Me.MaxY = maxY
+        End Sub
+    End Structure
+
+    Private Shared Function ComputeBounds(lines As List(Of GeoLine)) As Bounds2D
+        Dim minX As Double = Double.PositiveInfinity
+        Dim minY As Double = Double.PositiveInfinity
+        Dim maxX As Double = Double.NegativeInfinity
+        Dim maxY As Double = Double.NegativeInfinity
+
+        If lines Is Nothing OrElse lines.Count = 0 Then
+            Return New Bounds2D(0, 0, 0, 0)
+        End If
+
+        For Each ln In lines
+            Dim x1 = ln.X1
+            Dim y1 = ln.Y1
+            Dim x2 = ln.X2
+            Dim y2 = ln.Y2
+
+            If x1 < minX Then minX = x1
+            If x2 < minX Then minX = x2
+            If y1 < minY Then minY = y1
+            If y2 < minY Then minY = y2
+
+            If x1 > maxX Then maxX = x1
+            If x2 > maxX Then maxX = x2
+            If y1 > maxY Then maxY = y1
+            If y2 > maxY Then maxY = y2
+        Next
+
+        Return New Bounds2D(minX, minY, maxX, maxY)
+    End Function
+
+
 End Class

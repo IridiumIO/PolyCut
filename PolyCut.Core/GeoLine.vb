@@ -213,33 +213,25 @@ Partial Module GeoLineExtensions
     Public Function IsPointOnLineG(point As Vector2, line As GeoLine, tolerance As Double) As Boolean
         Dim dx As Double = line.X2 - line.X1
         Dim dy As Double = line.Y2 - line.Y1
-
         Dim len2 As Double = dx * dx + dy * dy
-        Dim tol As Double = tolerance
+        Dim tol2 As Double = tolerance * tolerance
 
-        ' Degenerate segment: treat as "point within tolerance"
         If len2 <= 0.0000000001 Then
-            Dim dist2 As Double = (point.X - line.X1) * (point.X - line.X1) + (point.Y - line.Y1) * (point.Y - line.Y1)
-            Return dist2 <= (tol * tol)
+            Dim px = point.X - line.X1
+            Dim py = point.Y - line.Y1
+            Return (px * px + py * py) <= tol2
         End If
 
-        ' Perpendicular distance test (your current cross-product approach, but written directly as squared compare)
         Dim cross As Double = (point.Y - line.Y1) * dx - (point.X - line.X1) * dy
-        ' Check: cross^2 <= tol^2 * len^2
-        If (cross * cross) > (tol * tol) * len2 Then Return False
+        If (cross * cross) > tol2 * len2 Then Return False
 
-        ' Projection parameter t in [0,1] with tolerance margin
         Dim dot As Double = (point.X - line.X1) * dx + (point.Y - line.Y1) * dy
-        Dim t As Double = dot / len2
-
-        Dim len As Double = Math.Sqrt(len2)
-        Dim eps As Double = tol / len   ' unitless
-
-        If t < -eps Then Return False
-        If t > 1.0 + eps Then Return False
+        If dot < 0 Then Return False
+        If dot > len2 Then Return False
 
         Return True
     End Function
+
 
 
 
@@ -296,7 +288,9 @@ Partial Module GeoLineExtensions
     End Function
     <Extension>
     Public Function DistanceToSquaredG(point1 As Vector2, point2 As Vector2) As Double
-        Return (point1.X - point2.X) ^ 2 + (point1.Y - point2.Y) ^ 2
+        Dim dx As Double = point1.X - point2.X
+        Dim dy As Double = point1.Y - point2.Y
+        Return dx * dx + dy * dy
     End Function
 
 

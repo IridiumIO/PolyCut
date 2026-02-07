@@ -63,7 +63,6 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Fill type generation
     ' -------------------------
-    <MeasurePerformance>
     Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double) As List(Of GeoLine)
         Dim result As New List(Of GeoLine)
 

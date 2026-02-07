@@ -160,6 +160,24 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
+                            <local:LabeledNumberBoxControl LabelText="Number of Passes" Text="{Binding MainVM.Configuration.Passes, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" TextBoxWidth="120">
+                                <local:LabeledNumberBoxControl.ToolTip>
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                        How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times.
+                                    </TextBlock>
+                                </local:LabeledNumberBoxControl.ToolTip>
+                            </local:LabeledNumberBoxControl>
+                            <local:LabeledNumberBoxControl LabelText="Z Offset Per Pass"
+                                                           Text="{Binding MainVM.Configuration.PassHeightDelta, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allownegative}"
+                                                           TextBoxWidth="120" UnitText="mm">
+                                <local:LabeledNumberBoxControl.ToolTip>
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                        The distance in Z that the tool should move after each pass when multiple passes are enabled.<LineBreak /><LineBreak />
+                                        Positive values move the tool up after each pass, while negative values move the tool down after each pass.<LineBreak /><LineBreak />
+                                        For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage.</TextBlock>
+                                </local:LabeledNumberBoxControl.ToolTip>
+                            </local:LabeledNumberBoxControl>
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto" />

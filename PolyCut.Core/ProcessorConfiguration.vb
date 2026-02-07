@@ -29,6 +29,9 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     Public Property TravelZ As Double = 5
     Public Property SafeZ As Double = 10
 
+    Public Property Passes As Integer = 1
+    Public Property PassHeightDelta As Double = 0
+
     Public Property WorkAreaWidth As Double = 200
     Public Property WorkAreaHeight As Double = 200
 

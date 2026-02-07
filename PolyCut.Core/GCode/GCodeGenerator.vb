@@ -14,8 +14,6 @@ Public Class GCodeGenerator
         RedefineOrigin(lines, cfg)
 
 
-
-        Dim zWork As Double = cfg.WorkZ
         Dim zTravel As Double = cfg.TravelZ
         Dim zSafe As Double = cfg.SafeZ
 
@@ -25,52 +23,75 @@ Public Class GCodeGenerator
 
 
         Dim GCD As New GCodeData With {
-            .TotalLength = lines.Sum(Function(l) l.Length)
+            .TotalLength = lines.Sum(Function(l) l.Length) * Math.Max(1, cfg.Passes)
         }
 
 
         GCD.EstimatedTime += GetTimeForLine(lines(0), travelSpeed)
         GCD.GCodes.Add(GCode.G0(lines(0).StartPoint, zTravel, travelSpeed))
 
-        Dim isNewLine As Boolean = True
 
-        For i As Integer = 0 To lines.Count - 1
+        For passIndex As Integer = 0 To cfg.Passes - 1
 
-            'Pen Down
-            If isNewLine Then
-                GCD.GCodes.Add(GCode.GZ(zWork))
-                GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
+            Dim zWork As Double = cfg.WorkZ + passIndex * cfg.PassHeightDelta
+            Dim isNewLine As Boolean = True
+
+
+            If cfg.Passes > 1 Then
+                GCD.GCodes.Add(GCode.CommentLine($"Pass {passIndex + 1} of {cfg.Passes} at height {zWork}"))
             End If
 
-            'Draw Line
-            GCD.GCodes.Add(GCode.G1(lines(i).EndPoint, F:=workSpeed))
-            GCD.EstimatedTime += GetTimeForLine(lines(i), workSpeed)
 
-            Dim l2 As Line = lines((i + 1) Mod lines.Count)
+            For i As Integer = 0 To lines.Count - 1
 
-
-            'Continue Drawing if next line is continuous
-            If lines(i).IsContinuousWith(l2) Then
-                isNewLine = False
-
-            Else
-                'Pen Up
-                GCD.GCodes.Add(GCode.GZ(zTravel))
-                GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
-
-
-                'Travel to next line if not at the end
-                If i <> lines.Count - 1 Then
-                    GCD.GCodes.Add(GCode.G0(lines(i + 1).StartPoint, F:=travelSpeed))
-                    GCD.EstimatedTime += GetTimeForLine(lines(i).EndPoint.LineTo(lines(i + 1).StartPoint), travelSpeed)
-                    isNewLine = True
-                Else
-                    'Pen Up
-                    GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
-                    GCD.EstimatedTime += GetTimeForZ(zSafe - zWork, zSpeed)
+                'Pen Down
+                If isNewLine Then
+                    GCD.GCodes.Add(GCode.GZ(zWork))
+                    GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
                 End If
 
+                'Draw Line
+                GCD.GCodes.Add(GCode.G1(lines(i).EndPoint, F:=workSpeed))
+                GCD.EstimatedTime += GetTimeForLine(lines(i), workSpeed)
 
+                Dim l2 As Line = lines((i + 1) Mod lines.Count)
+
+
+                'Continue Drawing if next line is continuous
+                If lines(i).IsContinuousWith(l2) Then
+                    isNewLine = False
+
+                Else
+                    'Pen Up
+                    GCD.GCodes.Add(GCode.GZ(zTravel))
+                    GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
+
+
+                    'Travel to next line if not at the end
+                    If i <> lines.Count - 1 Then
+                        GCD.GCodes.Add(GCode.G0(lines(i + 1).StartPoint, F:=travelSpeed))
+                        GCD.EstimatedTime += GetTimeForLine(lines(i).EndPoint.LineTo(lines(i + 1).StartPoint), travelSpeed)
+                        isNewLine = True
+                    Else
+                        'Pen Up
+                        GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
+                        GCD.EstimatedTime += GetTimeForZ(zSafe - zWork, zSpeed)
+                    End If
+
+
+                End If
+
+            Next
+
+            If passIndex <> cfg.Passes - 1 Then
+                ' Move to travel Z from safe
+                GCD.GCodes.Add(GCode.GZ(zTravel))
+                GCD.EstimatedTime += GetTimeForZ(zSafe - zTravel, zSpeed)
+
+                ' Travel XY back to the first line start
+                Dim lastEnd = lines(lines.Count - 1).EndPoint
+                GCD.GCodes.Add(GCode.G0(lines(0).StartPoint, F:=travelSpeed))
+                GCD.EstimatedTime += GetTimeForLine(lastEnd.LineTo(lines(0).StartPoint), travelSpeed)
             End If
 
         Next

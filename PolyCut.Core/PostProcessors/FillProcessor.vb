@@ -69,6 +69,7 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Fill type generation
     ' -------------------------
+    <MeasurePerformance>
     Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double, cfg As ProcessorConfiguration) As List(Of List(Of GeoLine))
         Dim result As New List(Of List(Of GeoLine))
 
@@ -242,11 +243,9 @@ Public Class FillProcessor : Implements IProcessor
         Dim outSegs As New List(Of List(Of GeoLine))()
         If lines Is Nothing OrElse lines.Count = 0 OrElse density <= 0 Then Return outSegs
 
-        ' Stitch tolerance: scaled units. Use a fraction of fill spacing.
-        Dim spacingMm As Double = Math.Max(0.0001, cfg.DrawingConfig.MaxStrokeWidth)
-        Dim snapTolMm As Double = Math.Max(0.01, spacingMm * 0.05)
-        Dim snapTol As Double = snapTolMm * DefaultScalingFactor
-        Dim snapTol2 As Double = snapTol * snapTol
+        Dim snapTol2 As Double = density * density
+        Dim flatTol As Double = Math.Max(0.001, cfg.Tolerance) * DefaultScalingFactor
+        Dim mergeTol2 As Double = MergeTolerance * MergeTolerance
 
         Dim bounds As Rect = ComputeBounds(lines)
         Dim centerX = (bounds.Left + bounds.Right) / 2
@@ -257,19 +256,58 @@ Public Class FillProcessor : Implements IProcessor
         For Each ln In lines
             Dim d1 = Vector2.Distance(center, ln.StartPoint)
             Dim d2 = Vector2.Distance(center, ln.EndPoint)
-            Dim localMax = If(d1 > d2, d1, d2)
-            If localMax > maxRadius Then maxRadius = localMax
+            If d1 > maxRadius Then maxRadius = d1
+            If d2 > maxRadius Then maxRadius = d2
         Next
 
         Dim b As Double = density / (2 * Math.PI)
+        Dim bSq As Double = b * b
         Dim thetaOffset As Double = Math.PI * fillangle / 180
-
-        Dim theta As Double = 0
         Dim maxRadiusExtended = maxRadius + density
 
+        ' Build spatial grid index over boundary edges 
+        Dim edgeCount As Integer = lines.Count
+        Dim edges As GeoLine() = lines.ToArray()
+
+        Dim shapeArea As Double = Math.Max(1.0, bounds.Width) * Math.Max(1.0, bounds.Height)
+        Dim cellSize As Double = Math.Max(density, Math.Sqrt(shapeArea / Math.Max(1, edgeCount)) * 2.0)
+        Dim invCell As Double = 1.0 / cellSize
+
+        Dim grid As New Dictionary(Of Long, List(Of Integer))(edgeCount * 2)
+        Dim gridMaxGx As Integer = Integer.MinValue
+
+        For i = 0 To edgeCount - 1
+            Dim e = edges(i)
+            Dim gx0 = CInt(Math.Floor(Math.Min(e.X1, e.X2) * invCell))
+            Dim gx1 = CInt(Math.Floor(Math.Max(e.X1, e.X2) * invCell))
+            Dim gy0 = CInt(Math.Floor(Math.Min(e.Y1, e.Y2) * invCell))
+            Dim gy1 = CInt(Math.Floor(Math.Max(e.Y1, e.Y2) * invCell))
+            If gx1 > gridMaxGx Then gridMaxGx = gx1
+            For ix = gx0 To gx1
+                For iy = gy0 To gy1
+                    Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
+                    Dim bucket As List(Of Integer) = Nothing
+                    If Not grid.TryGetValue(key, bucket) Then
+                        bucket = New List(Of Integer)(8)
+                        grid(key) = bucket
+                    End If
+                    bucket.Add(i)
+                Next
+            Next
+        Next
+
+        Dim seen(edgeCount - 1) As Integer
+        Dim stamp As Integer = 0
+
+        ' Shape AABB for quick edge rejection
+        Dim bMinX As Double = bounds.Left, bMaxX As Double = bounds.Right
+        Dim bMinY As Double = bounds.Top, bMaxY As Double = bounds.Bottom
+
+        Dim isInside As Boolean = IsPointInsideEvenOdd(center, lines)
+
+        Dim theta As Double = 0
         Dim prevPoint As Vector2 = Nothing
         Dim havePrev As Boolean = False
-
         Dim currentSeg As List(Of GeoLine) = Nothing
 
         While True
@@ -277,62 +315,209 @@ Public Class FillProcessor : Implements IProcessor
             If r > maxRadiusExtended Then Exit While
 
             Dim ang = theta + thetaOffset
-            Dim x = center.X + CSng(r * Math.Cos(ang))
-            Dim y = center.Y + CSng(r * Math.Sin(ang))
-            Dim p As New Vector2(x, y)
+            Dim p As New Vector2(
+                center.X + CSng(r * Math.Cos(ang)),
+                center.Y + CSng(r * Math.Sin(ang)))
 
             If havePrev Then
-                Dim spiralEdge As New GeoLine(prevPoint, p)
+                Dim eMinX As Double = Math.Min(CDbl(prevPoint.X), CDbl(p.X))
+                Dim eMaxX As Double = Math.Max(CDbl(prevPoint.X), CDbl(p.X))
+                Dim eMinY As Double = Math.Min(CDbl(prevPoint.Y), CDbl(p.Y))
+                Dim eMaxY As Double = Math.Max(CDbl(prevPoint.Y), CDbl(p.Y))
 
-                ' Clip this tiny edge
-                Dim clipped As List(Of List(Of GeoLine)) = ClipLinesAgainstShape(lines, spiralEdge, isSegment:=True)
-
-                If clipped.Count = 0 Then
-                    ' Spiral went outside (or through hole) -> end any current segment
+                If eMaxX < bMinX OrElse eMinX > bMaxX OrElse eMaxY < bMinY OrElse eMinY > bMaxY Then
+                    ' Edge entirely outside shape AABB — definitely outside
+                    isInside = False
                     If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
                         outSegs.Add(currentSeg)
                         currentSeg = Nothing
                     End If
                 Else
-                    ' For spiral,Stitch them into one continuous segment list as long as endpoints connect.
-                    For Each piece In clipped
-                        If piece Is Nothing OrElse piece.Count = 0 Then Continue For
+                    ' Find intersections using spatial grid
+                    stamp += 1
+                    If stamp = Integer.MaxValue Then
+                        stamp = 1
+                        Array.Clear(seen, 0, seen.Length)
+                    End If
 
-                        If currentSeg Is Nothing Then
-                            currentSeg = New List(Of GeoLine)(128)
-                            currentSeg.AddRange(piece)
-                        Else
-                            ' Check if the first line of 'piece' starts where currentSeg ends.
-                            Dim curEnd As Vector2 = currentSeg(currentSeg.Count - 1).EndPoint
-                            Dim pieceStart As Vector2 = piece(0).StartPoint
+                    Dim spiralEdge As New GeoLine(prevPoint, p)
+                    Dim sDir As Vector2 = p - prevPoint
+                    Dim sDirLen2 As Double = sDir.LengthSquared()
 
-                            If curEnd.DistanceToSquaredG(pieceStart) <= snapTol2 Then
-                                currentSeg.AddRange(piece)
-                            Else
-                                ' Disconnected > commit current and start new
+                    Dim hits As New List(Of (t As Double, pt As Vector2))(4)
+                    Dim qx0 = CInt(Math.Floor(eMinX * invCell))
+                    Dim qx1 = CInt(Math.Floor(eMaxX * invCell))
+                    Dim qy0 = CInt(Math.Floor(eMinY * invCell))
+                    Dim qy1 = CInt(Math.Floor(eMaxY * invCell))
+
+                    For ix = qx0 To qx1
+                        For iy = qy0 To qy1
+                            Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
+                            Dim bucket As List(Of Integer) = Nothing
+                            If Not grid.TryGetValue(key, bucket) Then Continue For
+                            For bi = 0 To bucket.Count - 1
+                                Dim ei = bucket(bi)
+                                If seen(ei) = stamp Then Continue For
+                                seen(ei) = stamp
+                                Dim hit = spiralEdge.GetIntersectionPointWith(edges(ei), False, IntersectionTolerance)
+                                If Not hit.HasValue Then Continue For
+                                Dim hp = hit.Value
+                                Dim t As Double = Vector2.Dot(hp - prevPoint, sDir) / sDirLen2
+                                If t >= -IntersectionTolerance AndAlso t <= 1 + IntersectionTolerance Then
+                                    hits.Add((t, hp))
+                                End If
+                            Next
+                        Next
+                    Next
+
+                    If hits.Count = 0 Then
+                        ' No boundary crossings = state unchanged, hot path
+                        If isInside AndAlso sDirLen2 > mergeTol2 Then
+                            If currentSeg Is Nothing Then
+                                currentSeg = New List(Of GeoLine)(128)
+                            ElseIf currentSeg.Count > 0 AndAlso
+                                   currentSeg(currentSeg.Count - 1).EndPoint.DistanceToSquaredG(prevPoint) > snapTol2 Then
                                 outSegs.Add(currentSeg)
                                 currentSeg = New List(Of GeoLine)(128)
-                                currentSeg.AddRange(piece)
+                            End If
+                            currentSeg.Add(spiralEdge)
+                        ElseIf Not isInside Then
+                            If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
+                                outSegs.Add(currentSeg)
+                                currentSeg = Nothing
                             End If
                         End If
-                    Next
+                    Else
+                        ' Has crossings - sort and build segments, then reset state via grid-accelerated PIP
+                        hits.Sort(Function(a, hb) a.t.CompareTo(hb.t))
+
+                        ' Build deduplicated crossing points
+                        Dim pts As New List(Of Vector2)(hits.Count + 2)
+                        pts.Add(prevPoint)
+                        Dim lastPt As Vector2 = prevPoint
+                        Dim crossings As Integer = 0
+                        For Each h In hits
+                            If Vector2.DistanceSquared(lastPt, h.pt) > mergeTol2 Then
+                                pts.Add(h.pt)
+                                lastPt = h.pt
+                                crossings += 1
+                            End If
+                        Next
+                        If Vector2.DistanceSquared(lastPt, p) > mergeTol2 Then
+                            pts.Add(p)
+                        End If
+
+                        ' Emit inside segments using tracked state
+                        Dim segments As New List(Of List(Of GeoLine))()
+                        Dim state As Boolean = isInside
+                        For i = 0 To pts.Count - 2
+                            If state AndAlso Vector2.DistanceSquared(pts(i), pts(i + 1)) > mergeTol2 Then
+                                segments.Add(New List(Of GeoLine)(1) From {New GeoLine(pts(i), pts(i + 1))})
+                            End If
+                            If i < crossings Then state = Not state
+                        Next
+
+                        StitchClippedPieces(segments, currentSeg, outSegs, snapTol2)
+
+                        ' Reset tracked state with grid-accelerated PIP at endpoint
+                        isInside = IsInsideGrid(CDbl(p.X), CDbl(p.Y), edges, grid, invCell, seen, stamp, gridMaxGx)
+                    End If
                 End If
             End If
 
             prevPoint = p
             havePrev = True
 
-            Dim ds = Math.Sqrt(r * r + b * b)
-            Dim stepLength = density / 2
-            Dim dTheta = stepLength / ds
-            dTheta = Math.Clamp(dTheta, 0.02, 0.5)
+            '  adaptive stepping
+            Dim rSq As Double = r * r
+            Dim rSqPlusBSq As Double = rSq + bSq
+            Dim ds As Double = Math.Sqrt(rSqPlusBSq)
+            Dim rho As Double = (rSqPlusBSq * ds) / (rSq + 2.0 * bSq)
+            Dim maxChord As Double = 2.0 * Math.Sqrt(2.0 * rho * flatTol)
+
+            Dim dTheta As Double = If(ds > 0, maxChord / ds, 0.5)
+            dTheta = Math.Clamp(dTheta, 0.01, 0.5)
+
             theta += dTheta
         End While
 
-        If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then outSegs.Add(currentSeg)
+        If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
+            outSegs.Add(currentSeg)
+        End If
 
+        Debug.WriteLine(outSegs.Select(Function(s) s.Count).Sum().ToString() & " spiral fill segments generated.")
         Return outSegs
     End Function
+
+
+    Private Shared Function IsInsideGrid(px As Double, py As Double, edges As GeoLine(), grid As Dictionary(Of Long, List(Of Integer)), invCell As Double, seen As Integer(), ByRef stamp As Integer, maxGx As Integer) As Boolean
+        stamp += 1
+        If stamp = Integer.MaxValue Then
+            stamp = 1
+            Array.Clear(seen, 0, seen.Length)
+        End If
+
+        Dim inside As Boolean = False
+        Dim gy As Integer = CInt(Math.Floor(py * invCell))
+        Dim gxStart As Integer = CInt(Math.Floor(px * invCell))
+
+        For gx = gxStart To maxGx
+            Dim key = (CLng(gx) << 32) Xor (gy And &HFFFFFFFFL)
+            Dim bucket As List(Of Integer) = Nothing
+            If Not grid.TryGetValue(key, bucket) Then Continue For
+
+            For bi = 0 To bucket.Count - 1
+                Dim ei = bucket(bi)
+                If seen(ei) = stamp Then Continue For
+                seen(ei) = stamp
+
+                Dim e = edges(ei)
+                Dim y1 As Double = e.Y1, y2 As Double = e.Y2
+                If y1 = y2 Then Continue For
+
+                Dim yMin As Double, yMax As Double
+                If y1 < y2 Then yMin = y1 : yMax = y2 Else yMin = y2 : yMax = y1
+                If py <= yMin OrElse py > yMax Then Continue For
+
+                Dim xInt As Double = e.X1 + (py - y1) * (e.X2 - e.X1) / (y2 - y1)
+                If xInt > px Then inside = Not inside
+            Next
+        Next
+
+        Return inside
+    End Function
+
+
+    Private Shared Sub StitchClippedPieces(clipped As List(Of List(Of GeoLine)), ByRef currentSeg As List(Of GeoLine), outSegs As List(Of List(Of GeoLine)), snapTol2 As Double)
+        If clipped.Count = 0 Then
+            If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
+                outSegs.Add(currentSeg)
+                currentSeg = Nothing
+            End If
+            Return
+        End If
+
+        For Each piece In clipped
+            If piece Is Nothing OrElse piece.Count = 0 Then Continue For
+
+            If currentSeg Is Nothing Then
+                currentSeg = New List(Of GeoLine)(128)
+                currentSeg.AddRange(piece)
+                Continue For
+            End If
+
+            Dim curEnd As Vector2 = currentSeg(currentSeg.Count - 1).EndPoint
+            Dim pieceStart As Vector2 = piece(0).StartPoint
+
+            If curEnd.DistanceToSquaredG(pieceStart) <= snapTol2 Then
+                currentSeg.AddRange(piece)
+            Else
+                outSegs.Add(currentSeg)
+                currentSeg = New List(Of GeoLine)(128)
+                currentSeg.AddRange(piece)
+            End If
+        Next
+    End Sub
 
 
 
@@ -766,7 +951,7 @@ Public Class FillProcessor : Implements IProcessor
 
     '    Return segments
     'End Function
-
+    <MeasurePerformance>
     Public Shared Function OptimiseFills_Newest(segments As List(Of List(Of GeoLine)), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean, cfg As ProcessorConfiguration, Optional preferDirection As Boolean = True, Optional startPoint As Nullable(Of Vector2) = Nothing) As List(Of GeoLine)
 
         If segments Is Nothing OrElse segments.Count = 0 Then Return New List(Of GeoLine)()

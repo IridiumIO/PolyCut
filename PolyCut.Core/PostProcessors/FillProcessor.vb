@@ -898,12 +898,15 @@ Public Class FillProcessor : Implements IProcessor
         If segments Is Nothing OrElse segments.Count = 0 Then Return New List(Of GeoLine)()
 
         ' Tolerances in scaled units (mm * 100000)
+        Dim tolScaled As Double = Math.Max(0.001, cfg.Tolerance) * DefaultScalingFactor
+
+
         Dim spacingMm As Double = Math.Max(0.0001, cfg.DrawingConfig.MaxStrokeWidth)
-        Dim snapTol2 As Double = Math.Max(0.01, spacingMm * 0.05) * DefaultScalingFactor
+        Dim snapTol2 As Double = Math.Max(0.01, cfg.Tolerance * 2.0) * DefaultScalingFactor
         snapTol2 *= snapTol2
 
-        Dim outlineTol As Double = Math.Max(0.05, spacingMm * 0.2) * DefaultScalingFactor
-        Dim maxWalkDist As Double = Math.Max(spacingMm * 5.0, 1.0) * DefaultScalingFactor
+        Dim outlineTol As Double = Math.Max(0.05, cfg.Tolerance * 2.0) * DefaultScalingFactor
+        Dim maxWalkDist As Double = Math.Max(spacingMm * 235.0, 1.0) * DefaultScalingFactor
         Dim maxWalkDist2 As Double = maxWalkDist * maxWalkDist
 
         ' Initialize starting point

@@ -121,25 +121,28 @@ Public Class FillProcessor : Implements IProcessor
         Dim dy = bounds.Bottom - bounds.Top
 
         Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
-        Dim scaleFactor = 10 * Math.Max(dx, dy)
+        Dim radius As Double = 0.5 * maxExtent
+        If radius <= 0 Then Return segments
 
         Dim cosTrav = Math.Cos(traverseAngleRad)
         Dim sinTrav = Math.Sin(traverseAngleRad)
         Dim cosFill = Math.Cos(fillAngleRad)
         Dim sinFill = Math.Sin(fillAngleRad)
 
-        For traversePosition = -maxExtent To maxExtent Step density
-            Dim sx = centerX + traversePosition * cosTrav
-            Dim sy = centerY + traversePosition * sinTrav
+        Dim ctx As ShapeGridContext = BuildShapeGrid(lines, density)
+
+        For traversePosition As Double = -maxExtent To maxExtent Step density
+            Dim sx As Double = centerX + traversePosition * cosTrav
+            Dim sy As Double = centerY + traversePosition * sinTrav
 
             Dim ray As New GeoLine(
-                X1:=sx - scaleFactor * cosFill,
-                Y1:=sy - scaleFactor * sinFill,
-                X2:=sx + scaleFactor * cosFill,
-                Y2:=sy + scaleFactor * sinFill
+                X1:=sx - radius * cosFill,
+                Y1:=sy - radius * sinFill,
+                X2:=sx + radius * cosFill,
+                Y2:=sy + radius * sinFill
             )
 
-            segments.AddRange(ClipLinesAgainstShape(lines, ray, isSegment:=False))
+            segments.AddRange(ClipLinesAgainstShape(ctx, ray, isSegment:=False))
         Next
 
         Return segments
@@ -196,8 +199,10 @@ Public Class FillProcessor : Implements IProcessor
 
         Dim dx = bounds.Right - bounds.Left
         Dim dy = bounds.Bottom - bounds.Top
+
         Dim maxExtent = Math.Sqrt(dx * dx + dy * dy)
-        Dim scaleFactor = 10.0 * Math.Max(dx, dy)
+        Dim radius As Double = 0.5 * maxExtent
+        If radius <= 0 Then Return fills
 
         ' Anchor at center 
         Dim anchorX As Double = centerX
@@ -216,19 +221,21 @@ Public Class FillProcessor : Implements IProcessor
             Dim tmp = kMin : kMin = kMax : kMax = tmp
         End If
 
+        Dim ctx As ShapeGridContext = BuildShapeGrid(lines, densityEff)
+
         For k As Integer = kMin To kMax
             Dim off As Double = k * densityEff
             Dim sx As Double = anchorX + off * nx
             Dim sy As Double = anchorY + off * ny
 
             Dim ray As New GeoLine(
-            X1:=sx - scaleFactor * cosFill,
-            Y1:=sy - scaleFactor * sinFill,
-            X2:=sx + scaleFactor * cosFill,
-            Y2:=sy + scaleFactor * sinFill
+            X1:=sx - radius * cosFill,
+            Y1:=sy - radius * sinFill,
+            X2:=sx + radius * cosFill,
+            Y2:=sy + radius * sinFill
         )
 
-            fills.AddRange(ClipLinesAgainstShape(lines, ray, isSegment:=False))
+            fills.AddRange(ClipLinesAgainstShape(ctx, ray, isSegment:=False))
         Next
 
         Return fills
@@ -245,7 +252,6 @@ Public Class FillProcessor : Implements IProcessor
 
         Dim snapTol2 As Double = density * density
         Dim flatTol As Double = Math.Max(0.001, cfg.Tolerance) * DefaultScalingFactor
-        Dim mergeTol2 As Double = MergeTolerance * MergeTolerance
 
         Dim bounds As Rect = ComputeBounds(lines)
         Dim centerX = (bounds.Left + bounds.Right) / 2
@@ -265,45 +271,8 @@ Public Class FillProcessor : Implements IProcessor
         Dim thetaOffset As Double = Math.PI * fillangle / 180
         Dim maxRadiusExtended = maxRadius + density
 
-        ' Build spatial grid index over boundary edges 
-        Dim edgeCount As Integer = lines.Count
-        Dim edges As GeoLine() = lines.ToArray()
 
-        Dim shapeArea As Double = Math.Max(1.0, bounds.Width) * Math.Max(1.0, bounds.Height)
-        Dim cellSize As Double = Math.Max(density, Math.Sqrt(shapeArea / Math.Max(1, edgeCount)) * 2.0)
-        Dim invCell As Double = 1.0 / cellSize
-
-        Dim grid As New Dictionary(Of Long, List(Of Integer))(edgeCount * 2)
-        Dim gridMaxGx As Integer = Integer.MinValue
-
-        For i = 0 To edgeCount - 1
-            Dim e = edges(i)
-            Dim gx0 = CInt(Math.Floor(Math.Min(e.X1, e.X2) * invCell))
-            Dim gx1 = CInt(Math.Floor(Math.Max(e.X1, e.X2) * invCell))
-            Dim gy0 = CInt(Math.Floor(Math.Min(e.Y1, e.Y2) * invCell))
-            Dim gy1 = CInt(Math.Floor(Math.Max(e.Y1, e.Y2) * invCell))
-            If gx1 > gridMaxGx Then gridMaxGx = gx1
-            For ix = gx0 To gx1
-                For iy = gy0 To gy1
-                    Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
-                    Dim bucket As List(Of Integer) = Nothing
-                    If Not grid.TryGetValue(key, bucket) Then
-                        bucket = New List(Of Integer)(8)
-                        grid(key) = bucket
-                    End If
-                    bucket.Add(i)
-                Next
-            Next
-        Next
-
-        Dim seen(edgeCount - 1) As Integer
-        Dim stamp As Integer = 0
-
-        ' Shape AABB for quick edge rejection
-        Dim bMinX As Double = bounds.Left, bMaxX As Double = bounds.Right
-        Dim bMinY As Double = bounds.Top, bMaxY As Double = bounds.Bottom
-
-        Dim isInside As Boolean = IsPointInsideEvenOdd(center, lines)
+        Dim ctx As ShapeGridContext = BuildShapeGrid(lines, density)
 
         Dim theta As Double = 0
         Dim prevPoint As Vector2 = Nothing
@@ -316,119 +285,20 @@ Public Class FillProcessor : Implements IProcessor
 
             Dim ang = theta + thetaOffset
             Dim p As New Vector2(
-                center.X + CSng(r * Math.Cos(ang)),
-                center.Y + CSng(r * Math.Sin(ang)))
+            center.X + CSng(r * Math.Cos(ang)),
+            center.Y + CSng(r * Math.Sin(ang)))
 
             If havePrev Then
-                Dim eMinX As Double = Math.Min(CDbl(prevPoint.X), CDbl(p.X))
-                Dim eMaxX As Double = Math.Max(CDbl(prevPoint.X), CDbl(p.X))
-                Dim eMinY As Double = Math.Min(CDbl(prevPoint.Y), CDbl(p.Y))
-                Dim eMaxY As Double = Math.Max(CDbl(prevPoint.Y), CDbl(p.Y))
+                Dim spiralEdge As New GeoLine(prevPoint, p)
 
-                If eMaxX < bMinX OrElse eMinX > bMaxX OrElse eMaxY < bMinY OrElse eMinY > bMaxY Then
-                    ' Edge entirely outside shape AABB — definitely outside
-                    isInside = False
-                    If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
-                        outSegs.Add(currentSeg)
-                        currentSeg = Nothing
-                    End If
-                Else
-                    ' Find intersections using spatial grid
-                    stamp += 1
-                    If stamp = Integer.MaxValue Then
-                        stamp = 1
-                        Array.Clear(seen, 0, seen.Length)
-                    End If
-
-                    Dim spiralEdge As New GeoLine(prevPoint, p)
-                    Dim sDir As Vector2 = p - prevPoint
-                    Dim sDirLen2 As Double = sDir.LengthSquared()
-
-                    Dim hits As New List(Of (t As Double, pt As Vector2))(4)
-                    Dim qx0 = CInt(Math.Floor(eMinX * invCell))
-                    Dim qx1 = CInt(Math.Floor(eMaxX * invCell))
-                    Dim qy0 = CInt(Math.Floor(eMinY * invCell))
-                    Dim qy1 = CInt(Math.Floor(eMaxY * invCell))
-
-                    For ix = qx0 To qx1
-                        For iy = qy0 To qy1
-                            Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
-                            Dim bucket As List(Of Integer) = Nothing
-                            If Not grid.TryGetValue(key, bucket) Then Continue For
-                            For bi = 0 To bucket.Count - 1
-                                Dim ei = bucket(bi)
-                                If seen(ei) = stamp Then Continue For
-                                seen(ei) = stamp
-                                Dim hit = spiralEdge.GetIntersectionPointWith(edges(ei), False, IntersectionTolerance)
-                                If Not hit.HasValue Then Continue For
-                                Dim hp = hit.Value
-                                Dim t As Double = Vector2.Dot(hp - prevPoint, sDir) / sDirLen2
-                                If t >= -IntersectionTolerance AndAlso t <= 1 + IntersectionTolerance Then
-                                    hits.Add((t, hp))
-                                End If
-                            Next
-                        Next
-                    Next
-
-                    If hits.Count = 0 Then
-                        ' No boundary crossings = state unchanged, hot path
-                        If isInside AndAlso sDirLen2 > mergeTol2 Then
-                            If currentSeg Is Nothing Then
-                                currentSeg = New List(Of GeoLine)(128)
-                            ElseIf currentSeg.Count > 0 AndAlso
-                                   currentSeg(currentSeg.Count - 1).EndPoint.DistanceToSquaredG(prevPoint) > snapTol2 Then
-                                outSegs.Add(currentSeg)
-                                currentSeg = New List(Of GeoLine)(128)
-                            End If
-                            currentSeg.Add(spiralEdge)
-                        ElseIf Not isInside Then
-                            If currentSeg IsNot Nothing AndAlso currentSeg.Count > 0 Then
-                                outSegs.Add(currentSeg)
-                                currentSeg = Nothing
-                            End If
-                        End If
-                    Else
-                        ' Has crossings - sort and build segments, then reset state via grid-accelerated PIP
-                        hits.Sort(Function(a, hb) a.t.CompareTo(hb.t))
-
-                        ' Build deduplicated crossing points
-                        Dim pts As New List(Of Vector2)(hits.Count + 2)
-                        pts.Add(prevPoint)
-                        Dim lastPt As Vector2 = prevPoint
-                        Dim crossings As Integer = 0
-                        For Each h In hits
-                            If Vector2.DistanceSquared(lastPt, h.pt) > mergeTol2 Then
-                                pts.Add(h.pt)
-                                lastPt = h.pt
-                                crossings += 1
-                            End If
-                        Next
-                        If Vector2.DistanceSquared(lastPt, p) > mergeTol2 Then
-                            pts.Add(p)
-                        End If
-
-                        ' Emit inside segments using tracked state
-                        Dim segments As New List(Of List(Of GeoLine))()
-                        Dim state As Boolean = isInside
-                        For i = 0 To pts.Count - 2
-                            If state AndAlso Vector2.DistanceSquared(pts(i), pts(i + 1)) > mergeTol2 Then
-                                segments.Add(New List(Of GeoLine)(1) From {New GeoLine(pts(i), pts(i + 1))})
-                            End If
-                            If i < crossings Then state = Not state
-                        Next
-
-                        StitchClippedPieces(segments, currentSeg, outSegs, snapTol2)
-
-                        ' Reset tracked state with grid-accelerated PIP at endpoint
-                        isInside = IsInsideGrid(CDbl(p.X), CDbl(p.Y), edges, grid, invCell, seen, stamp, gridMaxGx)
-                    End If
-                End If
+                Dim clipped As List(Of List(Of GeoLine)) = ClipLinesAgainstShape(ctx, spiralEdge, isSegment:=True)
+                StitchClippedPieces(clipped, currentSeg, outSegs, snapTol2)
             End If
 
             prevPoint = p
             havePrev = True
 
-            '  adaptive stepping
+            'adaptive stepping 
             Dim rSq As Double = r * r
             Dim rSqPlusBSq As Double = rSq + bSq
             Dim ds As Double = Math.Sqrt(rSqPlusBSq)
@@ -446,45 +316,8 @@ Public Class FillProcessor : Implements IProcessor
         End If
 
         Debug.WriteLine(outSegs.Select(Function(s) s.Count).Sum().ToString() & " spiral fill segments generated.")
+
         Return outSegs
-    End Function
-
-
-    Private Shared Function IsInsideGrid(px As Double, py As Double, edges As GeoLine(), grid As Dictionary(Of Long, List(Of Integer)), invCell As Double, seen As Integer(), ByRef stamp As Integer, maxGx As Integer) As Boolean
-        stamp += 1
-        If stamp = Integer.MaxValue Then
-            stamp = 1
-            Array.Clear(seen, 0, seen.Length)
-        End If
-
-        Dim inside As Boolean = False
-        Dim gy As Integer = CInt(Math.Floor(py * invCell))
-        Dim gxStart As Integer = CInt(Math.Floor(px * invCell))
-
-        For gx = gxStart To maxGx
-            Dim key = (CLng(gx) << 32) Xor (gy And &HFFFFFFFFL)
-            Dim bucket As List(Of Integer) = Nothing
-            If Not grid.TryGetValue(key, bucket) Then Continue For
-
-            For bi = 0 To bucket.Count - 1
-                Dim ei = bucket(bi)
-                If seen(ei) = stamp Then Continue For
-                seen(ei) = stamp
-
-                Dim e = edges(ei)
-                Dim y1 As Double = e.Y1, y2 As Double = e.Y2
-                If y1 = y2 Then Continue For
-
-                Dim yMin As Double, yMax As Double
-                If y1 < y2 Then yMin = y1 : yMax = y2 Else yMin = y2 : yMax = y1
-                If py <= yMin OrElse py > yMax Then Continue For
-
-                Dim xInt As Double = e.X1 + (py - y1) * (e.X2 - e.X1) / (y2 - y1)
-                If xInt > px Then inside = Not inside
-            Next
-        Next
-
-        Return inside
     End Function
 
 
@@ -533,15 +366,11 @@ Public Class FillProcessor : Implements IProcessor
         Dim cy As Double = (bounds.Top + bounds.Bottom) * 0.5
         Dim center As New Vector2(CSng(cx), CSng(cy))
 
-        ' Radius large enough to cover the whole shape
         Dim dx = bounds.Right - bounds.Left
         Dim dy = bounds.Bottom - bounds.Top
+
         Dim radius As Double = 0.5 * Math.Sqrt(dx * dx + dy * dy)
-
         If radius <= 0 Then Return fills
-
-        ' Make rays long enough that the segment definitely crosses the outline
-        Dim rayLen As Double = radius * 3.0
 
         Dim dTheta As Double = spacing / radius
         dTheta = Math.Clamp(dTheta, 0.01, 0.5)
@@ -551,18 +380,20 @@ Public Class FillProcessor : Implements IProcessor
         ' Cover full circle.  include endpoint so pattern is stable.
         Dim steps As Integer = Math.Max(1, CInt(Math.Ceiling((2.0 * Math.PI) / dTheta)))
 
+        Dim ctx As ShapeGridContext = BuildShapeGrid(lines, spacing)
+
         For i As Integer = 0 To steps - 1
             Dim theta As Double = theta0 + i * (2.0 * Math.PI / steps)
 
             Dim ux As Double = Math.Cos(theta)
             Dim uy As Double = Math.Sin(theta)
 
-            Dim p1 As New Vector2(CSng(cx - rayLen * ux), CSng(cy - rayLen * uy))
-            Dim p2 As New Vector2(CSng(cx + rayLen * ux), CSng(cy + rayLen * uy))
+            Dim p1 As New Vector2(CSng(cx - radius * ux), CSng(cy - radius * uy))
+            Dim p2 As New Vector2(CSng(cx + radius * ux), CSng(cy + radius * uy))
 
             Dim ray As New GeoLine(p1, p2)
 
-            fills.AddRange(ClipLinesAgainstShape(lines, ray, isSegment:=False))
+            fills.AddRange(ClipLinesAgainstShape(ctx, ray, isSegment:=False))
         Next
 
         Return fills
@@ -573,30 +404,59 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Clipping
     ' -------------------------
-    Private Shared Function ClipLinesAgainstShape(shapeBoundaries As List(Of GeoLine), line As GeoLine, isSegment As Boolean) As List(Of List(Of GeoLine))
+
+    Private Shared Function ClipLinesAgainstShape(ctx As ShapeGridContext, line As GeoLine, isSegment As Boolean) As List(Of List(Of GeoLine))
         Dim mergeTol2 As Double = MergeTolerance * MergeTolerance
 
         Dim dir As Vector2 = line.EndPoint - line.StartPoint
         Dim dirLen2 As Double = dir.LengthSquared()
-        If dirLen2 <= 0 OrElse shapeBoundaries Is Nothing OrElse shapeBoundaries.Count = 0 Then
+        If dirLen2 <= 0 OrElse ctx Is Nothing OrElse ctx.Edges Is Nothing OrElse ctx.Edges.Length = 0 Then
             Return New List(Of List(Of GeoLine))()
         End If
 
-        Dim hits As New List(Of (t As Double, p As Vector2))(shapeBoundaries.Count \ 2 + If(isSegment, 2, 0))
         Dim start As Vector2 = line.StartPoint
 
-        For Each edge In shapeBoundaries
-            Dim hit = line.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=IntersectionTolerance)
-            If Not hit.HasValue Then Continue For
+        ' Grid query range for this line's AABB. TODO use other AABB extension
+        Dim eMinX As Double = Math.Min(CDbl(line.X1), CDbl(line.X2))
+        Dim eMaxX As Double = Math.Max(CDbl(line.X1), CDbl(line.X2))
+        Dim eMinY As Double = Math.Min(CDbl(line.Y1), CDbl(line.Y2))
+        Dim eMaxY As Double = Math.Max(CDbl(line.Y1), CDbl(line.Y2))
 
-            Dim p As Vector2 = hit.Value
-            Dim t As Double = Vector2.Dot(p - start, dir) / dirLen2
+        Dim qx0 = CInt(Math.Floor(eMinX * ctx.InvCell))
+        Dim qx1 = CInt(Math.Floor(eMaxX * ctx.InvCell))
+        Dim qy0 = CInt(Math.Floor(eMinY * ctx.InvCell))
+        Dim qy1 = CInt(Math.Floor(eMaxY * ctx.InvCell))
 
-            If isSegment Then
-                If t >= -IntersectionTolerance AndAlso t <= 1 + IntersectionTolerance Then hits.Add((t, p))
-            Else
-                hits.Add((t, p))
-            End If
+        Dim stampInt = ctx.NextStamp()
+        Dim hits As New List(Of (t As Double, p As Vector2))(16)
+
+        For ix = qx0 To qx1
+            For iy = qy0 To qy1
+                Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
+                Dim bucket As List(Of Integer) = Nothing
+                If Not ctx.Grid.TryGetValue(key, bucket) Then Continue For
+
+                For bi = 0 To bucket.Count - 1
+                    Dim ei = bucket(bi)
+                    If ctx.Seen(ei) = stampInt Then Continue For
+                    ctx.Seen(ei) = stampInt
+
+                    Dim edge = ctx.Edges(ei)
+                    Dim hit = line.GetIntersectionPointWith(edge, IncludeCoincidentIntersection:=False, tolerance:=IntersectionTolerance)
+                    If Not hit.HasValue Then Continue For
+
+                    Dim p As Vector2 = hit.Value
+                    Dim t As Double = Vector2.Dot(p - start, dir) / dirLen2
+
+                    If isSegment Then
+                        If t >= -IntersectionTolerance AndAlso t <= 1 + IntersectionTolerance Then
+                            hits.Add((t, p))
+                        End If
+                    Else
+                        hits.Add((t, p))
+                    End If
+                Next
+            Next
         Next
 
         If isSegment Then
@@ -604,11 +464,10 @@ Public Class FillProcessor : Implements IProcessor
             hits.Add((1.0, line.EndPoint))
         End If
 
-        Return BuildSegmentsFromHits(hits, shapeBoundaries, mergeTol2)
+        Return BuildSegmentsFromHits(hits, ctx, mergeTol2)
     End Function
 
-
-    Private Shared Function BuildSegmentsFromHits(hits As List(Of (t As Double, p As Vector2)), shapeBoundaries As List(Of GeoLine), mergeTol2 As Double) As List(Of List(Of GeoLine))
+    Private Shared Function BuildSegmentsFromHits(hits As List(Of (t As Double, p As Vector2)), ctx As ShapeGridContext, mergeTol2 As Double) As List(Of List(Of GeoLine))
         If hits Is Nothing OrElse hits.Count < 2 Then Return New List(Of List(Of GeoLine))()
 
         hits.Sort(Function(a, b) a.t.CompareTo(b.t))
@@ -636,8 +495,10 @@ Public Class FillProcessor : Implements IProcessor
 
             If Vector2.DistanceSquared(a, b) <= mergeTol2 Then Continue For
 
-            Dim mid As New Vector2((a.X + b.X) * 0.5F, (a.Y + b.Y) * 0.5F)
-            If IsPointInsideEvenOdd(mid, shapeBoundaries) Then
+            Dim midX As Double = (CDbl(a.X) + CDbl(b.X)) * 0.5
+            Dim midY As Double = (CDbl(a.Y) + CDbl(b.Y)) * 0.5
+
+            If IsInsideGrid(ctx, midX, midY) Then
                 segments.Add(New List(Of GeoLine)(1) From {New GeoLine(a, b)})
             End If
         Next
@@ -646,38 +507,118 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
+    Private NotInheritable Class ShapeGridContext
+        Public ReadOnly Edges As GeoLine()
+        Public ReadOnly Grid As Dictionary(Of Long, List(Of Integer))
+        Public ReadOnly InvCell As Double
+        Public ReadOnly MaxGx As Integer
 
-    ' -------------------------
-    ' Point-in-polygon
-    ' -------------------------
-    Private Shared Function IsPointInsideEvenOdd(p As Vector2, edges As List(Of GeoLine)) As Boolean
-        Dim inside As Boolean = False
-        Dim py As Double = p.Y
-        Dim px As Double = p.X
+        Public ReadOnly Seen As Integer()
+        Public Stamp As Integer
 
-        For Each e In edges
-            Dim x1 As Double = e.X1
-            Dim y1 As Double = e.Y1
-            Dim x2 As Double = e.X2
-            Dim y2 As Double = e.Y2
+        Public Sub New(edges As GeoLine(), grid As Dictionary(Of Long, List(Of Integer)), invCell As Double, maxGx As Integer)
+            Me.Edges = edges
+            Me.Grid = grid
+            Me.InvCell = invCell
+            Me.MaxGx = maxGx
+            Me.Seen = New Integer(edges.Length - 1) {}
+            Me.Stamp = 0
+        End Sub
 
-            ' Skip horizontal edges
-            If y1 = y2 Then Continue For
-
-            Dim yMin As Double, yMax As Double
-            If y1 < y2 Then
-                yMin = y1 : yMax = y2
-            Else
-                yMin = y2 : yMax = y1
+        Public Function NextStamp() As Integer
+            Stamp += 1
+            If Stamp = Integer.MaxValue Then
+                Stamp = 1
+                Array.Clear(Seen, 0, Seen.Length)
             End If
+            Return Stamp
+        End Function
+    End Class
 
-            If py <= yMin OrElse py > yMax Then Continue For
-            Dim xInt As Double = x1 + (py - y1) * (x2 - x1) / (y2 - y1)
-            If xInt > px Then inside = Not inside
+    'TODO: ?switch to a spatial or quadtree for more dense/compex shapes
+    Private Shared Function BuildShapeGrid(lines As List(Of GeoLine), density As Double) As ShapeGridContext
+        Dim bounds As Rect = ComputeBounds(lines)
+
+        Dim edges As GeoLine() = lines.ToArray()
+        Dim edgeCount As Integer = edges.Length
+
+        Dim shapeArea As Double = Math.Max(1.0, bounds.Width) * Math.Max(1.0, bounds.Height)
+
+        ' density ./ area-derived cell size (scaled units)
+        Dim cellSize As Double = Math.Max(density, Math.Sqrt(shapeArea / Math.Max(1, edgeCount)) * 2.0)
+        Dim invCell As Double = 1.0 / cellSize
+
+        Dim grid As New Dictionary(Of Long, List(Of Integer))(edgeCount * 2)
+        Dim maxGx As Integer = Integer.MinValue
+
+        For i = 0 To edgeCount - 1
+            Dim e = edges(i)
+            Dim gx0 = CInt(Math.Floor(Math.Min(e.X1, e.X2) * invCell))
+            Dim gx1 = CInt(Math.Floor(Math.Max(e.X1, e.X2) * invCell))
+            Dim gy0 = CInt(Math.Floor(Math.Min(e.Y1, e.Y2) * invCell))
+            Dim gy1 = CInt(Math.Floor(Math.Max(e.Y1, e.Y2) * invCell))
+            If gx1 > maxGx Then maxGx = gx1
+            'https://handmade.network/p/75/monter/blog/p/2978-collision_system_part_2__sparse_hash-based_grid_partitioning%252C_multithreading%252C_and_future
+            For ix = gx0 To gx1
+                For iy = gy0 To gy1
+                    Dim key = (CLng(ix) << 32) Xor (iy And &HFFFFFFFFL)
+                    Dim bucket As List(Of Integer) = Nothing
+                    If Not grid.TryGetValue(key, bucket) Then
+                        bucket = New List(Of Integer)(8)
+                        grid(key) = bucket
+                    End If
+                    bucket.Add(i)
+                Next
+            Next
+        Next
+
+        Return New ShapeGridContext(edges, grid, invCell, maxGx)
+    End Function
+
+
+    ' -------------------------
+    ' Point-in-polygon (grid version)
+    ' -------------------------
+    Private Shared Function IsInsideGrid(ctx As ShapeGridContext, px As Double, py As Double) As Boolean
+        Dim stampId = ctx.NextStamp()
+
+        Dim inside As Boolean = False
+        Dim gy As Integer = CInt(Math.Floor(py * ctx.InvCell))
+        Dim gxStart As Integer = CInt(Math.Floor(px * ctx.InvCell))
+
+        For gx = gxStart To ctx.MaxGx
+            Dim key = (CLng(gx) << 32) Xor (gy And &HFFFFFFFFL)
+            Dim bucket As List(Of Integer) = Nothing
+            If Not ctx.Grid.TryGetValue(key, bucket) Then Continue For
+
+            For bi = 0 To bucket.Count - 1
+                Dim ei = bucket(bi)
+                If ctx.Seen(ei) = stampId Then Continue For
+                ctx.Seen(ei) = stampId
+
+                Dim e = ctx.Edges(ei)
+                Dim y1 As Double = e.Y1, y2 As Double = e.Y2
+                If y1 = y2 Then Continue For
+
+                Dim yMin As Double, yMax As Double
+                If y1 < y2 Then
+                    yMin = y1
+                    yMax = y2
+                Else
+                    yMin = y2
+                    yMax = y1
+                End If
+
+                If py <= yMin OrElse py > yMax Then Continue For
+
+                Dim xInt As Double = e.X1 + (py - y1) * (e.X2 - e.X1) / (y2 - y1)
+                If xInt > px Then inside = Not inside
+            Next
         Next
 
         Return inside
     End Function
+
 
 
 

@@ -320,6 +320,24 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Private travelMoveVisuals As New List(Of DrawingVisual)()
 
+
+    Shared Sub New()
+
+        renderPen.Freeze()
+        travelPen.Freeze()
+
+    End Sub
+
+    Private Shared ReadOnly renderPen As New Pen(New SolidColorBrush(Color.FromArgb(&H90, &H0, &HFF, &H0)), 0.2) With {
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
+    Private Shared ReadOnly travelPen As New Pen(Brushes.OrangeRed, 0.1) With {
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
     Private Function DrawToolPaths()
 
         ' Clear existing visuals in the VisualHost
@@ -334,17 +352,20 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             ' Create a new DrawingVisual for the line
             Dim lineVisual As New DrawingVisual()
             Using dc As DrawingContext = lineVisual.RenderOpen()
-                Dim pen As New Pen(line.Stroke, line.StrokeThickness)
-                pen.StartLineCap = PenLineCap.Round
-                pen.EndLineCap = PenLineCap.Round
-                dc.DrawLine(pen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+
+                If line.IsRapidMove Then
+                    dc.DrawLine(travelPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                Else
+                    dc.DrawLine(renderPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                End If
+
             End Using
 
             ' Add the visual to the VisualHost
             visualHost.AddVisual(lineVisual)
 
             ' Handle travel lines
-            If line.Stroke Is Brushes.OrangeRed Then
+            If line.IsRapidMove Then
                 ' Add to travel move visuals
                 travelMoveVisuals.Add(lineVisual)
 
@@ -400,7 +421,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             Dim startPoint As New Point(line.X1, line.Y1)
             Dim endPoint As New Point(line.X2, line.Y2)
 
-            Dim isTravelMove As Boolean = (line.Stroke Is Brushes.OrangeRed)
+            Dim isTravelMove As Boolean = line.IsRapidMove
             Dim hasTravelMoveBeenAdded As Boolean = False
 
             ' Calculate the total length of the line
@@ -432,10 +453,11 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                 End If
 
                 Using dc As DrawingContext = lineVisual.RenderOpen()
-                    Dim pen As New Pen(line.Stroke, line.StrokeThickness)
-                    pen.StartLineCap = PenLineCap.Round
-                    pen.EndLineCap = PenLineCap.Round
-                    dc.DrawLine(pen, startPoint, segmentEnd)
+                    If isTravelMove Then
+                        dc.DrawLine(travelPen, startPoint, segmentEnd)
+                    Else
+                        dc.DrawLine(renderPen, startPoint, segmentEnd)
+                    End If
                 End Using
 
                 ' Handle travel lines

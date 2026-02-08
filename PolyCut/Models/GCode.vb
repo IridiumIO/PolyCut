@@ -5,22 +5,32 @@ Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.Core
 
+
+Public Structure GCodeLine
+    Public X1 As Single
+    Public Y1 As Single
+    Public X2 As Single
+    Public Y2 As Single
+    Public IsRapidMove As Boolean
+End Structure
+
+
 Public Class GCodeGeometry : Inherits ObservableObject
 
     ' Use List for performance, convert to ObservableCollection later if needed
-    Private ReadOnly _paths As List(Of Line) = New List(Of Line)
-    Public ReadOnly Property Paths As ReadOnlyCollection(Of Line)
+    Private ReadOnly _paths As List(Of GCodeLine) = New List(Of GCodeLine)
+    Public ReadOnly Property Paths As ReadOnlyCollection(Of GCodeLine)
         Get
             Return _paths.AsReadOnly()
         End Get
     End Property
 
     ' Lazy-evaluated and cached travel paths
-    Private _travelPaths As List(Of Line) = Nothing
-    Public ReadOnly Property TravelPaths As IEnumerable(Of Line)
+    Private _travelPaths As List(Of GCodeLine) = Nothing
+    Public ReadOnly Property TravelPaths As IEnumerable(Of GCodeLine)
         Get
             If _travelPaths Is Nothing Then
-                _travelPaths = _paths.Where(Function(f) f.Stroke Is Brushes.OrangeRed).ToList()
+                _travelPaths = _paths.Where(Function(f) f.IsRapidMove).ToList()
             End If
             Return _travelPaths
         End Get
@@ -28,6 +38,7 @@ Public Class GCodeGeometry : Inherits ObservableObject
 
     ' Use List for faster bulk population
     Public ReadOnly Property GCode As List(Of GCode)
+
 
     Public Sub New(instr As String)
         GCode = instr.Split(Environment.NewLine).
@@ -71,16 +82,13 @@ Public Class GCodeGeometry : Inherits ObservableObject
         Next
     End Sub
 
-    Private Shared Function DrawLine(x1 As Double, y1 As Double, x2 As Double, y2 As Double, Optional isRapidMove As Boolean = False) As Line
-        Return New Line With {
+    Private Shared Function DrawLine(x1 As Double, y1 As Double, x2 As Double, y2 As Double, Optional isRapidMove As Boolean = False) As GCodeLine
+        Return New GCodeLine With {
             .X1 = Math.Round(x1, 2),
             .Y1 = Math.Round(y1, 2),
             .X2 = Math.Round(x2, 2),
             .Y2 = Math.Round(y2, 2),
-            .Stroke = If(isRapidMove, Brushes.OrangeRed, New SolidColorBrush(DirectCast(ColorConverter.ConvertFromString("#BBccccff"), Color))),
-            .StrokeThickness = If(isRapidMove, 0.1, 0.2),
-            .StrokeEndLineCap = PenLineCap.Round,
-            .StrokeStartLineCap = PenLineCap.Round
+            .IsRapidMove = isRapidMove
         }
     End Function
 End Class

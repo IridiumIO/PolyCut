@@ -189,6 +189,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private Function TokenizeLinesForList(lines As String(), cToken As CancellationToken) As List(Of InlineBuilder.LineTokens)
         Dim out As New List(Of InlineBuilder.LineTokens)(lines.Length)
 
+        If cToken.IsCancellationRequested Then Return out
+
         For Each line As String In lines
             cToken.ThrowIfCancellationRequested()
 

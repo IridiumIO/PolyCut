@@ -17,6 +17,12 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
 
     <ObservableProperty> Private _GridConfig As GridConfiguration = New GridConfiguration()
 
+    <ObservableProperty> Private _PreviewDrawingBrush As String = "#9000FF00"
+    <ObservableProperty> Private _PreviewDrawingStrokeThickness As Double = 0.2
+
+    <ObservableProperty> Private _PreviewTravelBrush As String = "#FF707020"
+    <ObservableProperty> Private _PreviewTravelStrokeThickness As Double = 0.1
+
 End Class
 
 Partial Public Class GridConfiguration : Inherits ObservableObject

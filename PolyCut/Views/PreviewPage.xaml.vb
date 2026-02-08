@@ -4,6 +4,7 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
 
+
 Imports WPF.Ui.Abstractions.Controls
 
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
@@ -38,7 +39,30 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             DrawToolPaths()
         End If
 
+        AddHandler viewmodel.UIConfiguration.PropertyChanged, Sub(s, e)
+                                                                  If e.PropertyName = NameOf(UIConfiguration.PreviewDrawingBrush) Then
+                                                                      _RenderPen = CreatePenWithBrush(_RenderPen, viewmodel.UIConfiguration.PreviewDrawingBrush)
+                                                                      cancellationTokenSource.Cancel()
+                                                                      viewmodel.GCodePaths.Clear()
+                                                                      DrawToolPaths()
+                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewTravelBrush) Then
+                                                                      _TravelPen = CreatePenWithBrush(_TravelPen, viewmodel.UIConfiguration.PreviewTravelBrush)
+                                                                      cancellationTokenSource.Cancel()
+                                                                      viewmodel.GCodePaths.Clear()
+                                                                      DrawToolPaths()
+                                                                  End If
+                                                              End Sub
     End Sub
+
+    Function CreatePenWithBrush(basePen As Pen, brushHex As String) As Pen
+        Dim brushColor As Color = CType(ColorConverter.ConvertFromString(brushHex), Color)
+        Dim brsh = New SolidColorBrush(brushColor)
+        brsh.Freeze()
+        Dim newPen = basePen.Clone()
+        newPen.Brush = brsh
+        newPen.Freeze()
+        Return newPen
+    End Function
 
     Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
         If e Is Nothing Then Return
@@ -321,22 +345,19 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private travelMoveVisuals As New List(Of DrawingVisual)()
 
 
-    Shared Sub New()
-
-        renderPen.Freeze()
-        travelPen.Freeze()
-
-    End Sub
-
-    Private Shared ReadOnly renderPen As New Pen(New SolidColorBrush(Color.FromArgb(&H90, &H0, &HFF, &H0)), 0.2) With {
+    Private _RenderPen As New Pen() With {
+        .Thickness = 0.2,
         .StartLineCap = PenLineCap.Round,
         .EndLineCap = PenLineCap.Round
     }
 
-    Private Shared ReadOnly travelPen As New Pen(Brushes.OrangeRed, 0.1) With {
+
+    Private _TravelPen As New Pen() With {
+        .Thickness = 0.1,
         .StartLineCap = PenLineCap.Round,
         .EndLineCap = PenLineCap.Round
     }
+
 
     Private Function DrawToolPaths()
 
@@ -354,9 +375,9 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             Using dc As DrawingContext = lineVisual.RenderOpen()
 
                 If line.IsRapidMove Then
-                    dc.DrawLine(travelPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                    dc.DrawLine(_TravelPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
                 Else
-                    dc.DrawLine(renderPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                    dc.DrawLine(_RenderPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
                 End If
 
             End Using
@@ -398,6 +419,20 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
 
     Private Sub InitializeDrawingVisual()
+
+
+        ' Ensure _RenderPen has a brush
+        If _RenderPen.Brush Is Nothing Then
+            _RenderPen = CreatePenWithBrush(_RenderPen, ViewModel.UIConfiguration.PreviewDrawingBrush)
+        End If
+
+        ' Ensure _TravelPen has a brush
+        If _TravelPen.Brush Is Nothing Then
+            _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
+        End If
+
+
+
         visualHost.ClearVisuals()
         Canvas.SetLeft(visualHost, 0)
         Canvas.SetTop(visualHost, 0)
@@ -454,9 +489,9 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
                 Using dc As DrawingContext = lineVisual.RenderOpen()
                     If isTravelMove Then
-                        dc.DrawLine(travelPen, startPoint, segmentEnd)
+                        dc.DrawLine(_TravelPen, startPoint, segmentEnd)
                     Else
-                        dc.DrawLine(renderPen, startPoint, segmentEnd)
+                        dc.DrawLine(_RenderPen, startPoint, segmentEnd)
                     End If
                 End Using
 

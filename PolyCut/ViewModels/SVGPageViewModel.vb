@@ -160,6 +160,15 @@ Public Class SVGPageViewModel : Inherits ObservableObject
                                                        End If
                                                    End Sub
 
+        Dim gd As New PolyCut.RichCanvas.GridDefinition With {
+            .Spacing = _UIConfiguration.GridConfig.Spacing,
+            .InsetLeft = _UIConfiguration.GridConfig.InsetLeft,
+            .InsetTop = _UIConfiguration.GridConfig.InsetTop,
+            .InsetRight = _UIConfiguration.GridConfig.InsetRight,
+            .InsetBottom = _UIConfiguration.GridConfig.InsetBottom
+            }
+
+        PolyCanvas.UpdateGridDefinition(gd)
 
     End Sub
 
@@ -305,6 +314,16 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         OnPropertyChanged(NameOf(GridLineVerticalEnd))
         OnPropertyChanged(NameOf(GridLineHorizontalEnd))
         OnPropertyChanged(NameOf(GridLineBrush))
+
+        Dim gd As New PolyCut.RichCanvas.GridDefinition With {
+            .Spacing = _UIConfiguration.GridConfig.Spacing,
+            .InsetLeft = _UIConfiguration.GridConfig.InsetLeft,
+            .InsetTop = _UIConfiguration.GridConfig.InsetTop,
+            .InsetRight = _UIConfiguration.GridConfig.InsetRight,
+            .InsetBottom = _UIConfiguration.GridConfig.InsetBottom
+            }
+        PolyCanvas.UpdateGridDefinition(gd)
+
     End Sub
 
 End Class

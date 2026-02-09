@@ -484,7 +484,11 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
     End Sub
 
+    Friend Shared GridDefinition As GridDefinition
 
+    Public Shared Sub UpdateGridDefinition(gd As GridDefinition)
+        GridDefinition = gd
+    End Sub
 
 
 
@@ -529,3 +533,11 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
 End Class
+
+Public Structure GridDefinition
+    Public Property Spacing As Double
+    Public Property InsetLeft As Double
+    Public Property InsetTop As Double
+    Public Property InsetRight As Double
+    Public Property InsetBottom As Double
+End Structure

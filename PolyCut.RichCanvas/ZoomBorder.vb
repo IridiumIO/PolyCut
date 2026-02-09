@@ -364,7 +364,7 @@ Public Class ZoomBorder
         If CanvasMode <> CanvasMode.Selection AndAlso e.LeftButton = MouseButtonState.Pressed Then
             Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
             Dim position As Point = e.GetPosition(polyCanvas)
-            DrawingManager.UpdateDrawing(CanvasMode, position, Keyboard.IsKeyDown(Key.LeftShift))
+            DrawingManager.UpdateDrawing(CanvasMode, position, Keyboard.IsKeyDown(Key.LeftShift), Keyboard.IsKeyDown(Key.LeftCtrl))
             Return
         End If
 

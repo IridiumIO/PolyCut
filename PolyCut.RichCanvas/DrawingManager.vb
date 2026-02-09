@@ -5,6 +5,9 @@ Public Class DrawingManager
     Private _currentShape As Shape
     Private _startPos As Point
 
+    Public Shared SNAPTOGRID As Boolean = False
+
+
     Public Sub StartDrawing(mode As CanvasMode, startPoint As Point, pcanvas As PolyCanvas)
         _startPos = startPoint
 
@@ -27,9 +30,9 @@ Public Class DrawingManager
         End If
     End Sub
 
-    Public Sub UpdateDrawing(mode As CanvasMode, currentPoint As Point, squareAspect As Boolean)
+    Public Sub UpdateDrawing(mode As CanvasMode, currentPoint As Point, squareAspect As Boolean, snapToGrid As Boolean)
         If _currentShape Is Nothing Then Return
-
+        DrawingManager.SNAPTOGRID = snapToGrid
         Select Case mode
             Case CanvasMode.Line
                 UpdateLine(DirectCast(_currentShape, Line), currentPoint, squareAspect)
@@ -96,7 +99,7 @@ Public Class DrawingManager
 
 
     Private Shared Function CreateLine(startPoint As Point) As Line
-        Return New Line With {
+        Dim line As New Line With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
             .X1 = startPoint.X,
@@ -107,9 +110,20 @@ Public Class DrawingManager
             .StrokeEndLineCap = PenLineCap.Round,
             .StrokeDashCap = PenLineCap.Round
         }
+
+        If SNAPTOGRID Then
+            line.X1 = Math.Round((line.X1 - PolyCanvas.GridDefinition.InsetLeft) / PolyCanvas.GridDefinition.Spacing) * PolyCanvas.GridDefinition.Spacing + PolyCanvas.GridDefinition.InsetLeft
+            line.Y1 = Math.Round((line.Y1 - PolyCanvas.GridDefinition.InsetTop) / PolyCanvas.GridDefinition.Spacing) * PolyCanvas.GridDefinition.Spacing + PolyCanvas.GridDefinition.InsetTop
+        End If
+
+        Return line
+
     End Function
 
     Private Shared Function CreatePen(startPoint As Point) As Polyline
+
+        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
+
         Dim polyline As New Polyline With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -123,6 +137,9 @@ Public Class DrawingManager
     End Function
 
     Private Shared Function CreateRectangle(startPoint As Point) As Rectangle
+
+        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
+
         Dim rect As New Rectangle With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -135,10 +152,15 @@ Public Class DrawingManager
         }
         Canvas.SetLeft(rect, startPoint.X)
         Canvas.SetTop(rect, startPoint.Y)
+
+
         Return rect
     End Function
 
     Private Shared Function CreateEllipse(startPoint As Point) As Ellipse
+
+        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
+
         Dim ellipse As New Ellipse With {
             .Stroke = Brushes.Black,
             .StrokeThickness = 1,
@@ -150,6 +172,8 @@ Public Class DrawingManager
         }
         Canvas.SetLeft(ellipse, startPoint.X)
         Canvas.SetTop(ellipse, startPoint.Y)
+
+
         Return ellipse
     End Function
 
@@ -181,6 +205,9 @@ Public Class DrawingManager
 
 
     Private Sub UpdateLine(line As Line, currentPoint As Point, squareAspect As Boolean)
+
+        Dim newPoint As Point = currentPoint
+
         If squareAspect Then
             Dim dx = currentPoint.X - _startPos.X
             Dim dy = currentPoint.Y - _startPos.Y
@@ -189,15 +216,21 @@ Public Class DrawingManager
             Dim length = Math.Sqrt(dx * dx + dy * dy)
             Dim snappedDx = Math.Cos(snappedAngle * (Math.PI / 180)) * length
             Dim snappedDy = Math.Sin(snappedAngle * (Math.PI / 180)) * length
-            line.X2 = _startPos.X + snappedDx
-            line.Y2 = _startPos.Y + snappedDy
-        Else
-            line.X2 = currentPoint.X
-            line.Y2 = currentPoint.Y
+            newPoint.X = _startPos.X + snappedDx
+            newPoint.Y = _startPos.Y + snappedDy
         End If
+
+        If SNAPTOGRID Then newPoint = SnapPoint(newPoint)
+
+        line.X2 = newPoint.X
+        line.Y2 = newPoint.Y
+
     End Sub
 
     Private Shared Sub UpdatePen(polyline As Polyline, currentPoint As Point)
+
+        If SNAPTOGRID Then currentPoint = SnapPoint(currentPoint)
+
         If polyline.Points.Count > 0 Then
             Dim lastPoint = polyline.Points(polyline.Points.Count - 1)
             If lastPoint <> currentPoint Then
@@ -209,17 +242,26 @@ Public Class DrawingManager
     End Sub
 
     Private Sub UpdateRectangle(rect As Rectangle, currentPoint As Point, squareAspect As Boolean)
-        Dim x = Math.Min(currentPoint.X, _startPos.X)
-        Dim y = Math.Min(currentPoint.Y, _startPos.Y)
-        Dim w = Math.Abs(currentPoint.X - _startPos.X)
-        Dim h = Math.Abs(currentPoint.Y - _startPos.Y)
+
+        Dim sp = _startPos
+        Dim cp = currentPoint
+
+        If SNAPTOGRID Then
+            sp = SnapPoint(sp)
+            cp = SnapPoint(cp)
+        End If
+
+        Dim x = Math.Min(cp.X, sp.X)
+        Dim y = Math.Min(cp.Y, sp.Y)
+        Dim w = Math.Abs(cp.X - sp.X)
+        Dim h = Math.Abs(cp.Y - sp.Y)
 
         If squareAspect Then
             Dim size = Math.Max(w, h)
             rect.Width = size
             rect.Height = size
-            Canvas.SetLeft(rect, If(currentPoint.X < _startPos.X, _startPos.X - size, _startPos.X))
-            Canvas.SetTop(rect, If(currentPoint.Y < _startPos.Y, _startPos.Y - size, _startPos.Y))
+            Canvas.SetLeft(rect, If(cp.X < sp.X, sp.X - size, sp.X))
+            Canvas.SetTop(rect, If(cp.Y < sp.Y, sp.Y - size, sp.Y))
         Else
             rect.Width = w
             rect.Height = h
@@ -228,18 +270,36 @@ Public Class DrawingManager
         End If
     End Sub
 
+    Private Shared Function SnapPoint(p As Point) As Point
+        Dim gd = PolyCanvas.GridDefinition
+        Dim s = gd.Spacing
+        Dim x = Math.Round((p.X - gd.InsetLeft) / s, MidpointRounding.AwayFromZero) * s + gd.InsetLeft
+        Dim y = Math.Round((p.Y - gd.InsetTop) / s, MidpointRounding.AwayFromZero) * s + gd.InsetTop
+        Return New Point(x, y)
+    End Function
+
     Private Sub UpdateEllipse(ellipse As Ellipse, currentPoint As Point, squareAspect As Boolean)
-        Dim x = Math.Min(currentPoint.X, _startPos.X)
-        Dim y = Math.Min(currentPoint.Y, _startPos.Y)
-        Dim w = Math.Abs(currentPoint.X - _startPos.X)
-        Dim h = Math.Abs(currentPoint.Y - _startPos.Y)
+
+        Dim sp = _startPos
+        Dim cp = currentPoint
+
+        If SNAPTOGRID Then
+            sp = SnapPoint(sp)
+            cp = SnapPoint(cp)
+        End If
+
+        Dim x = Math.Min(cp.X, sp.X)
+        Dim y = Math.Min(cp.Y, sp.Y)
+        Dim w = Math.Abs(cp.X - sp.X)
+        Dim h = Math.Abs(cp.Y - sp.Y)
 
         If squareAspect Then
             Dim size = Math.Max(w, h)
             ellipse.Width = size
             ellipse.Height = size
-            Canvas.SetLeft(ellipse, If(currentPoint.X < _startPos.X, _startPos.X - size, _startPos.X))
-            Canvas.SetTop(ellipse, If(currentPoint.Y < _startPos.Y, _startPos.Y - size, _startPos.Y))
+            Canvas.SetLeft(ellipse, If(cp.X < sp.X, sp.X - size, sp.X))
+            Canvas.SetTop(ellipse, If(cp.Y < sp.Y, sp.Y - size, sp.Y))
+
         Else
             ellipse.Width = w
             ellipse.Height = h

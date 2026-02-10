@@ -30,7 +30,7 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
         If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
             Try
                 strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
-                strokeW = CSng(Me.StrokeThickness)
+                'strokeW = CSng(Me.StrokeThickness)
             Catch
             End Try
         End If

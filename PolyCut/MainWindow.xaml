@@ -318,7 +318,7 @@
         <ContentPresenter x:Name="RootContentDialog"
                           Grid.Row="0" Grid.RowSpan="2"
                           d:Visibility="Collapsed" ClipToBounds="True" />
-        <ui:SnackbarPresenter x:Name="RootSnackbar"
+        <ui:SnackbarPresenter x:Name="RootSnackbar" d:Visibility="Collapsed"
                               Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />
 
     </Grid>

@@ -221,7 +221,7 @@ Public Class Tab_ElementProperties
         Dim center = New Point(_before.Left + _before.Width / 2, _before.Top + _before.Height / 2)
         Dim startRotation As Double = CType(_before.RenderTransform, RotateTransform)?.Angle Or 0
 
-        Dim newRotation As Double = (numberBox.Value - startRotation) Mod 360
+        Dim newRotation As Double = (If(numberBox.Value, 0) - startRotation) Mod 360
 
         If Math.Abs(newRotation - startRotation) < 0.01 Then
             _before = Nothing

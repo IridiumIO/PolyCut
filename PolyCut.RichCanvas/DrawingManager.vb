@@ -106,9 +106,9 @@ Public Class DrawingManager
             .Y1 = startPoint.Y,
             .X2 = startPoint.X,
             .Y2 = startPoint.Y,
-            .StrokeStartLineCap = PenLineCap.Round,
-            .StrokeEndLineCap = PenLineCap.Round,
-            .StrokeDashCap = PenLineCap.Round
+            .StrokeStartLineCap = PenLineCap.Square,
+            .StrokeEndLineCap = PenLineCap.Square,
+            .StrokeDashCap = PenLineCap.Square
         }
 
         If SNAPTOGRID Then

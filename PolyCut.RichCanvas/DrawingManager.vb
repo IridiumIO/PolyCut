@@ -65,19 +65,40 @@ Public Class DrawingManager
 
         If _currentShape Is Nothing Then Return
 
+        Dim currentCursorPosition As Point = Mouse.GetPosition(pCanvas)
+
         If mode = CanvasMode.Line Then
             Dim line As Line = DirectCast(_currentShape, Line)
             _currentShape = FinaliseLine(line)
+
+            If (currentCursorPosition.X - _startPos.X) ^ 2 + (currentCursorPosition.Y - _startPos.Y) ^ 2 < 2 Then
+                pCanvas.Children.Remove(_currentShape)
+                _currentShape = Nothing
+                Return
+            End If
+
         ElseIf mode = CanvasMode.Path Then
             Dim polyline As Polyline = DirectCast(_currentShape, Polyline)
             pCanvas.Children.Remove(polyline)
             _currentShape = FinalisePolyline(polyline)
+
+            If polyline.Points.Count < 2 Then
+                _currentShape = Nothing
+                Return
+            End If
+
+        Else
+
+            If (currentCursorPosition.X - _startPos.X) ^ 2 + (currentCursorPosition.Y - _startPos.Y) ^ 2 < 2 Then
+                pCanvas.Children.Remove(_currentShape)
+                _currentShape = Nothing
+                Return
+            End If
         End If
 
-        ' Raise the DrawingFinished event
+
         RaiseEvent DrawingFinished(Me, _currentShape)
 
-        ' Remove the shape from the canvas
         pCanvas.Children.Remove(_currentShape)
         _currentShape = Nothing
     End Sub

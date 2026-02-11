@@ -4,6 +4,8 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
 
+Imports MeasurePerformance.IL.Weaver
+
 
 Imports WPF.Ui.Abstractions.Controls
 
@@ -123,7 +125,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         End If
 
 
-        If e.PropertyName = NameOf(ViewModel.GCode) Then
+        If e.PropertyName = NameOf(ViewModel.GCodeGeometry) Then
             cancellationTokenSource.Cancel()
             ViewModel.GCodePaths.Clear()
             DrawToolPaths()
@@ -360,7 +362,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         .EndLineCap = PenLineCap.Round
     }
 
-
+    <MeasurePerformance>
     Private Function DrawToolPaths()
 
         ' Clear existing visuals in the VisualHost
@@ -368,8 +370,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         travelMoveVisuals.Clear()
 
         ' Compile the GCode into paths
-        If ViewModel.GCode Is Nothing Then Return 1
-        Dim gc = New GCodeGeometry(ViewModel.GCode)
+        If ViewModel.GCodeGeometry Is Nothing Then Return 1
+        Dim gc = ViewModel.GCodeGeometry
 
         For Each line In gc.Paths
             ' Create a new DrawingVisual for the line

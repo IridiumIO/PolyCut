@@ -52,6 +52,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                                                                       cancellationTokenSource.Cancel()
                                                                       viewmodel.GCodePaths.Clear()
                                                                       DrawToolPaths()
+                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewCursorBrush) Then
+                                                                      _CursorPen = CreatePenWithBrush(_CursorPen, viewmodel.UIConfiguration.PreviewCursorBrush)
                                                                   End If
                                                               End Sub
     End Sub
@@ -414,6 +416,13 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         .EndLineCap = PenLineCap.Round
     }
 
+    Private _CursorPen As New Pen() With {
+        .Thickness = 0.5,
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
+
     <MeasurePerformance>
     Private Function DrawToolPaths()
 
@@ -487,7 +496,10 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
         End If
 
-
+        ' Ensure _CursorPen has a brush
+        If _CursorPen.Brush Is Nothing Then
+            _CursorPen = CreatePenWithBrush(_CursorPen, ViewModel.UIConfiguration.PreviewCursorBrush)
+        End If
 
         visualHost.ClearVisuals()
         Canvas.SetLeft(visualHost, 0)
@@ -510,6 +522,10 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
 
+        _cursorVisual = Nothing
+        EnsureCursor()
+        ClearCursor()
+
         Dim paths = ViewModel?.GCodeGeometry?.Paths
         If paths Is Nothing OrElse paths.Count = 0 Then Return 0
 
@@ -522,10 +538,9 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         While _currentIndex < paths.Count
             If cToken.IsCancellationRequested Then Return 1
 
-            Dim stepLineMode As Boolean = False ' if True => finish THIS line, then pause before next
-
             ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
-            While _IsPaused AndAlso Not stepLineMode
+            ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
+            While _IsPaused
 
                 ' 1) Apply ALL queued step-backs
                 Dim backCount = Interlocked.Exchange(_stepBackCount, 0)
@@ -534,16 +549,24 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                         If _currentIndex <= 0 Then Exit For
                         _currentIndex -= 1
                         RemoveLineVisual(_currentIndex)
+
+                        Dim ln2 = paths(_currentIndex)
+                        UpdateCursor(New Point(ln2.X1, ln2.Y1))
                     Next
                     Continue While
                 End If
 
-                ' 2) Consume ONE step-forward 
+                ' 2) Step forward: jump whole lines
                 Dim fw = Interlocked.Exchange(_stepForwardCount, 0)
                 If fw > 0 Then
-                    If fw > 1 Then Interlocked.Add(_stepForwardCount, fw - 1)
-                    stepLineMode = True
-                    Exit While
+                    While fw > 0 AndAlso _currentIndex < paths.Count
+                        DrawLineInstant(paths(_currentIndex))
+                        _currentIndex += 1
+                        fw -= 1
+                    End While
+
+                    ' stay paused after stepping
+                    Continue While
                 End If
 
                 ' 3) Otherwise wait (resume/step/back will complete _pauseTcs)
@@ -553,7 +576,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
                 Dim tcs = _pauseTcs
                 Try : Await tcs.Task.ConfigureAwait(True) : Catch : End Try
-
                 If ReferenceEquals(_pauseTcs, tcs) Then _pauseTcs = Nothing
 
             End While
@@ -564,6 +586,9 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             Dim line = paths(_currentIndex)
 
             Dim startPoint As New Point(line.X1, line.Y1)
+
+            UpdateCursor(startPoint)
+
             Dim endPoint As New Point(line.X2, line.Y2)
             Dim isTravelMove As Boolean = line.IsRapidMove
 
@@ -575,6 +600,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             _lineVisuals(_currentIndex) = lineVisual
             visualHost.AddVisual(lineVisual)
 
+            BringCursorToFront()
+
             If isTravelMove Then
                 travelMoveVisuals.Add(lineVisual)
                 If Not TravelMovesVisibilityToggle.IsChecked Then lineVisual.Opacity = 0
@@ -582,36 +609,57 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
             Dim restartOuter As Boolean = False
 
+
             For i As Integer = 0 To numSegments - 1
                 If cToken.IsCancellationRequested Then Return 1
 
                 ' --------- SEGMENT PAUSE GATE (pause can happen mid-line) ----------
-                While _IsPaused AndAlso Not stepLineMode
+                While _IsPaused
 
                     ' Step Back during partial line: delete current line visual, then move back
-                    Dim backCount2 = Threading.Interlocked.Exchange(_stepBackCount, 0)
+                    Dim backCount2 = Interlocked.Exchange(_stepBackCount, 0)
                     If backCount2 > 0 Then
-                        RemoveLineVisual(_currentIndex) ' remove partial current line
+                        ' 1) Always reset the CURRENT line first (consume 1 back press)
+                        RemoveLineVisual(_currentIndex)
 
+                        Dim lnCur = paths(_currentIndex)
+                        UpdateCursor(New Point(lnCur.X1, lnCur.Y1))
+                        BringCursorToFront()
+
+                        backCount2 -= 1
+
+                        ' 2) Any remaining back presses go to previous completed lines
                         For n As Integer = 1 To backCount2
                             If _currentIndex <= 0 Then Exit For
                             _currentIndex -= 1
                             RemoveLineVisual(_currentIndex)
+
+                            Dim ln2 = paths(_currentIndex)
+                            UpdateCursor(New Point(ln2.X1, ln2.Y1))
+                            BringCursorToFront()
                         Next
 
                         restartOuter = True
                         Exit For
                     End If
 
-                    ' Step Forward: arm finish-line mode (consume ONE)
+                    ' Step Forward while paused mid-line:
                     Dim fw2 = Interlocked.Exchange(_stepForwardCount, 0)
                     If fw2 > 0 Then
-                        If fw2 > 1 Then Interlocked.Add(_stepForwardCount, fw2 - 1)
-                        stepLineMode = True
-                        Exit While
+                        ' remove the partially drawn current line
+                        RemoveLineVisual(_currentIndex)
+
+                        ' draw this line (and additional lines) instantly
+                        While fw2 > 0 AndAlso _currentIndex < paths.Count
+                            DrawLineInstant(paths(_currentIndex))
+                            _currentIndex += 1
+                            fw2 -= 1
+                        End While
+
+                        restartOuter = True
+                        Exit For
                     End If
 
-                    ' otherwise wait
                     If _pauseTcs Is Nothing Then
                         _pauseTcs = New TaskCompletionSource(Of Boolean)(TaskCreationOptions.RunContinuationsAsynchronously)
                     End If
@@ -639,6 +687,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                     dc.DrawLine(If(isTravelMove, _TravelPen, _RenderPen), startPoint, segmentEnd)
                 End Using
 
+                UpdateCursor(segmentEnd)
+
                 Dim delayTime As Single = Math.Min(segmentLength, totalLength) / ViewModel.LogarithmicPreviewSpeed * 1000
                 accumulatedDelay += delayTime
                 stopwatch.Stop()
@@ -661,8 +711,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             ' finished the line
             _currentIndex += 1
 
-            ' If we stepped this line, pause again before next line starts
-            If stepLineMode Then _IsPaused = True
 
         End While
 
@@ -670,6 +718,40 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Function
 
+    Private _cursorVisual As DrawingVisual
+    Private ReadOnly _cursorFill As Brush = Brushes.Transparent
+    Private Const _cursorRadius As Double = 2.2
+    Private Const _cursorCrosshairHalfSize As Double = 3.8
+
+    Private Sub EnsureCursor()
+        If _cursorVisual Is Nothing Then
+            _cursorVisual = New DrawingVisual()
+            visualHost.AddVisual(_cursorVisual)
+        End If
+        BringCursorToFront()
+    End Sub
+
+    Private Sub BringCursorToFront()
+        If _cursorVisual Is Nothing Then Return
+        visualHost.RemoveVisual(_cursorVisual)
+        visualHost.AddVisual(_cursorVisual) ' last = top-most
+    End Sub
+
+    Private Sub UpdateCursor(p As Point)
+        If _cursorVisual Is Nothing Then Return
+        Using dc = _cursorVisual.RenderOpen()
+            dc.DrawEllipse(_cursorFill, _cursorPen, p, _cursorRadius, _cursorRadius)
+            dc.DrawLine(_cursorPen, New Point(p.X - _cursorCrosshairHalfSize, p.Y), New Point(p.X + _cursorCrosshairHalfSize, p.Y))
+            dc.DrawLine(_cursorPen, New Point(p.X, p.Y - _cursorCrosshairHalfSize), New Point(p.X, p.Y + _cursorCrosshairHalfSize))
+        End Using
+    End Sub
+
+    Private Sub ClearCursor()
+        If _cursorVisual Is Nothing Then Return
+        Using dc = _cursorVisual.RenderOpen()
+            ' draw nothing
+        End Using
+    End Sub
 
     Private Sub RemoveLineVisual(i As Integer)
         If _lineVisuals Is Nothing OrElse i < 0 OrElse i >= _lineVisuals.Count Then Return
@@ -682,6 +764,27 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         _lineVisuals(i) = Nothing
     End Sub
 
+    Private Sub DrawLineInstant(line As GCodeLine)
+        Dim startPoint As New Point(line.X1, line.Y1)
+        Dim endPoint As New Point(line.X2, line.Y2)
+        Dim isTravelMove As Boolean = line.IsRapidMove
+
+        Dim v As New DrawingVisual()
+        _lineVisuals(_currentIndex) = v
+        visualHost.AddVisual(v)
+
+        If isTravelMove Then
+            travelMoveVisuals.Add(v)
+            If Not TravelMovesVisibilityToggle.IsChecked Then v.Opacity = 0
+        End If
+
+        Using dc As DrawingContext = v.RenderOpen()
+            dc.DrawLine(If(isTravelMove, _TravelPen, _RenderPen), startPoint, endPoint)
+        End Using
+
+        UpdateCursor(endPoint)
+        BringCursorToFront()
+    End Sub
 
 End Class
 

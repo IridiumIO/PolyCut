@@ -17,11 +17,13 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
 
     <ObservableProperty> Private _GridConfig As GridConfiguration = New GridConfiguration()
 
-    <ObservableProperty> Private _PreviewDrawingBrush As String = "#9000FF00"
+    <ObservableProperty> Private _PreviewDrawingBrush As String = "#FF00FF80"
     <ObservableProperty> Private _PreviewDrawingStrokeThickness As Double = 0.2
 
-    <ObservableProperty> Private _PreviewTravelBrush As String = "#FF707020"
+    <ObservableProperty> Private _PreviewTravelBrush As String = "#FFFF8000"
     <ObservableProperty> Private _PreviewTravelStrokeThickness As Double = 0.1
+
+    <ObservableProperty> Private _PreviewCursorBrush As String = "#80FF0000"
 
 End Class
 

@@ -149,6 +149,13 @@
                                           CurrentColor="{Binding MainVM.UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
                                           LabelText="Travel Line Colour" />
+                
+                <local:ColorPickerControl x:Name="PreviewPage_CursorBrushColorSelector"
+                          Margin="0 5"
+                          ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
+                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                          Foreground="{DynamicResource CardForeground}"
+                          LabelText="Cursor Line Colour" />
 
             </StackPanel>
 

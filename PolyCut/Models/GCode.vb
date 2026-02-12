@@ -66,8 +66,8 @@ Public Class GCodeGeometry : Inherits ObservableObject
             If cmd.Mode <> "G" OrElse (cmd.Code <> 0 AndAlso cmd.Code <> 1) Then Continue For
             If cmd.X Is Nothing OrElse cmd.Y Is Nothing Then Continue For
 
-            Dim x = cmd.X.Value
-            Dim y = cmd.Y.Value
+            Dim x = cmd.X.Value - Application.GetService(Of MainViewModel).Configuration.ToolOffsetX
+            Dim y = cmd.Y.Value - Application.GetService(Of MainViewModel).Configuration.ToolOffsetY
             Dim isRapid = cmd.Code = 0
 
             If Not firstLineDrawn Then

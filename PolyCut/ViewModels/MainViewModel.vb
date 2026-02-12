@@ -570,6 +570,9 @@ Partial Public Class MainViewModel
     Private Async Function GenerateGCode() As Task
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
+        Configuration.ToolOffsetX = Printer.ToolOffsetX
+        Configuration.ToolOffsetY = Printer.ToolOffsetY
+
         Configuration.SoftwareVersion = SettingsHandler.Version
 
         Dim generator As IGenerator = If(UsingGCodePlot,
@@ -589,6 +592,7 @@ Partial Public Class MainViewModel
         GCode = compiledGCodeString
         GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
+        OnPropertyChanged(NameOf(GCodeGeometry))
         _navigationService.Navigate(GetType(PreviewPage))
     End Function
 

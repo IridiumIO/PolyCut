@@ -12,6 +12,7 @@ Public Class GCodeGenerator
 
         'Standard Coordinates set 0,0 to the Top Left. 3D Printers use Bottom Left
         RedefineOrigin(lines, cfg)
+        ApplyOffset(lines, cfg.ToolOffsetX, cfg.ToolOffsetY)
 
 
         Dim zTravel As Double = cfg.TravelZ
@@ -108,6 +109,16 @@ Public Class GCodeGenerator
             line.Y2 = cfg.WorkAreaHeight - line.Y2
         Next
     End Sub
+
+    Private Shared Sub ApplyOffset(ByRef lines As List(Of Line), offsetX As Double, offsetY As Double)
+        For Each line In lines
+            line.X1 += offsetX
+            line.Y1 += offsetY
+            line.X2 += offsetX
+            line.Y2 += offsetY
+        Next
+    End Sub
+
 
     Public Shared Function GenerateWithMetadata(lines As List(Of Line), cfg As ProcessorConfiguration) As GCodeData
 

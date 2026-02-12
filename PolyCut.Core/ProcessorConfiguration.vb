@@ -34,6 +34,8 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
 
     Public Property WorkAreaWidth As Double = 200
     Public Property WorkAreaHeight As Double = 200
+    Public Property ToolOffsetX As Double = 0
+    Public Property ToolOffsetY As Double = 0
 
 
     Public Property CuttingConfig As New CuttingConfiguration

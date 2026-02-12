@@ -131,6 +131,9 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
     Private _WorkingOffsetX As Decimal = 0
     Private _WorkingOffsetY As Decimal = 0
 
+    <ObservableProperty> Private _ToolOffsetX As Decimal = 0
+    <ObservableProperty> Private _ToolOffsetY As Decimal = 0
+
     Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
     Private _EndGCode As String = $""
     Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"

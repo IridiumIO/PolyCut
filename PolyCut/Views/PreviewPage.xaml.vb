@@ -428,6 +428,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
         ' Clear existing visuals in the VisualHost
         visualHost.ClearVisuals()
+        visualHostCursor.ClearVisuals()
         travelMoveVisuals.Clear()
 
         ' Compile the GCode into paths
@@ -520,6 +521,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
         visualHost.ClearVisuals()
+        visualHostCursor.ClearVisuals()
         travelMoveVisuals.Clear()
 
         _cursorVisual = Nothing
@@ -600,7 +602,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             _lineVisuals(_currentIndex) = lineVisual
             visualHost.AddVisual(lineVisual)
 
-            BringCursorToFront()
 
             If isTravelMove Then
                 travelMoveVisuals.Add(lineVisual)
@@ -624,7 +625,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
                         Dim lnCur = paths(_currentIndex)
                         UpdateCursor(New Point(lnCur.X1, lnCur.Y1))
-                        BringCursorToFront()
 
                         backCount2 -= 1
 
@@ -636,7 +636,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
                             Dim ln2 = paths(_currentIndex)
                             UpdateCursor(New Point(ln2.X1, ln2.Y1))
-                            BringCursorToFront()
                         Next
 
                         restartOuter = True
@@ -726,23 +725,17 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private Sub EnsureCursor()
         If _cursorVisual Is Nothing Then
             _cursorVisual = New DrawingVisual()
-            visualHost.AddVisual(_cursorVisual)
+            visualHostCursor.AddVisual(_cursorVisual)
         End If
-        BringCursorToFront()
     End Sub
 
-    Private Sub BringCursorToFront()
-        If _cursorVisual Is Nothing Then Return
-        visualHost.RemoveVisual(_cursorVisual)
-        visualHost.AddVisual(_cursorVisual) ' last = top-most
-    End Sub
 
     Private Sub UpdateCursor(p As Point)
         If _cursorVisual Is Nothing Then Return
         Using dc = _cursorVisual.RenderOpen()
-            dc.DrawEllipse(_cursorFill, _cursorPen, p, _cursorRadius, _cursorRadius)
-            dc.DrawLine(_cursorPen, New Point(p.X - _cursorCrosshairHalfSize, p.Y), New Point(p.X + _cursorCrosshairHalfSize, p.Y))
-            dc.DrawLine(_cursorPen, New Point(p.X, p.Y - _cursorCrosshairHalfSize), New Point(p.X, p.Y + _cursorCrosshairHalfSize))
+            dc.DrawEllipse(_cursorFill, _CursorPen, p, _cursorRadius, _cursorRadius)
+            dc.DrawLine(_CursorPen, New Point(p.X - _cursorCrosshairHalfSize, p.Y), New Point(p.X + _cursorCrosshairHalfSize, p.Y))
+            dc.DrawLine(_CursorPen, New Point(p.X, p.Y - _cursorCrosshairHalfSize), New Point(p.X, p.Y + _cursorCrosshairHalfSize))
         End Using
     End Sub
 
@@ -783,7 +776,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         End Using
 
         UpdateCursor(endPoint)
-        BringCursorToFront()
     End Sub
 
 End Class

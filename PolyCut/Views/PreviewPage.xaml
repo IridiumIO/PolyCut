@@ -86,6 +86,14 @@
                     </local:VisualHost>
 
 
+                    <local:VisualHost x:Name="visualHostCursor">
+                        <local:VisualHost.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleY="-1" />
+                                <TranslateTransform Y="{Binding Printer.BedHeight}" />
+                            </TransformGroup>
+                        </local:VisualHost.RenderTransform>
+                    </local:VisualHost>
                 </Canvas>
 
 

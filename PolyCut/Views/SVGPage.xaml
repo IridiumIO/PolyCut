@@ -257,12 +257,15 @@
                         <Border.Clip>
                             <RectangleGeometry Rect="{Binding GridClipRect}" />
                         </Border.Clip>
+                        <Border.RenderTransform>
+                            <TranslateTransform X="-0.075" Y="-0.075"/>
+                        </Border.RenderTransform>
                         <Border.Background>
                             <DrawingBrush
                                 Stretch="None"
                                 TileMode="Tile"
                                 Viewport="{Binding PrinterGridPreviewViewport}"
-                                ViewportUnits="Absolute">
+                                ViewportUnits="Absolute">                            
                                 <DrawingBrush.Drawing>
                                     <GeometryDrawing>
                                         <GeometryDrawing.Geometry>

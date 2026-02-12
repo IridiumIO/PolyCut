@@ -1,4 +1,5 @@
 ﻿Imports System.Collections.ObjectModel
+Imports System.Collections.Specialized
 Imports System.IO
 Imports System.Net.WebRequestMethods
 
@@ -40,9 +41,34 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _GeneratedGCode As List(Of GCode)
 
     <ObservableProperty>
+    <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ImplementsProperty(GetType(IDrawableManager), NameOf(IDrawableManager.DrawableCollection))>
     Private _DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
+
+    <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ObservableProperty> Private _ImportedGroups As New ObservableCollection(Of DrawableGroup)
+
+    <ObservableProperty>
+    Private _FlatSidebarItems As New ObservableCollection(Of SidebarItemVM)
+    Private Sub RebuildFlatSidebarItems()
+        FlatSidebarItems.Clear()
+
+        For Each grp In ImportedGroups
+            If grp Is Nothing Then Continue For
+
+            Dim children = grp.DisplayChildren
+            If children Is Nothing Then Continue For
+
+            ' Hide Drawing Group if empty
+            If IsDrawingGroup(grp) AndAlso children.Count = 0 Then Continue For
+
+            For Each ch In children
+                If ch Is Nothing Then Continue For
+                If TypeOf ch Is DrawableGroup Then Continue For
+                FlatSidebarItems.Add(New SidebarItemVM(grp, ch))
+            Next
+        Next
+    End Sub
 
     Friend DrawingGroup As DrawableGroup
 
@@ -76,6 +102,12 @@ Partial Public Class MainViewModel
     Public ReadOnly Property SelectedDrawables As IEnumerable(Of IDrawable)
         Get
             Return DrawableCollection.Where(Function(d) d.IsSelected)
+        End Get
+    End Property
+
+    Public ReadOnly Property HasSelection As Boolean
+        Get
+            Return PolyCut.RichCanvas.PolyCanvas.SelectedItems IsNot Nothing AndAlso PolyCanvas.SelectedItems.Count > 0
         End Get
     End Property
 
@@ -154,6 +186,39 @@ Partial Public Class MainViewModel
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         Initialise()
+        WireFlatSidebarInvalidation()
+    End Sub
+
+    Private Sub AnyDisplayChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+        RebuildFlatSidebarItems()
+    End Sub
+
+    Private Sub WireFlatSidebarInvalidation()
+        AddHandler ImportedGroups.CollectionChanged, AddressOf ImportedGroups_CollectionChanged
+
+        ' existing
+        For Each g In ImportedGroups
+            If g Is Nothing Then Continue For
+            AddHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+        Next
+
+        RebuildFlatSidebarItems()
+
+    End Sub
+
+    Private Sub ImportedGroups_CollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+        If e.NewItems IsNot Nothing Then
+            For Each g As DrawableGroup In e.NewItems
+                AddHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+            Next
+        End If
+        If e.OldItems IsNot Nothing Then
+            For Each g As DrawableGroup In e.OldItems
+                RemoveHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+            Next
+        End If
+
+        RebuildFlatSidebarItems()
     End Sub
 
     Private Sub Initialise()
@@ -244,6 +309,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(HasSelection))
     End Sub
 
     Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
@@ -265,6 +331,7 @@ Partial Public Class MainViewModel
             _undoRedoService.Push(New TransformAction(items))
         End If
     End Sub
+
 
     Private Function IsTransformUnchanged(before As TransformAction.Snapshot, after As TransformAction.Snapshot) As Boolean
         Return Math.Abs(before.Left - after.Left) < 0.01 AndAlso
@@ -394,6 +461,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
         OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
     ' -----------------
@@ -456,6 +524,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
     Public Sub RemoveSelectedDrawables()

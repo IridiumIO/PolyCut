@@ -306,12 +306,11 @@
                                 </StackPanel>
                             </Grid>
 
-                            <Separator Margin="0,5" />
                         </StackPanel>
                     </ui:CardExpander>
 
 
-                    <ui:CardExpander
+                    <ui:CardExpander Visibility="Collapsed"
                         Margin="-15,-10"
                         VerticalAlignment="Top"
                         Background="Transparent"

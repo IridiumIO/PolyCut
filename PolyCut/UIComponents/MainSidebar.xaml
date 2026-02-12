@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:i="http://schemas.microsoft.com/xaml/behaviors" xmlns:local="clr-namespace:PolyCut"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
              xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
@@ -11,22 +12,22 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              x:Name="MainSidebar"
              d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
-             d:DesignHeight="800" d:DesignWidth="380" x:FieldModifier="public"
+             d:DesignHeight="800"
+             d:DesignWidth="380"
+             x:FieldModifier="public"
              mc:Ignorable="d">
     <Grid VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TabControl  Margin="0 0 0 0" VerticalAlignment="Stretch"
-                    BorderBrush="Transparent">
+        <TabControl Margin="0 0 0 0" VerticalAlignment="Stretch" BorderBrush="Transparent">
             <TabItem IsSelected="True" Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
-                    <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
+                    <StackPanel Margin="5 0 5 0" Orientation="Horizontal">
                         <ui:SymbolIcon Symbol="PuzzlePiece24" />
-                        <TextBlock Text="Elements"
-                                   Margin="6,0,0,0"/>
-                        <!--Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />-->
+                        <TextBlock Margin="6 0 0 0" Text="Elements" />
+                        <!--  Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />  -->
 
                     </StackPanel>
                 </TabItem.Header>
@@ -35,10 +36,10 @@
 
             <TabItem Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
-                    <StackPanel Margin="5,0,5,0" Orientation="Horizontal">
-                        <ui:SymbolIcon Margin="0,0,6,0" Symbol="AlignLeft16" />
+                    <StackPanel Margin="5 0 5 0" Orientation="Horizontal">
+                        <ui:SymbolIcon Margin="0 0 6 0" Symbol="AlignLeft16" />
                         <TextBlock Text="Properties" />
-                        <!--Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />-->
+                        <!--  Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />  -->
 
                     </StackPanel>
                 </TabItem.Header>
@@ -46,7 +47,7 @@
             </TabItem>
 
             <TabItem Width="9"
-                     Margin="0,0,0,0"
+                     Margin="0 0 0 0"
                      IsEnabled="False" IsHitTestVisible="False"
                      Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
@@ -58,8 +59,8 @@
 
             <TabItem Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
-                    <StackPanel Margin="5,0" Orientation="Horizontal">
-                        <ui:SymbolIcon Margin="0,0,6,0" Symbol="Options20" />
+                    <StackPanel Margin="5 0" Orientation="Horizontal">
+                        <ui:SymbolIcon Margin="0 0 6 0" Symbol="Options20" />
                         <TextBlock Text="Tool Mode" />
 
                     </StackPanel>

@@ -45,6 +45,13 @@ Public Class TransformGizmo
     Private _moveSnapAnchor As Point
     Private _lastSnappedDelta As Vector
 
+    ' Raw cumulative mouse travel since StartResize (never snapped)
+    Private _rawResizeX As Double
+    Private _rawResizeY As Double
+
+    ' For single-selection incremental ApplyResizeSingle
+    Private _lastSnappedResizeCum As Vector
+
     Private Shared ReadOnly CanvasLeftDp As DependencyPropertyDescriptor =
     DependencyPropertyDescriptor.FromProperty(Canvas.LeftProperty, GetType(ContentControl))
     Private Shared ReadOnly CanvasTopDp As DependencyPropertyDescriptor =
@@ -608,6 +615,10 @@ Public Class TransformGizmo
         _cumulativeChangeX = 0
         _cumulativeChangeY = 0
 
+        _rawResizeX = 0
+        _rawResizeY = 0
+        _lastSnappedResizeCum = New Vector(0, 0)
+
         CaptureInitialTransforms()
 
         _initialSizes.Clear()
@@ -725,28 +736,97 @@ Public Class TransformGizmo
     End Function
 
     Private Sub PerformResize(currentPos As Point)
-        ' Calculate DELTA from last position (not cumulative!)
         Dim deltaX = currentPos.X - _dragStart.X
         Dim deltaY = currentPos.Y - _dragStart.Y
         _dragStart = currentPos
 
-        ' For single selection, use the original ResizeThumb algorithm
+        ' -------- SINGLE SELECTION --------
         If _selectionManager.Count = 1 Then
             Dim item = _selectionManager.SelectedItems.FirstOrDefault()
-            If item?.DrawableElement IsNot Nothing Then
-                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
-                If wrapper IsNot Nothing Then
-                    PerformSingleItemResize(wrapper, deltaX, deltaY)
-                    Return
-                End If
+            Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Return
+
+            ' Always accumulate RAW mouse travel
+            _rawResizeX += deltaX
+            _rawResizeY += deltaY
+
+            Dim rawCum As New Vector(_rawResizeX, _rawResizeY)
+
+            ' Decide what the TARGET cumulative resize should be
+            Dim targetCum As Vector
+            If ShouldSnapMove() Then
+                targetCum = GetSnappedResizeCumulative(_activeHandle, _initialBounds, _rawResizeX, _rawResizeY)
+            Else
+                targetCum = rawCum
             End If
+
+            ' Convert cumulative -> incremental step
+            Dim stepDelta As Vector = targetCum - _lastSnappedResizeCum
+            _lastSnappedResizeCum = targetCum
+
+            If Math.Abs(stepDelta.X) < 0.0001 AndAlso Math.Abs(stepDelta.Y) < 0.0001 Then Return
+
+            PerformSingleItemResize(wrapper, stepDelta.X, stepDelta.Y)
+            Return
         End If
 
-        ' Multi-selection uses cumulative scaling
-        _cumulativeChangeX += deltaX
-        _cumulativeChangeY += deltaY
+        ' -------- MULTI SELECTION --------
+        _rawResizeX += deltaX
+        _rawResizeY += deltaY
+
+        If ShouldSnapMove() Then
+            Dim snappedCum As Vector = GetSnappedResizeCumulative(_activeHandle, _initialBounds, _rawResizeX, _rawResizeY)
+            _cumulativeChangeX = snappedCum.X
+            _cumulativeChangeY = snappedCum.Y
+        Else
+            _cumulativeChangeX = _rawResizeX
+            _cumulativeChangeY = _rawResizeY
+        End If
+
         PerformMultiItemResize()
     End Sub
+
+    Private Shared Function SnapX(x As Double) As Double
+        Dim gd = PolyCanvas.GridDefinition
+        Dim s = gd.Spacing
+        Return Math.Round((x - gd.InsetLeft) / s, MidpointRounding.AwayFromZero) * s + gd.InsetLeft
+    End Function
+
+    Private Shared Function SnapY(y As Double) As Double
+        Dim gd = PolyCanvas.GridDefinition
+        Dim s = gd.Spacing
+        Return Math.Round((y - gd.InsetTop) / s, MidpointRounding.AwayFromZero) * s + gd.InsetTop
+    End Function
+
+    ' Given raw cumulative mouse travel, return the effective cumulative change AFTER snapping
+    Private Shared Function GetSnappedResizeCumulative(handle As String, initial As Rect,
+                                                  rawCumX As Double, rawCumY As Double) As Vector
+        Dim effX As Double = rawCumX
+        Dim effY As Double = rawCumY
+
+        ' Snap the moving edge
+        If handle.Contains("Left") Then
+            Dim left1 = SnapX(initial.Left + rawCumX)
+            effX = left1 - initial.Left
+        ElseIf handle.Contains("Right") Then
+            Dim right1 = SnapX(initial.Right + rawCumX)
+            effX = right1 - initial.Right
+        Else
+            effX = 0 ' Top/Bottom only: ignore X
+        End If
+
+        If handle.Contains("Top") Then
+            Dim top1 = SnapY(initial.Top + rawCumY)
+            effY = top1 - initial.Top
+        ElseIf handle.Contains("Bottom") Then
+            Dim bottom1 = SnapY(initial.Bottom + rawCumY)
+            effY = bottom1 - initial.Bottom
+        Else
+            effY = 0 ' Left/Right only: ignore Y
+        End If
+
+        Return New Vector(effX, effY)
+    End Function
 
     Private Sub PerformSingleItemResize(wrapper As ContentControl, deltaX As Double, deltaY As Double)
         TransformAction.ApplyResizeSingle(wrapper, _activeHandle, deltaX, deltaY)

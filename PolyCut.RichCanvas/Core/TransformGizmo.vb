@@ -42,6 +42,8 @@ Public Class TransformGizmo
     Private ReadOnly _handleHitRects(7) As Rect
     Private Const HANDLE_HIT_PAD As Double = 6
 
+    Private _moveSnapAnchor As Point
+    Private _lastSnappedDelta As Vector
 
     Private Shared ReadOnly CanvasLeftDp As DependencyPropertyDescriptor =
     DependencyPropertyDescriptor.FromProperty(Canvas.LeftProperty, GetType(ContentControl))
@@ -623,9 +625,17 @@ Public Class TransformGizmo
         Me.CaptureMouse()
     End Sub
 
+
     Private Sub StartMove(pos As Point)
         _activeHandle = "Move"
         _dragStart = pos
+
+        ' anchor = selection top-left at drag start
+        Dim b = _selectionManager.GetUnrotatedBounds()
+        _moveSnapAnchor = If(b.HasValue, New Point(b.Value.Left, b.Value.Top), New Point(0, 0))
+
+        _lastSnappedDelta = New Vector(0, 0)
+
         CaptureInitialTransforms()
         Me.CaptureMouse()
     End Sub
@@ -678,19 +688,41 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub PerformMove(currentPos As Point)
-        Dim delta = Point.Subtract(currentPos, _dragStart)
+
+        Dim rawDelta As Vector = currentPos - _dragStart
+
+        Dim desiredDelta As Vector = rawDelta
+
+        If ShouldSnapMove() Then
+            ' Snap where the selection TOP-LEFT would land
+            Dim anchor1 As Point = _moveSnapAnchor + rawDelta
+            Dim anchor1Snapped As Point = SnapPoint(anchor1)
+
+            desiredDelta = anchor1Snapped - _moveSnapAnchor
+        End If
+
+        Dim stepDelta As Vector = desiredDelta - _lastSnappedDelta
+        _lastSnappedDelta = desiredDelta
+
+        If Math.Abs(stepDelta.X) < 0.0001 AndAlso Math.Abs(stepDelta.Y) < 0.0001 Then Return
 
         For Each item In _selectionManager.SelectedItems
-            If item?.DrawableElement IsNot Nothing Then
-                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
-                If wrapper IsNot Nothing AndAlso _initialTransforms.ContainsKey(item) Then
-                    TransformAction.ApplyMove(wrapper, delta.X, delta.Y)
-                End If
-            End If
+            Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Continue For
+            TransformAction.ApplyMove(wrapper, stepDelta.X, stepDelta.Y)
         Next
-
-        _dragStart = currentPos
     End Sub
+
+    Private Shared Function SnapPoint(p As Point) As Point
+        Dim gd = PolyCanvas.GridDefinition
+        Dim s = gd.Spacing
+        Dim x = Math.Round((p.X - gd.InsetLeft) / s, MidpointRounding.AwayFromZero) * s + gd.InsetLeft
+        Dim y = Math.Round((p.Y - gd.InsetTop) / s, MidpointRounding.AwayFromZero) * s + gd.InsetTop
+        Return New Point(x, y)
+    End Function
+    Private Shared Function ShouldSnapMove() As Boolean
+        Return Keyboard.IsKeyDown(Key.LeftCtrl) OrElse Keyboard.IsKeyDown(Key.RightCtrl)
+    End Function
 
     Private Sub PerformResize(currentPos As Point)
         ' Calculate DELTA from last position (not cumulative!)

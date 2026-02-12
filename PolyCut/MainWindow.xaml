@@ -87,19 +87,30 @@
 
                             <Menu.Resources>
                                 <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
+
+
                             </Menu.Resources>
 
-                            <MenuItem Header="_File">
+                            <ui:MenuItem x:Name="dlsk"
+                                         local:BackdropSampler.IntervalMs="5000" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.TintColor="#08FFFFFF" Header="_File">
+                                <MenuItem.Resources>
+                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                </MenuItem.Resources>
+
                                 <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + N" Command="{Binding NewProjectCommand}" Header="_New" />
+                                <Separator />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG" />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" Header="_Load Project" />
                                 <Separator />
                                 <MenuItem local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" Header="_Save" />
                                 <MenuItem local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" Header="S_ave As..." />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" Header="_Load Project..." />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG..." />
                                 <MenuItem local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" Header="_Export As SVG..." />
-                            </MenuItem>
+                            </ui:MenuItem>
 
-                            <MenuItem Header="_Edit">
+                            <ui:MenuItem Header="_Edit">
+                                <ui:MenuItem.Resources>
+                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                </ui:MenuItem.Resources>
                                 <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + X"
                                              Command="{Binding CutSelectionCommand}"
                                              Header="Cut"
@@ -114,10 +125,13 @@
                                              Command="{Binding PasteClipboardCommand}"
                                              Header="_Paste"
                                              Icon="{ui:SymbolIcon Symbol=ClipboardPaste20}" />
-                            </MenuItem>
+                            </ui:MenuItem>
 
 
-                            <MenuItem Header="_View">
+                            <ui:MenuItem Header="_View">
+                                <ui:MenuItem.Resources>
+                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                </ui:MenuItem.Resources>
                                 <StackPanel Orientation="Horizontal">
                                     <ToggleButton IsChecked="{Binding CuttingMatVisibility, Mode=TwoWay}">
                                         <ToggleButton.Template>
@@ -232,7 +246,7 @@
                                     <Label Margin="10 4 10 0" Content="Show Grid" />
                                 </StackPanel>
 
-                            </MenuItem>
+                            </ui:MenuItem>
                             <Separator />
                             <ui:MenuItem x:Name="UndoButtonGlobal"
                                          Background="Transparent" BorderThickness="0"
@@ -318,8 +332,9 @@
         <ContentPresenter x:Name="RootContentDialog"
                           Grid.Row="0" Grid.RowSpan="2"
                           d:Visibility="Collapsed" ClipToBounds="True" />
-        <ui:SnackbarPresenter x:Name="RootSnackbar" d:Visibility="Collapsed"
-                              Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />
+        <ui:SnackbarPresenter x:Name="RootSnackbar"
+                              Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                              d:Visibility="Collapsed" />
 
     </Grid>
     <ui:FluentWindow.InputBindings>

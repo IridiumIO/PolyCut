@@ -75,7 +75,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
 
     Private Function BuildBoundingBoxGCode(generatedGCode As IEnumerable(Of GCode)) As String
 
-        Dim FSpeed = 5 * 60 ' mm/min
+        Dim FSpeed = MainVM.Configuration.WorkSpeed * 60 ' mm/min
 
         Dim points = generatedGCode.Where(Function(gc) gc.X.HasValue AndAlso gc.Y.HasValue).Select(Function(gc) (X:=gc.X.Value, Y:=gc.Y.Value)).ToList()
         If points.Count = 0 Then Return String.Empty

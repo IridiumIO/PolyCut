@@ -106,7 +106,8 @@
                  Grid.Column="0"
                  Width="500"
                  Margin="5" Padding="0" VerticalAlignment="Bottom" Panel.ZIndex="1"
-                 beh:BackdropSampler.IsEnabled="True" beh:BackdropSampler.TintColor="#14FFFFFF" Background="#323232" BorderThickness="0" UseLayoutRounding="True">
+                 beh:BackdropSampler.Corner="Bottom" beh:BackdropSampler.IsEnabled="True" beh:BackdropSampler.SampleY="3" beh:BackdropSampler.TintColor="#14FFFFFF" Background="#323232"
+                 BorderThickness="0" UseLayoutRounding="True">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
             </ui:Card.Effect>

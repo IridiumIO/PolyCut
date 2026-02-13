@@ -7,13 +7,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              x:Name="FPCRoot"
              d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
              mc:Ignorable="d">
     <ComboBox Background="Transparent"
               ItemTemplate="{DynamicResource FontTemplate}"
               ScrollViewer.VerticalScrollBarVisibility="Visible"
               SelectedItem="{Binding SelectedFont, ElementName=FPCRoot, Mode=TwoWay}">
         <ComboBox.Resources>
+
+            <Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="{x:Type ComboBox}">
+                <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+                <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+            </Style>
 
             <CollectionViewSource x:Key="myFonts" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}">
                 <CollectionViewSource.SortDescriptions>
@@ -23,7 +30,7 @@
 
             <Style x:Key="FontStyle">
                 <Setter Property="Control.FontFamily" Value="{Binding Source}" />
-                <Setter Property="Control.FontSize" Value="13" />
+                <Setter Property="Control.FontSize" Value="123" />
             </Style>
             <Style x:Key="FontStyle2">
                 <Setter Property="Control.FontFamily" Value="Segoe UI" />
@@ -31,34 +38,37 @@
             </Style>
 
             <DataTemplate x:Key="FontTemplate">
-                <StackPanel Orientation="Horizontal" VirtualizingStackPanel.IsVirtualizing="True">
-                    <Grid Width="300" Height="16"
-                          VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="300" Height="16" VerticalAlignment="Center">
                         <Grid.ToolTip>
-                            <StackPanel>
-                                <TextBlock Text="The Quick Brown Fox Jumps Over The Lazy Dog."
-                                           FontSize="15"
-                                           Style="{StaticResource FontStyle}" />
-                                <TextBlock Text="1234567890 !@#$%^&amp;*()-+[]{};:'/?"
-                                           FontSize="15"
-                                           Style="{StaticResource FontStyle}" />
-                            </StackPanel>
+                            <ToolTip MaxWidth="400">
+                                <StackPanel>
+                                    <TextBlock FontSize="15" Style="{StaticResource FontStyle}" Text="The Quick Brown Fox Jumps Over The Lazy Dog." />
+                                    <TextBlock FontSize="15" Style="{StaticResource FontStyle}" Text="1234567890 !@#$%^&amp;*()-+[]{};:'/?" />
+                                </StackPanel>
+                            </ToolTip>
+
                         </Grid.ToolTip>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding Source}"
-                                   Grid.Column="0"
-                                   MaxWidth="150"
-                                   Margin="0,0,10,0" VerticalAlignment="Bottom"
+                        <TextBlock Grid.Column="0"
+                                   Width="150"
+                                   Margin="0 0 10 0" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                                    Style="{StaticResource FontStyle2}"
+                                   Text="{Binding Source}"
                                    TextTrimming="CharacterEllipsis" />
-                        <Viewbox Grid.Column="1"
-                                 MinWidth="100" MaxWidth="100"
-                                 HorizontalAlignment="Right"
-                                 Stretch="Uniform">
-                            <TextBlock Text="{Binding Source}" Style="{StaticResource FontStyle}" />
+                        <Viewbox Grid.Column="2"
+                                 Height="22"
+                                 HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 Stretch="Uniform" StretchDirection="DownOnly">
+                            <TextBlock Width="700"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource FontStyle}"
+                                       Text="{Binding Source}"
+                                       TextAlignment="Right" TextTrimming="None" />
                         </Viewbox>
                     </Grid>
                 </StackPanel>

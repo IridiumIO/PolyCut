@@ -164,10 +164,10 @@ Public Class TransformGizmo
         _handleRects(HandleId.BottomLeft) = New Rect(rect.Left - hs, rect.Bottom - hs, handleSize, handleSize)
         _handleRects(HandleId.BottomRight) = New Rect(rect.Right - hs, rect.Bottom - hs, handleSize, handleSize)
 
-        _handleRects(HandleId.Top) = New Rect(rect.Left + rect.Width / 2 - chs, rect.Top - chs, cardinalHandleSize, cardinalHandleSize)
-        _handleRects(HandleId.Bottom) = New Rect(rect.Left + rect.Width / 2 - chs, rect.Bottom - chs, cardinalHandleSize, cardinalHandleSize)
-        _handleRects(HandleId.Left) = New Rect(rect.Left - chs, rect.Top + rect.Height / 2 - chs, cardinalHandleSize, cardinalHandleSize)
-        _handleRects(HandleId.Right) = New Rect(rect.Right - chs, rect.Top + rect.Height / 2 - chs, cardinalHandleSize, cardinalHandleSize)
+        _handleRects(HandleId.Top) = New Rect(rect.Left + rect.Width / 2 - cardinalHandleSize, rect.Top - chs, cardinalHandleSize * 2, cardinalHandleSize)
+        _handleRects(HandleId.Bottom) = New Rect(rect.Left + rect.Width / 2 - cardinalHandleSize, rect.Bottom - chs, cardinalHandleSize * 2, cardinalHandleSize)
+        _handleRects(HandleId.Left) = New Rect(rect.Left - chs, rect.Top + rect.Height / 2 - cardinalHandleSize, cardinalHandleSize, cardinalHandleSize * 2)
+        _handleRects(HandleId.Right) = New Rect(rect.Right - chs, rect.Top + rect.Height / 2 - cardinalHandleSize, cardinalHandleSize, cardinalHandleSize * 2)
 
         _rotateHandleRect = New Rect(rect.Left + rect.Width / 2 - rotateHandleSize / 2, rect.Top - rotateOffset - rotateHandleSize / 2, rotateHandleSize, rotateHandleSize)
 
@@ -217,14 +217,14 @@ Public Class TransformGizmo
         drawingContext.DrawRectangle(_styleCache.HandleBrush, _styleCache.HandlePen, _handleRects(HandleId.BottomRight))
 
         ' Draw edge handles
-        drawingContext.DrawRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top))
-        drawingContext.DrawRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom))
-        drawingContext.DrawRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left))
-        drawingContext.DrawRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right))
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top), 5 / _scale, 5 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom), 5 / _scale, 5 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left), 5 / _scale, 5 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right), 5 / _scale, 5 / _scale)
 
         ' Draw rotate handle background
-        Dim iconCenter = New Point(_rotateHandleRect.Left + _rotateHandleRect.Width / 2, _rotateHandleRect.Top + _rotateHandleRect.Height / 2)
-        drawingContext.DrawEllipse(_styleCache.RotateBackBrush, _styleCache.RotatePen, iconCenter, _rotateHandleRect.Width / 2, _rotateHandleRect.Height / 2)
+        Dim iconCenter = New Point(_rotateHandleRect.Left + _rotateHandleRect.Width / 2, _rotateHandleRect.Top + _rotateHandleRect.Height - (8 / _scale))
+        drawingContext.DrawEllipse(_styleCache.RotateBackBrush, _styleCache.RotatePen, iconCenter, _rotateHandleRect.Width / 2.5, _rotateHandleRect.Height / 2.5)
 
         ' Draw rotate handle icon
         Dim arcGeom = _renderCache.GetArcWithArrowGeometry(_scale)
@@ -248,7 +248,7 @@ Public Class TransformGizmo
         Dim ft = _renderCache.GetAngleText(angleText, 14 / _scale, dpi)
 
         Dim textX = iconCenter.X - ft.Width / 2
-        Dim textY = _rotateHandleRect.Top - rotateOffset / 2 - ft.Height / 2
+        Dim textY = _rotateHandleRect.Top - rotateOffset / 2 + 8 / _scale
         Dim bgRect As New Rect(textX - 4 / _scale, textY - 2 / _scale, ft.Width + 8 / _scale, ft.Height + 4 / _scale)
 
         drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, bgRect, 3 / _scale, 3 / _scale)
@@ -258,7 +258,7 @@ Public Class TransformGizmo
 
     Private Sub RenderDimensionsVisual(drawingContext As DrawingContext, rect As Rect, dpi As Double)
         ' Display current dimensions while resizing (single selection only)
-        If _activeHandle Is Nothing OrElse _activeHandle = "Rotate" OrElse _activeHandle = "Move" OrElse _selectionManager.Count <> 1 Then Return
+        If _selectionManager.Count <> 1 Then Return
 
 
         Dim dims = GetCurrentDimensions()
@@ -269,14 +269,14 @@ Public Class TransformGizmo
 
         Dim widthFt = _renderCache.GetWidthText($"{w:F1} mm", 12 / _scale, dpi)
         Dim widthX = rect.Left + rect.Width / 2 - widthFt.Width / 2
-        Dim widthY = rect.Bottom + 8 / _scale
+        Dim widthY = rect.Bottom + 18 / _scale
         Dim widthBgRect As New Rect(widthX - 4 / _scale, widthY - 2 / _scale, widthFt.Width + 8 / _scale, widthFt.Height + 4 / _scale)
 
         drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, widthBgRect, 3 / _scale, 3 / _scale)
         drawingContext.DrawText(widthFt, New Point(widthX, widthY))
 
         Dim heightFt = _renderCache.GetHeightText($"{h:F1} mm", 12 / _scale, dpi)
-        Dim heightX = rect.Right + 8 / _scale
+        Dim heightX = rect.Right + 18 / _scale
         Dim heightY = rect.Top + rect.Height / 2 - heightFt.Height / 2
         Dim heightBgRect As New Rect(heightX - 4 / _scale, heightY - 2 / _scale, heightFt.Width + 8 / _scale, heightFt.Height + 4 / _scale)
 
@@ -911,12 +911,12 @@ End Class
 Friend NotInheritable Class BrushCache
 
     ' ---- Frozen Brushes ----'
-    Public ReadOnly MoveFillBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(&H10, &H0, &H0, &HFF)))
-    Public ReadOnly HandleBrush As Brush = Freeze(New SolidColorBrush(Colors.White))
-    Public ReadOnly EdgeHandleBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(&HFF, &HA0, &HA0, &HA0)))
-    Public ReadOnly RotateBackBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(&H40, &H30, &H66, &HCC)))
-    Public ReadOnly RotateStrokeBrush As Brush = Freeze(New SolidColorBrush(Color.FromRgb(&H30, &H66, &HCC)))
-    Public ReadOnly IconBrush As Brush = Freeze(New SolidColorBrush(Color.FromRgb(&H40, &HA0, &HE0)))
+    Public ReadOnly MoveFillBrush As Brush = Freeze(Brushes.Transparent)
+    Public ReadOnly HandleBrush As Brush = Freeze(Brushes.White)
+    Public ReadOnly EdgeHandleBrush As Brush = Freeze(Brushes.White)
+    Public ReadOnly RotateBackBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(120, 33, 150, 243)))
+    Public ReadOnly RotateStrokeBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)))
+    Public ReadOnly IconBrush As Brush = Freeze(Brushes.White)
     Public ReadOnly DimBgBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(&HC0, &H20, &H20, &H20)))
 
     ' ---- Scale-dependent Pens ----'
@@ -935,11 +935,11 @@ Friend NotInheritable Class BrushCache
 
         Dim t = 1.0 / _scale
 
-        BoundsPen = Freeze(New Pen(Brushes.Gray, t) With {.DashStyle = DashStyles.Dash})
-        HandlePen = Freeze(New Pen(Brushes.Black, t))
-        EdgePen = Freeze(New Pen(Brushes.White, t))
+        BoundsPen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t) With {.DashStyle = DashStyles.Dash})
+        HandlePen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t))
+        EdgePen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t))
         RotatePen = Freeze(New Pen(RotateStrokeBrush, t))
-        ArcPen = Freeze(New Pen(IconBrush, t * 2.5) With {.StartLineCap = PenLineCap.Round, .EndLineCap = PenLineCap.Triangle})
+        ArcPen = Freeze(New Pen(IconBrush, t * 2) With {.StartLineCap = PenLineCap.Round, .EndLineCap = PenLineCap.Triangle})
 
     End Sub
 
@@ -966,13 +966,13 @@ Friend NotInheritable Class RenderCache
 
     Private Sub EnsureArc(scale As Double)
 
-        scale = Math.Round(scale, 3) 'round to avoid tiny changes causing regen
+        scale = Math.Round(scale, 2) 'round to avoid tiny changes causing regen
 
         If _arcWithArrowGeom IsNot Nothing AndAlso _scale = scale Then Return
         _scale = scale
 
-        Dim iconSize = 20 / scale
-        _arcRadius = iconSize / 2.5
+        Dim iconSize = 6 / scale
+        _arcRadius = iconSize / 1
 
         Dim r = _arcRadius
         Dim startAngle = _arcStartAngle
@@ -987,11 +987,11 @@ Friend NotInheritable Class RenderCache
 
         Dim leftPt = New Point(
         endPt.X - arrowSize * Math.Cos(arrowAngle - 0.7),
-        endPt.Y - arrowSize * Math.Sin(arrowAngle - 0.7))
+        endPt.Y - arrowSize * Math.Sin(arrowAngle - 0.9))
 
         Dim rightPt = New Point(
-        endPt.X - arrowSize * Math.Cos(arrowAngle + 0.3),
-        endPt.Y - arrowSize * Math.Sin(arrowAngle + 0.3))
+        endPt.X - arrowSize * Math.Cos(arrowAngle + 0.2),
+        endPt.Y - arrowSize * Math.Sin(arrowAngle + 0.2))
 
         Dim g As New StreamGeometry()
         Using ctx = g.Open()

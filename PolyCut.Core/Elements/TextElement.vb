@@ -26,64 +26,65 @@ Public Class TextElement : Implements IPathBasedElement
         Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Figures = GenerateFigures(text)
-        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
+        Dim m = element.Transforms.GetMatrix()
 
-        Dim pgl As List(Of PathGeometry) = Figures.Select(Function(fig) GeometryHelpers.LinesToPathGeometry(fig)).ToList
+        Dim pgl = Figures.Select(Function(fig)
+                                     fig.TransformLinesInPlace(m)
+                                     Return LinesToPathGeometry(fig)
+                                 End Function).ToList()
 
-        If cfg.AutoUnionText Then
-            Geo = UnionGeometries(pgl)
-        Else
-            Geo = New PathGeometry
-            For Each pg In pgl
-                For Each fig In pg.Figures
-                    Geo.Figures.Add(fig)
-                Next
-            Next
-        End If
 
+        Geo = If(cfg.AutoUnionText,
+                 UnionGeometries(pgl),
+                 New PathGeometry(pgl.SelectMany(Function(pg) pg.Figures), FillRule.Nonzero, Nothing))
 
         Figures = BuildLinesFromGeometry(Geo, cfg.Tolerance)
-        For Each fig In Figures
-            For Each ln In fig
-                ln.Tag = fillcolor
-            Next
-        Next
+        Figures.ForEach(Sub(fig) fig.ForEach(Sub(ln) ln.Tag = fillcolor))
 
     End Sub
 
-
     Public Shared Function UnionGeometries(pgl As List(Of PathGeometry)) As PathGeometry
+        If pgl Is Nothing OrElse pgl.Count = 0 Then Return New PathGeometry()
 
-        Dim unionedGeos As New PathGeometry
+        Dim items = pgl.Select(Function(g, i) (g, i, b:=If(g Is Nothing, Rect.Empty, g.Bounds))).Where(Function(t) t.g IsNot Nothing).ToArray()
 
-        Dim containedGeometries As New List(Of PathGeometry)
+        Dim marked = items.Select(Function(a) (a.g, isHole:=items.Any(Function(b) b.i <> a.i AndAlso b.b.Contains(a.b) AndAlso b.g.FillContains(a.g)))).ToArray()
 
-        For i = 0 To pgl.Count - 1
-            Dim iscontained As Boolean = False
-            For j = 0 To pgl.Count - 1
-                If i <> j AndAlso pgl(j).FillContains(pgl(i)) Then
-                    containedGeometries.Add(pgl(i))
-                    iscontained = True
-                    Exit For
-                End If
-            Next
+        Dim keep = marked.Where(Function(x) Not x.isHole).Select(Function(x) DirectCast(x.g, Geometry)).ToList()
+        Dim holes = marked.Where(Function(x) x.isHole).Select(Function(x) x.g).ToList()
 
-            If Not iscontained Then
-                unionedGeos = Geometry.Combine(unionedGeos, pgl(i), GeometryCombineMode.Union, Nothing)
-            Else
-                containedGeometries.Add(pgl(i))
-            End If
+        Dim unioned As Geometry = BalancedCombine(keep, GeometryCombineMode.Union)
+        holes.ForEach(Sub(h) unioned = Geometry.Combine(unioned, h, GeometryCombineMode.Exclude, Nothing))
 
-        Next
-
-        'We apply the exclude operation to the unioned geometries to remove the contained geometries. This handles things like holes in the O/A/g etc.
-        For Each geometryToExclude In containedGeometries
-            unionedGeos = Geometry.Combine(unionedGeos, geometryToExclude, GeometryCombineMode.Exclude, Nothing)
-        Next
-
-        Return unionedGeos
+        Return If(TryCast(unioned, PathGeometry), unioned.GetFlattenedPathGeometry())
     End Function
 
+    Private Shared Function BalancedCombine(items As List(Of Geometry), mode As GeometryCombineMode) As Geometry
+        If items Is Nothing OrElse items.Count = 0 Then Return New PathGeometry()
+        If items.Count = 1 Then Return items(0)
+
+        Dim current As New List(Of Geometry)(items)
+
+        While current.Count > 1
+            Dim nextRound As New List(Of Geometry)((current.Count + 1) \ 2)
+
+            Dim i As Integer = 0
+            While i < current.Count
+                If i = current.Count - 1 Then
+                    nextRound.Add(current(i))
+                    Exit While
+                End If
+
+                Dim combined = Geometry.Combine(current(i), current(i + 1), mode, Nothing)
+                nextRound.Add(combined)
+                i += 2
+            End While
+
+            current = nextRound
+        End While
+
+        Return current(0)
+    End Function
 
     Private Function GenerateFigures(text As SvgText) As List(Of List(Of Line))
 

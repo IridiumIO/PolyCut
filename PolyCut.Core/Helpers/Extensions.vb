@@ -1,4 +1,5 @@
 ﻿Imports System.Runtime.CompilerServices
+Imports System.Runtime.Intrinsics.Arm
 Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
@@ -72,6 +73,34 @@ Partial Public Module Extensions
         Return lines.Select(Function(line) line.TransformLine(transforms))
     End Function
 
+
+    <Extension>
+    Public Sub TransformInPlace(line As Line, wpfMatrix As Matrix)
+        If line Is Nothing Then Return
+
+        Dim p1 As Point = wpfMatrix.Transform(line.StartPoint)
+        Dim p2 As Point = wpfMatrix.Transform(line.EndPoint)
+
+        line.X1 = p1.X
+        line.Y1 = p1.Y
+        line.X2 = p2.X
+        line.Y2 = p2.Y
+    End Sub
+
+    <Extension>
+    Public Sub TransformLinesInPlace(lines As IList(Of Line), transforms As System.Drawing.Drawing2D.Matrix)
+        If lines Is Nothing OrElse lines.Count = 0 OrElse transforms Is Nothing Then Return
+
+        ' Convert ONCE per figure (or once per element) not per-line
+        Dim e = transforms.Elements
+        Dim wpfMatrix As New Matrix(e(0), e(1), e(2), e(3), transforms.OffsetX, transforms.OffsetY)
+        If wpfMatrix.IsIdentity Then Return
+
+        For i As Integer = 0 To lines.Count - 1
+            Dim ln = lines(i)
+            ln.TransformInPlace(wpfMatrix)
+        Next
+    End Sub
 
     <Extension>
     Public Function IsContinuousWith(line As Line, otherline As Line) As Boolean

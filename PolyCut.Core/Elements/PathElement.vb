@@ -3,6 +3,8 @@ Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
 
+Imports MeasurePerformance.IL.Weaver
+
 Imports PolyCut.[Shared]
 
 Imports Svg
@@ -18,6 +20,8 @@ Public Class PathElement : Implements IPathBasedElement
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property Figures As List(Of List(Of Line)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
+
+    <MeasurePerformance>
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
 
         Dim path = DirectCast(element, SvgPath)
@@ -26,15 +30,12 @@ Public Class PathElement : Implements IPathBasedElement
         Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Geo = Geometry.Parse(path.PathData.ToString).GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
-
+        Dim m As System.Drawing.Drawing2D.Matrix = element.Transforms.GetMatrix()
         Figures = BuildLinesFromGeometry(Geo, Config.Tolerance)
-        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
-
-        For Each fig In Figures
-            For Each ln In fig
-                ln.Tag = fillcolor
-            Next
-        Next
+        Figures.ForEach(Sub(fig)
+                            fig.TransformLinesInPlace(m)
+                            fig.ForEach(Sub(ln) ln.Tag = fillcolor)
+                        End Sub)
 
     End Sub
 

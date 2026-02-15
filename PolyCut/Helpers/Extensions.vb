@@ -77,16 +77,19 @@ Public Module Extensions
 
 
     <Extension()>
-    Public Function IsWithinBounds(SVGelement As SvgVisualElement, x As Double, y As Double) As Boolean
+    Public Function IsWithinBounds(svgElement As SvgVisualElement, x As Double, y As Double) As Boolean
+        If svgElement Is Nothing Then Return False
 
-        Dim cxLeft = SVGelement.Bounds.X
-        Dim cxTop = SVGelement.Bounds.Y
+        Dim b = svgElement.Bounds ' compute once
 
-        If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso SVGelement.Bounds.Width + cxLeft < x AndAlso SVGelement.Bounds.Height + cxTop < y Then
-            Return True
-        End If
+        Return b.X >= 0 AndAlso b.Y >= 0 AndAlso (b.Right <= x) AndAlso (b.Bottom <= y)
+
+        'If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso svgElement.Bounds.Width + cxLeft < x AndAlso svgElement.Bounds.Height + cxTop < y Then
+        'Return True
+        'End If
 
         Return False
+
 
     End Function
 

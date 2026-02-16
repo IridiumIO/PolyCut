@@ -1,5 +1,7 @@
 ﻿
 'Generator that uses PolyCut.Core
+Imports MeasurePerformance.IL.Weaver
+
 Imports PolyCut.Core
 
 Imports WPF.Ui.Controls
@@ -11,6 +13,7 @@ Public Class PolyCutGenerator : Implements IGenerator
     Private Property GCodes As List(Of GCode) Implements IGenerator.GCodes
     Private Property SVGText As String
 
+    <MeasurePerformance>
     Public Async Function GenerateGcode() As Task(Of (StatusCode As Integer, Message As String)) Implements IGenerator.GenerateGcodeAsync
 
 

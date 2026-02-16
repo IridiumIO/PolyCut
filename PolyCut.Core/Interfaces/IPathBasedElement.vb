@@ -4,10 +4,10 @@ Imports System.Windows.Shapes
 
 Public Interface IPathBasedElement
 
-    ReadOnly Property FlattenedLines As List(Of Line)
+    ReadOnly Property FlattenedLines As List(Of GeoLine)
 
     Property Geo As PathGeometry
-    Property Figures As List(Of List(Of Line))
+    Property Figures As List(Of List(Of GeoLine))
     Property IsFilled As Boolean
     Property Config As ProcessorConfiguration
     Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration)

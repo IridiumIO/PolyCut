@@ -6,11 +6,11 @@ Imports System.Windows.Shapes
 Public Class OffsetProcessor : Implements IProcessor
 
 
-    Private Shared Function CreateOffsetArcs(lines As List(Of Line), toolRadius As Double) As List(Of Line)
+    Private Shared Function CreateOffsetArcs(lines As List(Of GeoLine), toolRadius As Double) As List(Of GeoLine)
 
         If toolRadius <= 0 Then Return lines
 
-        Dim processedLines As New List(Of Line)
+        Dim processedLines As New List(Of GeoLine)
 
         'Flag to note if the last processed line was continuous so we don't double up on adding a shortened l2
         Dim previousWasContinuous As Boolean = False
@@ -30,7 +30,6 @@ Public Class OffsetProcessor : Implements IProcessor
 
                 If Not processedLines.Contains(l1) Then
                     processedLines.Add(l1)
-
                 End If
 
                 Continue For
@@ -51,8 +50,14 @@ Public Class OffsetProcessor : Implements IProcessor
             Dim theta = l1.AngleR
             Dim xOffset = toolRadius * Math.Cos(theta)
             Dim yOffset = toolRadius * Math.Sin(theta)
-            l1.X2 += xOffset
-            l1.Y2 += yOffset
+            l1 = New GeoLine(l1.X1, l1.Y1, l1.X2 + xOffset, l1.Y2 + yOffset)
+            lines(i) = l1
+
+            ' If this line was already added in a previous iteration (previousWasContinuous = True),
+            ' we need to update it in processedLines with the extended version
+            If previousWasContinuous AndAlso processedLines.Count > 0 Then
+                processedLines(processedLines.Count - 1) = l1
+            End If
 
             Dim epsilon = l2.AngleR
             Dim xOffset2 = toolRadius * Math.Cos(epsilon)
@@ -61,8 +66,8 @@ Public Class OffsetProcessor : Implements IProcessor
 
             Dim rollingIndex As Integer = i + 1
 
-            Dim arcStartP = l1.EndPoint
-            Dim arcCenterP = l2.StartPoint
+            Dim arcStartP = l1.EndPoint.ToPoint
+            Dim arcCenterP = l2.StartPoint.ToPoint
             Dim arcEndP As New Point(l2.X1 + xOffset2, l2.Y1 + yOffset2)
 
             Dim geom As New PathGeometry
@@ -106,11 +111,10 @@ Public Class OffsetProcessor : Implements IProcessor
             geom.Figures.Add(pfig)
 
             Dim flattened = geom.GetFlattenedPathGeometry(0.01, ToleranceType.Absolute)
-            Dim builtLines = BuildLinesFromGeometry(flattened, 0.01).SelectMany(Of Line)(Function(x) x).ToList()
+            Dim builtLines = BuildLinesFromGeometry(flattened, 0.01).SelectMany(Of GeoLine)(Function(x) x).ToList()
 
             'Ensure after arc is built that the first line of the arc is continuous with l1
-            builtLines(0).X1 = l1.X2
-            builtLines(0).Y1 = l1.Y2
+            builtLines(0) = New GeoLine(l1.X2, l1.Y2, builtLines(0).X2, builtLines(0).Y2)
 
             If Not previousWasContinuous Then
                 processedLines.Add(l1)
@@ -121,16 +125,11 @@ Public Class OffsetProcessor : Implements IProcessor
 
             End If
 
-            Dim lf = lines((rollingIndex) Mod lines.Count)
-            Dim lftheta = lf.AngleR
-            Dim lfxOffset = toolRadius * Math.Cos(lftheta)
-            Dim lfyOffset = toolRadius * Math.Sin(lftheta)
-            lf.X1 += lfxOffset
-            lf.Y1 += lfyOffset
+            Dim lfIndex = rollingIndex Mod lines.Count
+            Dim lf = lines(lfIndex)
+            lf = New GeoLine(builtLines.Last.X2, builtLines.Last.Y2, lf.X2, lf.Y2)
 
-
-            lf.X1 = builtLines.Last.X2
-            lf.Y1 = builtLines.Last.Y2
+            lines(lfIndex) = lf
 
             processedLines.AddRange(builtLines)
 
@@ -145,6 +144,16 @@ Public Class OffsetProcessor : Implements IProcessor
                 i = rollingIndex - 1
 
             Else
+
+                If processedLines.Count > 0 AndAlso lfIndex = 0 Then
+                    For pi = 0 To Math.Min(10, processedLines.Count - 1)
+                        If processedLines(pi).X2 = lf.X2 AndAlso processedLines(pi).Y2 = lf.Y2 Then
+                            processedLines(pi) = lf
+                            Exit For
+                        End If
+                    Next
+                End If
+
                 i = rollingIndex
 
             End If
@@ -159,7 +168,7 @@ Public Class OffsetProcessor : Implements IProcessor
 
     Const AlignmentThreshold As Double = 0.5 'Approximately 60 degrees
 
-    Public Shared Function ReorderLoopForBladeAlignment(loopLines As List(Of Line), lastBladeDir As Vector?) As List(Of Line)
+    Public Shared Function ReorderLoopForBladeAlignment(loopLines As List(Of GeoLine), lastBladeDir As Vector?) As List(Of GeoLine)
 
         If Not lastBladeDir.HasValue OrElse loopLines Is Nothing OrElse loopLines.Count < 2 Then
             Return loopLines
@@ -182,7 +191,7 @@ Public Class OffsetProcessor : Implements IProcessor
 
 
 
-    Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
+    Public Function Process(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
         Return CreateOffsetArcs(lines, cfg.CuttingConfig.ToolDiameter / 2)
     End Function
 End Class

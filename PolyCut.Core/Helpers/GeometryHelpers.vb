@@ -2,6 +2,7 @@
 Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
 Imports Svg
 Imports Svg.Transforms
 
@@ -12,13 +13,13 @@ Imports Svg.Transforms
 Public Module GeometryHelpers
 
 
-    Public Function BuildLinesFromGeometry(geo As PathGeometry, tolerance As Double) As List(Of List(Of Line))
+    Public Function BuildLinesFromGeometry(geo As PathGeometry, tolerance As Double) As List(Of List(Of GeoLine))
 
-        Dim segs As New List(Of List(Of Line))
+        Dim segs As New List(Of List(Of GeoLine))
 
         For Each figure In geo.Figures
 
-            Dim figLines As New List(Of Line)
+            Dim figLines As New List(Of GeoLine)
             Dim startPoint = figure.StartPoint
             For Each segment In figure.Segments
                 Dim lineSegment = TryCast(segment, LineSegment)
@@ -37,14 +38,19 @@ Public Module GeometryHelpers
                 End If
             Next
 
-            Dim tolerancedLines As New List(Of Line) From {figLines(0)}
+            If figLines.Count = 0 Then
+                segs.Add(New List(Of GeoLine)())
+                Continue For
+            End If
+
+            Dim tolerancedLines As New List(Of GeoLine) From {figLines(0)}
 
             Dim wasLastLineShortened As Boolean = False
             For i As Integer = 1 To figLines.Count - 1
 
                 If figLines(i).Length < tolerance And Not wasLastLineShortened Then
-                    tolerancedLines.Last.X2 = figLines(i).X2
-                    tolerancedLines.Last.Y2 = figLines(i).Y2
+                    ' replace the last entry with a shortened version (write back into list)
+                    tolerancedLines(tolerancedLines.Count - 1) = New GeoLine(tolerancedLines.Last.X1, tolerancedLines.Last.Y1, figLines(i).X2, figLines(i).Y2)
                     wasLastLineShortened = True
                 Else
                     tolerancedLines.Add(figLines(i))
@@ -62,7 +68,7 @@ Public Module GeometryHelpers
 
 
 
-    Public Function LinesToPathGeometry(lines As List(Of Line)) As PathGeometry
+    Public Function LinesToPathGeometry(lines As List(Of GeoLine)) As PathGeometry
         Dim geometry As New PathGeometry()
         Dim figure As PathFigure = Nothing
 

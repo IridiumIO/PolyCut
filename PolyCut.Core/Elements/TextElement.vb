@@ -10,14 +10,14 @@ Imports Svg
 
 Public Class TextElement : Implements IPathBasedElement
 
-    Public ReadOnly Property FlattenedLines As List(Of Line) Implements IPathBasedElement.FlattenedLines
+    Public ReadOnly Property FlattenedLines As List(Of GeoLine) Implements IPathBasedElement.FlattenedLines
         Get
-            Return Figures.SelectMany(Of Line)(Function(x) x).ToList
+            Return Figures.SelectMany(Of GeoLine)(Function(x) x).ToList
         End Get
     End Property
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
-    Public Property Figures As List(Of List(Of Line)) Implements IPathBasedElement.Figures
+    Public Property Figures As List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim text = DirectCast(element, SvgText)
@@ -29,7 +29,7 @@ Public Class TextElement : Implements IPathBasedElement
         Dim m = element.Transforms.GetMatrix()
 
         Dim pgl = Figures.Select(Function(fig)
-                                     fig.TransformLinesInPlace(m)
+                                     fig = fig.TransformLines(m).ToList()
                                      Return LinesToPathGeometry(fig)
                                  End Function).ToList()
 
@@ -39,7 +39,13 @@ Public Class TextElement : Implements IPathBasedElement
                  New PathGeometry(pgl.SelectMany(Function(pg) pg.Figures), FillRule.Nonzero, Nothing))
 
         Figures = BuildLinesFromGeometry(Geo, cfg.Tolerance)
-        Figures.ForEach(Sub(fig) fig.ForEach(Sub(ln) ln.Tag = fillcolor))
+        For fi = 0 To Figures.Count - 1
+            For li = 0 To Figures(fi).Count - 1
+                Dim ln = Figures(fi)(li)
+                ln = ln.WithTag(fillcolor)
+                Figures(fi)(li) = ln
+            Next
+        Next
 
     End Sub
 
@@ -86,7 +92,7 @@ Public Class TextElement : Implements IPathBasedElement
         Return current(0)
     End Function
 
-    Private Function GenerateFigures(text As SvgText) As List(Of List(Of Line))
+    Private Function GenerateFigures(text As SvgText) As List(Of List(Of GeoLine))
 
         Dim tp = text.Path(Nothing).PathData.Points.ToList
         Dim tt = text.Path(Nothing).PathData.Types.ToList
@@ -106,9 +112,9 @@ Public Class TextElement : Implements IPathBasedElement
         Dim geoPath As New System.Drawing.Drawing2D.GraphicsPath(tp.ToArray, tt.ToArray)
         geoPath.Flatten(New System.Drawing.Drawing2D.Matrix, Config.Tolerance * 10)
 
-        Dim subpaths As New List(Of List(Of Line))
+        Dim subpaths As New List(Of List(Of GeoLine))
 
-        Dim currentSubpath As New List(Of Line)
+        Dim currentSubpath As New List(Of GeoLine)
 
         For i As Integer = 0 To geoPath.PathPoints.Length - 1
 
@@ -116,26 +122,16 @@ Public Class TextElement : Implements IPathBasedElement
             Dim type As System.Drawing.Drawing2D.PathPointType = geoPath.PathTypes(i)
 
             If type = 0 Then
-                currentSubpath = New List(Of Line)
+                currentSubpath = New List(Of GeoLine)
             End If
 
             If type.HasFlag(System.Drawing.Drawing2D.PathPointType.Line) Then
-                Dim line As New Line With {
-                            .X1 = geoPath.PathPoints(i - 1).X,
-                            .Y1 = geoPath.PathPoints(i - 1).Y,
-                            .X2 = point.X,
-                            .Y2 = point.Y
-                        }
+                Dim line As New GeoLine(geoPath.PathPoints(i - 1).X, geoPath.PathPoints(i - 1).Y, point.X, point.Y)
                 currentSubpath.Add(line)
             End If
 
             If type.HasFlag(System.Drawing.Drawing2D.PathPointType.CloseSubpath) Then
-                Dim line As New Line With {
-                            .X1 = point.X,
-                            .Y1 = point.Y,
-                            .X2 = currentSubpath.First.X1,
-                            .Y2 = currentSubpath.First.Y1
-                        }
+                Dim line As New GeoLine(point.X, point.Y, currentSubpath.First.X1, currentSubpath.First.Y1)
                 currentSubpath.Add(line)
                 subpaths.Add(currentSubpath)
             End If

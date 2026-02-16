@@ -12,7 +12,7 @@ Public Class ProcessorManager
     End Sub
 
 
-    Public Function Process(figures As List(Of List(Of Line))) As List(Of Line)
+    Public Function Process(figures As List(Of IPathBasedElement)) As List(Of GeoLine)
 
         Select Case ProcessorConfiguration.SelectedToolMode
             Case ProcessorConfiguration.ToolMode.Cut : Return ProcessCutting(figures)
@@ -23,14 +23,14 @@ Public Class ProcessorManager
     End Function
 
 
-    Private Function ProcessCutting(figures As List(Of List(Of Line))) As List(Of Line)
+    Private Function ProcessCutting(figures As List(Of IPathBasedElement)) As List(Of GeoLine)
         ' Reorder top-level figures as groups (greedy nearest-first) if enabled
-        Dim workFigures As List(Of List(Of Line)) = If(ProcessorConfiguration.OptimisedToolPath, figures.ReorderFiguresGreedy, New List(Of List(Of Line))(figures))
+        Dim workFigures As List(Of IPathBasedElement) = If(ProcessorConfiguration.OptimisedToolPath, figures.ReorderFiguresGreedy(), figures)
 
         ' Flatten all closed loops from all figures
-        Dim unprocessedLoops = workFigures.SelectMany(Function(figure) GetClosedPaths(figure)).ToList()
+        Dim unprocessedLoops = workFigures.SelectMany(Function(figure) GetClosedPaths(figure.FlattenedLines)).ToList()
 
-        Dim processedLoops As New List(Of List(Of Line))
+        Dim processedLoops As New List(Of List(Of GeoLine))
         Dim lastBladeDir As Vector? = Nothing
 
         Const LookaheadCount As Integer = 3
@@ -51,16 +51,15 @@ Public Class ProcessorManager
                 End If
             End If
 
-            Dim selectedLoop As List(Of Line) = unprocessedLoops(bestIndex)
+            Dim selectedLoop As List(Of GeoLine) = unprocessedLoops(bestIndex)
             unprocessedLoops.RemoveAt(bestIndex)
 
             'Step 2: pre-offset alignment within loop
-            Dim alignedPreOffsetLoop As List(Of Line) = OffsetProcessor.ReorderLoopForBladeAlignment(selectedLoop, lastBladeDir)
-
+            Dim alignedPreOffsetLoop As List(Of GeoLine) = OffsetProcessor.ReorderLoopForBladeAlignment(selectedLoop, lastBladeDir)
             'Step 3: offset + overcut
-            Dim offsetLoop As List(Of Line) = New OffsetProcessor().Process(alignedPreOffsetLoop, ProcessorConfiguration)
+            Dim offsetLoop As List(Of GeoLine) = New OffsetProcessor().Process(alignedPreOffsetLoop, ProcessorConfiguration)
 
-            Dim overcutLoop As List(Of Line) = New OvercutProcessor().Process(offsetLoop, ProcessorConfiguration)
+            Dim overcutLoop As List(Of GeoLine) = New OvercutProcessor().Process(offsetLoop, ProcessorConfiguration)
 
             processedLoops.Add(overcutLoop)
             lastBladeDir = overcutLoop.LastDirection()
@@ -75,21 +74,21 @@ Public Class ProcessorManager
 
 
 
-    Private Function ProcessDrawing(figures As List(Of List(Of Line))) As List(Of Line)
+    Private Function ProcessDrawing(figures As List(Of IPathBasedElement)) As List(Of GeoLine)
 
         ' Reorder top-level figures as groups (greedy nearest-first) if enabled
-        Dim workFigures As List(Of List(Of Line)) = If(ProcessorConfiguration.OptimisedToolPath, figures.ReorderFiguresGreedy, New List(Of List(Of Line))(figures))
+        Dim workFigures As List(Of IPathBasedElement) = If(ProcessorConfiguration.OptimisedToolPath, figures.ReorderFiguresGreedy(), figures)
 
-        Dim fillProcessedFigures = workFigures.Select(Function(figure) New FillProcessor().Process(figure, ProcessorConfiguration)).ToList()
+        Dim fillProcessedFigures = workFigures.Select(Function(figure) New FillProcessor().Process(figure.FlattenedLines, ProcessorConfiguration)).ToList()
 
-        Return fillProcessedFigures.SelectMany(Of Line)(Function(x) x).ToList
+        Return fillProcessedFigures.SelectMany(Of GeoLine)(Function(x) x).ToList
 
     End Function
 
 
 
 
-    Public Function GenerateGCode(lines As List(Of Line)) As GCodeData
+    Public Function GenerateGCode(lines As List(Of GeoLine)) As GCodeData
 
         Dim GCodeData = GCodeGenerator.GenerateWithMetadata(lines, ProcessorConfiguration)
         Return GCodeData
@@ -103,27 +102,30 @@ Public Class ProcessorManager
     End Function
 
 
-    Public Function GetClosedPaths(figures As List(Of Line)) As List(Of List(Of Line))
-        Dim closedPaths As New List(Of List(Of Line))
+    Public Function GetClosedPaths(figures As List(Of GeoLine)) As List(Of List(Of GeoLine))
+        If figures Is Nothing OrElse figures.Count = 0 Then
+            Return New List(Of List(Of GeoLine))
+        End If
+        Dim closedPaths As New List(Of List(Of GeoLine))
 
-        Dim workingPath As New List(Of Line)
+        Dim workingPath As New List(Of GeoLine)
 
-        Dim currentLoopStartPoint As System.Windows.Point = figures.First.StartPoint
-        Dim workingEndPoint As System.Windows.Point = figures.First.EndPoint
+        Dim currentLoopStartPoint As System.Windows.Point = figures.First.StartPoint.ToPoint
+        Dim workingEndPoint As System.Windows.Point = figures.First.EndPoint.ToPoint
 
         workingPath.Add(figures(0))
 
         For Each line In figures
 
-            If line.StartPoint = workingEndPoint Then
+            If line.StartPoint.X = workingEndPoint.X AndAlso line.StartPoint.Y = workingEndPoint.Y Then
                 workingPath.Add(line)
-                workingEndPoint = line.EndPoint
+                workingEndPoint = line.EndPoint.ToPoint
             Else
-                If workingEndPoint = currentLoopStartPoint Then
+                If workingEndPoint.X = currentLoopStartPoint.X AndAlso workingEndPoint.Y = currentLoopStartPoint.Y Then
                     closedPaths.Add(workingPath)
-                    workingPath = New List(Of Line)
-                    currentLoopStartPoint = line.StartPoint
-                    workingEndPoint = line.EndPoint
+                    workingPath = New List(Of GeoLine)
+                    currentLoopStartPoint = line.StartPoint.ToPoint
+                    workingEndPoint = line.EndPoint.ToPoint
                     workingPath.Add(line)
                 End If
 

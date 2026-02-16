@@ -17,13 +17,13 @@ Public Class PolyCutGenerator : Implements IGenerator
     Public Async Function GenerateGcode() As Task(Of (StatusCode As Integer, Message As String)) Implements IGenerator.GenerateGcodeAsync
 
 
-        Dim processedElements As List(Of List(Of Line)) = Await SVGProcessor.ProcessSVG(SVGText, Configuration)
+        Dim processedElements As List(Of IPathBasedElement) = Await SVGProcessor.ProcessSVG(SVGText, Configuration)
 
         If processedElements.Count = 0 Then
             Return (1, "No paths on canvas")
         End If
 
-        Dim processedlines As List(Of Line)
+        Dim processedlines As List(Of GeoLine)
 
         Dim processorManager As New ProcessorManager(Configuration)
         processedlines = processorManager.Process(processedElements)

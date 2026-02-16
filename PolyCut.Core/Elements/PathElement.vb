@@ -11,14 +11,14 @@ Imports Svg
 
 Public Class PathElement : Implements IPathBasedElement
 
-    Public ReadOnly Property FlattenedLines As List(Of Line) Implements IPathBasedElement.FlattenedLines
+    Public ReadOnly Property FlattenedLines As List(Of GeoLine) Implements IPathBasedElement.FlattenedLines
         Get
-            Return Figures.SelectMany(Of Line)(Function(x) x).ToList
+            Return Figures.SelectMany(Of GeoLine)(Function(x) x).ToList
         End Get
     End Property
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
-    Public Property Figures As List(Of List(Of Line)) Implements IPathBasedElement.Figures
+    Public Property Figures As List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
 
     <MeasurePerformance>
@@ -32,10 +32,15 @@ Public Class PathElement : Implements IPathBasedElement
         Geo = Geometry.Parse(path.PathData.ToString).GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
         Dim m As System.Drawing.Drawing2D.Matrix = element.Transforms.GetMatrix()
         Figures = BuildLinesFromGeometry(Geo, Config.Tolerance)
-        Figures.ForEach(Sub(fig)
-                            fig.TransformLinesInPlace(m)
-                            fig.ForEach(Sub(ln) ln.Tag = fillcolor)
-                        End Sub)
+        Figures = Figures.Select(Function(fig) TransformLines(fig, m).ToList()).ToList()
+
+        For fi = 0 To Figures.Count - 1
+            For li = 0 To Figures(fi).Count - 1
+                Dim gl = Figures(fi)(li)
+                gl = gl.WithTag(fillcolor)
+                Figures(fi)(li) = gl
+            Next
+        Next
 
     End Sub
 

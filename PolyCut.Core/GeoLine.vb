@@ -5,67 +5,69 @@ Imports System.Windows.Media
 Imports System.Windows.Shapes
 
 
-Public Class GeoLine
+Public Structure GeoLine
 
-    Public Property StartPoint As Vector2
-    Public Property EndPoint As Vector2
-    Public Property X1 As Single
+    Public Tag As Object
+
+
+    Public ReadOnly Property StartPoint As Vector2
+    Public ReadOnly Property EndPoint As Vector2
+
+    ' ---- Existing property names kept (now ReadOnly) ----
+    Public ReadOnly Property X1 As Single
         Get
             Return StartPoint.X
         End Get
-        Set(value As Single)
-            StartPoint = New Vector2(value, StartPoint.Y)
-        End Set
     End Property
-    Public Property Y1 As Single
+
+    Public ReadOnly Property Y1 As Single
         Get
             Return StartPoint.Y
         End Get
-        Set(value As Single)
-            StartPoint = New Vector2(StartPoint.X, value)
-        End Set
     End Property
-    Public Property X2 As Single
+
+    Public ReadOnly Property X2 As Single
         Get
             Return EndPoint.X
         End Get
-        Set(value As Single)
-            EndPoint = New Vector2(value, EndPoint.Y)
-        End Set
     End Property
-    Public Property Y2 As Single
+
+    Public ReadOnly Property Y2 As Single
         Get
             Return EndPoint.Y
         End Get
-        Set(value As Single)
-            EndPoint = New Vector2(EndPoint.X, value)
-        End Set
     End Property
+
     Public ReadOnly Property XLength As Double
         Get
             Return X2 - X1
         End Get
     End Property
+
     Public ReadOnly Property YLength As Double
         Get
             Return Y2 - Y1
         End Get
     End Property
+
     Public ReadOnly Property Length As Double
         Get
             Return Vector2.Distance(StartPoint, EndPoint)
         End Get
     End Property
+
     Public ReadOnly Property Slope As Double
         Get
             Return YLength / XLength
         End Get
     End Property
+
     Public ReadOnly Property MidPoint As Vector2
         Get
-            Return New Vector2((StartPoint.X + EndPoint.X) / 2, (StartPoint.Y + EndPoint.Y) / 2)
+            Return New Vector2((StartPoint.X + EndPoint.X) / 2.0F, (StartPoint.Y + EndPoint.Y) / 2.0F)
         End Get
     End Property
+
     Public ReadOnly Property AngleR As Double
         Get
             Return Math.Atan2(YLength, XLength)
@@ -73,8 +75,7 @@ Public Class GeoLine
     End Property
 
 
-
-
+    ' ---- Constructors ----
     Public Sub New(startP As Vector2, endP As Vector2)
         StartPoint = startP
         EndPoint = endP
@@ -91,13 +92,43 @@ Public Class GeoLine
     End Sub
 
 
+    ' ---- Fluent Builders ----
+    Public Function WithStartPoint(p As Vector2) As GeoLine
+        Return New GeoLine(p, EndPoint)
+    End Function
 
+    Public Function WithEndPoint(p As Vector2) As GeoLine
+        Return New GeoLine(StartPoint, p)
+    End Function
+
+    Public Function WithX1(value As Single) As GeoLine
+        Return New GeoLine(New Vector2(value, StartPoint.Y), EndPoint)
+    End Function
+
+    Public Function WithY1(value As Single) As GeoLine
+        Return New GeoLine(New Vector2(StartPoint.X, value), EndPoint)
+    End Function
+
+    Public Function WithX2(value As Single) As GeoLine
+        Return New GeoLine(StartPoint, New Vector2(value, EndPoint.Y))
+    End Function
+
+    Public Function WithY2(value As Single) As GeoLine
+        Return New GeoLine(StartPoint, New Vector2(EndPoint.X, value))
+    End Function
 
     Public Function Reverse() As GeoLine
         Return New GeoLine(EndPoint, StartPoint)
     End Function
 
+    Public Function WithTag(value As Object) As GeoLine
+        Dim g As GeoLine = Me
+        g.Tag = value
+        Return g
+    End Function
 
+
+    ' ---- Methods ----
     Public Function GetAngleBetween(line2 As GeoLine) As Double
 
         Dim hypot As GeoLine = StartPoint.LineTo(line2.EndPoint)
@@ -196,7 +227,7 @@ Public Class GeoLine
     End Function
 
 
-End Class
+End Structure
 
 
 Partial Module GeoLineExtensions

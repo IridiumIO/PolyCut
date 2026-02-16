@@ -24,7 +24,7 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Entry point
     ' -------------------------
-    Public Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line) Implements IProcessor.Process
+    Public Function Process(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
 
         ' Respect per-element SVG fill presence when deciding to generate fills.
         Dim fillTag As Object = Nothing
@@ -39,7 +39,7 @@ Public Class FillProcessor : Implements IProcessor
         Dim spacing As Double = spacingNullable.Value
         Dim spacingScaled As Double = spacing * DefaultScalingFactor
 
-        Dim outlineGeo As List(Of GeoLine) = ToGeoLines(lines, DefaultScalingFactor)
+        Dim outlineGeo As List(Of GeoLine) = ToScaledGeoLines(lines, DefaultScalingFactor)
 
         Dim processedGeo As List(Of List(Of GeoLine)) = GenerateFill(outlineGeo, spacingScaled, cfg.DrawingConfig.FillType, cfg.DrawingConfig.ShadingAngle, cfg)
 
@@ -61,7 +61,7 @@ Public Class FillProcessor : Implements IProcessor
             End If
         End If
 
-        Return ToWpfLines(newGeo, DefaultScalingFactor)
+        Return ToUnscaledLines(newGeo, DefaultScalingFactor)
     End Function
 
 
@@ -93,11 +93,11 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    Public Shared Function IsShapeClosed(lines As List(Of Line)) As Boolean
+    Public Shared Function IsShapeClosed(lines As List(Of GeoLine)) As Boolean
         For i = 0 To lines.Count - 1
             For j = i To lines.Count - 1
                 If i = j Then Continue For
-                If lines(i).StartPoint = lines(j).EndPoint Then Return True
+                If lines(i).StartPoint.X = lines(j).EndPoint.X AndAlso lines(i).StartPoint.Y = lines(j).EndPoint.Y Then Return True
             Next
         Next
         Return False
@@ -164,7 +164,7 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Conversions
     ' -------------------------
-    Private Shared Function ToGeoLines(lines As List(Of Line), scale As Double) As List(Of GeoLine)
+    Private Shared Function ToScaledGeoLines(lines As List(Of GeoLine), scale As Double) As List(Of GeoLine)
         Dim result As New List(Of GeoLine)(If(lines?.Count, 0))
         If lines Is Nothing Then Return result
 
@@ -175,17 +175,12 @@ Public Class FillProcessor : Implements IProcessor
         Return result
     End Function
 
-    Private Shared Function ToWpfLines(lines As List(Of GeoLine), scale As Double) As List(Of Line)
-        Dim result As New List(Of Line)(If(lines?.Count, 0))
+    Private Shared Function ToUnscaledLines(lines As List(Of GeoLine), scale As Double) As List(Of GeoLine)
+        Dim result As New List(Of GeoLine)(If(lines?.Count, 0))
         If lines Is Nothing Then Return result
 
         For Each ln In lines
-            result.Add(New Line With {
-                .X1 = ln.X1 / scale,
-                .Y1 = ln.Y1 / scale,
-                .X2 = ln.X2 / scale,
-                .Y2 = ln.Y2 / scale
-            })
+            result.Add(New GeoLine(ln.X1 / scale, ln.Y1 / scale, ln.X2 / scale, ln.Y2 / scale))
         Next
 
         Return result

@@ -19,11 +19,13 @@ Public Class TextElement : Implements IPathBasedElement
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property Figures As List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
+    Public Property FillColor As String Implements IPathBasedElement.FillColor
+
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim text = DirectCast(element, SvgText)
         Config = cfg
 
-        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
+        FillColor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Figures = GenerateFigures(text)
         Dim m = element.Transforms.GetMatrix()
@@ -39,13 +41,6 @@ Public Class TextElement : Implements IPathBasedElement
                  New PathGeometry(pgl.SelectMany(Function(pg) pg.Figures), FillRule.Nonzero, Nothing))
 
         Figures = BuildLinesFromGeometry(Geo, cfg.Tolerance)
-        For fi = 0 To Figures.Count - 1
-            For li = 0 To Figures(fi).Count - 1
-                Dim ln = Figures(fi)(li)
-                ln = ln.WithTag(fillcolor)
-                Figures(fi)(li) = ln
-            Next
-        Next
 
     End Sub
 

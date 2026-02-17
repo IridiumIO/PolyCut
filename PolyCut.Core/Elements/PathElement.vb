@@ -20,6 +20,7 @@ Public Class PathElement : Implements IPathBasedElement
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property Figures As List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
+    Public Property FillColor As String Implements IPathBasedElement.FillColor
 
     <MeasurePerformance>
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
@@ -27,20 +28,12 @@ Public Class PathElement : Implements IPathBasedElement
         Dim path = DirectCast(element, SvgPath)
         Config = cfg
 
-        Dim fillcolor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
+        FillColor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
         Geo = Geometry.Parse(path.PathData.ToString).GetFlattenedPathGeometry(Config.Tolerance, ToleranceType.Absolute)
         Dim m As System.Drawing.Drawing2D.Matrix = element.Transforms.GetMatrix()
         Figures = BuildLinesFromGeometry(Geo, Config.Tolerance)
         Figures = Figures.Select(Function(fig) TransformLines(fig, m).ToList()).ToList()
-
-        For fi = 0 To Figures.Count - 1
-            For li = 0 To Figures(fi).Count - 1
-                Dim gl = Figures(fi)(li)
-                gl = gl.WithTag(fillcolor)
-                Figures(fi)(li) = gl
-            Next
-        Next
 
     End Sub
 

@@ -1,8 +1,7 @@
 ﻿Imports System.Windows
 Imports System.Windows.Shapes
 
-Public Class OvercutProcessor : Implements IProcessor
-
+Public Class OvercutGenerator
 
     Public Shared Function CreateOvercuts(lines As List(Of GeoLine), overcut As Double) As List(Of GeoLine)
 
@@ -50,7 +49,4 @@ Public Class OvercutProcessor : Implements IProcessor
         Return lines
     End Function
 
-    Public Function Process(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
-        Return CreateOvercuts(lines, cfg.CuttingConfig.Overcut)
-    End Function
 End Class

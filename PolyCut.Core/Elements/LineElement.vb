@@ -14,22 +14,18 @@ Public Class LineElement : Implements IPathBasedElement
     Public Property Figures As New List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
+    Public Property FillColor As String Implements IPathBasedElement.FillColor
+
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim ln = DirectCast(element, SvgLine)
         Config = cfg
+
+        FillColor = Nothing  ' Lines don't have fills
 
         Figures.Add(New List(Of GeoLine) From {
                     New GeoLine(ln.StartX.Value, ln.StartY.Value, ln.EndX.Value, ln.EndY.Value)
                     })
         Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms?.GetMatrix).ToList).ToList()
-
-        For fi = 0 To Figures.Count - 1
-            For li = 0 To Figures(fi).Count - 1
-                Dim g = Figures(fi)(li)
-                g = g.WithTag(Nothing)
-                Figures(fi)(li) = g
-            Next
-        Next
 
     End Sub
 End Class

@@ -7,9 +7,6 @@ Imports System.Windows.Shapes
 
 Public Structure GeoLine
 
-    Public Tag As Object
-
-
     Public ReadOnly Property StartPoint As Vector2
     Public ReadOnly Property EndPoint As Vector2
 
@@ -119,12 +116,6 @@ Public Structure GeoLine
 
     Public Function Reverse() As GeoLine
         Return New GeoLine(EndPoint, StartPoint)
-    End Function
-
-    Public Function WithTag(value As Object) As GeoLine
-        Dim g As GeoLine = Me
-        g.Tag = value
-        Return g
     End Function
 
 

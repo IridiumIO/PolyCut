@@ -24,12 +24,30 @@ Public Class FillProcessor : Implements IProcessor
     ' -------------------------
     ' Entry point
     ' -------------------------
-    Public Function Process(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
+
+    Public Function Process(elements As List(Of IPathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
+        If elements Is Nothing OrElse elements.Count = 0 Then
+            Return New List(Of GeoLine)
+        End If
+
+        Dim results As New List(Of GeoLine)
+        For Each element In elements
+            results.AddRange(ProcessElement(element, cfg))
+        Next
+
+        Return results
+    End Function
+
+    ' Per-element processing
+    Private Function ProcessElement(element As IPathBasedElement, cfg As ProcessorConfiguration) As List(Of GeoLine)
+        If element Is Nothing OrElse element.FlattenedLines Is Nothing OrElse element.FlattenedLines.Count = 0 Then
+            Return New List(Of GeoLine)
+        End If
+
+        Dim lines = element.FlattenedLines
+        Dim fillTag = element.FillColor
 
         ' Respect per-element SVG fill presence when deciding to generate fills.
-        Dim fillTag As Object = Nothing
-        If lines IsNot Nothing AndAlso lines.Count > 0 Then fillTag = lines(0).Tag
-
         If Not ShouldGenerateFill(fillTag) Then Return lines
         If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then Return lines
 

@@ -3,10 +3,9 @@ Imports System.Windows.Media
 Imports System.Windows.Shapes
 
 
-Public Class OffsetProcessor : Implements IProcessor
+Public Class OffsetGenerator
 
-
-    Private Shared Function CreateOffsetArcs(lines As List(Of GeoLine), toolRadius As Double) As List(Of GeoLine)
+    Public Shared Function CreateOffsetArcs(lines As List(Of GeoLine), toolRadius As Double) As List(Of GeoLine)
 
         If toolRadius <= 0 Then Return lines
 
@@ -189,9 +188,4 @@ Public Class OffsetProcessor : Implements IProcessor
         Return loopLines.RotateStartAt(best.idx)
     End Function
 
-
-
-    Public Function Process(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
-        Return CreateOffsetArcs(lines, cfg.CuttingConfig.ToolDiameter / 2)
-    End Function
 End Class

@@ -129,6 +129,11 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
 
     ' Static wrappers for backwards compatibility
     Private Shared _activeInstance As PolyCanvas
+    Public Shared ReadOnly Property ActiveInstance As PolyCanvas
+        Get
+            Return _activeInstance
+        End Get
+    End Property
 
     Public Shared Event SelectionCountChanged As EventHandler
 

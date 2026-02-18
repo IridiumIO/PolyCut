@@ -3,6 +3,8 @@ Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
 
+Imports MeasurePerformance.IL.Weaver
+
 Imports Svg
 Imports Svg.Transforms
 
@@ -12,7 +14,7 @@ Imports Svg.Transforms
 
 Public Module GeometryHelpers
 
-
+    <MeasurePerformance>
     Public Function BuildLinesFromGeometry(geo As PathGeometry, tolerance As Double) As List(Of List(Of GeoLine))
 
         Dim segs As New List(Of List(Of GeoLine))

@@ -644,9 +644,12 @@ Partial Public Class MainViewModel
 
         Configuration.SoftwareVersion = SettingsHandler.Version
 
+
+        Dim skipBoundsCheck = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+
         Dim generator As IGenerator = If(UsingGCodePlot,
             New GCodePlotGenerator(Configuration, Printer, GenerateSVGText),
-            New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
+            New PolyCutGenerator(Configuration, Printer, DrawableCollection.Where(Function(d) Not d.IsHidden AndAlso (skipBoundsCheck OrElse d.IsWithinBounds(Printer.BedWidth, Printer.BedHeight))).ToList(), PolyCanvas.ActiveInstance))
 
         Dim retcode = Await generator.GenerateGcodeAsync
 

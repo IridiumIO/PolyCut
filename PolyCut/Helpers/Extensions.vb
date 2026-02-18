@@ -94,17 +94,34 @@ Public Module Extensions
     End Function
 
     <Extension()>
-    Public Function IsWithinBounds(drawableElement As IDrawable, x As Double, y As Double) As Boolean
+    Public Function IsWithinBounds(drawable As IDrawable, canvasWidth As Double, canvasHeight As Double, mainCanvas As Visual) As Boolean
+        If drawable Is Nothing OrElse mainCanvas Is Nothing Then Return False
 
-        Dim renderable = drawableElement.DrawableElement
-        Dim cxLeft = Canvas.GetLeft(renderable.Parent)
-        Dim cxTop = Canvas.GetTop(renderable.Parent)
-        Dim cxWidth = renderable.ActualWidth
-        Dim cxHeight = renderable.ActualHeight
-        If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso cxWidth + cxLeft < x AndAlso cxHeight + cxTop < y Then
-            Return True
-        End If
-        Return False
+        Dim fe = TryCast(drawable.DrawableElement, FrameworkElement)
+        If fe Is Nothing Then Return False
+
+        Dim testElement As FrameworkElement = fe
+
+        If testElement.ActualWidth <= 0 OrElse testElement.ActualHeight <= 0 Then Return False
+
+        Dim gt As GeneralTransform
+        Try
+            gt = testElement.TransformToVisual(mainCanvas)
+        Catch
+            ' not in visual tree
+            Return False
+        End Try
+
+        ' Local bounds of the element (axis-aligned in its own space)
+        Dim localRect As New Rect(0, 0, testElement.ActualWidth, testElement.ActualHeight)
+
+        ' Transform into canvas space; result is axis-aligned bounds of the transformed quad
+        Dim worldRect As Rect = gt.TransformBounds(localRect)
+
+        Dim canvasRect As New Rect(0, 0, canvasWidth, canvasHeight)
+
+
+        Return canvasRect.Contains(worldRect)
     End Function
 
 End Module

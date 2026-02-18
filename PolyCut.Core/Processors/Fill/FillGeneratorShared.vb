@@ -223,28 +223,5 @@ Module FillGeneratorShared
     End Function
 
 
-    ' -------------------------
-    ' Get Bounds
-    ' -------------------------
-    Friend Function ComputeBounds(lines As List(Of GeoLine)) As Rect
-        If lines Is Nothing OrElse lines.Count = 0 Then Return New Rect(0, 0, 0, 0)
-
-        Dim minX = Double.PositiveInfinity
-        Dim minY = Double.PositiveInfinity
-        Dim maxX = Double.NegativeInfinity
-        Dim maxY = Double.NegativeInfinity
-
-        For Each ln In lines
-            Dim x1 = ln.X1, y1 = ln.Y1
-            Dim x2 = ln.X2, y2 = ln.Y2
-
-            minX = Math.Min(minX, Math.Min(x1, x2))
-            minY = Math.Min(minY, Math.Min(y1, y2))
-            maxX = Math.Max(maxX, Math.Max(x1, x2))
-            maxY = Math.Max(maxY, Math.Max(y1, y2))
-        Next
-
-        Return New Rect(minX, minY, maxX - minX, maxY - minY)
-    End Function
 
 End Module

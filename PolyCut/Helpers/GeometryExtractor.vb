@@ -56,8 +56,15 @@ Public Class GeometryExtractor
 
         ' now build lines from transformed
         Dim figures = BuildLinesFromGeometry(transformed, cfg.Tolerance)
-        Dim oldfigures = Core.GeometryHelpers.BuildLinesFromGeometry(transformed, cfg.Tolerance)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)
+
+        Dim b = figures.ComputeBounds()
+
+        Dim skipBoundsCheck = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+
+        If Not skipBoundsCheck AndAlso Not IsFullyOnCanvas(b, cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
+            Return New List(Of IPathBasedElement)
+        End If
 
         ' 6. Create IPathBasedElement
         Dim pathElement = CreatePathBasedElement(drawable, figures)
@@ -248,6 +255,18 @@ Public Class GeometryExtractor
         Next
 
         Return figures
+    End Function
+
+    Private Shared Function IsOnCanvas(bounds As Rect, canvasW As Double, canvasH As Double) As Boolean
+        If bounds.IsEmpty Then Return False
+        Dim canvasRect As New Rect(0, 0, canvasW, canvasH)
+        Return canvasRect.IntersectsWith(bounds) ' policy 1: any part visible
+    End Function
+
+    Private Shared Function IsFullyOnCanvas(bounds As Rect, canvasW As Double, canvasH As Double) As Boolean
+        If bounds.IsEmpty Then Return False
+        Dim canvasRect As New Rect(0, 0, canvasW, canvasH)
+        Return canvasRect.Contains(bounds) ' policy 2: fully inside
     End Function
 
 End Class

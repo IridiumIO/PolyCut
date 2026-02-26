@@ -55,7 +55,10 @@ Public Class GeometryExtractor
         transformed = transformed.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
 
         ' now build lines from transformed
-        Dim figures = BuildLinesFromGeometry(transformed, cfg.Tolerance)
+        Dim isFilled = IsFillEnabled(drawable)
+
+        Dim figures = PolyCut.Core.BuildLinesFromGeometry(transformed, cfg.Tolerance)
+        figures = NormalizeFiguresForCut(figures, cfg.Tolerance, isFilled)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)
 
         Dim b = figures.ComputeBounds()
@@ -71,6 +74,7 @@ Public Class GeometryExtractor
         If pathElement Is Nothing Then Return New List(Of IPathBasedElement)
 
         pathElement.FillColor = GetFillColor(drawable)
+        pathElement.IsFilled = isFilled
         pathElement.Config = cfg
 
         Return New List(Of IPathBasedElement) From {pathElement}
@@ -210,52 +214,68 @@ Public Class GeometryExtractor
         End Try
     End Function
 
+    Private Shared Function IsFillEnabled(drawable As IDrawable) As Boolean
+        If drawable Is Nothing Then Return False
 
-    <MeasurePerformance>
-    Private Shared Function BuildLinesFromGeometry(geometry As PathGeometry, tolerance As Double) As List(Of List(Of GeoLine))
-        If geometry Is Nothing Then Return New List(Of List(Of GeoLine))
+        Dim fillBrush = drawable.Fill
+        If fillBrush Is Nothing Then Return False
 
-        Dim figures As New List(Of List(Of GeoLine))
+        If fillBrush.Opacity <= 0 Then Return False
 
-        For Each figure In geometry.Figures
-            Dim lines As New List(Of GeoLine)
-            Dim currentPoint = New Vector2(figure.StartPoint.X, figure.StartPoint.Y)
+        Dim solid = TryCast(fillBrush, SolidColorBrush)
+        Return solid Is Nothing OrElse solid.Color.A > 0
+    End Function
 
-            For Each segment In figure.Segments
-                Dim lineSegment = TryCast(segment, LineSegment)
-                If lineSegment IsNot Nothing Then
-                    Dim endPoint = New Vector2(lineSegment.Point.X, lineSegment.Point.Y)
-                    lines.Add(New GeoLine(currentPoint, endPoint))
-                    currentPoint = endPoint
-                    Continue For
+    Private Shared Function NormalizeFiguresForCut(figures As List(Of List(Of GeoLine)), tolerance As Double, forceClose As Boolean) As List(Of List(Of GeoLine))
+        Dim output As New List(Of List(Of GeoLine))
+        If figures Is Nothing Then Return output
+
+        Dim continuityTolerance = Math.Max(0.000001, tolerance * 2)
+
+        For Each fig In figures
+            If fig Is Nothing OrElse fig.Count = 0 Then Continue For
+
+            Dim normalized As New List(Of GeoLine)
+
+            Dim first = fig(0)
+            normalized.Add(first)
+
+            For i = 1 To fig.Count - 1
+                Dim prev = normalized(normalized.Count - 1)
+                Dim current = fig(i)
+
+                Dim dx = current.X1 - prev.X2
+                Dim dy = current.Y1 - prev.Y2
+                Dim dist = Math.Sqrt(dx * dx + dy * dy)
+
+                If dist <= continuityTolerance Then
+                    current = New GeoLine(prev.X2, prev.Y2, current.X2, current.Y2)
                 End If
 
-                Dim polyLineSegment = TryCast(segment, PolyLineSegment)
-                If polyLineSegment IsNot Nothing Then
-                    For Each pt In polyLineSegment.Points
-                        Dim endPoint = New Vector2(pt.X, pt.Y)
-                        lines.Add(New GeoLine(currentPoint, endPoint))
-                        currentPoint = endPoint
-                    Next
-                    Continue For
-                End If
-
+                normalized.Add(current)
             Next
 
-            If figure.IsClosed AndAlso lines.Count > 0 Then
-                Dim firstPoint = lines(0).StartPoint
-                If Not currentPoint.Equals(firstPoint) Then
-                    lines.Add(New GeoLine(currentPoint, firstPoint))
+            If forceClose AndAlso normalized.Count > 0 Then
+                Dim startL = normalized(0)
+                Dim endL = normalized(normalized.Count - 1)
+
+                Dim cdx = startL.X1 - endL.X2
+                Dim cdy = startL.Y1 - endL.Y2
+                Dim cdist = Math.Sqrt(cdx * cdx + cdy * cdy)
+
+                If cdist <= continuityTolerance Then
+                    normalized(normalized.Count - 1) = New GeoLine(endL.X1, endL.Y1, startL.X1, startL.Y1)
+                Else
+                    normalized.Add(New GeoLine(endL.X2, endL.Y2, startL.X1, startL.Y1))
                 End If
             End If
 
-            If lines.Count > 0 Then
-                figures.Add(lines)
-            End If
+            output.Add(normalized)
         Next
 
-        Return figures
+        Return output
     End Function
+
 
     Private Shared Function IsOnCanvas(bounds As Rect, canvasW As Double, canvasH As Double) As Boolean
         If bounds.IsEmpty Then Return False

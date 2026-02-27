@@ -165,27 +165,32 @@ Public Class OffsetGenerator
 
     End Function
 
-    Const AlignmentThreshold As Double = 0.5 'Approximately 60 degrees
+
+    ' cos(25 deg)
+    Const AlignmentThresholdCos As Double = 0.906
 
     Public Shared Function ReorderLoopForBladeAlignment(loopLines As List(Of GeoLine), lastBladeDir As Vector?) As List(Of GeoLine)
+        If loopLines Is Nothing OrElse loopLines.Count < 2 Then Return loopLines
 
-        If Not lastBladeDir.HasValue OrElse loopLines Is Nothing OrElse loopLines.Count < 2 Then
-            Return loopLines
-        End If
+        Dim n = loopLines.Count
 
-        ' score each segment by dot(lastBlade, segmentDirection)
-        Dim scored = loopLines.Select(Function(l, idx) New With {
-            idx,
-            Key .score = Vector.Multiply(lastBladeDir.Value, l.Direction())
-        }).OrderByDescending(Function(x) x.score).ToList()
+        Dim scored = loopLines.Select(Function(l, idx)
+                                          Dim predIdx = (idx - 1 + n) Mod n
+                                          Dim predDir = loopLines(predIdx).Direction()
+                                          Dim currDir = l.Direction()
 
-        Dim best = scored.First()
-        ' preserve threshold behavior: if best score is below threshold we still pick the max-scoring start
-        If best.score <= AlignmentThreshold Then
-            ' keep using the best-scoring anyway (previous logic fell back to ordering by best score)
-        End If
+                                          ' Strongly prefer entries where the loop predecessor already points the same way.
+                                          Dim hasFreeEntry As Boolean = Vector.Multiply(predDir, currDir) >= AlignmentThresholdCos
 
-        Return loopLines.RotateStartAt(best.idx)
+                                          ' Secondary score: alignment with the last known blade direction.
+                                          Dim dirScore As Double = If(lastBladeDir.HasValue,
+                                                                    Vector.Multiply(lastBladeDir.Value, currDir),
+                                                                    0.0)
+
+                                          Return New With {idx, Key .score = If(hasFreeEntry, 10.0, 0.0) + dirScore}
+                                      End Function).OrderByDescending(Function(x) x.score).ToList()
+
+        Return loopLines.RotateStartAt(scored(0).idx)
     End Function
 
 End Class

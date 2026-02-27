@@ -24,7 +24,7 @@ Public Class OffsetGenerator
             Dim l2 = lines((i + 1) Mod lines.Count) 'If lines(i) = lines.count - 1 then we need to check its position relative to the first line to close the shape
 
 
-            If Not l1.IsContinuousWith(l2) OrElse l1.IsCollinearWith(l2, 40) Then
+            If Not l1.IsContinuousWith(l2) OrElse l1.IsCollinearWith(l2, 5) Then
                 previousWasContinuous = False
 
                 If Not processedLines.Contains(l1) Then

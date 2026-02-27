@@ -8,7 +8,7 @@ Public Class CutProcessor : Implements IProcessor
             Return New List(Of GeoLine)
         End If
 
-        ' Reorder elements if optimization enabled
+        ' Reorder elements if optimization enabled TODO: Add this to the config sidebar for cutting options
         Dim workElements = If(cfg.OptimisedToolPath, elements.ReorderFiguresGreedy(), elements)
 
         ' Flatten all loops from all elements for global optimization
@@ -93,5 +93,5 @@ Public Class CutProcessor : Implements IProcessor
 
         Return closedPaths
     End Function
-
+    
 End Class

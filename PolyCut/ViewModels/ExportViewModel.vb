@@ -29,7 +29,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         }
 
         If fsd.ShowDialog() Then
-            Dim ret = Await diskexporter.Export(MainVM.GeneratedGCode, fsd.FileName)
+            Dim ret = Await diskexporter.Export(MainVM.GCode, fsd.FileName)
             If ret = 0 Then
                 Application.GetService(Of SnackbarService).GenerateSuccess("File Saved", $"Saved to: {fsd.FileName}")
             Else
@@ -43,7 +43,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
     <RelayCommand>
     Private Async Sub NetworkUpload()
         Dim moonraker As New MoonrakerExporter(MainVM.Configuration)
-        Dim ret = Await moonraker.Export(MainVM.GeneratedGCode, FilePath)
+        Dim ret = Await moonraker.Export(MainVM.GCode, FilePath)
         ParseRet(ret)
     End Sub
 

@@ -147,12 +147,21 @@ Public Structure GeoLine
         End If
     End Function
 
+    Public Function IsCollinearWith(other As GeoLine, Optional sinTol As Double = 0) As Boolean
+        Dim ax = Me.X2 - Me.X1
+        Dim ay = Me.Y2 - Me.Y1
+        Dim bx = other.X2 - other.X1
+        Dim by = other.Y2 - other.Y1
 
-    Public Function IsCollinearWith(otherline As GeoLine, Optional tolerance As Double = 0) As Boolean
-        Dim radians = Math.PI / 180 * tolerance
-        Dim TwoAngle = Me.GetAngleBetween(otherline)
-        Dim withinTolerance = MathHelpers.Between(TwoAngle, Math.PI - radians, Math.PI + radians)
-        Return withinTolerance
+        Dim aLen2 = ax * ax + ay * ay
+        Dim bLen2 = bx * bx + by * by
+        If aLen2 <= 0 OrElse bLen2 <= 0 Then Return True ' treat degenerate as collinear for gating
+
+        Dim cross = ax * by - ay * bx
+        Dim cross2 = cross * cross
+
+        ' cross^2 / (|a|^2|b|^2) <= sinTol^2
+        Return cross2 <= (sinTol * sinTol) * aLen2 * bLen2
     End Function
 
 

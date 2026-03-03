@@ -5,6 +5,8 @@ Imports System.Windows.Shapes
 
 Public Class OffsetGenerator
 
+    Private Const COLLINEARITYANGLE_SIN = 0.08715572466147 ' 5 degrees in radians
+
     Public Shared Function CreateOffsetArcs(lines As List(Of GeoLine), toolRadius As Double) As List(Of GeoLine)
 
         If toolRadius <= 0 Then Return lines
@@ -16,15 +18,13 @@ Public Class OffsetGenerator
         Dim outerlooped As Boolean = False
 
 
-
         For i As Integer = 0 To lines.Count - 1
             If outerlooped Then Exit For
 
             Dim l1 = lines(i)
             Dim l2 = lines((i + 1) Mod lines.Count) 'If lines(i) = lines.count - 1 then we need to check its position relative to the first line to close the shape
 
-
-            If Not l1.IsContinuousWith(l2) OrElse l1.IsCollinearWith(l2, 5) Then
+            If Not l1.IsContinuousWith(l2) OrElse l1.IsCollinearWith(l2, COLLINEARITYANGLE_SIN) Then
                 previousWasContinuous = False
 
                 If Not processedLines.Contains(l1) Then

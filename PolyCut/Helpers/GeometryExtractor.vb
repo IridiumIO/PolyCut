@@ -58,6 +58,12 @@ Public Class GeometryExtractor
         Dim isFilled = IsFillEnabled(drawable)
 
         Dim figures = PolyCut.Core.BuildLinesFromGeometry(transformed, cfg.Tolerance)
+
+        'trim trash
+        If Keyboard.IsKeyDown(Key.LeftCtrl) Then
+            figures = CleanupFigures(figures, cfg.Tolerance)
+        End If
+
         figures = NormalizeFiguresForCut(figures, cfg.Tolerance, isFilled)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)
 
@@ -288,5 +294,86 @@ Public Class GeometryExtractor
         Dim canvasRect As New Rect(0, 0, canvasW, canvasH)
         Return canvasRect.Contains(bounds) ' policy 2: fully inside
     End Function
+
+    Private Shared Function CleanupFigures(figures As List(Of List(Of GeoLine)), tolerance As Double) As List(Of List(Of GeoLine))
+        Dim output As New List(Of List(Of GeoLine))
+        If figures Is Nothing Then Return output
+
+        ' How close is "the same point"?
+        Dim eps As Double = Math.Max(0.000001, tolerance * 0.5)
+        Dim eps2 As Double = eps * eps
+
+        ' Angle tolerance for collinearity merging (in radians).
+        Dim sinTol As Double = 0.0001
+
+        If Keyboard.IsKeyDown(Key.LeftShift) Then sinTol *= 100
+
+        For Each fig In figures
+            If fig Is Nothing OrElse fig.Count = 0 Then Continue For
+
+            Dim cleaned As New List(Of GeoLine)
+
+            For i = 0 To fig.Count - 1
+                Dim ln = fig(i)
+
+                ' Skip lines with NaN/Infinity (rare, but protects downstream)
+                If Not IsFiniteLine(ln) Then Continue For
+
+                ' If the segment itself is basically zero-length, drop it.
+                If Dist2(ln.X1, ln.Y1, ln.X2, ln.Y2) <= eps2 Then Continue For
+
+                If cleaned.Count = 0 Then
+                    cleaned.Add(ln)
+                    Continue For
+                End If
+
+                Dim prev = cleaned(cleaned.Count - 1)
+
+                ' Snap current start to previous end if they're very close
+                If Dist2(prev.X2, prev.Y2, ln.X1, ln.Y1) <= eps2 Then
+                    ln = New GeoLine(prev.X2, prev.Y2, ln.X2, ln.Y2)
+                End If
+
+                ' If after snapping, current becomes degenerate, drop it
+                If Dist2(ln.X1, ln.Y1, ln.X2, ln.Y2) <= eps2 Then
+                    Continue For
+                End If
+
+                ' If prev is degenerate (can happen after earlier edits), replace it
+                If Dist2(prev.X1, prev.Y1, prev.X2, prev.Y2) <= eps2 Then
+                    cleaned(cleaned.Count - 1) = ln
+                    Continue For
+                End If
+
+                ' Optional: merge adjacent collinear segments (helps remove micro-vertices)
+                If Dist2(prev.X2, prev.Y2, ln.X1, ln.Y1) <= eps2 AndAlso prev.IsCollinearWith(ln, sinTol) Then
+                    cleaned(cleaned.Count - 1) = New GeoLine(prev.X1, prev.Y1, ln.X2, ln.Y2)
+                Else
+                    cleaned.Add(ln)
+                End If
+            Next
+
+            ' Drop figures that collapsed to nothing
+            If cleaned.Count > 0 Then output.Add(cleaned)
+        Next
+
+        Return output
+    End Function
+
+    Private Shared Function Dist2(x1 As Double, y1 As Double, x2 As Double, y2 As Double) As Double
+        Dim dx = x2 - x1
+        Dim dy = y2 - y1
+        Return dx * dx + dy * dy
+    End Function
+
+    Private Shared Function IsFiniteLine(ln As GeoLine) As Boolean
+        Return IsFinite(ln.X1) AndAlso IsFinite(ln.Y1) AndAlso IsFinite(ln.X2) AndAlso IsFinite(ln.Y2)
+    End Function
+
+    Private Shared Function IsFinite(v As Double) As Boolean
+        Return Not Double.IsNaN(v) AndAlso Not Double.IsInfinity(v)
+    End Function
+
+
 
 End Class

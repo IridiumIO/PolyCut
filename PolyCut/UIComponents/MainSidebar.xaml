@@ -61,7 +61,7 @@
                 <TabItem.Header>
                     <StackPanel Margin="5 0" Orientation="Horizontal">
                         <ui:SymbolIcon Margin="0 0 6 0" Symbol="Options20" />
-                        <TextBlock Text="Tool Mode" />
+                        <TextBlock Text="Tool Config" />
 
                     </StackPanel>
                 </TabItem.Header>

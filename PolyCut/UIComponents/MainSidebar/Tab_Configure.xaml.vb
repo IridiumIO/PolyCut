@@ -6,12 +6,13 @@ Public Class Tab_Configure
 
     Private _previewTextChangedHandler As RoutedEventHandler
 
-    Private _mainVM As MainViewModel
+    Public Property MainVM As MainViewModel
 
     Public Sub New()
         InitializeComponent()
         _previewTextChangedHandler = AddressOf LabeledNumberBoxControl_TextChanged
-        _mainVM = Application.GetService(Of MainViewModel)()
+        MainVM = Application.GetService(Of MainViewModel)()
+        DataContext = Me
     End Sub
 
     Private Sub LabeledNumberBoxControl_MouseEnter(sender As Object, e As MouseEventArgs)
@@ -39,7 +40,7 @@ Public Class Tab_Configure
     Private Sub RefreshThresholdPreview()
         If Not _thresholdPreviewActive Then Return
 
-        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next
@@ -58,7 +59,7 @@ Public Class Tab_Configure
         Dim t As Double
         If Not Double.TryParse(ShadingThresholdControl.Text, t) Then Return
 
-        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
             Dim brightness = GetBrightness01(d)
             If brightness < t Then
                 Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
@@ -71,7 +72,7 @@ Public Class Tab_Configure
         If Not _thresholdPreviewActive Then Return
         _thresholdPreviewActive = False
 
-        For Each d In EnumerateDrawablesForPreview(_mainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next
@@ -109,7 +110,7 @@ Public Class Tab_Configure
     End Sub
 
     Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        _mainVM.Configuration.ExtractionColor = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        MainVM.Configuration.ExtractionColor = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Iterator Function EnumerateDrawablesForPreview(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)

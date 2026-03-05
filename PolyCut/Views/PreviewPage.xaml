@@ -56,26 +56,70 @@
                         Margin="0 0 0 0"
                         Background="Transparent">
 
+
                     <Border x:Name="CuttingMatBounds"
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Background="#44646464" BorderBrush="#858585" BorderThickness="1" ClipToBounds="True">
+                            Panel.ZIndex="-3"
+                            Background="#16181D" BorderBrush="#858585" BorderThickness="0" CornerRadius="7">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.3" ShadowDepth="0"
+                                              Color="Black" />
+                        </Border.Effect>
 
-                        <svgc:SvgCanvas x:Name="CuttingMat"
-                                        Margin="-1"
-                                        HorizontalAlignment="{Binding Printer.CuttingMatHorizontalAlignment}"
-                                        VerticalAlignment="{Binding Printer.CuttingMatVerticalAlignment}"
-                                        Source="{Binding Printer.CuttingMat.QualifiedSVGSource}"
-                                        Visibility="{Binding ElementName=CuttingMatVisibilityToggle, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <svgc:SvgCanvas.RenderTransform>
-                                <TransformGroup>
-                                    <RotateTransform Angle="{Binding Printer.CuttingMatRotation}" />
-                                    <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
-                                </TransformGroup>
-                            </svgc:SvgCanvas.RenderTransform>
-                        </svgc:SvgCanvas>
+
 
                     </Border>
+
+                    <Border x:Name="GridClipBorder"
+                            Width="{Binding Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding Printer.BedHeight, Mode=TwoWay}"
+                            Panel.ZIndex="-2"
+                            ClipToBounds="True" CornerRadius="7">
+
+                        <Border.Clip>
+                            <RectangleGeometry RadiusX="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}" RadiusY="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}">
+                                <RectangleGeometry.Rect>
+                                    <MultiBinding Converter="{local:RectFromSizeConverter}">
+                                        <Binding ElementName="GridClipBorder" Path="ActualWidth" />
+                                        <Binding ElementName="GridClipBorder" Path="ActualHeight" />
+                                    </MultiBinding>
+                                </RectangleGeometry.Rect>
+                            </RectangleGeometry>
+                        </Border.Clip>
+
+                        <Grid>
+
+
+                            <svgc:SvgCanvas x:Name="CuttingMat"
+                                            Margin="-1"
+                                            HorizontalAlignment="{Binding Printer.CuttingMatHorizontalAlignment}"
+                                            VerticalAlignment="{Binding Printer.CuttingMatVerticalAlignment}"
+                                            Source="{Binding Printer.CuttingMat.QualifiedSVGSource}"
+                                            Visibility="Collapsed">
+                                <svgc:SvgCanvas.RenderTransform>
+                                    <TransformGroup>
+                                        <RotateTransform Angle="{Binding Printer.CuttingMatRotation}" />
+                                        <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
+                                    </TransformGroup>
+                                </svgc:SvgCanvas.RenderTransform>
+                            </svgc:SvgCanvas>
+
+                            <local:GridPreviewControl Width="{Binding Printer.BedWidth, Mode=OneWay}"
+                                                      Height="{Binding Printer.BedHeight, Mode=OneWay}"
+                                                      GridConfig="{Binding UIConfiguration.GridConfig}"
+                                                      IsHitTestVisible="False"
+                                                      Visibility="{Binding UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
+
+
+
+
+
+                    </Border>
+
+
+
                     <local:VisualHost x:Name="visualHost">
                         <local:VisualHost.RenderTransform>
                             <TransformGroup>
@@ -182,7 +226,7 @@
 
                         <StackPanel Grid.Column="0" Margin="0 0 10 0" Orientation="Horizontal">
 
-                            <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="True">
+                            <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="{Binding IsGridVisible, Mode=TwoWay}">
                                 <ToggleButton.Template>
                                     <ControlTemplate>
                                         <ContentControl>
@@ -216,7 +260,7 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <Label Margin="10 4 10 0" Content="Cutting Mat" />
+                            <Label Margin="10 4 10 0" Content="Show Grid" />
 
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="10 0 0 0" Orientation="Horizontal">
@@ -255,7 +299,7 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <Label Margin="10 4 10 0" Content="Travel Moves" />
+                            <Label Margin="10 4 10 0" Content="Show Travel Moves" />
 
                         </StackPanel>
 

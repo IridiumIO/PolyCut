@@ -191,37 +191,12 @@
 
                     </Border>
 
-                    <Border Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
-                            Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
-                            Panel.ZIndex="-1"
-                            IsHitTestVisible="False"
-                            Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border.Clip>
-                            <RectangleGeometry Rect="{Binding GridClipRect}" />
-                        </Border.Clip>
-                        <Border.RenderTransform>
-                            <TranslateTransform X="-0.075" Y="-0.075" />
-                        </Border.RenderTransform>
-                        <Border.Background>
-                            <DrawingBrush Stretch="None" TileMode="Tile"
-                                          Viewport="{Binding PrinterGridPreviewViewport}"
-                                          ViewportUnits="Absolute">
-                                <DrawingBrush.Drawing>
-                                    <GeometryDrawing>
-                                        <GeometryDrawing.Geometry>
-                                            <GeometryGroup>
-                                                <LineGeometry StartPoint="-1,0" EndPoint="{Binding GridLineHorizontalEnd}" />
-                                                <LineGeometry StartPoint="0,-1" EndPoint="{Binding GridLineVerticalEnd}" />
-                                            </GeometryGroup>
-                                        </GeometryDrawing.Geometry>
-                                        <GeometryDrawing.Pen>
-                                            <Pen Brush="{Binding MainVM.UIConfiguration.GridConfig.GridBrush}" Thickness="{Binding GridLineThickness}" />
-                                        </GeometryDrawing.Pen>
-                                    </GeometryDrawing>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </Border.Background>
-                    </Border>
+                    <local:GridPreviewControl Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
+                                              Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
+                                              Panel.ZIndex="-1"
+                                              GridConfig="{Binding MainVM.UIConfiguration.GridConfig}"
+                                              IsHitTestVisible="False"
+                                              Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
 
                     <!--  Fill the offset outside space  -->

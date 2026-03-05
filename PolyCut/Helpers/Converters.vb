@@ -653,3 +653,31 @@ Public Class BrushToHexStringConverter : Inherits Markup.MarkupExtension
         Return Binding.DoNothing
     End Function
 End Class
+
+
+
+Public Class RectFromSizeConverter : Inherits Markup.MarkupExtension
+    Implements IMultiValueConverter
+
+    Public Function Convert(values As Object(), targetType As System.Type, parameter As Object, culture As CultureInfo) As Object Implements IMultiValueConverter.Convert
+        Dim w As Double = 0
+        Dim h As Double = 0
+
+        If values IsNot Nothing AndAlso values.Length > 0 AndAlso TypeOf values(0) Is Double Then
+            w = CDbl(values(0))
+        End If
+        If values IsNot Nothing AndAlso values.Length > 1 AndAlso TypeOf values(1) Is Double Then
+            h = CDbl(values(1))
+        End If
+
+        Return New Rect(0, 0, Math.Max(0, w), Math.Max(0, h))
+    End Function
+
+    Public Function ConvertBack(value As Object, targetTypes() As Type, parameter As Object, culture As CultureInfo) As Object() Implements IMultiValueConverter.ConvertBack
+        Throw New NotImplementedException()
+    End Function
+
+    Public Overrides Function ProvideValue(serviceProvider As IServiceProvider) As Object
+        Return Me
+    End Function
+End Class

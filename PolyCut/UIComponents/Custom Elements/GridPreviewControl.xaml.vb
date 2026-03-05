@@ -138,7 +138,14 @@ Partial Public Class GridPreviewControl
             Dim w = Math.Max(0, right - left + (GridLineThickness / 2.0))
             Dim h = Math.Max(0, bottom - top + (GridLineThickness / 2.0))
 
+            ' Round to device-friendly values to avoid sub-pixel differences
+            left = Math.Round(left, 2)
+            top = Math.Round(top, 2)
+            w = Math.Round(w, 2)
+            h = Math.Round(h, 2)
+
             GridClipRect = New Rect(left, top, w, h)
+
             PrinterGridPreviewViewport = New Rect(insetLeft, insetTop, spacing, spacing)
             GridLineVerticalEnd = New Point(0, spacing + 1)
             GridLineHorizontalEnd = New Point(spacing + 1, 0)

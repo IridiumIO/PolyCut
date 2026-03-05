@@ -15,7 +15,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private cancellationTokenSource As CancellationTokenSource = New CancellationTokenSource
 
     Private _subscribedPrinter As Printer
-    Private _subscribedPrinterCuttingMat As CuttingMat
 
     Sub New(viewmodel As MainViewModel)
 
@@ -73,7 +72,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
         If String.Equals(e.PropertyName, NameOf(ViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
             SubscribeToPrinter(ViewModel.Printer)
-            Transform()
         End If
     End Sub
 
@@ -89,43 +87,11 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             AddHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
         End If
 
-        SubscribeToPrinterCuttingMat(If(pr IsNot Nothing, pr.CuttingMat, Nothing))
     End Sub
 
-    Private Sub SubscribeToPrinterCuttingMat(mat As CuttingMat)
-        If _subscribedPrinterCuttingMat IsNot Nothing Then
-            RemoveHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        End If
-
-        _subscribedPrinterCuttingMat = mat
-
-        If _subscribedPrinterCuttingMat IsNot Nothing Then
-            AddHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        End If
-    End Sub
 
 
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
-
-
-        Dim prop = If(e?.PropertyName, "")
-
-        If prop.IndexOf("CuttingMat", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse prop.IndexOf("Rotation", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse prop.IndexOf("Alignment", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse String.Equals(prop, NameOf(MainViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
-
-            ' If the printer's CuttingMat reference changed, resubscribe its events
-            If TypeOf sender Is Printer Then
-                Dim p = TryCast(sender, Printer)
-                If p IsNot Nothing Then
-                    SubscribeToPrinterCuttingMat(p.CuttingMat)
-                End If
-            End If
-
-            Transform()
-        End If
-
 
         If e.PropertyName = NameOf(ViewModel.GCodeGeometry) Then
             cancellationTokenSource.Cancel()
@@ -255,67 +221,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Return out
     End Function
 
-    Private Sub Transform()
-        Dim ret = CalculateOutputs(ViewModel.Printer.CuttingMatRotation, ViewModel.Printer.CuttingMatHorizontalAlignment, ViewModel.Printer.CuttingMatVerticalAlignment)
-
-        CuttingMat_RenderTransform.X = ret.Item1
-        CuttingMat_RenderTransform.Y = ret.Item2
-    End Sub
-
-    Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
-        Dim x As Double = 0
-        Dim y As Double = 0
-
-        Dim CuttingMatWidth = ViewModel.Printer.CuttingMat.Width
-        Dim CuttingMatHeight = ViewModel.Printer.CuttingMat.Height
-
-        Select Case rotation
-            Case 0
-            ' No rotation
-            Case 90
-                ' 90 degrees rotation
-                Select Case alignmentV
-                    Case "Top"
-                        If alignmentH = "Left" Then
-                            x = 355.6
-                        ElseIf alignmentH = "Right" Then
-                            x = 330.2
-                        End If
-                    Case "Bottom"
-                        If alignmentH = "Left" Then
-                            x = 355.6
-                            y = 25.4
-                        ElseIf alignmentH = "Right" Then
-                            x = 330.2
-                            y = 25.4
-                        End If
-                End Select
-            Case 180
-                ' 180 degrees rotation
-                x = 330.2
-                y = 355.6
-            Case 270
-                ' 270 degrees rotation
-                Select Case alignmentV
-                    Case "Top"
-                        If alignmentH = "Left" Then
-                            y = 330.2
-                        ElseIf alignmentH = "Right" Then
-                            x = -25.4
-                            y = 330.2
-                        End If
-                    Case "Bottom"
-                        If alignmentH = "Left" Then
-                            y = 355.6
-                        ElseIf alignmentH = "Right" Then
-                            x = -25.4
-                            y = 355.6
-                        End If
-                End Select
-        End Select
-
-        Return Tuple.Create(x, y)
-    End Function
 
 
 

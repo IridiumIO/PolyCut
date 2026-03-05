@@ -46,21 +46,6 @@
     End Sub
 
 
-    Public Event CuttingMatAlignmentMouseEnter As EventHandler(Of MouseEventArgs)
-    Public Event CuttingMatAlignmentMouseLeave As EventHandler(Of MouseEventArgs)
-    Private Sub HoverAlignment(sender As Object, e As MouseEventArgs) Handles cuttingMat_AlignmentBoxes.MouseEnter, cuttingMat_AlignmentBoxes.MouseLeave
-
-        If e.RoutedEvent Is MouseEnterEvent Then
-            RaiseEvent CuttingMatAlignmentMouseEnter(Me, e)
-        Else
-            RaiseEvent CuttingMatAlignmentMouseLeave(Me, e)
-        End If
-
-    End Sub
-
-    Private Sub ComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
-        MainVM.Printer.CuttingMat = DirectCast(DirectCast(sender, ComboBox).SelectedItem, CuttingMat)
-    End Sub
 
     Private Async Sub AddPrinterBtn_Click(sender As Object, e As RoutedEventArgs)
 
@@ -75,8 +60,7 @@
                 .WorkingOffsetX = 0,
                 .WorkingOffsetY = 0,
                 .WorkingWidth = 235,
-                .WorkingHeight = 235,
-                .CuttingMat = MainVM.Printer.CuttingMat
+                .WorkingHeight = 235
             }
             MainVM.AddPrinter(newPrinter)
         End If

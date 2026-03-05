@@ -61,7 +61,7 @@
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="-3"
-                            Background="#16181D" BorderBrush="#858585" BorderThickness="0" CornerRadius="7">
+                            Background="#16181D" BorderBrush="White" BorderThickness="0" CornerRadius="7">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.3" ShadowDepth="0"
                                               Color="Black" />
@@ -90,20 +90,6 @@
 
                         <Grid>
 
-
-                            <svgc:SvgCanvas x:Name="CuttingMat"
-                                            Margin="-1"
-                                            HorizontalAlignment="{Binding Printer.CuttingMatHorizontalAlignment}"
-                                            VerticalAlignment="{Binding Printer.CuttingMatVerticalAlignment}"
-                                            Source="{Binding Printer.CuttingMat.QualifiedSVGSource}"
-                                            Visibility="Collapsed">
-                                <svgc:SvgCanvas.RenderTransform>
-                                    <TransformGroup>
-                                        <RotateTransform Angle="{Binding Printer.CuttingMatRotation}" />
-                                        <TranslateTransform x:Name="CuttingMat_RenderTransform" X="0" Y="0" />
-                                    </TransformGroup>
-                                </svgc:SvgCanvas.RenderTransform>
-                            </svgc:SvgCanvas>
 
                             <local:GridPreviewControl Width="{Binding Printer.BedWidth, Mode=OneWay}"
                                                       Height="{Binding Printer.BedHeight, Mode=OneWay}"

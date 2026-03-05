@@ -31,7 +31,6 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _UsingGCodePlot As Boolean
     <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
     <ObservableProperty> Private _Printer As Printer
-    <ObservableProperty> Private _CuttingMats As ObservableCollection(Of CuttingMat)
     <ObservableProperty> Private _Configuration As ProcessorConfiguration
     <ObservableProperty> Private _UIConfiguration As UIConfiguration
 
@@ -222,37 +221,7 @@ Partial Public Class MainViewModel
     End Sub
 
     Private Sub Initialise()
-        CuttingMats = SettingsHandler.GetCuttingMats
         Printers = SettingsHandler.GetPrinters
-
-        For Each p In Printers
-            If p Is Nothing Then Continue For
-
-            If p.CuttingMat IsNot Nothing Then
-                Dim match As CuttingMat = Nothing
-
-                If p.CuttingMat.Id <> Guid.Empty Then
-                    match = CuttingMats.FirstOrDefault(Function(cm) cm.Id = p.CuttingMat.Id)
-                End If
-
-                If match Is Nothing Then
-                    match = CuttingMats.FirstOrDefault(Function(cm) _
-                        String.Equals(cm.Name, p.CuttingMat.Name, StringComparison.OrdinalIgnoreCase) AndAlso
-                        cm.Width = p.CuttingMat.Width AndAlso
-                        cm.Height = p.CuttingMat.Height AndAlso
-                        String.Equals(cm.SVGSource, p.CuttingMat.SVGSource, StringComparison.OrdinalIgnoreCase))
-                End If
-
-                If match IsNot Nothing Then
-                    p.CuttingMat = match
-                Else
-                    If p.CuttingMat.Id = Guid.Empty Then p.CuttingMat.Id = Guid.NewGuid()
-                    CuttingMats.Add(p.CuttingMat)
-                End If
-            Else
-                If CuttingMats.Count > 0 Then p.CuttingMat = CuttingMats.First()
-            End If
-        Next
 
         Printer = Printers.First
         Configuration = (SettingsHandler.GetConfigurations).First
@@ -897,15 +866,6 @@ Partial Public Class MainViewModel
         _snackbarService.GenerateSuccess("New Project", "Workspace cleared")
     End Sub
 
-
-    Public Property CuttingMatVisibility As Boolean
-        Get
-            Return UIConfiguration.ShowCuttingMat
-        End Get
-        Set(value As Boolean)
-            UIConfiguration.ShowCuttingMat = value
-        End Set
-    End Property
 
     Public Property WorkingAreaVisibility As Boolean
         Get

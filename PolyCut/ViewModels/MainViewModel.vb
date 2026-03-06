@@ -1,4 +1,5 @@
 ﻿Imports System.Collections.ObjectModel
+Imports System.Collections.Specialized
 Imports System.IO
 Imports System.Net.WebRequestMethods
 
@@ -30,7 +31,6 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _UsingGCodePlot As Boolean
     <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
     <ObservableProperty> Private _Printer As Printer
-    <ObservableProperty> Private _CuttingMats As ObservableCollection(Of CuttingMat)
     <ObservableProperty> Private _Configuration As ProcessorConfiguration
     <ObservableProperty> Private _UIConfiguration As UIConfiguration
 
@@ -40,9 +40,34 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _GeneratedGCode As List(Of GCode)
 
     <ObservableProperty>
+    <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ImplementsProperty(GetType(IDrawableManager), NameOf(IDrawableManager.DrawableCollection))>
     Private _DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
+
+    <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ObservableProperty> Private _ImportedGroups As New ObservableCollection(Of DrawableGroup)
+
+    <ObservableProperty>
+    Private _FlatSidebarItems As New ObservableCollection(Of SidebarItemVM)
+    Private Sub RebuildFlatSidebarItems()
+        FlatSidebarItems.Clear()
+
+        For Each grp In ImportedGroups
+            If grp Is Nothing Then Continue For
+
+            Dim children = grp.DisplayChildren
+            If children Is Nothing Then Continue For
+
+            ' Hide Drawing Group if empty
+            If IsDrawingGroup(grp) AndAlso children.Count = 0 Then Continue For
+
+            For Each ch In children
+                If ch Is Nothing Then Continue For
+                If TypeOf ch Is DrawableGroup Then Continue For
+                FlatSidebarItems.Add(New SidebarItemVM(grp, ch))
+            Next
+        Next
+    End Sub
 
     Friend DrawingGroup As DrawableGroup
 
@@ -76,6 +101,12 @@ Partial Public Class MainViewModel
     Public ReadOnly Property SelectedDrawables As IEnumerable(Of IDrawable)
         Get
             Return DrawableCollection.Where(Function(d) d.IsSelected)
+        End Get
+    End Property
+
+    Public ReadOnly Property HasSelection As Boolean
+        Get
+            Return PolyCut.RichCanvas.PolyCanvas.SelectedItems IsNot Nothing AndAlso PolyCanvas.SelectedItems.Count > 0
         End Get
     End Property
 
@@ -154,40 +185,43 @@ Partial Public Class MainViewModel
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         Initialise()
+        WireFlatSidebarInvalidation()
+    End Sub
+
+    Private Sub AnyDisplayChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+        RebuildFlatSidebarItems()
+    End Sub
+
+    Private Sub WireFlatSidebarInvalidation()
+        AddHandler ImportedGroups.CollectionChanged, AddressOf ImportedGroups_CollectionChanged
+
+        ' existing
+        For Each g In ImportedGroups
+            If g Is Nothing Then Continue For
+            AddHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+        Next
+
+        RebuildFlatSidebarItems()
+
+    End Sub
+
+    Private Sub ImportedGroups_CollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+        If e.NewItems IsNot Nothing Then
+            For Each g As DrawableGroup In e.NewItems
+                AddHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+            Next
+        End If
+        If e.OldItems IsNot Nothing Then
+            For Each g As DrawableGroup In e.OldItems
+                RemoveHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
+            Next
+        End If
+
+        RebuildFlatSidebarItems()
     End Sub
 
     Private Sub Initialise()
-        CuttingMats = SettingsHandler.GetCuttingMats
         Printers = SettingsHandler.GetPrinters
-
-        For Each p In Printers
-            If p Is Nothing Then Continue For
-
-            If p.CuttingMat IsNot Nothing Then
-                Dim match As CuttingMat = Nothing
-
-                If p.CuttingMat.Id <> Guid.Empty Then
-                    match = CuttingMats.FirstOrDefault(Function(cm) cm.Id = p.CuttingMat.Id)
-                End If
-
-                If match Is Nothing Then
-                    match = CuttingMats.FirstOrDefault(Function(cm) _
-                        String.Equals(cm.Name, p.CuttingMat.Name, StringComparison.OrdinalIgnoreCase) AndAlso
-                        cm.Width = p.CuttingMat.Width AndAlso
-                        cm.Height = p.CuttingMat.Height AndAlso
-                        String.Equals(cm.SVGSource, p.CuttingMat.SVGSource, StringComparison.OrdinalIgnoreCase))
-                End If
-
-                If match IsNot Nothing Then
-                    p.CuttingMat = match
-                Else
-                    If p.CuttingMat.Id = Guid.Empty Then p.CuttingMat.Id = Guid.NewGuid()
-                    CuttingMats.Add(p.CuttingMat)
-                End If
-            Else
-                If CuttingMats.Count > 0 Then p.CuttingMat = CuttingMats.First()
-            End If
-        Next
 
         Printer = Printers.First
         Configuration = (SettingsHandler.GetConfigurations).First
@@ -244,6 +278,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(HasSelection))
     End Sub
 
     Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
@@ -265,6 +300,7 @@ Partial Public Class MainViewModel
             _undoRedoService.Push(New TransformAction(items))
         End If
     End Sub
+
 
     Private Function IsTransformUnchanged(before As TransformAction.Snapshot, after As TransformAction.Snapshot) As Boolean
         Return Math.Abs(before.Left - after.Left) < 0.01 AndAlso
@@ -394,6 +430,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(PolyCutDocumentName))
         OnPropertyChanged(NameOf(SelectedDrawable))
+        OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
     ' -----------------
@@ -456,6 +493,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
     Public Sub RemoveSelectedDrawables()
@@ -570,11 +608,14 @@ Partial Public Class MainViewModel
     Private Async Function GenerateGCode() As Task
         Configuration.WorkAreaHeight = Printer.BedHeight
         Configuration.WorkAreaWidth = Printer.BedWidth
+        Configuration.ToolOffsetX = Printer.ToolOffsetX
+        Configuration.ToolOffsetY = Printer.ToolOffsetY
+
         Configuration.SoftwareVersion = SettingsHandler.Version
 
         Dim generator As IGenerator = If(UsingGCodePlot,
             New GCodePlotGenerator(Configuration, Printer, GenerateSVGText),
-            New PolyCutGenerator(Configuration, Printer, GenerateSVGText))
+            New PolyCutGenerator(Configuration, Printer, DrawableCollection.Where(Function(d) Not d.IsHidden).ToList(), PolyCanvas.ActiveInstance))
 
         Dim retcode = Await generator.GenerateGcodeAsync
 
@@ -589,6 +630,7 @@ Partial Public Class MainViewModel
         GCode = compiledGCodeString
         GCodeGeometry = New GCodeGeometry(GeneratedGCode)
         OnPropertyChanged(NameOf(GCode))
+        OnPropertyChanged(NameOf(GCodeGeometry))
         _navigationService.Navigate(GetType(PreviewPage))
     End Function
 
@@ -646,7 +688,7 @@ Partial Public Class MainViewModel
             If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
                 outDoc.Children.Add(finalElement)
             ElseIf TypeOf (drawableL) Is DrawablePath Then
-                If drawableL?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
+                If drawableL?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight, PolyCanvas.ActiveInstance) Then
                     outDoc.Children.Add(finalElement)
                 End If
             End If
@@ -824,15 +866,6 @@ Partial Public Class MainViewModel
         _snackbarService.GenerateSuccess("New Project", "Workspace cleared")
     End Sub
 
-
-    Public Property CuttingMatVisibility As Boolean
-        Get
-            Return UIConfiguration.ShowCuttingMat
-        End Get
-        Set(value As Boolean)
-            UIConfiguration.ShowCuttingMat = value
-        End Set
-    End Property
 
     Public Property WorkingAreaVisibility As Boolean
         Get

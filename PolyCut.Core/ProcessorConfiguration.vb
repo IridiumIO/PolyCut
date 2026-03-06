@@ -29,8 +29,13 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     Public Property TravelZ As Double = 5
     Public Property SafeZ As Double = 10
 
+    Public Property Passes As Integer = 1
+    Public Property PassHeightDelta As Double = 0
+
     Public Property WorkAreaWidth As Double = 200
     Public Property WorkAreaHeight As Double = 200
+    Public Property ToolOffsetX As Double = 0
+    Public Property ToolOffsetY As Double = 0
 
 
     Public Property CuttingConfig As New CuttingConfiguration
@@ -55,6 +60,21 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
         End Get
     End Property
 
+
+
+    Public Function Clone() As ProcessorConfiguration
+        Dim c = DirectCast(Me.MemberwiseClone(), ProcessorConfiguration)
+
+        ' Deep-copy the reference-type sub-configs
+        c.CuttingConfig = Me.CuttingConfig?.Clone()
+        c.DrawingConfig = Me.DrawingConfig?.Clone()
+        c.ExportConfig = Me.ExportConfig?.Clone()
+
+        Return c
+    End Function
+
+
+
 End Class
 
 Partial Public Class CuttingConfiguration : Inherits ObservableObject
@@ -68,12 +88,20 @@ Partial Public Class CuttingConfiguration : Inherits ObservableObject
         End Get
     End Property
 
+    Public Function Clone() As CuttingConfiguration
+        Return DirectCast(Me.MemberwiseClone(), CuttingConfiguration)
+    End Function
+
 End Class
 
 Public Enum FillType
     None
     Hatch
     CrossHatch
+    TriangularHatch
+    DiamondCrossHatch
+    Spiral
+    Radial
 End Enum
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject
@@ -89,7 +117,6 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
     Public Property OutlinesBeforeFill As Boolean = False
 
 
-
     Public ReadOnly Property CrossHatch As Boolean
         Get
             Return FillType = FillType.CrossHatch
@@ -99,6 +126,12 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
 
     ''' Currently only supported by GCodePlot
     Public Property DrawingDirection As Integer? = Nothing
+
+
+    Public Function Clone() As DrawingConfiguration
+        Return DirectCast(Me.MemberwiseClone(), DrawingConfiguration)
+    End Function
+
 End Class
 
 Partial Public Class GCodeConfiguration : Inherits ObservableObject
@@ -155,6 +188,9 @@ Partial Public Class ExportConfiguration : Inherits ObservableObject
     Public Property DestinationPort As Integer = 7125
     Public Property AutoPrint As Boolean = True
 
+    Public Function Clone() As ExportConfiguration
+        Return DirectCast(Me.MemberwiseClone(), ExportConfiguration)
+    End Function
 
 End Class
 

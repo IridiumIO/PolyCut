@@ -4,6 +4,9 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
 
+Imports MeasurePerformance.IL.Weaver
+
+
 Imports WPF.Ui.Abstractions.Controls
 
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
@@ -12,7 +15,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private cancellationTokenSource As CancellationTokenSource = New CancellationTokenSource
 
     Private _subscribedPrinter As Printer
-    Private _subscribedPrinterCuttingMat As CuttingMat
 
     Sub New(viewmodel As MainViewModel)
 
@@ -38,14 +40,38 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             DrawToolPaths()
         End If
 
+        AddHandler viewmodel.UIConfiguration.PropertyChanged, Sub(s, e)
+                                                                  If e.PropertyName = NameOf(UIConfiguration.PreviewDrawingBrush) Then
+                                                                      _RenderPen = CreatePenWithBrush(_RenderPen, viewmodel.UIConfiguration.PreviewDrawingBrush)
+                                                                      cancellationTokenSource.Cancel()
+                                                                      viewmodel.GCodePaths.Clear()
+                                                                      DrawToolPaths()
+                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewTravelBrush) Then
+                                                                      _TravelPen = CreatePenWithBrush(_TravelPen, viewmodel.UIConfiguration.PreviewTravelBrush)
+                                                                      cancellationTokenSource.Cancel()
+                                                                      viewmodel.GCodePaths.Clear()
+                                                                      DrawToolPaths()
+                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewCursorBrush) Then
+                                                                      _CursorPen = CreatePenWithBrush(_CursorPen, viewmodel.UIConfiguration.PreviewCursorBrush)
+                                                                  End If
+                                                              End Sub
     End Sub
+
+    Function CreatePenWithBrush(basePen As Pen, brushHex As String) As Pen
+        Dim brushColor As Color = CType(ColorConverter.ConvertFromString(brushHex), Color)
+        Dim brsh = New SolidColorBrush(brushColor)
+        brsh.Freeze()
+        Dim newPen = basePen.Clone()
+        newPen.Brush = brsh
+        newPen.Freeze()
+        Return newPen
+    End Function
 
     Private Sub MainViewModel_PropertyChanged(sender As Object, e As PropertyChangedEventArgs)
         If e Is Nothing Then Return
 
         If String.Equals(e.PropertyName, NameOf(ViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
             SubscribeToPrinter(ViewModel.Printer)
-            Transform()
         End If
     End Sub
 
@@ -61,45 +87,13 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             AddHandler _subscribedPrinter.PropertyChanged, AddressOf PropertyChangedHandler
         End If
 
-        SubscribeToPrinterCuttingMat(If(pr IsNot Nothing, pr.CuttingMat, Nothing))
     End Sub
 
-    Private Sub SubscribeToPrinterCuttingMat(mat As CuttingMat)
-        If _subscribedPrinterCuttingMat IsNot Nothing Then
-            RemoveHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        End If
-
-        _subscribedPrinterCuttingMat = mat
-
-        If _subscribedPrinterCuttingMat IsNot Nothing Then
-            AddHandler _subscribedPrinterCuttingMat.PropertyChanged, AddressOf PropertyChangedHandler
-        End If
-    End Sub
 
 
     Private Sub PropertyChangedHandler(sender As Object, e As PropertyChangedEventArgs)
 
-
-        Dim prop = If(e?.PropertyName, "")
-
-        If prop.IndexOf("CuttingMat", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse prop.IndexOf("Rotation", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse prop.IndexOf("Alignment", StringComparison.OrdinalIgnoreCase) >= 0 _
-           OrElse String.Equals(prop, NameOf(MainViewModel.Printer), StringComparison.OrdinalIgnoreCase) Then
-
-            ' If the printer's CuttingMat reference changed, resubscribe its events
-            If TypeOf sender Is Printer Then
-                Dim p = TryCast(sender, Printer)
-                If p IsNot Nothing Then
-                    SubscribeToPrinterCuttingMat(p.CuttingMat)
-                End If
-            End If
-
-            Transform()
-        End If
-
-
-        If e.PropertyName = NameOf(ViewModel.GCode) Then
+        If e.PropertyName = NameOf(ViewModel.GCodeGeometry) Then
             cancellationTokenSource.Cancel()
             ViewModel.GCodePaths.Clear()
             DrawToolPaths()
@@ -165,6 +159,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private Function TokenizeLinesForList(lines As String(), cToken As CancellationToken) As List(Of InlineBuilder.LineTokens)
         Dim out As New List(Of InlineBuilder.LineTokens)(lines.Length)
 
+        If cToken.IsCancellationRequested Then Return out
+
         For Each line As String In lines
             cToken.ThrowIfCancellationRequested()
 
@@ -225,92 +221,69 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Return out
     End Function
 
-    Private Sub Transform()
-        Dim ret = CalculateOutputs(ViewModel.Printer.CuttingMatRotation, ViewModel.Printer.CuttingMatHorizontalAlignment, ViewModel.Printer.CuttingMatVerticalAlignment)
-
-        CuttingMat_RenderTransform.X = ret.Item1
-        CuttingMat_RenderTransform.Y = ret.Item2
-    End Sub
-
-    Function CalculateOutputs(rotation As Integer, alignmentH As String, alignmentV As String) As Tuple(Of Double, Double)
-        Dim x As Double = 0
-        Dim y As Double = 0
-
-        Dim CuttingMatWidth = ViewModel.Printer.CuttingMat.Width
-        Dim CuttingMatHeight = ViewModel.Printer.CuttingMat.Height
-
-        Select Case rotation
-            Case 0
-            ' No rotation
-            Case 90
-                ' 90 degrees rotation
-                Select Case alignmentV
-                    Case "Top"
-                        If alignmentH = "Left" Then
-                            x = 355.6
-                        ElseIf alignmentH = "Right" Then
-                            x = 330.2
-                        End If
-                    Case "Bottom"
-                        If alignmentH = "Left" Then
-                            x = 355.6
-                            y = 25.4
-                        ElseIf alignmentH = "Right" Then
-                            x = 330.2
-                            y = 25.4
-                        End If
-                End Select
-            Case 180
-                ' 180 degrees rotation
-                x = 330.2
-                y = 355.6
-            Case 270
-                ' 270 degrees rotation
-                Select Case alignmentV
-                    Case "Top"
-                        If alignmentH = "Left" Then
-                            y = 330.2
-                        ElseIf alignmentH = "Right" Then
-                            x = -25.4
-                            y = 330.2
-                        End If
-                    Case "Bottom"
-                        If alignmentH = "Left" Then
-                            y = 355.6
-                        ElseIf alignmentH = "Right" Then
-                            x = -25.4
-                            y = 355.6
-                        End If
-                End Select
-        End Select
-
-        Return Tuple.Create(x, y)
-    End Function
 
 
 
     Private ReadOnly regexG01 As New Regex("G01.*?X([\d.]+).*?Y([\d.]+)")
     Private ReadOnly regexG00 As New Regex("G00.*?X([\d.]+).*?Y([\d.]+)")
 
-    Private isRendering As Boolean = False
+    Private Sub TogglePlayPauseSymbol()
+        If _IsPlaying Then
+            If _IsPaused Then
+                PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Play16
+            Else
+                PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Pause16
+            End If
+        Else
+            PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Play16
+        End If
+    End Sub
+
+
 
     Private Async Sub PreviewToolpath(sender As Object, e As RoutedEventArgs)
 
-        Await cancellationTokenSource.CancelAsync()
+        If _IsPlaying Then
+            If Not _IsPaused Then
+                ' Pause
+                _IsPaused = True
+                _pauseTcs = New TaskCompletionSource(Of Boolean)(TaskCreationOptions.RunContinuationsAsynchronously)
+            Else
+                ' Resume
+                _IsPaused = False
+                _pauseTcs?.TrySetResult(True)
+                _pauseTcs = Nothing
+            End If
+            TogglePlayPauseSymbol()
 
-        cancellationTokenSource = New CancellationTokenSource
-        Dim ret = Await PreviewToolpaths(cancellationTokenSource.Token)
+        Else
+            _IsPlaying = True
+            _IsPaused = False
+            _pauseTcs = Nothing
+            TogglePlayPauseSymbol()
 
-        If ret <> -1 Then
-            isRendering = False
+            Try
+
+                Await cancellationTokenSource.CancelAsync()
+
+                cancellationTokenSource = New CancellationTokenSource
+                Dim ret = Await PreviewToolpaths(cancellationTokenSource.Token)
+
+            Finally
+                _IsPlaying = False
+                _IsPaused = False
+                _pauseTcs = Nothing
+                TogglePlayPauseSymbol()
+
+            End Try
         End If
-
     End Sub
 
     Private Sub StopPreviewToolpath(sender As Object, e As RoutedEventArgs)
         cancellationTokenSource.Cancel()
-        isRendering = False
-        ' Clear the visuals
+        _IsPlaying = False
+        _IsPaused = False
+        _pauseTcs = Nothing
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
         DrawToolPaths()
@@ -318,33 +291,73 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
+    Private Sub StepForwardPreviewButton_Click(sender As Object, e As RoutedEventArgs)
+        If Not _IsPaused Then Return
+        Interlocked.Increment(_stepForwardCount)
+        _pauseTcs?.TrySetResult(True)
+    End Sub
+
+
+    Private Sub StepBackPreviewButton_Click(sender As Object, e As RoutedEventArgs)
+        If Not _IsPaused Then Return
+        Interlocked.Increment(_stepBackCount)
+        _pauseTcs?.TrySetResult(True)
+    End Sub
+
+
     Private travelMoveVisuals As New List(Of DrawingVisual)()
 
+
+    Private _RenderPen As New Pen() With {
+        .Thickness = 0.2,
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
+
+    Private _TravelPen As New Pen() With {
+        .Thickness = 0.1,
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
+    Private _CursorPen As New Pen() With {
+        .Thickness = 0.5,
+        .StartLineCap = PenLineCap.Round,
+        .EndLineCap = PenLineCap.Round
+    }
+
+
+    <MeasurePerformance>
     Private Function DrawToolPaths()
 
         ' Clear existing visuals in the VisualHost
         visualHost.ClearVisuals()
+        visualHostCursor.ClearVisuals()
         travelMoveVisuals.Clear()
 
         ' Compile the GCode into paths
-        If ViewModel.GCode Is Nothing Then Return 1
-        Dim gc = New GCodeGeometry(ViewModel.GCode)
+        If ViewModel.GCodeGeometry Is Nothing Then Return 1
+        Dim gc = ViewModel.GCodeGeometry
 
         For Each line In gc.Paths
             ' Create a new DrawingVisual for the line
             Dim lineVisual As New DrawingVisual()
             Using dc As DrawingContext = lineVisual.RenderOpen()
-                Dim pen As New Pen(line.Stroke, line.StrokeThickness)
-                pen.StartLineCap = PenLineCap.Round
-                pen.EndLineCap = PenLineCap.Round
-                dc.DrawLine(pen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+
+                If line.IsRapidMove Then
+                    dc.DrawLine(_TravelPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                Else
+                    dc.DrawLine(_RenderPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+                End If
+
             End Using
 
             ' Add the visual to the VisualHost
             visualHost.AddVisual(lineVisual)
 
             ' Handle travel lines
-            If line.Stroke Is Brushes.OrangeRed Then
+            If line.IsRapidMove Then
                 ' Add to travel move visuals
                 travelMoveVisuals.Add(lineVisual)
 
@@ -377,102 +390,298 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
 
     Private Sub InitializeDrawingVisual()
+
+
+        ' Ensure _RenderPen has a brush
+        If _RenderPen.Brush Is Nothing Then
+            _RenderPen = CreatePenWithBrush(_RenderPen, ViewModel.UIConfiguration.PreviewDrawingBrush)
+        End If
+
+        ' Ensure _TravelPen has a brush
+        If _TravelPen.Brush Is Nothing Then
+            _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
+        End If
+
+        ' Ensure _CursorPen has a brush
+        If _CursorPen.Brush Is Nothing Then
+            _CursorPen = CreatePenWithBrush(_CursorPen, ViewModel.UIConfiguration.PreviewCursorBrush)
+        End If
+
         visualHost.ClearVisuals()
         Canvas.SetLeft(visualHost, 0)
         Canvas.SetTop(visualHost, 0)
     End Sub
 
 
+
+    Private _IsPlaying As Boolean
+    Private _IsPaused As Boolean
+    Private _pauseTcs As TaskCompletionSource(Of Boolean)
+
+    Private _stepForwardCount As Integer = 0
+    Private _stepBackCount As Integer = 0
+
+    Private _lineVisuals As List(Of DrawingVisual)
+    Private _currentIndex As Integer = 0 ' NEXT line to start drawing
+
     Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
-        ' Clear existing visuals
         visualHost.ClearVisuals()
+        visualHostCursor.ClearVisuals()
         travelMoveVisuals.Clear()
 
-        If ViewModel.GCodeGeometry Is Nothing Then Return 1
+        _cursorVisual = Nothing
+        EnsureCursor()
+        ClearCursor()
 
-        ' Accumulated delay time
+        Dim paths = ViewModel?.GCodeGeometry?.Paths
+        If paths Is Nothing OrElse paths.Count = 0 Then Return 0
+
+        _lineVisuals = Enumerable.Repeat(Of DrawingVisual)(Nothing, paths.Count).ToList()
+        _currentIndex = 0
+
         Dim accumulatedDelay As Single = 0
         Dim stopwatch As New Stopwatch()
 
-        For Each line In ViewModel.GCodeGeometry.Paths
+        While _currentIndex < paths.Count
             If cToken.IsCancellationRequested Then Return 1
 
+            ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
+            ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
+            While _IsPaused
+
+                ' 1) Apply ALL queued step-backs
+                Dim backCount = Interlocked.Exchange(_stepBackCount, 0)
+                If backCount > 0 Then
+                    For n As Integer = 1 To backCount
+                        If _currentIndex <= 0 Then Exit For
+                        _currentIndex -= 1
+                        RemoveLineVisual(_currentIndex)
+
+                        Dim ln2 = paths(_currentIndex)
+                        UpdateCursor(New Point(ln2.X1, ln2.Y1))
+                    Next
+                    Continue While
+                End If
+
+                ' 2) Step forward: jump whole lines
+                Dim fw = Interlocked.Exchange(_stepForwardCount, 0)
+                If fw > 0 Then
+                    While fw > 0 AndAlso _currentIndex < paths.Count
+                        DrawLineInstant(paths(_currentIndex))
+                        _currentIndex += 1
+                        fw -= 1
+                    End While
+
+                    ' stay paused after stepping
+                    Continue While
+                End If
+
+                ' 3) Otherwise wait (resume/step/back will complete _pauseTcs)
+                If _pauseTcs Is Nothing Then
+                    _pauseTcs = New TaskCompletionSource(Of Boolean)(TaskCreationOptions.RunContinuationsAsynchronously)
+                End If
+
+                Dim tcs = _pauseTcs
+                Try : Await tcs.Task.ConfigureAwait(True) : Catch : End Try
+                If ReferenceEquals(_pauseTcs, tcs) Then _pauseTcs = Nothing
+
+            End While
+
+            If cToken.IsCancellationRequested Then Return 1
+
+            ' --------- DRAW CURRENT LINE (_currentIndex) ----------
+            Dim line = paths(_currentIndex)
+
             Dim startPoint As New Point(line.X1, line.Y1)
+
+            UpdateCursor(startPoint)
+
             Dim endPoint As New Point(line.X2, line.Y2)
+            Dim isTravelMove As Boolean = line.IsRapidMove
 
-            Dim isTravelMove As Boolean = (line.Stroke Is Brushes.OrangeRed)
-            Dim hasTravelMoveBeenAdded As Boolean = False
-
-            ' Calculate the total length of the line
             Dim totalLength As Single = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
-
             Dim segmentLength As Single = 0.5
-            ' Calculate the number of segments
-            Dim numSegments As Integer = Math.Ceiling(totalLength / segmentLength)
+            Dim numSegments As Integer = Math.Max(1, CInt(Math.Ceiling(totalLength / segmentLength)))
 
-            Dim lineVisual As New DrawingVisual
-            Dim hasVisualBeenAdded As Boolean = False
-            Dim lvIndex As Integer = 0
+            Dim lineVisual As New DrawingVisual()
+            _lineVisuals(_currentIndex) = lineVisual
+            visualHost.AddVisual(lineVisual)
 
-            ' Generate and draw each segment
+
+            If isTravelMove Then
+                travelMoveVisuals.Add(lineVisual)
+                If Not TravelMovesVisibilityToggle.IsChecked Then lineVisual.Opacity = 0
+            End If
+
+            Dim restartOuter As Boolean = False
+
+
             For i As Integer = 0 To numSegments - 1
                 If cToken.IsCancellationRequested Then Return 1
+
+                ' --------- SEGMENT PAUSE GATE (pause can happen mid-line) ----------
+                While _IsPaused
+
+                    ' Step Back during partial line: delete current line visual, then move back
+                    Dim backCount2 = Interlocked.Exchange(_stepBackCount, 0)
+                    If backCount2 > 0 Then
+                        ' 1) Always reset the CURRENT line first (consume 1 back press)
+                        RemoveLineVisual(_currentIndex)
+
+                        Dim lnCur = paths(_currentIndex)
+                        UpdateCursor(New Point(lnCur.X1, lnCur.Y1))
+
+                        backCount2 -= 1
+
+                        ' 2) Any remaining back presses go to previous completed lines
+                        For n As Integer = 1 To backCount2
+                            If _currentIndex <= 0 Then Exit For
+                            _currentIndex -= 1
+                            RemoveLineVisual(_currentIndex)
+
+                            Dim ln2 = paths(_currentIndex)
+                            UpdateCursor(New Point(ln2.X1, ln2.Y1))
+                        Next
+
+                        restartOuter = True
+                        Exit For
+                    End If
+
+                    ' Step Forward while paused mid-line:
+                    Dim fw2 = Interlocked.Exchange(_stepForwardCount, 0)
+                    If fw2 > 0 Then
+                        ' remove the partially drawn current line
+                        RemoveLineVisual(_currentIndex)
+
+                        ' draw this line (and additional lines) instantly
+                        While fw2 > 0 AndAlso _currentIndex < paths.Count
+                            DrawLineInstant(paths(_currentIndex))
+                            _currentIndex += 1
+                            fw2 -= 1
+                        End While
+
+                        restartOuter = True
+                        Exit For
+                    End If
+
+                    If _pauseTcs Is Nothing Then
+                        _pauseTcs = New TaskCompletionSource(Of Boolean)(TaskCreationOptions.RunContinuationsAsynchronously)
+                    End If
+
+                    Dim tcs2 = _pauseTcs
+                    Try
+                        Await tcs2.Task.ConfigureAwait(True)
+                    Catch
+                    End Try
+                    If ReferenceEquals(_pauseTcs, tcs2) Then _pauseTcs = Nothing
+                End While
+
+                If restartOuter Then Exit For
+
+                ' --------- segment draw + delay ----------
                 stopwatch.Restart()
 
-                Dim t2 As Single = (i + 1) / numSegments
-
+                Dim t2 As Single = CSng((i + 1) / numSegments)
                 Dim segmentEnd As New Point(
-                startPoint.X + (endPoint.X - startPoint.X) * t2,
-                startPoint.Y + (endPoint.Y - startPoint.Y) * t2
-            )
-                If Not hasVisualBeenAdded Then
-                    lineVisual = New DrawingVisual()
-                    visualHost.AddVisual(lineVisual)
-                    hasVisualBeenAdded = True
-                End If
+                    startPoint.X + (endPoint.X - startPoint.X) * t2,
+                    startPoint.Y + (endPoint.Y - startPoint.Y) * t2
+                )
 
                 Using dc As DrawingContext = lineVisual.RenderOpen()
-                    Dim pen As New Pen(line.Stroke, line.StrokeThickness)
-                    pen.StartLineCap = PenLineCap.Round
-                    pen.EndLineCap = PenLineCap.Round
-                    dc.DrawLine(pen, startPoint, segmentEnd)
+                    dc.DrawLine(If(isTravelMove, _TravelPen, _RenderPen), startPoint, segmentEnd)
                 End Using
 
-                ' Handle travel lines
-                If isTravelMove Then
-                    If Not hasTravelMoveBeenAdded Then
-                        travelMoveVisuals.Add(lineVisual)
-                        hasTravelMoveBeenAdded = True
-                    End If
-                    If Not TravelMovesVisibilityToggle.IsChecked Then
-                        lineVisual.Opacity = 0 ' Hide the travel line
-                    End If
-                End If
+                UpdateCursor(segmentEnd)
 
-                ' Calculate the delay for this segment in milliseconds
                 Dim delayTime As Single = Math.Min(segmentLength, totalLength) / ViewModel.LogarithmicPreviewSpeed * 1000
                 accumulatedDelay += delayTime
                 stopwatch.Stop()
-                accumulatedDelay -= stopwatch.Elapsed.TotalMilliseconds
+                accumulatedDelay -= CSng(stopwatch.Elapsed.TotalMilliseconds)
 
-                ' Render the batch if the accumulated delay exceeds 1 millisecond
                 If accumulatedDelay >= 1 Then
                     Try
                         Await Task.Delay(Math.Max(CInt(accumulatedDelay), 1), cToken)
                     Catch ex As TaskCanceledException
                         Return 1
                     End Try
-
                     accumulatedDelay = 0
                 End If
             Next
 
-        Next
+            If restartOuter Then
+                Continue While ' resume from new _currentIndex
+            End If
+
+            ' finished the line
+            _currentIndex += 1
+
+
+        End While
 
         Return 0
+
     End Function
 
+    Private _cursorVisual As DrawingVisual
+    Private ReadOnly _cursorFill As Brush = Brushes.Transparent
+    Private Const _cursorRadius As Double = 2.2
+    Private Const _cursorCrosshairHalfSize As Double = 3.8
 
+    Private Sub EnsureCursor()
+        If _cursorVisual Is Nothing Then
+            _cursorVisual = New DrawingVisual()
+            visualHostCursor.AddVisual(_cursorVisual)
+        End If
+    End Sub
+
+
+    Private Sub UpdateCursor(p As Point)
+        If _cursorVisual Is Nothing Then Return
+        Using dc = _cursorVisual.RenderOpen()
+            dc.DrawEllipse(_cursorFill, _CursorPen, p, _cursorRadius, _cursorRadius)
+            dc.DrawLine(_CursorPen, New Point(p.X - _cursorCrosshairHalfSize, p.Y), New Point(p.X + _cursorCrosshairHalfSize, p.Y))
+            dc.DrawLine(_CursorPen, New Point(p.X, p.Y - _cursorCrosshairHalfSize), New Point(p.X, p.Y + _cursorCrosshairHalfSize))
+        End Using
+    End Sub
+
+    Private Sub ClearCursor()
+        If _cursorVisual Is Nothing Then Return
+        Using dc = _cursorVisual.RenderOpen()
+            ' draw nothing
+        End Using
+    End Sub
+
+    Private Sub RemoveLineVisual(i As Integer)
+        If _lineVisuals Is Nothing OrElse i < 0 OrElse i >= _lineVisuals.Count Then Return
+
+        Dim v = _lineVisuals(i)
+        If v Is Nothing Then Return
+
+        visualHost.RemoveVisual(v)
+        travelMoveVisuals.Remove(v)
+        _lineVisuals(i) = Nothing
+    End Sub
+
+    Private Sub DrawLineInstant(line As GCodeLine)
+        Dim startPoint As New Point(line.X1, line.Y1)
+        Dim endPoint As New Point(line.X2, line.Y2)
+        Dim isTravelMove As Boolean = line.IsRapidMove
+
+        Dim v As New DrawingVisual()
+        _lineVisuals(_currentIndex) = v
+        visualHost.AddVisual(v)
+
+        If isTravelMove Then
+            travelMoveVisuals.Add(v)
+            If Not TravelMovesVisibilityToggle.IsChecked Then v.Opacity = 0
+        End If
+
+        Using dc As DrawingContext = v.RenderOpen()
+            dc.DrawLine(If(isTravelMove, _TravelPen, _RenderPen), startPoint, endPoint)
+        End Using
+
+        UpdateCursor(endPoint)
+    End Sub
 
 End Class
 

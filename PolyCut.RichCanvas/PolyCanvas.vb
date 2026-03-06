@@ -2,8 +2,6 @@
 Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.ComponentModel
-Imports System.Windows.Controls
-Imports System.Windows.Controls.Primitives
 
 Imports PolyCut.Shared
 
@@ -131,6 +129,11 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
 
     ' Static wrappers for backwards compatibility
     Private Shared _activeInstance As PolyCanvas
+    Public Shared ReadOnly Property ActiveInstance As PolyCanvas
+        Get
+            Return _activeInstance
+        End Get
+    End Property
 
     Public Shared Event SelectionCountChanged As EventHandler
 
@@ -239,7 +242,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 Dim line As Line = CType(child, Line)
                 wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
                 wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
-                MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
+                FitLineToWrapper(line, wrapper, line.StrokeThickness)
             ElseIf TypeOf child Is Path Then
                 Dim path As Path = CType(child, Path)
                 path.Stretch = Stretch.Fill
@@ -484,11 +487,39 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
     End Sub
 
+    Friend Shared GridDefinition As GridDefinition
+
+    Public Shared Sub UpdateGridDefinition(gd As GridDefinition)
+        GridDefinition = gd
+    End Sub
 
 
 
 
+    Public Sub FitLineToWrapper(line As Line, wrapper As ContentControl, strokeThickness As Double)
+        If line Is Nothing OrElse wrapper Is Nothing Then Return
 
+        Dim w As Double = If(Double.IsNaN(wrapper.Width), wrapper.ActualWidth, wrapper.Width)
+        Dim h As Double = If(Double.IsNaN(wrapper.Height), wrapper.ActualHeight, wrapper.Height)
+        If w <= 0 OrElse h <= 0 Then Return
+
+        Dim half As Double = Math.Max(0.0, strokeThickness) * 0.5
+
+        ' Clamp so we don't go negative when wrapper is tiny
+        Dim xMin As Double = Math.Min(w * 0.5, half)
+        Dim yMin As Double = Math.Min(h * 0.5, half)
+        Dim xMax As Double = Math.Max(xMin, w - half)
+        Dim yMax As Double = Math.Max(yMin, h - half)
+
+        ' Preserve direction (so reverse lines don't flip)
+        Dim leftToRight As Boolean = (line.X2 >= line.X1)
+        Dim topToBottom As Boolean = (line.Y2 >= line.Y1)
+
+        line.X1 = If(leftToRight, xMin, xMax)
+        line.Y1 = If(topToBottom, yMin, yMax)
+        line.X2 = If(leftToRight, xMax, xMin)
+        line.Y2 = If(topToBottom, yMax, yMin)
+    End Sub
 
 
 
@@ -509,17 +540,10 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         Dim scaleX As Double = e.NewSize.Width / originalDimensions.Value.Width
         Dim scaleY As Double = e.NewSize.Height / originalDimensions.Value.Height
 
-        If TypeOf content Is Line AndAlso originalEndPoint.HasValue Then
+        If TypeOf content Is Line Then
             Dim line As Line = CType(content, Line)
-
-            line.X2 = originalEndPoint.Value.X * scaleX
-            line.Y2 = originalEndPoint.Value.Y * scaleY
-
-
-            If line.Y1 > line.Y2 Then
-                line.Y1 = wrapper.Height - line.StrokeThickness / 2
-            End If
-
+            FitLineToWrapper(line, wrapper, line.StrokeThickness)
+            Return
         End If
 
         InvalidateMeasure()
@@ -529,3 +553,11 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
 End Class
+
+Public Structure GridDefinition
+    Public Property Spacing As Double
+    Public Property InsetLeft As Double
+    Public Property InsetTop As Double
+    Public Property InsetRight As Double
+    Public Property InsetBottom As Double
+End Structure

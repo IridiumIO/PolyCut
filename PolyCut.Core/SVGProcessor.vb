@@ -3,76 +3,57 @@
 Imports System.Windows
 Imports System.Windows.Documents
 Imports System.Windows.Shapes
+Imports PolyCut.shared
 
 Public Class SVGProcessor
 
 
-    Shared Function colourToHex(colour As Drawing.Color) As String
-        If colour = Nothing Then Return Nothing
-        Return "#" & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
-    End Function
 
-    Public Shared Function SVGColorBullshitFixer(svgcolour As SvgPaintServer) As String
-
-        Dim colour As String
-
-        If svgcolour Is Nothing OrElse svgcolour.ToString() = "none" OrElse svgcolour.GetType().Name.Contains("None") Then
-            colour = Nothing
-        Else
-            Dim casted = TryCast(svgcolour, SvgColourServer)?.Colour
-            colour = If(casted.HasValue, colourToHex(casted), Nothing)
-        End If
-
-        Return colour
-    End Function
-
-
-    Shared Function CompileElementAndGetFigures(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of List(Of Line))
+    Shared Function CompileElementAndGetFigures(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As IPathBasedElement
 
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
-        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
+        Dim fillcolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Fill)
+        Dim strokecolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Stroke)
 
-        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = ColorAndBrushHelpers.ColourToHex(configClr) OrElse strokecolour = ColorAndBrushHelpers.ColourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
-            Return element.Figures
+            Return element
         End If
 
-        Return New List(Of List(Of Line))
+        Return Nothing
 
     End Function
 
-    Shared Function CompileElementAndGetFiguresFlattened(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As List(Of Line)
-
+    Shared Function CompileElementAndGetFiguresFlattened(element As IPathBasedElement, svgVisualElement As SvgVisualElement, cfg As ProcessorConfiguration) As IPathBasedElement
 
         Dim configClr = Drawing.ColorTranslator.FromHtml(cfg.ExtractionColor)
 
-        Dim fillcolour = SVGColorBullshitFixer(svgVisualElement.Fill)
-        Dim strokecolour = SVGColorBullshitFixer(svgVisualElement.Stroke)
+        Dim fillcolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Fill)
+        Dim strokecolour = ColorAndBrushHelpers.SVGPaintServerToString(svgVisualElement.Stroke)
 
-        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = colourToHex(configClr) OrElse strokecolour = colourToHex(configClr) Then
+        If cfg.ExtractOneColour = False OrElse String.IsNullOrWhiteSpace(cfg.ExtractionColor) OrElse fillcolour = ColorAndBrushHelpers.ColourToHex(configClr) OrElse strokecolour = ColorAndBrushHelpers.ColourToHex(configClr) Then
             element.CompileFromSVGElement(svgVisualElement, cfg)
-            Return element.Figures.SelectMany(Of Line)(Function(x) x).ToList
+            Return element
         End If
-        Return New List(Of Line)
+        Return Nothing
 
     End Function
 
-    Shared Async Function LoopElements(element As SvgVisualElement, processorConfiguration As ProcessorConfiguration) As Task(Of List(Of List(Of Line)))
+    Shared Async Function LoopElements(element As SvgVisualElement, processorConfiguration As ProcessorConfiguration) As Task(Of List(Of IPathBasedElement))
 
-        Dim generatedLines As New List(Of List(Of Line))
+        Dim generatedLines As New List(Of IPathBasedElement)
 
         Select Case element.GetType
             Case GetType(SvgRectangle)
-                generatedLines.AddRange(CompileElementAndGetFigures(New RectangleElement, element, processorConfiguration))
+                generatedLines.Add(CompileElementAndGetFigures(New RectangleElement, element, processorConfiguration))
 
             Case GetType(SvgEllipse)
-                generatedLines.AddRange(CompileElementAndGetFigures(New EllipseElement, element, processorConfiguration))
+                generatedLines.Add(CompileElementAndGetFigures(New EllipseElement, element, processorConfiguration))
 
             Case GetType(SvgCircle)
-                generatedLines.AddRange(CompileElementAndGetFigures(New CircleElement, element, processorConfiguration))
+                generatedLines.Add(CompileElementAndGetFigures(New CircleElement, element, processorConfiguration))
 
             'For SVGPath and SVGText we need to flatten the lines so that the fillprocessor can correctly remove internal elements
             'Unfortunately this means it needs to be undone in the overcut processor; need to find a better way to do this.
@@ -82,9 +63,7 @@ Public Class SVGProcessor
             Case GetType(SvgText)
                 generatedLines.Add(CompileElementAndGetFiguresFlattened(New TextElement, element, processorConfiguration))
             Case GetType(SvgLine)
-                generatedLines.AddRange(CompileElementAndGetFigures(New LineElement, element, processorConfiguration))
-            Case Else
-                Debug.WriteLine(element.GetType.ToString)
+                generatedLines.Add(CompileElementAndGetFigures(New LineElement, element, processorConfiguration))
 
         End Select
 
@@ -94,8 +73,6 @@ Public Class SVGProcessor
             If element.Transforms IsNot Nothing Then
                 child.Transforms = If(child.Transforms, New Transforms.SvgTransformCollection)
                 child.Transforms.InsertRange(0, element.Transforms)
-                'child.Transforms.AddRange(element.Transforms)
-
             End If
 
             generatedLines.AddRange(Await LoopElements(child, processorConfiguration))
@@ -108,15 +85,15 @@ Public Class SVGProcessor
 
 
 
-    Shared Async Function ProcessSVGVisualElements(elements As List(Of SvgVisualElement), cfg As ProcessorConfiguration) As Task(Of List(Of List(Of Line)))
+    Shared Async Function ProcessSVGVisualElements(elements As List(Of SvgVisualElement), cfg As ProcessorConfiguration) As Task(Of List(Of IPathBasedElement))
 
-        Dim compiledLines As New List(Of List(Of Line))
+        Dim compiledLines As New List(Of IPathBasedElement)
 
         For Each element In elements
             compiledLines.AddRange(Await LoopElements(element, cfg))
         Next
 
-        compiledLines.RemoveAll(Function(lset) lset.Count = 0)
+        compiledLines.RemoveAll(Function(lset) lset Is Nothing OrElse lset.Figures Is Nothing OrElse lset.Figures.Count = 0)
         Return compiledLines
 
     End Function
@@ -136,7 +113,7 @@ Public Class SVGProcessor
 
     End Sub
 
-    Public Shared Async Function ProcessSVG(svgText As String, config As ProcessorConfiguration) As Task(Of List(Of List(Of Line)))
+    Public Shared Async Function ProcessSVG(svgText As String, config As ProcessorConfiguration) As Task(Of List(Of IPathBasedElement))
 
         Dim svgDoc = SvgDocument.FromSvg(Of SvgDocument)(svgText)
 

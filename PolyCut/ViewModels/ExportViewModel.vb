@@ -29,7 +29,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         }
 
         If fsd.ShowDialog() Then
-            Dim ret = Await diskexporter.Export(MainVM.GeneratedGCode, fsd.FileName)
+            Dim ret = Await diskexporter.Export(MainVM.GCode, fsd.FileName)
             If ret = 0 Then
                 Application.GetService(Of SnackbarService).GenerateSuccess("File Saved", $"Saved to: {fsd.FileName}")
             Else
@@ -43,7 +43,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
     <RelayCommand>
     Private Async Sub NetworkUpload()
         Dim moonraker As New MoonrakerExporter(MainVM.Configuration)
-        Dim ret = Await moonraker.Export(MainVM.GeneratedGCode, FilePath)
+        Dim ret = Await moonraker.Export(MainVM.GCode, FilePath)
         ParseRet(ret)
     End Sub
 
@@ -75,7 +75,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
 
     Private Function BuildBoundingBoxGCode(generatedGCode As IEnumerable(Of GCode)) As String
 
-        Dim FSpeed = 5 * 60 ' mm/min
+        Dim FSpeed = MainVM.Configuration.WorkSpeed * 60 ' mm/min
 
         Dim points = generatedGCode.Where(Function(gc) gc.X.HasValue AndAlso gc.Y.HasValue).Select(Function(gc) (X:=gc.X.Value, Y:=gc.Y.Value)).ToList()
         If points.Count = 0 Then Return String.Empty

@@ -8,6 +8,7 @@ Public Class ImportSVGAction : Implements IUndoableAction
     Private _importedGroup As DrawableGroup
     Private _allImportedDrawables As List(Of IDrawable)
     Private _indexInImportedGroups As Integer
+    Private _parentMap As New Dictionary(Of IDrawable, DrawableGroup)()
 
     Public Sub New(manager As IDrawableManager, svgService As ISvgImportService, filePath As String)
         _manager = manager
@@ -50,6 +51,13 @@ Public Class ImportSVGAction : Implements IUndoableAction
             End If
         Next
 
+        For Each d In _allImportedDrawables
+            Dim pg = TryCast(d.ParentGroup, DrawableGroup)
+            If pg IsNot Nothing Then
+                _parentMap(d) = pg
+            End If
+        Next
+
         Dim mainVM = TryCast(_manager, MainViewModel)
         If mainVM IsNot Nothing Then
             _indexInImportedGroups = mainVM.ImportedGroups.Count
@@ -64,6 +72,12 @@ Public Class ImportSVGAction : Implements IUndoableAction
 
         For Each drawable In _allImportedDrawables
             _manager.RemoveDrawableFromCollection(drawable)
+
+            Dim parentGrp As DrawableGroup = Nothing
+            If _parentMap.TryGetValue(drawable, parentGrp) Then
+                parentGrp.RemoveChild(drawable)
+            End If
+
             _manager.ClearDrawableParent(drawable)
         Next
 
@@ -77,6 +91,14 @@ Public Class ImportSVGAction : Implements IUndoableAction
         If _importedGroup Is Nothing Then Return
 
         For Each drawable In _allImportedDrawables
+
+            Dim parentGrp As DrawableGroup = Nothing
+            If _parentMap.TryGetValue(drawable, parentGrp) Then
+                If Not parentGrp.GroupChildren.Contains(drawable) Then
+                    parentGrp.AddChild(drawable)
+                End If
+            End If
+
             If Not _manager.DrawableCollection.Contains(drawable) Then
                 _manager.DrawableCollection.Add(drawable)
             End If

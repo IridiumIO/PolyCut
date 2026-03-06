@@ -25,15 +25,15 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
         Dim strokeW As Single = 0.001F
 
         Try
-            fillServer = SvgHelpers.BrushToSvgColourServer(Me.Fill)
+            fillServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
         Catch
         End Try
 
         ' Only set stroke if thickness > 0 and stroke is not Nothing
         If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
             Try
-                strokeServer = SvgHelpers.BrushToSvgColourServer(Me.Stroke)
-                strokeW = CSng(Me.StrokeThickness)
+                strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
+                'strokeW = CSng(Me.StrokeThickness)
             Catch
             End Try
         End If

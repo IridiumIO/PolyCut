@@ -1,50 +1,40 @@
-﻿<Page
-    x:Class="SettingsPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:PolyCut"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
-    xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    xmlns:vc="clr-namespace:ValueConverters;assembly=ValueConverters"
-    Title="SettingsPage"
-    Margin="42,42,42,0"
-    d:DataContext="{d:DesignInstance Type=local:SettingsPageViewModel}"
-    d:DesignHeight="700"
-    d:DesignWidth="800"
-    mc:Ignorable="d">
+﻿<Page x:Class="SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:PolyCut"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
+      xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vc="clr-namespace:ValueConverters;assembly=ValueConverters"
+      Title="SettingsPage"
+      Margin="42 42 42 40"
+      d:DataContext="{d:DesignInstance Type=local:SettingsPageViewModel}"
+      d:DesignHeight="700"
+      d:DesignWidth="800"
+      mc:Ignorable="d">
     <Page.Resources />
     <Grid>
         <StackPanel>
             <StackPanel Orientation="Horizontal">
-                <svgc:SvgViewbox
-                    Height="50"
-                    Margin="5"
-                    HorizontalAlignment="Left"
-                    Panel.ZIndex="-2"
-                    Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg" />
-                <TextBlock
-                    Margin="14"
-                    VerticalAlignment="Bottom"
-                    FontSize="20"
-                    Foreground="#80FFFFFF">
+                <svgc:SvgViewbox Height="50"
+                                 Margin="5" HorizontalAlignment="Left" Panel.ZIndex="-2"
+                                 Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg" />
+                <TextBlock Margin="14" VerticalAlignment="Bottom"
+                           FontSize="20" Foreground="#80FFFFFF">
                     <Run Text="version" />
                     <Run Text="{x:Static local:SettingsHandler.Version}" />
                 </TextBlock>
             </StackPanel>
 
-            <Separator Margin="0,10" />
+            <Separator Margin="0 10" />
             <Label Content="GCode Generator" />
-            <ComboBox
-                MinWidth="300"
-                HorizontalAlignment="Left"
-                SelectedIndex="{Binding MainVM.UsingGCodePlot, Mode=TwoWay}">
+            <ComboBox MinWidth="300" HorizontalAlignment="Left" SelectedIndex="{Binding MainVM.UsingGCodePlot, Mode=TwoWay}">
                 <ComboBoxItem Content="Polycut.Core" />
                 <ComboBoxItem Content="GCodePlot" />
             </ComboBox>
-            <Separator Margin="0,10" />
+            <Separator Margin="0 10" />
             <!--<Label Content="Canvas Color" />
             <ComboBox
                 MinWidth="300"
@@ -59,97 +49,68 @@
             <Label Content="Grid Settings" />
             <Grid HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition
-                        Width="*"
-                        MinWidth="400"
-                        MaxWidth="600" />
+                    <ColumnDefinition Width="*" MinWidth="400" MaxWidth="600" />
                     <ColumnDefinition Width="*" />
 
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <local:LabeledNumberBoxControl
-                        LabelText="Spacing"
-                        Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                        TextBoxWidth="100"
-                        UnitText="mm" />
+                    <local:LabeledNumberBoxControl LabelText="Spacing"
+                                                   Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                   TextBoxWidth="100" UnitText="mm" />
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <local:LabeledNumberBoxControl
-                            Margin="0,0,15,0"
-                            LabelText="Inset (Left)"
-                            Text="{Binding MainVM.UIConfiguration.GridConfig.InsetLeft, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                            TextBoxWidth="100"
-                            UnitText="mm" />
-                        <local:LabeledNumberBoxControl
-                            Grid.Column="1"
-                            LabelText="Inset (Right)"
-                            Text="{Binding MainVM.UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                            TextBoxWidth="100"
-                            UnitText="mm" />
+                        <local:LabeledNumberBoxControl Margin="0 0 15 0"
+                                                       LabelText="Inset (Left)"
+                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetLeft, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       TextBoxWidth="100" UnitText="mm" />
+                        <local:LabeledNumberBoxControl Grid.Column="1"
+                                                       LabelText="Inset (Right)"
+                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       TextBoxWidth="100" UnitText="mm" />
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <local:LabeledNumberBoxControl
-                            Margin="0,0,15,0"
-                            LabelText="Inset (Top)"
-                            Text="{Binding MainVM.UIConfiguration.GridConfig.InsetTop, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                            TextBoxWidth="100"
-                            UnitText="mm" />
-                        <local:LabeledNumberBoxControl
-                            Grid.Column="1"
-                            LabelText="Inset (Bottom)"
-                            Text="{Binding MainVM.UIConfiguration.GridConfig.InsetBottom, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                            TextBoxWidth="100"
-                            UnitText="mm" />
+                        <local:LabeledNumberBoxControl Margin="0 0 15 0"
+                                                       LabelText="Inset (Top)"
+                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetTop, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       TextBoxWidth="100" UnitText="mm" />
+                        <local:LabeledNumberBoxControl Grid.Column="1"
+                                                       LabelText="Inset (Bottom)"
+                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetBottom, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       TextBoxWidth="100" UnitText="mm" />
                     </Grid>
 
-                    <local:ColorPickerControl
-                        Margin="0,5"
-                        ColorSelected="ColorPickerControl_ColorSelected"
-                        CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
-                        Foreground="{DynamicResource CardForeground}"
-                        LabelText="Gridline Colour" />
+                    <local:ColorPickerControl Margin="0 5"
+                                              ColorSelected="ColorPickerControl_ColorSelected"
+                                              CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                              Foreground="{DynamicResource CardForeground}"
+                                              LabelText="Gridline Colour" />
 
 
                 </StackPanel>
 
 
-                <Viewbox
-                    Grid.Column="1"
-                    MinWidth="100"
-                    MaxWidth="300"
-                    MaxHeight="300"
-                    Margin="20,0,0,0"
-                    HorizontalAlignment="Left"
-                    SnapsToDevicePixels="True"
-                    Stretch="Uniform"
-                    StretchDirection="Both"
-                    UseLayoutRounding="True">
+                <Viewbox Grid.Column="1"
+                         MinWidth="100" MaxWidth="300" MaxHeight="300"
+                         Margin="20 0 0 0" HorizontalAlignment="Left"
+                         SnapsToDevicePixels="True" Stretch="Uniform" StretchDirection="Both" UseLayoutRounding="True">
                     <Grid Background="#424242">
-                        <Border
-                            Margin="-1"
-                            Panel.ZIndex="1"
-                            BorderBrush="White"
-                            BorderThickness="1" />
-                        <Border
-                            Width="{Binding MainVM.Printer.BedWidth}"
-                            Height="{Binding MainVM.Printer.BedHeight}"
-                            Margin="-1">
+                        <Border Margin="-1" Panel.ZIndex="1"
+                                BorderBrush="White" BorderThickness="1" />
+                        <Border Width="{Binding MainVM.Printer.BedWidth}" Height="{Binding MainVM.Printer.BedHeight}" Margin="-1">
                             <Border.Clip>
                                 <RectangleGeometry Rect="{Binding GridClipRect}" />
                             </Border.Clip>
                             <Border.Background>
-                                <DrawingBrush
-                                    Stretch="None"
-                                    TileMode="Tile"
-                                    Viewport="{Binding PrinterGridPreviewViewport}"
-                                    ViewportUnits="Absolute">
+                                <DrawingBrush Stretch="None" TileMode="Tile"
+                                              Viewport="{Binding PrinterGridPreviewViewport}"
+                                              ViewportUnits="Absolute">
                                     <DrawingBrush.Drawing>
                                         <GeometryDrawing>
                                             <GeometryDrawing.Geometry>
@@ -171,6 +132,32 @@
 
 
             </Grid>
+
+            <Separator Margin="0 10" />
+            <Label Content="Preview Page Settings" />
+            <StackPanel Width="390" MaxWidth="390"
+                        Margin="10 0 0 0" HorizontalAlignment="Left">
+                <local:ColorPickerControl x:Name="PreviewPage_DrawingBrushColorSelector"
+                                          Margin="0 5"
+                                          ColorSelected="PreviewPage_DrawingBrushColorSelector_ColorSelected"
+                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewDrawingBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          Foreground="{DynamicResource CardForeground}"
+                                          LabelText="Drawing Line Colour" />
+                <local:ColorPickerControl x:Name="PreviewPage_TravelBrushColorSelector"
+                                          Margin="0 5"
+                                          ColorSelected="PreviewPage_TravelBrushColorSelector_ColorSelected"
+                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          Foreground="{DynamicResource CardForeground}"
+                                          LabelText="Travel Line Colour" />
+                
+                <local:ColorPickerControl x:Name="PreviewPage_CursorBrushColorSelector"
+                          Margin="0 5"
+                          ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
+                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                          Foreground="{DynamicResource CardForeground}"
+                          LabelText="Cursor Line Colour" />
+
+            </StackPanel>
 
         </StackPanel>
 

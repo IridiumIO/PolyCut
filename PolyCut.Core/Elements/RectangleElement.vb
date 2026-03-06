@@ -1,20 +1,25 @@
-﻿Imports Svg
-Imports System.Windows
+﻿Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
+
+Imports PolyCut.[Shared]
+
+Imports Svg
 
 Public Class RectangleElement : Implements IPathBasedElement
 
 
-    Public ReadOnly Property FlattenedLines As List(Of Line) Implements IPathBasedElement.FlattenedLines
+    Public ReadOnly Property FlattenedLines As List(Of GeoLine) Implements IPathBasedElement.FlattenedLines
         Get
-            Return Figures.SelectMany(Of Line)(Function(x) x).ToList
+            Return Figures.SelectMany(Of GeoLine)(Function(x) x).ToList
         End Get
     End Property
     Public Property Geo As PathGeometry Implements IPathBasedElement.Geo
     Public Property Config As ProcessorConfiguration Implements IPathBasedElement.Config
-    Public Property Figures As New List(Of List(Of Line)) Implements IPathBasedElement.Figures
+    Public Property Figures As New List(Of List(Of GeoLine)) Implements IPathBasedElement.Figures
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
+    Public Property FillColor As String Implements IPathBasedElement.FillColor
+
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
         Dim rect = DirectCast(element, SvgRectangle)
         Config = cfg
@@ -22,44 +27,17 @@ Public Class RectangleElement : Implements IPathBasedElement
             Throw New NotImplementedException("Rounded corners not implemented for rectangle objects. Convert to a path")
         End If
 
+        FillColor = ColorAndBrushHelpers.SVGPaintServerToString(element.Fill)
 
-
-        Dim fillcolor = SVGProcessor.SVGColorBullshitFixer(element.Fill)
-
-        Figures.Add(New List(Of Line) From {
-                    New Line With {
-                        .X1 = rect.X,
-                        .Y1 = rect.Y,
-                        .X2 = rect.X.Value + rect.Width.Value,
-                        .Y2 = rect.Y
-                    },
-                    New Line With {
-                        .X1 = rect.X.Value + rect.Width.Value,
-                        .Y1 = rect.Y,
-                        .X2 = rect.X.Value + rect.Width.Value,
-                        .Y2 = rect.Y.Value + rect.Height.Value
-                    },
-                    New Line With {
-                        .X1 = rect.X.Value + rect.Width.Value,
-                        .Y1 = rect.Y.Value + rect.Height.Value,
-                        .X2 = rect.X,
-                        .Y2 = rect.Y.Value + rect.Height.Value
-                    },
-                    New Line With {
-                        .X1 = rect.X,
-                        .Y1 = rect.Y.Value + rect.Height.Value,
-                        .X2 = rect.X,
-                        .Y2 = rect.Y
-                    }
+        Figures.Add(New List(Of GeoLine) From {
+                    New GeoLine(rect.X, rect.Y, rect.X.Value + rect.Width.Value, rect.Y),
+                    New GeoLine(rect.X.Value + rect.Width.Value, rect.Y, rect.X.Value + rect.Width.Value, rect.Y.Value + rect.Height.Value),
+                    New GeoLine(rect.X.Value + rect.Width.Value, rect.Y.Value + rect.Height.Value, rect.X, rect.Y.Value + rect.Height.Value),
+                    New GeoLine(rect.X, rect.Y.Value + rect.Height.Value, rect.X, rect.Y)
                 })
 
-        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList).ToList()
+        Figures = Figures.Select(Function(fig) TransformLines(fig, element.Transforms.GetMatrix).ToList()).ToList()
 
-        For Each fig In Figures
-            For Each ln In fig
-                ln.Tag = fillcolor
-            Next
-        Next
     End Sub
 
 

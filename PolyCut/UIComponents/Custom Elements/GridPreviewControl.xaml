@@ -1,0 +1,40 @@
+﻿<UserControl x:Class="GridPreviewControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DesignHeight="200"
+             d:DesignWidth="200"
+             mc:Ignorable="d">
+    <Border Width="{Binding Width, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Height="{Binding Height, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Panel.ZIndex="-1"
+            IsHitTestVisible="False"
+            Visibility="{Binding Visibility, RelativeSource={RelativeSource AncestorType=UserControl}}">
+        <Border.Clip>
+            <RectangleGeometry Rect="{Binding GridClipRect, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        </Border.Clip>
+        <Border.RenderTransform>
+            <TranslateTransform X="-0.075" Y="-0.075" />
+        </Border.RenderTransform>
+        <Border.Background>
+            <DrawingBrush Stretch="None" TileMode="Tile"
+                          Viewport="{Binding PrinterGridPreviewViewport, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          ViewportUnits="Absolute">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <LineGeometry StartPoint="-1,0" EndPoint="{Binding GridLineHorizontalEnd, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                <LineGeometry StartPoint="0,-1" EndPoint="{Binding GridLineVerticalEnd, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="{Binding GridLineBrush, RelativeSource={RelativeSource AncestorType=UserControl}}" Thickness="{Binding GridLineThickness, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+        </Border.Background>
+    </Border>
+</UserControl>

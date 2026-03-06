@@ -22,4 +22,14 @@ Public Class DiskExporter : Implements IExporter
         Return 0
 
     End Function
+
+
+    Public Async Function Export(gcodes As String, fileName As String) As Task(Of Integer)
+        If String.IsNullOrEmpty(gcodes) Then Return 1
+
+        Await File.WriteAllTextAsync(fileName, gcodes)
+
+        Return 0
+    End Function
+
 End Class

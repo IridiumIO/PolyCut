@@ -1,5 +1,5 @@
 ﻿Imports System.Windows.Shapes
 
 Public Interface IProcessor
-    Function Process(lines As List(Of Line), cfg As ProcessorConfiguration) As List(Of Line)
+    Function Process(elements As List(Of IPathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine)
 End Interface

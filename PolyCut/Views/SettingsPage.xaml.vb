@@ -30,4 +30,18 @@ Class SettingsPage
 
     End Sub
 
+    Private Sub PreviewPage_DrawingBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
+        mv.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
+
+    Private Sub PreviewPage_TravelBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
+        mv.UIConfiguration.PreviewTravelBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
+
+    Private Sub PreviewPage_CursorBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
+        mv.UIConfiguration.PreviewCursorBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
 End Class

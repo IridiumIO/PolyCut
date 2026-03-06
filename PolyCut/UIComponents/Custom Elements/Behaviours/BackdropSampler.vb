@@ -17,6 +17,10 @@ Public NotInheritable Class BackdropSampler
         TopRight = 1
         BottomLeft = 2
         BottomRight = 3
+        Top = 4
+        Bottom = 5
+        Left = 6
+        Right = 7
     End Enum
 
     Private NotInheritable Class State
@@ -199,8 +203,16 @@ Public NotInheritable Class BackdropSampler
                             sx = ox + (clientW - 1 - insetX) : sy = oy + insetY
                         Case SampleCorner.BottomLeft
                             sx = ox + insetX : sy = oy + (clientH - 1 - insetY)
-                        Case Else
+                        Case SampleCorner.BottomRight
                             sx = ox + (clientW - 1 - insetX) : sy = oy + (clientH - 1 - insetY)
+                        Case SampleCorner.Top
+                            sx = ox + (clientW \ 2) : sy = oy + insetY
+                        Case SampleCorner.Bottom
+                            sx = ox + (clientW \ 2) : sy = oy + (clientH - 1 - insetY)
+                        Case SampleCorner.Left
+                            sx = ox + insetX : sy = oy + (clientH \ 2)
+                        Case SampleCorner.Right
+                            sx = ox + (clientW - 1 - insetX) : sy = oy + (clientH \ 2)
                     End Select
 
                     doSample = True

@@ -83,11 +83,6 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         End Get
     End Property
 
-    Public Property CuttingMat As CuttingMat
-    Public Property CuttingMatVerticalAlignment As String = "Top"
-    Public Property CuttingMatHorizontalAlignment As String = "Left"
-    Public Property CuttingMatRotation As Double = 0
-
     Public Property StartGCode As String
         Get
             Return _StartGCode
@@ -131,6 +126,9 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
     Private _WorkingOffsetX As Decimal = 0
     Private _WorkingOffsetY As Decimal = 0
 
+    <ObservableProperty> Private _ToolOffsetX As Decimal = 0
+    <ObservableProperty> Private _ToolOffsetY As Decimal = 0
+
     Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
     Private _EndGCode As String = $""
     Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
@@ -146,10 +144,6 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
             .WorkingOffsetY = Me.WorkingOffsetY,
             .WorkingWidth = Me.WorkingWidth,
             .WorkingHeight = Me.WorkingHeight,
-            .CuttingMat = Me.CuttingMat,
-            .CuttingMatVerticalAlignment = Me.CuttingMatVerticalAlignment,
-            .CuttingMatHorizontalAlignment = Me.CuttingMatHorizontalAlignment,
-            .CuttingMatRotation = Me.CuttingMatRotation,
             .StartGCode = Me.StartGCode,
             .EndGCode = Me.EndGCode
         }
@@ -167,10 +161,6 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         Me.WorkingOffsetY = other.WorkingOffsetY
         Me.WorkingWidth = other.WorkingWidth
         Me.WorkingHeight = other.WorkingHeight
-        Me.CuttingMat = other.CuttingMat
-        Me.CuttingMatVerticalAlignment = other.CuttingMatVerticalAlignment
-        Me.CuttingMatHorizontalAlignment = other.CuttingMatHorizontalAlignment
-        Me.CuttingMatRotation = other.CuttingMatRotation
         Me.StartGCode = other.StartGCode
         Me.EndGCode = other.EndGCode
     End Sub

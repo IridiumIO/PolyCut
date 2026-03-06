@@ -572,6 +572,9 @@ Public Class SVGImportService : Implements ISvgImportService
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
 
+            Dim original As SvgPath = svgPath.DeepCopy()
+
+            svgPath.StrokeWidth = New SvgUnit(0)
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
             Dim wasClipped As Boolean = BakeClipGeometry(geometry, svgPath, svgDoc)
 
@@ -597,9 +600,9 @@ Public Class SVGImportService : Implements ISvgImportService
                 .Stretch = Stretch.None
             }
 
-            Return FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
-
-
+            Dim idrawable = FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
+            idrawable.StrokeThickness = original.StrokeWidth
+            Return idrawable
         Catch ex As Exception
             Return Nothing
         End Try
@@ -910,7 +913,7 @@ Public Class SVGImportService : Implements ISvgImportService
             Else
                 Dim color = CType(svgElement.Stroke, SvgColourServer).Colour
                 shape.Stroke = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
-                shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 1)
+                shape.StrokeThickness = If(transformedStrokeThickness > 0, transformedStrokeThickness, 0.1)
             End If
 
         Else

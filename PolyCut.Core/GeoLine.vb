@@ -5,67 +5,66 @@ Imports System.Windows.Media
 Imports System.Windows.Shapes
 
 
-Public Class GeoLine
+Public Structure GeoLine
 
-    Public Property StartPoint As Vector2
-    Public Property EndPoint As Vector2
-    Public Property X1 As Single
+    Public ReadOnly Property StartPoint As Vector2
+    Public ReadOnly Property EndPoint As Vector2
+
+    ' ---- Existing property names kept (now ReadOnly) ----
+    Public ReadOnly Property X1 As Single
         Get
             Return StartPoint.X
         End Get
-        Set(value As Single)
-            StartPoint = New Vector2(value, StartPoint.Y)
-        End Set
     End Property
-    Public Property Y1 As Single
+
+    Public ReadOnly Property Y1 As Single
         Get
             Return StartPoint.Y
         End Get
-        Set(value As Single)
-            StartPoint = New Vector2(StartPoint.X, value)
-        End Set
     End Property
-    Public Property X2 As Single
+
+    Public ReadOnly Property X2 As Single
         Get
             Return EndPoint.X
         End Get
-        Set(value As Single)
-            EndPoint = New Vector2(value, EndPoint.Y)
-        End Set
     End Property
-    Public Property Y2 As Single
+
+    Public ReadOnly Property Y2 As Single
         Get
             Return EndPoint.Y
         End Get
-        Set(value As Single)
-            EndPoint = New Vector2(EndPoint.X, value)
-        End Set
     End Property
+
     Public ReadOnly Property XLength As Double
         Get
             Return X2 - X1
         End Get
     End Property
+
     Public ReadOnly Property YLength As Double
         Get
             Return Y2 - Y1
         End Get
     End Property
+
     Public ReadOnly Property Length As Double
         Get
             Return Vector2.Distance(StartPoint, EndPoint)
         End Get
     End Property
+
     Public ReadOnly Property Slope As Double
         Get
             Return YLength / XLength
         End Get
     End Property
+
     Public ReadOnly Property MidPoint As Vector2
         Get
-            Return New Vector2((StartPoint.X + EndPoint.X) / 2, (StartPoint.Y + EndPoint.Y) / 2)
+            Return New Vector2((StartPoint.X + EndPoint.X) / 2.0F, (StartPoint.Y + EndPoint.Y) / 2.0F)
         End Get
     End Property
+
     Public ReadOnly Property AngleR As Double
         Get
             Return Math.Atan2(YLength, XLength)
@@ -73,8 +72,7 @@ Public Class GeoLine
     End Property
 
 
-
-
+    ' ---- Constructors ----
     Public Sub New(startP As Vector2, endP As Vector2)
         StartPoint = startP
         EndPoint = endP
@@ -91,13 +89,37 @@ Public Class GeoLine
     End Sub
 
 
+    ' ---- Fluent Builders ----
+    Public Function WithStartPoint(p As Vector2) As GeoLine
+        Return New GeoLine(p, EndPoint)
+    End Function
 
+    Public Function WithEndPoint(p As Vector2) As GeoLine
+        Return New GeoLine(StartPoint, p)
+    End Function
+
+    Public Function WithX1(value As Single) As GeoLine
+        Return New GeoLine(New Vector2(value, StartPoint.Y), EndPoint)
+    End Function
+
+    Public Function WithY1(value As Single) As GeoLine
+        Return New GeoLine(New Vector2(StartPoint.X, value), EndPoint)
+    End Function
+
+    Public Function WithX2(value As Single) As GeoLine
+        Return New GeoLine(StartPoint, New Vector2(value, EndPoint.Y))
+    End Function
+
+    Public Function WithY2(value As Single) As GeoLine
+        Return New GeoLine(StartPoint, New Vector2(EndPoint.X, value))
+    End Function
 
     Public Function Reverse() As GeoLine
         Return New GeoLine(EndPoint, StartPoint)
     End Function
 
 
+    ' ---- Methods ----
     Public Function GetAngleBetween(line2 As GeoLine) As Double
 
         Dim hypot As GeoLine = StartPoint.LineTo(line2.EndPoint)
@@ -125,12 +147,21 @@ Public Class GeoLine
         End If
     End Function
 
+    Public Function IsCollinearWith(other As GeoLine, Optional sinTol As Double = 0) As Boolean
+        Dim ax = Me.X2 - Me.X1
+        Dim ay = Me.Y2 - Me.Y1
+        Dim bx = other.X2 - other.X1
+        Dim by = other.Y2 - other.Y1
 
-    Public Function IsCollinearWith(otherline As GeoLine, Optional tolerance As Double = 0) As Boolean
-        Dim radians = Math.PI / 180 * tolerance
-        Dim TwoAngle = Me.GetAngleBetween(otherline)
-        Dim withinTolerance = MathHelpers.Between(TwoAngle, Math.PI - radians, Math.PI + radians)
-        Return withinTolerance
+        Dim aLen2 = ax * ax + ay * ay
+        Dim bLen2 = bx * bx + by * by
+        If aLen2 <= 0 OrElse bLen2 <= 0 Then Return True ' treat degenerate as collinear for gating
+
+        Dim cross = ax * by - ay * bx
+        Dim cross2 = cross * cross
+
+        ' cross^2 / (|a|^2|b|^2) <= sinTol^2
+        Return cross2 <= (sinTol * sinTol) * aLen2 * bLen2
     End Function
 
 
@@ -196,10 +227,10 @@ Public Class GeoLine
     End Function
 
 
-End Class
+End Structure
 
 
-Partial Module GeoLineExtensions
+Partial Public Module GeoLineExtensions
 
     <Extension>
     Public Function TransformLinesG(lines As IEnumerable(Of GeoLine), transforms As System.Drawing.Drawing2D.Matrix) As IEnumerable(Of GeoLine)
@@ -213,33 +244,25 @@ Partial Module GeoLineExtensions
     Public Function IsPointOnLineG(point As Vector2, line As GeoLine, tolerance As Double) As Boolean
         Dim dx As Double = line.X2 - line.X1
         Dim dy As Double = line.Y2 - line.Y1
-
         Dim len2 As Double = dx * dx + dy * dy
-        Dim tol As Double = tolerance
+        Dim tol2 As Double = tolerance * tolerance
 
-        ' Degenerate segment: treat as "point within tolerance"
         If len2 <= 0.0000000001 Then
-            Dim dist2 As Double = (point.X - line.X1) * (point.X - line.X1) + (point.Y - line.Y1) * (point.Y - line.Y1)
-            Return dist2 <= (tol * tol)
+            Dim px = point.X - line.X1
+            Dim py = point.Y - line.Y1
+            Return (px * px + py * py) <= tol2
         End If
 
-        ' Perpendicular distance test (your current cross-product approach, but written directly as squared compare)
         Dim cross As Double = (point.Y - line.Y1) * dx - (point.X - line.X1) * dy
-        ' Check: cross^2 <= tol^2 * len^2
-        If (cross * cross) > (tol * tol) * len2 Then Return False
+        If (cross * cross) > tol2 * len2 Then Return False
 
-        ' Projection parameter t in [0,1] with tolerance margin
         Dim dot As Double = (point.X - line.X1) * dx + (point.Y - line.Y1) * dy
-        Dim t As Double = dot / len2
-
-        Dim len As Double = Math.Sqrt(len2)
-        Dim eps As Double = tol / len   ' unitless
-
-        If t < -eps Then Return False
-        If t > 1.0 + eps Then Return False
+        If dot < 0 Then Return False
+        If dot > len2 Then Return False
 
         Return True
     End Function
+
 
 
 
@@ -296,13 +319,70 @@ Partial Module GeoLineExtensions
     End Function
     <Extension>
     Public Function DistanceToSquaredG(point1 As Vector2, point2 As Vector2) As Double
-        Return (point1.X - point2.X) ^ 2 + (point1.Y - point2.Y) ^ 2
+        Dim dx As Double = point1.X - point2.X
+        Dim dy As Double = point1.Y - point2.Y
+        Return dx * dx + dy * dy
     End Function
 
 
     <Extension>
     Public Function ToPoint(vec As Vector2) As Point
         Return New Point(vec.X, vec.Y)
+    End Function
+
+
+
+    ' -------------------------
+    ' Get Bounds
+    ' -------------------------
+    Friend Function ComputeBounds(lines As List(Of GeoLine)) As Rect
+        If lines Is Nothing OrElse lines.Count = 0 Then Return New Rect(0, 0, 0, 0)
+
+        Dim minX = Double.PositiveInfinity
+        Dim minY = Double.PositiveInfinity
+        Dim maxX = Double.NegativeInfinity
+        Dim maxY = Double.NegativeInfinity
+
+        For Each ln In lines
+            Dim x1 = ln.X1, y1 = ln.Y1
+            Dim x2 = ln.X2, y2 = ln.Y2
+
+            minX = Math.Min(minX, Math.Min(x1, x2))
+            minY = Math.Min(minY, Math.Min(y1, y2))
+            maxX = Math.Max(maxX, Math.Max(x1, x2))
+            maxY = Math.Max(maxY, Math.Max(y1, y2))
+        Next
+
+        Return New Rect(minX, minY, maxX - minX, maxY - minY)
+    End Function
+    <Extension>
+    Public Function ComputeBounds(figures As List(Of List(Of GeoLine))) As Rect
+        Dim minX = Double.PositiveInfinity
+        Dim minY = Double.PositiveInfinity
+        Dim maxX = Double.NegativeInfinity
+        Dim maxY = Double.NegativeInfinity
+
+        If figures Is Nothing Then Return Rect.Empty
+
+        For Each fig In figures
+            If fig Is Nothing Then Continue For
+            For Each ln In fig
+                ' start
+                minX = Math.Min(minX, ln.X1)
+                minY = Math.Min(minY, ln.Y1)
+                maxX = Math.Max(maxX, ln.X1)
+                maxY = Math.Max(maxY, ln.Y1)
+
+                ' end
+                minX = Math.Min(minX, ln.X2)
+                minY = Math.Min(minY, ln.Y2)
+                maxX = Math.Max(maxX, ln.X2)
+                maxY = Math.Max(maxY, ln.Y2)
+            Next
+        Next
+
+        If Double.IsInfinity(minX) Then Return Rect.Empty
+        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
     End Function
 
 End Module

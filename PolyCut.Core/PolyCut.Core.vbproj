@@ -16,4 +16,8 @@
     <PackageReference Include="Svg" Version="3.4.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PolyCut.Shared\PolyCut.Shared.vbproj" />
+  </ItemGroup>
+
 </Project>

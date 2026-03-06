@@ -13,7 +13,7 @@ Imports SharpVectors.Renderers
 
 Public Class SettingsHandler : Inherits ObservableObject
 
-    Public Shared Property Version As String = "0.8"
+    Public Shared Property Version As String = "0.9"
 
     Public Shared Property DataFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", "PolyCut"))
 
@@ -21,14 +21,12 @@ Public Class SettingsHandler : Inherits ObservableObject
 
     Public Shared Property ConfigurationSettings As ConfigurationsSettings = New ConfigurationsSettings
     Public Shared Property PrinterSettings As PrinterSettings = New PrinterSettings
-    Public Shared Property CuttingMatSettings As CuttingMatSettings = New CuttingMatSettings
     Public Shared Property UISettings As UISettings = New UISettings
 
     Shared Async Function InitialiseSettings() As Task
 
         If Not DataFolder.Exists Then DataFolder.Create()
         Await PrinterSettings.InitialiseSettings(Of Printer)("PolyCut", $"{NameOf(Printer)}s")
-        Await CuttingMatSettings.InitialiseSettings(Of CuttingMat)("PolyCut", $"{NameOf(CuttingMat)}s")
         Await ConfigurationSettings.InitialiseSettings(Of ProcessorConfiguration)("PolyCut", $"{NameOf(ProcessorConfiguration)}s")
         Await UISettings.InitialiseSettings(Of UIConfiguration)("PolyCut", $"UIConfiguration")
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
@@ -87,15 +85,6 @@ Public Class SettingsHandler : Inherits ObservableObject
     Shared Sub DeletePrinter(printer As Printer)
         PrinterSettings.DeleteValue(printer.Name)
     End Sub
-
-    Shared Function GetCuttingMats() As ObservableCollection(Of CuttingMat)
-        Return GetCollection(Of CuttingMat)(CuttingMatSettings)
-    End Function
-
-    Shared Async Sub WriteCuttingMat(cuttingmat As CuttingMat)
-        Await CuttingMatSettings.SetValue(cuttingmat.Name, cuttingmat)
-    End Sub
-
 
     Shared Function GetConfigurations() As ObservableCollection(Of ProcessorConfiguration)
         Return GetCollection(Of ProcessorConfiguration)(ConfigurationSettings)

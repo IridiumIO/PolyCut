@@ -24,7 +24,7 @@ Public Class GCode
         Me.Z = Z
         Me.F = Feedrate
     End Sub
-    Public Sub New(M As String, G As Integer?, X As Double?, Y As Double?, Z As Double?, E As Double?, F As Double?, Optional Comment As String = Nothing)
+    Public Sub New(M As String, G As Integer?, Optional X As Double? = Nothing, Optional Y As Double? = Nothing, Optional Z As Double? = Nothing, Optional E As Double? = Nothing, Optional F As Double? = Nothing, Optional Comment As String = Nothing)
         Mode = M
         Code = G
         Me.X = X

@@ -8,14 +8,11 @@ End Class
 
 Public Class GCodeGenerator
 
-    Public Shared Function Generate(lines As List(Of Line), cfg As ProcessorConfiguration) As GCodeData
+    Public Shared Function Generate(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As GCodeData
 
         'Standard Coordinates set 0,0 to the Top Left. 3D Printers use Bottom Left
-        RedefineOrigin(lines, cfg)
+        Dim workLines = ApplyOffset(RedefineOrigin(lines, cfg), cfg.ToolOffsetX, cfg.ToolOffsetY)
 
-
-
-        Dim zWork As Double = cfg.WorkZ
         Dim zTravel As Double = cfg.TravelZ
         Dim zSafe As Double = cfg.SafeZ
 
@@ -23,54 +20,71 @@ Public Class GCodeGenerator
         Dim travelSpeed As Double = cfg.TravelSpeed * 60
         Dim zSpeed As Double = cfg.ZSpeed * 60
 
-
         Dim GCD As New GCodeData With {
-            .TotalLength = lines.Sum(Function(l) l.Length)
+            .TotalLength = workLines.Sum(Function(l) l.Length) * Math.Max(1, cfg.Passes)
         }
 
+        If workLines Is Nothing OrElse workLines.Count = 0 Then
+            Return GCD
+        End If
 
-        GCD.EstimatedTime += GetTimeForLine(lines(0), travelSpeed)
-        GCD.GCodes.Add(GCode.G0(lines(0).StartPoint, zTravel, travelSpeed))
+        GCD.EstimatedTime += GetTimeForLine(workLines(0), travelSpeed)
+        GCD.GCodes.Add(GCode.G0(workLines(0).StartPoint.ToPoint, zTravel, travelSpeed))
 
-        Dim isNewLine As Boolean = True
+        For passIndex As Integer = 0 To cfg.Passes - 1
 
-        For i As Integer = 0 To lines.Count - 1
+            Dim zWork As Double = cfg.WorkZ + passIndex * cfg.PassHeightDelta
+            Dim isNewLine As Boolean = True
 
-            'Pen Down
-            If isNewLine Then
-                GCD.GCodes.Add(GCode.GZ(zWork))
-                GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
+            If cfg.Passes > 1 Then
+                GCD.GCodes.Add(GCode.CommentLine($"Pass {passIndex + 1} of {cfg.Passes} at height {zWork}"))
             End If
 
-            'Draw Line
-            GCD.GCodes.Add(GCode.G1(lines(i).EndPoint, F:=workSpeed))
-            GCD.EstimatedTime += GetTimeForLine(lines(i), workSpeed)
+            For i As Integer = 0 To workLines.Count - 1
 
-            Dim l2 As Line = lines((i + 1) Mod lines.Count)
-
-
-            'Continue Drawing if next line is continuous
-            If lines(i).IsContinuousWith(l2) Then
-                isNewLine = False
-
-            Else
-                'Pen Up
-                GCD.GCodes.Add(GCode.GZ(zTravel))
-                GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
-
-
-                'Travel to next line if not at the end
-                If i <> lines.Count - 1 Then
-                    GCD.GCodes.Add(GCode.G0(lines(i + 1).StartPoint, F:=travelSpeed))
-                    GCD.EstimatedTime += GetTimeForLine(lines(i).EndPoint.LineTo(lines(i + 1).StartPoint), travelSpeed)
-                    isNewLine = True
-                Else
-                    'Pen Up
-                    GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
-                    GCD.EstimatedTime += GetTimeForZ(zSafe - zWork, zSpeed)
+                'Pen Down
+                If isNewLine Then
+                    GCD.GCodes.Add(GCode.GZ(zWork))
+                    GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
                 End If
 
+                'Draw Line
+                GCD.GCodes.Add(GCode.G1(workLines(i).EndPoint.ToPoint, F:=workSpeed))
+                GCD.EstimatedTime += GetTimeForLine(workLines(i), workSpeed)
 
+                Dim l2 As GeoLine = workLines((i + 1) Mod workLines.Count)
+
+                'Continue Drawing if next line is continuous
+                If workLines(i).IsContinuousWith(l2) Then
+                    isNewLine = False
+                Else
+                    'Pen Up
+                    GCD.GCodes.Add(GCode.GZ(zTravel))
+                    GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
+
+                    'Travel to next line if not at the end
+                    If i <> workLines.Count - 1 Then
+                        GCD.GCodes.Add(GCode.G0(workLines(i + 1).StartPoint.ToPoint, F:=travelSpeed))
+                        GCD.EstimatedTime += GetTimeForLine(workLines(i).EndPoint.LineTo(workLines(i + 1).StartPoint), travelSpeed)
+                        isNewLine = True
+                    Else
+                        'Pen Up
+                        GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
+                        GCD.EstimatedTime += GetTimeForZ(zSafe - zWork, zSpeed)
+                    End If
+                End If
+
+            Next
+
+            If passIndex <> cfg.Passes - 1 Then
+                ' Move to travel Z from safe
+                GCD.GCodes.Add(GCode.GZ(zTravel))
+                GCD.EstimatedTime += GetTimeForZ(zSafe - zTravel, zSpeed)
+
+                ' Travel XY back to the first line start
+                Dim lastEnd = workLines(workLines.Count - 1).EndPoint
+                GCD.GCodes.Add(GCode.G0(workLines(0).StartPoint.ToPoint, F:=travelSpeed))
+                GCD.EstimatedTime += GetTimeForLine(lastEnd.LineTo(workLines(0).StartPoint), travelSpeed)
             End If
 
         Next
@@ -81,14 +95,20 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Sub RedefineOrigin(ByRef lines As List(Of Line), cfg As ProcessorConfiguration)
-        For Each line In lines
-            line.Y1 = cfg.WorkAreaHeight - line.Y1
-            line.Y2 = cfg.WorkAreaHeight - line.Y2
-        Next
-    End Sub
+    Private Shared Function RedefineOrigin(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine)
+        Dim h As Single = cfg.WorkAreaHeight
+        Return lines.Select(Function(ln) New GeoLine(ln.X1, h - ln.Y1, ln.X2, h - ln.Y2)).ToList()
+    End Function
 
-    Public Shared Function GenerateWithMetadata(lines As List(Of Line), cfg As ProcessorConfiguration) As GCodeData
+    Private Shared Function ApplyOffset(lines As List(Of GeoLine), offsetX As Double, offsetY As Double) As List(Of GeoLine)
+        Dim ox As Single = offsetX
+        Dim oy As Single = offsetY
+        Return lines.Select(Function(ln) New GeoLine(ln.X1 + ox, ln.Y1 + oy, ln.X2 + ox, ln.Y2 + oy)).ToList()
+    End Function
+
+
+
+    Public Shared Function GenerateWithMetadata(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As GCodeData
 
         Dim GCodeData = Generate(lines, cfg)
 
@@ -146,7 +166,7 @@ Public Class GCodeGenerator
 
     End Function
 
-    Private Shared Function GetTimeForLine(line As Line, speed As Double) As Double
+    Private Shared Function GetTimeForLine(line As GeoLine, speed As Double) As Double
         Return line.Length / speed * 60
     End Function
 

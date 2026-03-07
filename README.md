@@ -1,33 +1,54 @@
 <p align="center"><img src="https://raw.githubusercontent.com/IridiumIO/PolyCut/ac993f8824416a01a3d201cd3b27ee47d56aceee/PolyCut/Resources/banner_light.svg" width="450"></p>
 
-<p align="center"><b>If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut or Silhouette machine.</b></p> 
+<p align="center"><b>Use your 3D Printer as a plotter / vinyl cutter. If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut or Silhouette machine.</b></p> 
 
 <p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives/foil stampers or other tools attached. It also directly supports uploading to a networked 3D Printer via Klipper. 
 </p> 
 
 &nbsp;
 
+
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0e6ff91c-14cd-447d-adea-5113609f091e" width="1000"/>
+  <img alt="NewMainUI" src="https://github.com/user-attachments/assets/0a2234f3-34ca-43cf-88fe-a86be8f26624" width="800"/>
   </br> 
 </p>
+
+<p align="center">
+  <img alt="NewPreviewUI" src="https://github.com/user-attachments/assets/5d117494-5f9b-45c2-9c8d-9c350b48db8f" width="800"/>
+  </br> 
+</p>
+
 
 &nbsp;
 
 <h3 align="center"><a href="https://github.com/IridiumIO/PolyCut/releases">Download Here</a></h3>
 
+<p align="center">
+  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
+  </br> 
+</p>
+
 # Features
 
 ### Drawing Canvas:
-- Import multiple SVGs, arrange and scale them (currently you need to have them grouped how you want in advance as groups can't be separated yet) with a resizable/rotatable cutting mat to help line things up
-    - Support for any size 3D printer bed since all we really need is the bed dimensions; right now the default is named `Ender 3 S1` at 235x235mm but you can adjust and save the dimensions to anything; proper adding/editing names is planned.
-- Draw basic shapes (line, ellipse, rectangle, path) and text elements directly onto the canvas (best used for creating cutout lines for easier weeding of vinyl)
-- Objects can be resized and re-positioned as needed. I do however recommend using a program such as `Inkscape` to actually create your SVGs exactly how you want them, and then using PolyCut as the slicer
+- Import multiple SVGs, arrange and scale them on the canvas
+    - SVG groups / layers are preserved on import, including clipped geometries
+- While I strongly recommend using `Inkscape` to design your SVGs exactly as you want and then use Polycut as a machine path generator, basic transformation support is available in Polycut.
+    - Copy/Cut/Paste support
+    - Boolean operations (Union, Subtract, Intersect, Exclude)
+    - Mirror/Flip objects (handy for using heat-transfer vinyl)
+    - Editing Stroke/Fill colour
+    - Resize/rotate/move
+ - Basic shapes (line, ellipse, rectangle, path) can be drawn directly on the canvas
 
+   
 ### Tool Modes:
-- Cutting mode - generates outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter); importantly, has configurable swivel offsets that account for the blade's diameter, to ensure sharp corners remain sharp.
-- Drawing mode - generate paths and fills in a hatch / crosshatch pattern
-- (More modes planned, though editing the settings of the above two modes can allow for foiling and embossing as well)
+- **Cutting mode** - Generates optimised outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter, or cricut/silhouette blades).
+    - Configurable swivel offsets that account for the blade diameter to ensure sharp corners remain sharp
+    - Tracks the blade orientation when moving between cut lines to optimise and avoid tearing / scratching
+- **Drawing mode** - generate paths and fills using a variety of fill patterns:
+    - Hatch, Crosshatch, Spiral, Triangular Hatch, Diamond Crosshatch, and Radial fills
+- **Multipass** — repeat cutting or drawing passes N times, stepping down in Z between each pass; useful for thicker materials that need multiple light passes rather than a single deep cut
 
 ### Generators:
 There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`

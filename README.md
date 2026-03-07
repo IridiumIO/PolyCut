@@ -1,31 +1,38 @@
-<p align="center"><img src="https://raw.githubusercontent.com/IridiumIO/PolyCut/ac993f8824416a01a3d201cd3b27ee47d56aceee/PolyCut/Resources/banner_light.svg" width="450"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/7fcc4750-2f59-46ef-8b85-1d2f5fee2b0a" width="450"></p>
+
+
+<p align="center">
+  <a href="https://github.com/IridiumIO/PolyCut/releases">
+    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/IridiumIO/Polycut?style=for-the-badge">
+  </a>
+  </br> 
+</p>
 
 <p align="center"><b>Use your 3D Printer as a plotter / vinyl cutter. If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut or Silhouette machine.</b></p> 
 
-<p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers that have blades/pens/knives/foil stampers or other tools attached. It also directly supports uploading to a networked 3D Printer via Klipper. 
+<p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers, CNCs or any other Gcode machines that have blades/pens/knives/foil tools attached. It also directly supports uploading to a networked 3D Printer via Moonraker/Klipper. 
 </p> 
 
 &nbsp;
 
-
 <p align="center">
-  <img alt="NewMainUI" src="https://github.com/user-attachments/assets/0a2234f3-34ca-43cf-88fe-a86be8f26624" width="800"/>
+  <img alt="NewMainUI" src="https://github.com/user-attachments/assets/92d81be3-7d70-44cd-9348-eac888ac1367" width="800"/>
   </br> 
 </p>
 
 <p align="center">
-  <img alt="NewPreviewUI" src="https://github.com/user-attachments/assets/5d117494-5f9b-45c2-9c8d-9c350b48db8f" width="800"/>
+  <img alt="NewPreviewUI" src="https://github.com/user-attachments/assets/3bf80186-79a1-4115-bee4-d01ea2e7768c" width="800"/>
   </br> 
 </p>
 
 
 &nbsp;
 
-<h3 align="center"><a href="https://github.com/IridiumIO/PolyCut/releases">Download Here</a></h3>
+# Installation
 
 <p align="center">
-  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
-  </br> 
+<img alt="Static Badge" src="https://img.shields.io/badge/DOWNLOAD-steelblue?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
 </p>
 
 # Features
@@ -49,28 +56,37 @@
 - **Drawing mode** - generate paths and fills using a variety of fill patterns:
     - Hatch, Crosshatch, Spiral, Triangular Hatch, Diamond Crosshatch, and Radial fills
 - **Multipass** — repeat cutting or drawing passes N times, stepping down in Z between each pass; useful for thicker materials that need multiple light passes rather than a single deep cut
+- **Foiling / Engraving / Embossing / Etching** - Each can easily be done using configurable settings of the above modes 
 
-### Generators:
-There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`
-- **Polycut.Core**: Created for Polycut, but still experimental. It supports cutting and drawing, and most importantly, it can process text elements without having to convert them to paths first. However it has a few drawbacks for now:
-    - Even if a shape does not have a fill in the SVG, it will still be filled
-    - Complex shapes can cause problems with cutting/drawing accuracy.
-- **GCodePlot**: Created by @arpruss, with a few tweaks by myself that haven't made it into the base repository yet. This is a more tried-and-tested generator with more consistent results.
-    -  but importantly it **cannot** handle text elements that haven't been converted to paths first. 
-There are other features that are supported by one or the other; these are appropriately enabled/disabled when you switch between the two.
+### Saved Projects:
+- Save and reload working projects to/from disk, preserving all canvas shapes and properties.
+- Allows exporting the canvas to SVG as well
+
+### Printer/Machine Configuration:
+- Add and manage multiple printers (or any GCode supporting machine really) with independent profiles
+- Per-printer **Custom Start / End GCode**
+- Per-printer **Tool X / Y Offsets** to compensate for toolhead mounting offsets
+- **Klipper bounding box preview** - Send a dry-run rectangle pass to the Klipper before actually cutting, so you can confirm the material is aligned properly before actually cutting/drawing
 
 ### Preview
-- 2D rendering of toolpaths including a preview mode that renders the lines in the order the 3D printer will process them (at 20x speed)
-- Note: This gets laggy **very** quickly if you have intricate designs or you set the precision too high
-- GCode preview also shows estimated time and total drawing/cutting length. These details are also visible to Klipper
+- A full 2D animated render of toolpaths including travel/active line discrimination, showing the order processing will occur
+- Detailed controls for **Pause**, **Resume**, **Step Forward**, **Step Back** in the preview animation
+- GCode preview shows estimated time and total drawing/cutting length (also exported to Klipper if you use it) 
 
 ### Export
 - Save to GCode file, or
-- Send to a networked 3D printer using Klipper/Moonraker. Other services should be relatively straightforward to implement if requested. No support for password-protected Moonraker instances so far though
-    - Option to auto-start running the file after upload
-
+- Send to a networked 3D printer using Klipper/Moonraker
+  - Option to auto-start running the file after upload
+  - **Klipper Bounding Box Preview** export — runs a travel-only rectangle so you can verify alignment before committing to a cut
+ 
 ### Monitor
 - Simply takes the provided URL from the export tab and renders the webpage; handy for monitoring Klipper from within the app rather than opening a separate browser
+
+### Generators:
+There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`
+- **Polycut.Core**: Created for Polycut from the ground up, and incorporates a lot of performance and quality tweaks. 
+- **GCodePlot**: Created by @arpruss, with a few tweaks by myself that haven't made it into the base repository yet. This is a more tried-and-tested generator with more consistent results; initially this was a superior processor, but over the past few months `Polycut.Core` has become a lot more capable with more supported features. GCodePlot remains for those who simply prefer it :) 
+  - Note: GCodePlot doesn't support the spiral/radial/diamond/triangle fill patterns. It also cannot process SVG text elements or clipped paths directly. 
 
 
 &nbsp;

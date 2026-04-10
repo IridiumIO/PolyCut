@@ -11,7 +11,7 @@
                  x:Name="MainWindowView"
                  Title="PolyCut"
                  Width="1300"
-                 Height="700"
+                 Height="750"
                  MinWidth="700"
                  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
                  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"

@@ -133,96 +133,103 @@
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                <rc:PolyCanvas x:Name="mainCanvas"
-                               Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
-                               Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                               Margin="0 0 0 0" Panel.ZIndex="1"
-                               Background="Transparent"
-                               ChildrenCollection="{Binding MainVM.DrawableCollection}"
-                               ClipToBounds="False" />
-
-
-
-                <Border x:Name="CuttingMatBounds"
+                <Canvas x:Name="ReferenceCanvas"
                         Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                         Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                        Panel.ZIndex="-3"
+                        Margin="0 0 0 0">
+
+                    <rc:PolyCanvas x:Name="mainCanvas"
+                                   Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                                   Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                                   Margin="0 0 0 0" Panel.ZIndex="1"
+                                   Background="Transparent"
+                                   ChildrenCollection="{Binding MainVM.DrawableCollection}"
+                                   ClipToBounds="False" />
+
+
+                    <Border x:Name="CuttingMatBounds"
+                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                            Panel.ZIndex="-3"
                         Background="{Binding CanvasThemeColor}"
                         BorderBrush="White"
                         BorderThickness="0.4" CornerRadius="0">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.78" ShadowDepth="0"
-                                          Color="Black" />
-                    </Border.Effect>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.78" ShadowDepth="0"
+                                              Color="Black" />
+                        </Border.Effect>
+                    </Border>
+
+                    <Border x:Name="GridClipBorder"
+                            Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
+                            Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
+                            Panel.ZIndex="0"
+                            ClipToBounds="True" CornerRadius="0">
 
 
+                        <Border.Clip>
+                            <RectangleGeometry RadiusX="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}" RadiusY="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}">
+                                <RectangleGeometry.Rect>
+                                    <MultiBinding Converter="{local:RectFromSizeConverter}">
+                                        <Binding ElementName="GridClipBorder" Path="ActualWidth" />
+                                        <Binding ElementName="GridClipBorder" Path="ActualHeight" />
+                                    </MultiBinding>
+                                </RectangleGeometry.Rect>
+                            </RectangleGeometry>
+                        </Border.Clip>
 
-                </Border>
-
-                <Border x:Name="GridClipBorder"
-                        Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
-                        Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
-                        Panel.ZIndex="0" 
-                        ClipToBounds="True" CornerRadius="0">
-
-
-                    <Border.Clip>
-                        <RectangleGeometry RadiusX="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}" RadiusY="{Binding CornerRadius.TopLeft, ElementName=GridClipBorder}">
-                            <RectangleGeometry.Rect>
-                                <MultiBinding Converter="{local:RectFromSizeConverter}">
-                                    <Binding ElementName="GridClipBorder" Path="ActualWidth" />
-                                    <Binding ElementName="GridClipBorder" Path="ActualHeight" />
-                                </MultiBinding>
-                            </RectangleGeometry.Rect>
-                        </RectangleGeometry>
-                    </Border.Clip>
-
-                    <local:GridPreviewControl Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
-                                              Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
-                                              Panel.ZIndex="-1"
-                                              GridConfig="{Binding MainVM.UIConfiguration.GridConfig}"
-                                              IsHitTestVisible="False"
-                                              Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <local:GridPreviewControl Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
+                                                  Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
+                                                  Panel.ZIndex="-1"
+                                                  GridConfig="{Binding MainVM.UIConfiguration.GridConfig}"
+                                                  IsHitTestVisible="False"
+                                                  Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
 
 
 
-                </Border>
+                    </Border>
 
 
-                <!--  Fill the offset outside space  -->
-                <Path Canvas.Left="0" Canvas.Bottom="0"
-                      ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
-                      Visibility="{Binding MainVM.WorkingAreaVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Path.Data>
-                        <CombinedGeometry GeometryCombineMode="Xor">
-                            <CombinedGeometry.Geometry1>
-                                <RectangleGeometry Rect="{Binding MainVM.Printer.BedRect}" />
-                            </CombinedGeometry.Geometry1>
-                            <CombinedGeometry.Geometry2>
-                                <RectangleGeometry Rect="{Binding MainVM.Printer.WorkingRect}" />
-                            </CombinedGeometry.Geometry2>
-                        </CombinedGeometry>
-                    </Path.Data>
-                    <Path.Fill>
-                        <LinearGradientBrush SpreadMethod="Reflect" StartPoint="0 0" EndPoint="0.01 0.01">
-                            <GradientStop Offset="0.5" Color="#30FFFFFF" />
-                            <GradientStop Offset="0.5" Color="#40FFFFFF" />
-                        </LinearGradientBrush>
-                        <!--<SolidColorBrush Color="#40000000"/>-->
-                    </Path.Fill>
-                    <Path.Stroke>
-                        <SolidColorBrush Color="Transparent" />
-                    </Path.Stroke>
+                    <!--  Fill the offset outside space  -->
+                    <Path Canvas.Left="0" Canvas.Bottom="0"
+                          ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
+                          Visibility="{Binding MainVM.WorkingAreaVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Path.Data>
+                            <CombinedGeometry GeometryCombineMode="Xor">
+                                <CombinedGeometry.Geometry1>
+                                    <RectangleGeometry Rect="{Binding MainVM.Printer.BedRect}" />
+                                </CombinedGeometry.Geometry1>
+                                <CombinedGeometry.Geometry2>
+                                    <RectangleGeometry Rect="{Binding MainVM.Printer.WorkingRect}" />
+                                </CombinedGeometry.Geometry2>
+                            </CombinedGeometry>
+                        </Path.Data>
+                        <Path.Fill>
+                            <LinearGradientBrush SpreadMethod="Reflect" StartPoint="0 0" EndPoint="0.01 0.01">
+                                <GradientStop Offset="0.5" Color="#30FFFFFF" />
+                                <GradientStop Offset="0.5" Color="#40FFFFFF" />
+                            </LinearGradientBrush>
+                            <!--<SolidColorBrush Color="#40000000"/>-->
+                        </Path.Fill>
+                        <Path.Stroke>
+                            <SolidColorBrush Color="Transparent" />
+                        </Path.Stroke>
 
-                    <Path.Effect>
-                        <DropShadowEffect BlurRadius="15" Direction="0" RenderingBias="Quality" ShadowDepth="0" />
+                        <Path.Effect>
+                            <DropShadowEffect BlurRadius="15" Direction="0" RenderingBias="Quality" ShadowDepth="0" />
 
-                    </Path.Effect>
-                    <Path.LayoutTransform>
-                        <ScaleTransform ScaleY="-1" />
-                    </Path.LayoutTransform>
-                </Path>
+                        </Path.Effect>
+                        <Path.LayoutTransform>
+                            <ScaleTransform ScaleY="-1" />
+                        </Path.LayoutTransform>
+                    </Path>
+
+                </Canvas>
+
+
+
+
 
             </Grid>
 

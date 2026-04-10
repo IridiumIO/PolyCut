@@ -282,14 +282,14 @@ Public Class ZoomBorder
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
-            Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim _polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(_polyCanvas)
             DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
         Else
             If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
                 Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
                 If Not isShiftPressed Then
-                    Dim _polyCanvas = TryCast(Me.FindName("mainCanvas"), PolyCanvas)
+                    Dim _polyCanvas = GetPolyCanvas()
 
                     _polyCanvas?.SelectionManager.ClearSelection()
                 End If
@@ -307,7 +307,7 @@ Public Class ZoomBorder
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
-            Dim _polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim _polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(_polyCanvas)
             DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
             e.Handled = True
@@ -319,7 +319,7 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_MouseUp(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
-            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim polyCanvas = GetPolyCanvas()
             DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
             Return
         End If
@@ -362,7 +362,7 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
         Dim currentPosition As Point = e.GetPosition(Me)
         If CanvasMode <> CanvasMode.Selection AndAlso e.LeftButton = MouseButtonState.Pressed Then
-            Dim polyCanvas = CType(Me.FindName("mainCanvas"), PolyCanvas)
+            Dim polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(polyCanvas)
             DrawingManager.UpdateDrawing(CanvasMode, position, Keyboard.IsKeyDown(Key.LeftShift), Keyboard.IsKeyDown(Key.LeftCtrl))
             Return
@@ -379,6 +379,27 @@ Public Class ZoomBorder
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
 
+    Private Function GetPolyCanvas() As PolyCanvas
+        ' Try direct name lookup first
+        Dim byName As PolyCanvas = TryCast(Me.FindName("mainCanvas"), PolyCanvas)
+        If byName IsNot Nothing Then Return byName
+
+        ' If that fails, search visual tre
+        If Child Is Nothing Then Return Nothing
+        Return FindChildOfType(Of PolyCanvas)(Child)
+    End Function
+
+    Private Function FindChildOfType(Of T As DependencyObject)(root As DependencyObject) As T
+        If root Is Nothing Then Return Nothing
+        For i As Integer = 0 To VisualTreeHelper.GetChildrenCount(root) - 1
+            Dim child = VisualTreeHelper.GetChild(root, i)
+            Dim tx = TryCast(child, T)
+            If tx IsNot Nothing Then Return tx
+            Dim nested = FindChildOfType(Of T)(child)
+            If nested IsNot Nothing Then Return nested
+        Next
+        Return Nothing
+    End Function
 
 End Class
 

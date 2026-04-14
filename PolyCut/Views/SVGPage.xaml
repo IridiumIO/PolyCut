@@ -128,7 +128,7 @@
                        ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
                        LeftButtonAction="None" MiddleButtonAction="Move" PreviewMouseDown="zoomPanControl_PreviewMouseDown" RightButtonAction="Reset" ScaleAmount="0.002"
-                       ScaleMax="150" ScaleMin="0.1">
+                       ScaleMax="150" ScaleMin="0.01">
 
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -151,9 +151,8 @@
                             Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="-3"
-                        Background="{Binding CanvasThemeColor}"
-                        BorderBrush="White"
-                        BorderThickness="0.4" CornerRadius="0">
+                            Background="{Binding CanvasThemeColor}"
+                            BorderBrush="White" BorderThickness="0.4" CornerRadius="0">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.78" ShadowDepth="0"
                                               Color="Black" />

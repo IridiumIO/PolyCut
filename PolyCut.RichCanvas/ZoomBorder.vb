@@ -232,31 +232,74 @@ Public Class ZoomBorder
     Public Async Sub Reset()
         If Child Is Nothing Then Return
 
-        Dim cs = CType(Child, FrameworkElement)
+        Me.UpdateLayout()
 
-        Dim duration As Integer = 200 ' in milliseconds
-        Dim frames As Integer = 28
-        Dim deltaScale = (Scale - 2) / frames
-        Dim deltaTX = (TranslateTransform.X + cs.ActualWidth / 2) / frames
-        Dim deltaTY = (TranslateTransform.Y + cs.ActualHeight / 2) / frames
+        Dim fit = TryCast(FindElementByNameInChild("mainCanvas"), FrameworkElement)
+        If fit Is Nothing Then fit = TryCast(GetPolyCanvas(), FrameworkElement)
+        If fit Is Nothing Then Return
 
-        Dim frame As Integer = 0
-        While frame < frames
-            Scale -= deltaScale
-            TranslateTransform.X -= deltaTX
-            TranslateTransform.Y -= deltaTY
+        Dim w = fit.ActualWidth
+        Dim h = fit.ActualHeight
+        Dim vw = ActualWidth - Padding.Left - Padding.Right
+        Dim vh = ActualHeight - Padding.Top - Padding.Bottom
+        If w <= 0 OrElse h <= 0 OrElse vw <= 0 OrElse vh <= 0 Then Return
 
-            ' Use Task.Delay for asynchronous waiting without blocking the UI thread
-            Await Task.Delay(duration / frames)
+        Const margin As Double = 60.0
+        Dim targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, Math.Min((vw - 2 * margin) / w, (vh - 2 * margin) / h)))
 
-            frame += 1
-        End While
+        Dim s0 = Scale
+        Dim x0 = TranslateTransform.X
+        Dim y0 = TranslateTransform.Y
 
-        Scale = 2
-        TranslateTransform.X = -cs.ActualWidth / 2
-        TranslateTransform.Y = -cs.ActualHeight / 2
+        ' Compute final centered translation at target scale
+        Scale = targetScale
+        Dim b = fit.TransformToAncestor(Me).TransformBounds(New Rect(0, 0, w, h))
+        Dim targetX = TranslateTransform.X + (Padding.Left + ((vw - b.Width) / 2.0) - b.Left)
+        Dim targetY = TranslateTransform.Y + (Padding.Top + ((vh - b.Height) / 2.0) - b.Top)
 
+        ' Restore start and animate
+        Scale = s0
+        TranslateTransform.X = x0
+        TranslateTransform.Y = y0
+
+        Const durationMs As Integer = 200
+        Const frames As Integer = 28
+        Dim delayMs = Math.Max(1, durationMs \ frames)
+
+        For i As Integer = 1 To frames
+            Dim t = i / CDbl(frames)
+            t = t * t * (3 - 2 * t) ' smoothstep easing
+            Scale = s0 + ((targetScale - s0) * t)
+            TranslateTransform.X = x0 + ((targetX - x0) * t)
+            TranslateTransform.Y = y0 + ((targetY - y0) * t)
+            Await Task.Delay(delayMs)
+        Next
+
+        Scale = targetScale
+        TranslateTransform.X = targetX
+        TranslateTransform.Y = targetY
     End Sub
+
+    Private Function FindElementByNameInChild(elementName As String) As FrameworkElement
+        If Child Is Nothing Then Return Nothing
+        Return FindElementByNameRecursive(TryCast(Child, DependencyObject), elementName)
+    End Function
+
+    Private Function FindElementByNameRecursive(root As DependencyObject, elementName As String) As FrameworkElement
+        If root Is Nothing Then Return Nothing
+
+        Dim fe As FrameworkElement = TryCast(root, FrameworkElement)
+        If fe IsNot Nothing AndAlso String.Equals(fe.Name, elementName, StringComparison.Ordinal) Then
+            Return fe
+        End If
+
+        For i As Integer = 0 To VisualTreeHelper.GetChildrenCount(root) - 1
+            Dim found = FindElementByNameRecursive(VisualTreeHelper.GetChild(root, i), elementName)
+            If found IsNot Nothing Then Return found
+        Next
+
+        Return Nothing
+    End Function
 
     Private Sub MoveDown(ByVal e As MouseButtonEventArgs)
         If Not PanEnabled OrElse Child Is Nothing Then Return
@@ -378,6 +421,8 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
+
+
 
     Private Function GetPolyCanvas() As PolyCanvas
         ' Try direct name lookup first

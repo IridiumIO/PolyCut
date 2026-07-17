@@ -14,7 +14,6 @@ Public Class GCodeGenerator
         Dim workLines = ApplyOffset(RedefineOrigin(lines, cfg), cfg.ToolOffsetX, cfg.ToolOffsetY)
 
         Dim zTravel As Double = cfg.TravelZ
-        Dim zSafe As Double = cfg.SafeZ
 
         Dim workSpeed As Double = cfg.WorkSpeed * 60
         Dim travelSpeed As Double = cfg.TravelSpeed * 60
@@ -69,8 +68,8 @@ Public Class GCodeGenerator
                         isNewLine = True
                     Else
                         'Pen Up
-                        GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
-                        GCD.EstimatedTime += GetTimeForZ(zSafe - zWork, zSpeed)
+                        GCD.GCodes.Add(GCode.GZ(zTravel, zSpeed))
+                        GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
                     End If
                 End If
 
@@ -79,7 +78,7 @@ Public Class GCodeGenerator
             If passIndex <> cfg.Passes - 1 Then
                 ' Move to travel Z from safe
                 GCD.GCodes.Add(GCode.GZ(zTravel))
-                GCD.EstimatedTime += GetTimeForZ(zSafe - zTravel, zSpeed)
+                GCD.EstimatedTime += GetTimeForZ(zTravel, zSpeed)
 
                 ' Travel XY back to the first line start
                 Dim lastEnd = workLines(workLines.Count - 1).EndPoint
@@ -89,7 +88,7 @@ Public Class GCodeGenerator
 
         Next
 
-        GCD.GCodes.Add(GCode.GZ(zSafe, zSpeed))
+        GCD.GCodes.Add(GCode.GZ(zTravel, zSpeed))
 
         Return GCD
 

@@ -184,7 +184,6 @@ Public Class GCodePlotGenerator : Implements IGenerator
     {NameOf(Configuration.ZSpeed), "z-speed"},
     {NameOf(Configuration.WorkZ), "work-z"},
     {NameOf(Configuration.TravelZ), "lift-delta-z"},
-    {NameOf(Configuration.SafeZ), "safe-delta-z"},
     {NameOf(Configuration.Tolerance), "tolerance"},
     {NameOf(Configuration.ExtractOneColour), "boolean-extract-color"},
     {NameOf(Configuration.ExtractionColor), "extract-color"},
@@ -200,6 +199,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
     {NameOf(Configuration.DrawingConfig.ShadingAngle), "shading-angle"},
     {NameOf(Configuration.Area), "area"}
     }
+    '{NameOf(Configuration.SafeZ), "safe-delta-z"},
 
 
 
@@ -215,7 +215,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
         args.AddRange(BuildArgsForObject(properties, Configuration.DrawingConfig))
 
 
-        args.Add("--align-x=none --align-y=none --ignore-locked=false --ignore-hidden=false")
+        args.Add($"--align-x=none --align-y=none --ignore-locked=false --ignore-hidden=false --safe-delta-z={Configuration.TravelZ}")
 
         Debug.WriteLine(String.Join(" ", args))
 

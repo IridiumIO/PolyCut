@@ -34,6 +34,8 @@ Public Class GCodePlotGenerator : Implements IGenerator
 
 
         For Each line In output.Split(Environment.NewLine)
+            Dim gc = GCode.Parse(line)
+            If String.IsNullOrEmpty(gc.ToString) Then Continue For
             GCodes.Add(GCode.Parse(line))
         Next
 
@@ -65,13 +67,11 @@ Public Class GCodePlotGenerator : Implements IGenerator
             GCode.CommentLine($"  Generator:                 GCodePlot"),
             GCode.Blank(),
             GCode.CommentLine($"######################################"),
-            GCode.Blank(),
-            GCode.CommentLine($"######################################"),
             GCode.CommentLine($"Custom Start GCode"),
             GCode.Blank(),
             GCode.Blank(),
-            GCode.CommentLine($"######################################"),
-            GCode.Blank()}
+            GCode.CommentLine($"######################################")
+        }
 
         Dim EndMeta As New List(Of GCode) From {
             GCode.Blank(),
@@ -87,7 +87,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
             GCode.CommentLine($" filament used [mm] = {totalLineLength:F1}"),
             GCode.Blank(),
             GCode.CommentLine($"######################################")
-            }
+        }
 
         GCodes.InsertRange(0, InitialMeta)
         GCodes.AddRange(EndMeta)

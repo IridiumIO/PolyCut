@@ -27,6 +27,11 @@
                     <Run Text="{x:Static local:SettingsHandler.Version}" />
                 </TextBlock>
             </StackPanel>
+            <CheckBox x:Name="AddToStartMenuCheckBox"
+                      Margin="0 -40 0 -40" HorizontalAlignment="Right" Panel.ZIndex="2"
+                      Checked="AddToStartMenuCheckBox_Checked" Content="Add to Start Menu"
+                      IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
+                      Unchecked="AddToStartMenuCheckBox_Unchecked" />
 
             <Separator Margin="0 10" />
             <Label Content="GCode Generator" />
@@ -149,13 +154,13 @@
                                           CurrentColor="{Binding MainVM.UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
                                           LabelText="Travel Line Colour" />
-                
+
                 <local:ColorPickerControl x:Name="PreviewPage_CursorBrushColorSelector"
-                          Margin="0 5"
-                          ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
-                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
-                          Foreground="{DynamicResource CardForeground}"
-                          LabelText="Cursor Line Colour" />
+                                          Margin="0 5"
+                                          ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
+                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          Foreground="{DynamicResource CardForeground}"
+                                          LabelText="Cursor Colour" />
 
             </StackPanel>
 

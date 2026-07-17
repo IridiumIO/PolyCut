@@ -56,4 +56,34 @@ Public Class SettingsPageViewModel : Inherits ObservableObject
         End Get
     End Property
 
+
+    Public Sub AddToStartMenu()
+
+        Dim startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu)
+        Dim programs = IO.Path.Combine(startMenu, "Programs")
+
+        Dim shortcutPath = IO.Path.Combine(programs, "PolyCut.lnk")
+
+        Dim shell = CreateObject("WScript.Shell")
+        Dim shortcut = shell.CreateShortcut(shortcutPath)
+
+        shortcut.TargetPath = Process.GetCurrentProcess().MainModule.FileName
+        shortcut.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
+        shortcut.IconLocation = Process.GetCurrentProcess().MainModule.FileName & ",0"
+        shortcut.Description = "PolyCut"
+
+        shortcut.Save()
+    End Sub
+
+    Friend Sub RemoveFromStartMenu()
+        Dim startMenu = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu)
+        Dim programs = IO.Path.Combine(startMenu, "Programs")
+
+        Dim shortcutPath = IO.Path.Combine(programs, "PolyCut.lnk")
+
+        If IO.Path.Exists(shortcutPath) Then
+            IO.File.Delete(shortcutPath)
+        End If
+
+    End Sub
 End Class

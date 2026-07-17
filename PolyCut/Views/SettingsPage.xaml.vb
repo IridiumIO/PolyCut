@@ -10,10 +10,10 @@ Class SettingsPage
 
     Public ReadOnly Property _viewModel As SettingsPageViewModel
 
-
     Sub New(viewmodel As SettingsPageViewModel)
 
         DataContext = viewmodel
+        _viewModel = viewmodel
         ' This call is required by the designer.
         InitializeComponent()
 
@@ -22,8 +22,7 @@ Class SettingsPage
     End Sub
 
     Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
-        mv.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.MainVM.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)
@@ -31,17 +30,24 @@ Class SettingsPage
     End Sub
 
     Private Sub PreviewPage_DrawingBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
-        mv.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.MainVM.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub PreviewPage_TravelBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
-        mv.UIConfiguration.PreviewTravelBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.MainVM.UIConfiguration.PreviewTravelBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub PreviewPage_CursorBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        Dim mv As MainViewModel = Application.GetService(Of MainViewModel)()
-        mv.UIConfiguration.PreviewCursorBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.MainVM.UIConfiguration.PreviewCursorBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+    End Sub
+
+    Private Sub AddToStartMenuCheckBox_Checked(sender As Object, e As RoutedEventArgs)
+        _viewModel.AddToStartMenu()
+        _viewModel.MainVM.UIConfiguration.AddToStartMenu = True
+    End Sub
+
+    Private Sub AddToStartMenuCheckBox_Unchecked(sender As Object, e As RoutedEventArgs)
+        _viewModel.RemoveFromStartMenu()
+        _viewModel.MainVM.UIConfiguration.AddToStartMenu = False
     End Sub
 End Class

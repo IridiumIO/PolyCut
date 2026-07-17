@@ -24,6 +24,8 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
 
     <ObservableProperty> Private _PreviewCursorBrush As String = "#80FF0000"
 
+    <ObservableProperty> Private _AddToStartMenu As Boolean = False
+
 End Class
 
 Partial Public Class GridConfiguration : Inherits ObservableObject

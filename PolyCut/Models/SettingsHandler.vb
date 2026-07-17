@@ -41,13 +41,6 @@ Public Class SettingsHandler : Inherits ObservableObject
 
         Dim exepath As String = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
 
-        If Not exepath = IO.Path.Combine(DataFolder.FullName, "PolyCut.exe") Then
-
-            IO.File.Copy(exepath, IO.Path.Combine(DataFolder.FullName, "PolyCut.exe"), True)
-
-        End If
-
-
         Dim EV1 = Environment.GetEnvironmentVariable("IridiumIO", EnvironmentVariableTarget.User)
         Dim EV2 = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User)
 

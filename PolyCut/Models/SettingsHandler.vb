@@ -42,15 +42,9 @@ Public Class SettingsHandler : Inherits ObservableObject
         Dim exepath As String = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
 
         Dim EV1 = Environment.GetEnvironmentVariable("IridiumIO", EnvironmentVariableTarget.User)
-        Dim EV2 = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User)
 
         If EV1 Is Nothing Then
             Await Task.Run(Sub() Environment.SetEnvironmentVariable("IridiumIO", IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO"), EnvironmentVariableTarget.User))
-        End If
-
-        If Not EV2.Contains(DataFolder.FullName) Then
-            EV2 += ";" + DataFolder.FullName
-            Await Task.Run(Sub() Environment.SetEnvironmentVariable("Path", EV2, EnvironmentVariableTarget.User))
         End If
 
     End Sub

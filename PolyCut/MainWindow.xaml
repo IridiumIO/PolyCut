@@ -261,7 +261,8 @@
                         <ui:SymbolIcon Symbol="SaveArrowRight20" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Margin="15 2"
+                <ui:NavigationViewItem x:Name="MonitorPage_NavigationButton"
+                                       Margin="15 2"
                                        Content="Monitor" NavigationCacheMode="Required"
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:MonitorPage}">

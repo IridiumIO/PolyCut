@@ -18,6 +18,10 @@ Class MainWindow : Implements INavigationWindow
         NavigationView.SetServiceProvider(serviceProvider)
         snackbarService.SetSnackbarPresenter(RootSnackbar)
 
+        If WineDetection.IsRunningUnderWine Then
+            MonitorPage_NavigationButton.Visibility = Visibility.Collapsed
+        End If
+
         AddHandler NavigationView.Navigated, Sub(s, e)
                                                  If TypeOf (e.Page) Is SVGPage Then
                                                      UndoButtonGlobal.Visibility = Visibility.Visible

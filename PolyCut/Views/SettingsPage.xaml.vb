@@ -19,6 +19,10 @@ Class SettingsPage
 
         ' Add any initialization after the InitializeComponent() call.
 
+        If WineDetection.IsRunningUnderWine Then
+            AddToStartMenuCheckBox.Visibility = Visibility.Collapsed
+        End If
+
     End Sub
 
     Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)

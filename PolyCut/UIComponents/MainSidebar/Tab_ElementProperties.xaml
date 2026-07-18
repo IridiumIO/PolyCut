@@ -110,7 +110,7 @@
                                        Content="R" />
                                 <ui:NumberBox Grid.Row="4" Grid.Column="1"
                                               AcceptsReturn="False" ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus" Maximum="360" Minimum="-360"
-                                              SpinButtonPlacementMode="Compact" ValueChanged="NumberBox_LostFocus"
+                                              SpinButtonPlacementMode="Hidden" ValueChanged="NumberBox_LostFocus"
                                               Value="{Binding MainVM.SelectedWrapper.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
 
                                 <ui:Button Grid.Row="4" Grid.Column="4"

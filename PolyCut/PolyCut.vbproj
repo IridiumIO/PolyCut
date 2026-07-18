@@ -74,7 +74,7 @@
     <PackageReference Include="spicermicer.ZoomBorder" Version="1.0.0" />
     <PackageReference Include="Svg" Version="3.4.6" />
     <PackageReference Include="ValueConverters" Version="3.0.26" />
-    <PackageReference Include="WPF-UI" Version="4.2.0">
+    <PackageReference Include="WPF-UI" Version="4.3.0">
       <GeneratePathProperty>True</GeneratePathProperty>
     </PackageReference>
     <PackageReference Include="WPF-UI.DependencyInjection" Version="4.2.0" />

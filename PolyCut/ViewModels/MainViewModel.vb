@@ -26,6 +26,8 @@ Partial Public Class MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
 
+    'Operating System detection
+    <ObservableProperty> Private _IsWindows As Boolean = Not WineDetection.IsRunningUnderWine
 
     ' State / configuration
     <ObservableProperty> Private _UsingGCodePlot As Boolean

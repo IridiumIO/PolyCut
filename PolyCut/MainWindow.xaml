@@ -92,7 +92,11 @@
                             </Menu.Resources>
 
                             <ui:MenuItem x:Name="dlsk"
-                                         local:BackdropSampler.IntervalMs="5000" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.TintColor="#08FFFFFF" Header="_File">
+                                         local:BackdropSampler.IntervalMs="5000"
+                                         local:BackdropSampler.IsEnabled="{Binding IsWindows}"
+                                         local:BackdropSampler.TintColor="#08FFFFFF"
+                                         Background="{StaticResource ApplicationBackgroundBrush}"
+                                         Header="_File">
                                 <MenuItem.Resources>
                                     <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
                                 </MenuItem.Resources>

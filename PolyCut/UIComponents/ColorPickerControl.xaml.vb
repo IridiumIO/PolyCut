@@ -3,6 +3,18 @@ Imports System.Windows
 Public Class ColorPickerControl
     Inherits UserControl
 
+    Public Sub New()
+        InitializeComponent()
+
+        Dim mainVM = Application.GetService(Of MainViewModel)()
+
+        If Not mainVM.IsWindows Then
+            ColorPopup.AllowsTransparency = False
+            ColorPopupBorder.CornerRadius = New CornerRadius(0)
+        End If
+
+    End Sub
+
     ' Label text property
     Public Shared ReadOnly LabelTextProperty As DependencyProperty =
         DependencyProperty.Register("LabelText", GetType(String), GetType(ColorPickerControl), New PropertyMetadata("Color"))

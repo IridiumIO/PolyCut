@@ -8,9 +8,10 @@ Public Class ColorPickerControl
 
         Dim mainVM = Application.GetService(Of MainViewModel)()
 
-        If Not mainVM.IsWindows Then
+        If mainVM.IsWindows Then
             ColorPopup.AllowsTransparency = False
             ColorPopupBorder.CornerRadius = New CornerRadius(0)
+            EyedropperButton.Visibility = Visibility.Collapsed
         End If
 
     End Sub

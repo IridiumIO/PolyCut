@@ -2,16 +2,15 @@
 
 
 <p align="center">
-  <a href="https://github.com/IridiumIO/PolyCut/releases">
-    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github">
-    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/IridiumIO/Polycut?style=for-the-badge">
-  </a>
+    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github"> <a href="https://github.com/IridiumIO/PolyCut/releases"></img>
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/IridiumIO/Polycut?style=for-the-badge"> <a href="https://github.com/IridiumIO/PolyCut/releases"></img>
+
   </br> 
 </p>
 
-<p align="center"><b>Use your 3D Printer as a plotter / vinyl cutter. If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut or Silhouette machine.</b></p> 
+<p align="center"><b>Turn your 3D Printer into a vinyl cutter, pen plotter, foil machine or engraving tool. </br>If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut machine.</b></p> 
 
-<p align="center">Polycut is a tool designed to import SVG files and convert them to 2D GCode to run on 3D Printers, CNCs or any other Gcode machines that have blades/pens/knives/foil tools attached. It also directly supports uploading to a networked 3D Printer via Moonraker/Klipper. 
+<p align="center">Convert SVG artwork into optimized 2D GCode with drag-knife compensation, drawing fills, multi-pass engraving and more.  Polycut also directly supports uploading to a networked 3D Printer via Moonraker/Klipper. 
 </p> 
 
 &nbsp;
@@ -30,99 +29,85 @@
 &nbsp;
 
 # Installation
-
+Download the latest version from Github Releases. 
 <p align="center">
 <img alt="Static Badge" src="https://img.shields.io/badge/DOWNLOAD-steelblue?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
 </p>
 
+The application itself is portable (no installation required!) however configuration data is saved in `%LocalAppData%/IridiumIO/PolyCut`
+
+
 # Features
 
 ### Drawing Canvas:
-- Import multiple SVGs, arrange and scale them on the canvas
-    - SVG groups / layers are preserved on import, including clipped geometries
-- While I strongly recommend using `Inkscape` to design your SVGs exactly as you want and then use Polycut as a machine path generator, basic transformation support is available in Polycut.
-    - Copy/Cut/Paste support
+- Import arrange and scale multiple SVGs
+    - SVG groups, layers and clipped geometries are preserved.
+- Basic editing tools
+    - Copy/Cut/Paste
     - Boolean operations (Union, Subtract, Intersect, Exclude)
-    - Mirror/Flip objects (handy for using heat-transfer vinyl)
-    - Editing Stroke/Fill colour
-    - Resize/rotate/move
- - Basic shapes (line, ellipse, rectangle, path) can be drawn directly on the canvas
+    - Mirror/Flip, Move, Rotate, Resize
+    - Editing Stroke and Fill colours
+ - Draw basic shapes directly (line, ellipse, rectangle, path) as well as text.
+ - Save and reload projects, or export the canvas back to SVG for use elsewhere
 
-   
+> [!NOTE]
+> PolyCut is intended to complement tools like Inkscape, not replace them. I strongly recommend designing your artwork in Inkscape, and using Polycut for layout, basic transformations and GCode generation. An Inkscape extension for rapid export is coming soon.
+
+
 ### Tool Modes:
-- **Cutting mode** - Generates optimised outline paths for a drag knife or cutter (e.g. Roland Vinyl Cutter, or cricut/silhouette blades).
-    - Configurable swivel offsets that account for the blade diameter to ensure sharp corners remain sharp
-    - Tracks the blade orientation when moving between cut lines to optimise and avoid tearing / scratching
-- **Drawing mode** - generate paths and fills using a variety of fill patterns:
-    - Hatch, Crosshatch, Spiral, Triangular Hatch, Diamond Crosshatch, and Radial fills
-- **Multipass** — repeat cutting or drawing passes N times, stepping down in Z between each pass; useful for thicker materials that need multiple light passes rather than a single deep cut
-- **Foiling / Engraving / Embossing / Etching** - Each can easily be done using configurable settings of the above modes 
-
-### Saved Projects:
-- Save and reload working projects to/from disk, preserving all canvas shapes and properties.
-- Allows exporting the canvas to SVG as well
+- **Cutting** - Optimised drag knife toolpaths with configurable swivel offsets and blade orientation tracking for crisp corners and tearing prevention.
+- **Drawing** - Outline drawing +/- Hatch, Crosshatch, Spiral, Triangular, Diamond and Radial fill patterns
+- **Multipass** - Repeat passes with configurable Z step-down
+- **Foiling, Engraving, Embossing and Etching** — Configurable using the above tool modes
 
 ### Printer/Machine Configuration:
-- Add and manage multiple printers (or any GCode supporting machine really) with independent profiles
-- Per-printer **Custom Start / End GCode**
-- Per-printer **Tool X / Y Offsets** to compensate for toolhead mounting offsets
-- **Klipper bounding box preview** - Send a dry-run rectangle pass to the Klipper before actually cutting, so you can confirm the material is aligned properly before actually cutting/drawing
+- Multiple machine profiles
+- Custom Start / End GCode
+- Tool X / Y Offsets to compensate for mounting offsets
+- Klipper bounding box preview - Sends a dry-run to Klipper for material alignment.
 
-### Preview
-- A full 2D animated render of toolpaths including travel/active line discrimination, showing the order processing will occur
-- Detailed controls for **Pause**, **Resume**, **Step Forward**, **Step Back** in the preview animation
-- GCode preview shows estimated time and total drawing/cutting length (also exported to Klipper if you use it) 
+### Preview & Export
+- Animated 2D toolpath preview with travel moves, execution order and playback controls
+- GCode previews show estimated time and total toolpath length (Metric only. Sorry Americans)
+- Export GCode or upload directly to Moonraker/Klipper with optional auto-start after upload, and a built-in Klipper web interface. 
 
-### Export
-- Save to GCode file, or
-- Send to a networked 3D printer using Klipper/Moonraker
-  - Option to auto-start running the file after upload
-  - **Klipper Bounding Box Preview** export — runs a travel-only rectangle so you can verify alignment before committing to a cut
- 
-### Monitor
-- Simply takes the provided URL from the export tab and renders the webpage; handy for monitoring Klipper from within the app rather than opening a separate browser
-
-### Generators:
+### Toolpath Generators:
 There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`
-- **Polycut.Core**: Created for Polycut from the ground up, and incorporates a lot of performance and quality tweaks. 
-- **GCodePlot**: Created by @arpruss, with a few tweaks by myself that haven't made it into the base repository yet. This is a more tried-and-tested generator with more consistent results; initially this was a superior processor, but over the past few months `Polycut.Core` has become a lot more capable with more supported features. GCodePlot remains for those who simply prefer it :) 
-  - Note: GCodePlot doesn't support the spiral/radial/diamond/triangle fill patterns. It also cannot process SVG text elements or clipped paths directly. 
-
+- **Polycut.Core**: Custom generator with advanced optimisations and path ordering, advanced fill generation, SVG text and clipping support, and significantly faster processing.
+- **GCodePlot**: Created by @arpruss, augmented with a few tweaks by myself. Initially this was the superior processor, but now remains for those who simply prefer it :) 
 
 &nbsp;
 
 # Requirements
+### Operating System
 - Windows 10 v1809 or higher (Windows 11 required for Mica effects).
-    - Technically it could work as far back as Windows 7 but I haven't tested it.  
-
-&nbsp;
-
-# Additional Screenshots
-
-<p>
-   <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/77c7abfc-bef7-4a34-a558-ab1c78c9ff5f" width="1000"/>
-  <img src="https://github.com/IridiumIO/PolyCut/assets/1491536/cb2b29de-e527-42ba-9b35-a3a55a4881b2" width="1000"/>
-</p>
-
-# Background
-I have a 3D printer. I wanted to get into bookbinding, which utilises a lot of vinyl designs that typically require a Cricut, Silhouette or similar vinyl cutter that costs as much as a 3D printer. A 3D printer is already a perfectly good 3-axis system, capable of <200 micron cutting/drawing precision.
-General solutions do exist for creating GCode from SVG files already - You can convert SVGs to GCode from within Cura, but it doesn't account for the diameter of a swivel blade, and thus corners are never crisp; Inkscape has its own inbuilt GCodeTools but it is extremely kludgy; InkCut looks to be nice, but it refuses to run on my PC. 
-
-GCodePlot by @arpruss is an excellent extension to Inkscape - by far the best I found (and in fact, you can use it from within Polycut) but on its own, it isn't quite *smooth* enough. You have to chop up a 12" cutting mat to fit on a standard 3d printer bed, and you never quite know where to line everything up. First I created a [template](https://github.com/IridiumIO/PolyCut/assets/1491536/dd7d9973-3343-4935-85e9-bdc71f112550) for Inkscape that had a [pre-chopped cutting mat in it](https://github.com/IridiumIO/PolyCut/assets/1491536/623fe8d8-3cfd-4ae9-a5e2-e2841f8a1561). Then modified GCodePlot to allow exporting from Inkscape's export menu, added support for ignoring hidden/locked layers, and added Moonraker upload support. That should have been enough for me.
-
-But then I got ambitious...
-
-
-### Tutorial on setting up Klipper to quickly swap between 3D printing and non-printing modes 
-[Klipper Setup.md](https://github.com/IridiumIO/PolyCut/blob/master/Klipper%20Setup.md#klipper-setup)
+- Linux - requires `WINE`. Some features are disabled for compatibility (In-built browser, Eyedropper tool and transparency effects)
 
 ### 3D-printable mount for holding swivel blade/pens
 If you have an Ender 3 S1 or other printer that can take [this hotswap mount](https://properprinting.pro/product/creality-ender3s1-simpletoolchanger/), then you can [get my current vinyl cutter holder here](https://www.printables.com/model/741765). 
 
 Otherwise, you'll find vinyl cutters on Printables/Thingiverse. I *strongly* recommend using one that has a spring in it, because a 3D printer bed is nowhere near level enough for the accuracy needed to consistently cut through vinyl. A spring will allow a bit of flexibility and pressure to keep the blade in contact with the cutting mat. 
 
-# Issues and Planned Features
-[See the document here](https://github.com/IridiumIO/PolyCut/blob/master/PolyCut.Core/Issues.md#issues)
+### (Optional) Tutorial on setting up Klipper to quickly swap between 3D printing and non-printing modes 
+[Klipper Setup.md](https://github.com/IridiumIO/PolyCut/blob/master/Klipper%20Setup.md#klipper-setup)
+
+
+&nbsp;
+
+# Background
+Like many makers, I own a 3D printer. When I started getting into bookbinding and other paper crafts, I quickly discovered that many projects rely on vinyl cutters such as a Cricut or Silhouette. Spending hundreds of dollars on a machine that is essentially another 3-axis motion system didn't make much sense to me. 
+
+A semi-modern 3D printer is already capable of extremely precise movements, often with positional accuracy much lower than 200 microns. With the right tool attached, it can perform many of the same jobs as a dedicated Cricut or Silhouette machine.
+The problem was, software to achieve this was kind of rubbish. 
+
+There are several ways to generate GCode from SVG files, but none of them quite fit what I wanted. Cura can convert SVGs into toolpaths, but it doesn't compensate for a drag knife's swivel radius, resulting in corners that are never sharp. Inkscape's built-in GCode tools are powerful but extremely klunky. Other available tools 
+
+I have a 3D printer. I wanted to get into bookbinding, which utilises a lot of vinyl designs that typically require a Cricut, Silhouette or similar vinyl cutter that costs as much as a 3D printer. A 3D printer is already a perfectly good 3-axis system, capable of <200 micron cutting/drawing precision.
+General solutions do exist for creating GCode from SVG files already - You can convert SVGs to GCode from within Cura, but it doesn't account for the diameter of a swivel blade, and thus corners are never crisp; Inkscape has its own inbuilt GCodeTools but it is extremely kludgy; InkCut looks to be nice, but it refuses to run on my PC. 
+
+One project stood out: GCodePlot is an Inkscape extension by @arpruss. It produced excellent toolpaths and became the foundation for many of my early experiments. I initially modified it directly, created a [template](https://github.com/IridiumIO/PolyCut/assets/1491536/dd7d9973-3343-4935-85e9-bdc71f112550) for Inkscape that had a [pre-chopped cutting mat in it](https://github.com/IridiumIO/PolyCut/assets/1491536/623fe8d8-3cfd-4ae9-a5e2-e2841f8a1561). Then started adding features such as Moonraker uploads, exporting directly from Inkscape, and support for ignoring hidden or locked layers. But on it's own, it never quite felt... *smooth* enough. 
+
+Then I got ambitious... and PolyCut is the result. 
 
  -----
  ### Like this project?

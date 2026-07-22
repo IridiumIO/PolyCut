@@ -5,6 +5,7 @@ I'm also using Mainsail for the Web interface. You can use Fluidd if you want, b
 
 This looks complicated, but it really isn't; it's just a lot of copy-and-pasting. 
 
+> [!NOTE]
 > This is *not* a guide on setting up Klipper from scratch. It assumes you already have your Ender 3 S1 set up in Klipper the way you want for 3D Printing.
 
 ## Step 1 - Separating out Printer.cfg
@@ -54,10 +55,10 @@ rotation_distance: 40
 
 ```
 
-Note: You'll see that my Z_Offset is set to 0. This is **intentional**. You can mess with the Z offset later but it is important to make sure it's set to zero for now, because that offset will persist between both the 3D Print mode and the Cutting Mode.
-
 What we've done now is simply moved everything from the Printer.cfg to its own file, freeing up the ability to make swaps easier. 
 
+> [!IMPORTANT]
+>  You'll see that my Z_Offset is set to 0. This is **intentional**. You can mess with the Z offset later but it is important to make sure it's set to zero for now, because that offset will persist between both the 3D Print mode and the Cutting Mode.
 
 
 ## Step 2 - Setting up PolyCut.cfg
@@ -75,6 +76,8 @@ Duplicate the `3DPrint.cfg` file and call it `PolyCut.cfg`. You should have two 
  - `[safe_z_home]`
 
 These are all things you don't need running while in cutting mode. Technically you can delete the `[heater_bed]` section as well but it's not necessary. 
+
+> [!IMPORTANT]
 > **Make sure you delete `[include macros.cfg]`! We don't need all those printing macros and we'll use our own here**
 
 ### Bypass BLTouch
@@ -285,7 +288,8 @@ Then press `8` to install G-Code Shell Command.
 
 Done!
 
->Note! Be careful from hereon out. You have enabled a way to run arbitrary system code from within GCode - which means don't download and run random GCode files  because they could contain malicious code that can now run. 
+> [!CAUTION]
+> Be careful from hereon out. You have enabled a way to run arbitrary system code from within GCode - which means don't download and run random GCode files  because they could contain malicious code that can now run. 
 
 
 ### ShellCommand File
@@ -325,11 +329,13 @@ command: python /home/pi/printer_data/config/SwitchMode.py
 *Any* shell command can be run in that line. I could have entered a command to delete all your files instead. Be careful. 
 
 But what we're actually doing is telling it to run a certain python file to switch the mode (We'll create that file in a second). 
-> Note: If your username is not creatively called "pi" like mine is, make sure you change it in the filepath above, e.g. 
+ - `[gcode_macro SET]` - This is a macro that lets you type `SET MODE=CUT` or `SET MODE=PRINT` into your console, and it passes the `MODE` variable to the python script. It then automatically restarts the firmware. 
+ - `[gcode_macro CUTTING_MODE]` and `[gcode_macro POLYCUT_MODE]` - Shortcuts to the above. We'll use these for creating the interface buttons in Mainsail later.
+
+> [!NOTE]
+> If your username is not creatively called "pi" like mine is, make sure you change it in the filepath above, e.g. 
 > `command: python /home/[YOUR_USERNAME_HERE]/printer_data/config/SwitchMode.py`
 
- - `[gcode_macro SET]` - This is a macro that lets you type `SET MODE=CUT` or `SET MODE=PRINT` into your console, and it passes the `MODE` variable to the python script. It then automatically restarts the firmware. 
- - `[gcode_macro CUTTING_MODE]` and `[gcode_macro POLYCUT_MODE]` - Shortcuts to the above. We'll use these for creating the interface buttons in Mainsail later. 
 
 ### SwitchMode File
 Let's create that python file now and call it `SwitchMode.py` (create it in the same place your `printer.cfg` and other similar files are)

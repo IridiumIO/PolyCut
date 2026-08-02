@@ -384,7 +384,7 @@ Partial Public Class MainViewModel
     <RelayCommand>
     Private Sub BrowseSVG()
         Dim fs As New Microsoft.Win32.OpenFileDialog With {
-            .Filter = "*.svg|*.svg|*.png|*.png",
+            .Filter = "Image Files (*.svg;*.png;*.bmp;*.jpg;*.jpeg)|*.svg;*.png;*.bmp;*.jpg;*.jpeg|All Files (*.*)|*.*",
             .Multiselect = True
         }
         If fs.ShowDialog Then
@@ -392,7 +392,7 @@ Partial Public Class MainViewModel
 
             For Each fl In fs.FileNames
 
-                If IO.Path.GetExtension(fl).ToLower() = ".png" Then
+                If IO.Path.GetExtension(fl).ToLower() <> ".svg" Then
                     Dim vtracer = Application.GetService(Of VTracerService)
                     Dim svgPath = vtracer.ConvertPNGToSVG(fl)
                     If svgPath Is Nothing Then

@@ -286,6 +286,21 @@
                                         </Style>
                                     </Grid.Style>
                                 </Grid>
+                                <local:LabeledSliderControl Margin="0 -5"
+                                                            DeferCommit="True" LabelText="Threshold" Maximum="255" Minimum="0" TickFrequency="1"
+                                                            UnitText="px"
+                                                            Value="{Binding VTracerOptions.BWThreshold}">
+                                    <local:LabeledSliderControl.Style>
+                                        <Style TargetType="local:LabeledSliderControl">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </local:LabeledSliderControl.Style>
+                                </local:LabeledSliderControl>
 
 
                                 <local:LabeledSliderControl Margin="0 -5"

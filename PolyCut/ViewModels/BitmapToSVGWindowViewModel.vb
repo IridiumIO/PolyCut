@@ -49,6 +49,7 @@ Public Class VTracerOptions : Inherits ObservableObject
     <ObservableProperty> Private _MaxColors As Integer = 0 '0 = no limit
     <ObservableProperty> Private _Optimize As OptimizationMode = OptimizationMode.QuantizeAndCleanup
     <ObservableProperty> Private _WatershedDetail As Integer = 128
+    <ObservableProperty> Private _BWThreshold As Integer = 128
     <ObservableProperty> Private _AdaptiveSampling As Boolean = False
     <ObservableProperty> Private _AdaptiveSamplingWindow As Integer = 0 'px. Implies Adaptive Sampling is enabled
     <ObservableProperty> Private _AdapativeSensitivity As Integer = 16 '% below local mean, 0-100. 
@@ -155,6 +156,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 {If(opts.MaxColors > 0, "--max-colors " & opts.MaxColors, "")}
 --optimize {CInt(opts.Optimize)}
 --watershed-detail {opts.WatershedDetail}
+--threshold {opts.BWThreshold}
 {If(opts.AdaptiveSampling, "--adaptive", "")}
 {If(opts.AdaptiveSampling, "--adaptive-window " & opts.AdaptiveSamplingWindow, "")}
 {If(opts.AdaptiveSampling, "--adaptive-t " & opts.AdapativeSensitivity, "")}

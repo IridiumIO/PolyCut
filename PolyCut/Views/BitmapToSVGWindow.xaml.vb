@@ -1,7 +1,7 @@
 ﻿Public Class BitmapToSVGWindow
 
     Private _flattenedShapes As List(Of (Geometry As Geometry, Source As GeometryDrawing))
-
+    Private _drawingBounds As Rect
 
     Public Sub New(vm As BitmapToSVGWindowViewModel)
 
@@ -30,27 +30,24 @@
         If drawing Is Nothing Then Return
 
         _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).
-            Where(Function(s) Not ReferenceEquals(s.Source, vm.BoundsSentinel)).
-            ToList()
+        Where(Function(s) Not ReferenceEquals(s.Source, vm.BoundsSentinel)).
+        ToList()
 
-        Dim bounds = drawing.Bounds
-        HitTestCanvas.Width = bounds.Width
-        HitTestCanvas.Height = bounds.Height
-        HitTestCanvas.RenderTransform = New TranslateTransform(-bounds.X, -bounds.Y)
+        Dim canvasSize = vm.PreviewCanvasSize
+        HitTestCanvas.Width = canvasSize.Width
+        HitTestCanvas.Height = canvasSize.Height
+        PreviewImageOverlay.Width = canvasSize.Width
+        PreviewImageOverlay.Height = canvasSize.Height
 
-        PreviewImageOverlay.Width = bounds.Width
-        PreviewImageOverlay.Height = bounds.Height
 
         HighlightPath.Data = Nothing
     End Sub
 
     Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
-
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
 
         Dim point = e.GetPosition(HitTestCanvas)
 
-        ' Iterate in reverse: later-drawn shapes are visually "on top", so prioritize them.
         For i = _flattenedShapes.Count - 1 To 0 Step -1
             Dim shape = _flattenedShapes(i)
             If shape.Geometry.FillContains(point) Then

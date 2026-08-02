@@ -62,7 +62,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
     <ObservableProperty> Private _OriginalImage As BitmapImage
     <ObservableProperty> Private _PreviewImage As DrawingImage
     <ObservableProperty> Private _PreviewDrawing As Drawing
-
+    <ObservableProperty> Private _PreviewCanvasSize As Size
 
     <ObservableProperty> Private _VTracerOptions As VTracerOptions
 
@@ -117,8 +117,6 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
             PreviewImage = Render(tempSvgPath) 'Render has a side effect of setting PreviewDrawing, used for hit testing. TODO Refactor
             AnalyzeSvg(svgX)
 
-            Debug.WriteLine($"DrawingImage.Width/Height = {PreviewImage.Width} / {PreviewImage.Height}")
-
             _WorkingSVGString = svgX
         Catch ex As OperationCanceledException
             Debug.WriteLine("Preview update canceled.")
@@ -126,10 +124,6 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
             Debug.WriteLine($"Error during preview update: {ex.Message}")
 
         End Try
-
-        If Keyboard.IsKeyDown(Key.LeftShift) Then
-            Process.Start("explorer.exe", $"/select,""{tempSvgPath}""")
-        End If
 
         IsNotProcessing = True
 
@@ -211,9 +205,6 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
 
 
-
-
-
     Public Function Render(svg As String) As DrawingImage
 
         Dim settings = New WpfDrawingSettings()
@@ -227,7 +218,8 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
         Dim drawing = converter.Read(svg)
 
         Dim canvasSize = GetDeclaredCanvasSize(svg)
-        drawing = NormalizeDrawingBounds(drawing, canvasSize.Width, canvasSize.Height) 'Pretty sure this is needed because of SharpVectors btu I can't prove it. 
+        PreviewCanvasSize = canvasSize
+        drawing = NormalizeDrawing(drawing, canvasSize.Width, canvasSize.Height) 'Pretty sure this is needed because of SharpVectors btu I can't prove it. 
 
         PreviewDrawing = drawing 'SIDE EFFECT: TODO refactor to make it clearer
         Debug.WriteLine($"Drawing.Bounds = {drawing.Bounds}")
@@ -269,24 +261,25 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
     Private _boundsSentinel As GeometryDrawing
 
-    Private Function NormalizeDrawingBounds(drawing As Drawing, width As Double, height As Double) As Drawing
-        If width <= 0 OrElse height <= 0 Then Return drawing
+    Private Function NormalizeDrawing(rawDrawing As Drawing, canvasWidth As Double, canvasHeight As Double) As Drawing
+        If canvasWidth <= 0 OrElse canvasHeight <= 0 Then Return rawDrawing
+
+        Dim originalBounds = rawDrawing.Bounds
+
+        Dim shiftedContent As New DrawingGroup()
+        shiftedContent.Transform = New TranslateTransform(-originalBounds.X, -originalBounds.Y)
+        shiftedContent.Children.Add(rawDrawing)
 
         _boundsSentinel = New GeometryDrawing(
         System.Windows.Media.Brushes.Transparent,
         Nothing,
-        New RectangleGeometry(New Rect(0, 0, width, height)))
+        New RectangleGeometry(New Rect(0, 0, canvasWidth, canvasHeight)))
 
-        Dim group = TryCast(drawing, DrawingGroup)
-        If group IsNot Nothing Then
-            group.Children.Insert(0, _boundsSentinel)
-            Return group
-        Else
-            Dim wrapper As New DrawingGroup()
-            wrapper.Children.Add(_boundsSentinel)
-            wrapper.Children.Add(drawing)
-            Return wrapper
-        End If
+        Dim root As New DrawingGroup()
+        root.Children.Add(_boundsSentinel)
+        root.Children.Add(shiftedContent)
+
+        Return root
     End Function
 
     Public ReadOnly Property BoundsSentinel As GeometryDrawing

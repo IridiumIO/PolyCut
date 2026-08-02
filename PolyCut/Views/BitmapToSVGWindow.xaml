@@ -100,7 +100,7 @@
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"
                             Background="Transparent" MouseLeave="HitTestCanvas_MouseLeave" MouseMove="HitTestCanvas_MouseMove">
-                        <Image x:Name="PreviewImageOverlay" Source="{Binding PreviewImage}" Stretch="Fill" />
+                        <Image x:Name="PreviewImageOverlay" Source="{Binding PreviewImage}" Stretch="None" />
 
                         <Path x:Name="HighlightPath"
                               Fill="#504cAF50" IsHitTestVisible="False"

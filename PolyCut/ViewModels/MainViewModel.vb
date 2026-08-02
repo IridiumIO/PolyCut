@@ -384,13 +384,24 @@ Partial Public Class MainViewModel
     <RelayCommand>
     Private Sub BrowseSVG()
         Dim fs As New Microsoft.Win32.OpenFileDialog With {
-            .Filter = "*.svg|*.svg",
+            .Filter = "*.svg|*.svg|*.png|*.png",
             .Multiselect = True
         }
         If fs.ShowDialog Then
             Dim actions As New List(Of IUndoableAction)()
 
             For Each fl In fs.FileNames
+
+                If IO.Path.GetExtension(fl).ToLower() = ".png" Then
+                    Dim vtracer = Application.GetService(Of VTracerService)
+                    Dim svgPath = vtracer.ConvertPNGToSVG(fl)
+                    If svgPath Is Nothing Then
+                        Continue For
+                    End If
+                    fl = svgPath
+                End If
+
+
                 Dim action As New ImportSVGAction(Me, _svgImportService, fl)
                 If action.Execute() Then
                     actions.Add(action)

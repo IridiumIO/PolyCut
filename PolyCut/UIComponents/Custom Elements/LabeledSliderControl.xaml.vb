@@ -1,4 +1,6 @@
-﻿Partial Public Class LabeledSliderControl
+﻿Imports System.Windows.Controls.Primitives
+
+Partial Public Class LabeledSliderControl
     Inherits UserControl
 
     Public Sub New()
@@ -83,5 +85,41 @@
     End Property
     Public Shared ReadOnly NumberIsReadOnlyProperty As DependencyProperty =
         DependencyProperty.Register(NameOf(NumberIsReadOnly), GetType(Boolean), GetType(LabeledSliderControl), New PropertyMetadata(False))
+
+    Public Property DeferCommit As Boolean
+        Get
+            Return CBool(GetValue(DeferCommitProperty))
+        End Get
+        Set(value As Boolean)
+            SetValue(DeferCommitProperty, value)
+        End Set
+    End Property
+    Public Shared ReadOnly DeferCommitProperty As DependencyProperty =
+        DependencyProperty.Register(NameOf(DeferCommit), GetType(Boolean), GetType(LabeledSliderControl), New PropertyMetadata(False))
+
+
+    Private Sub PART_Slider_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double))
+        ' Preserves original live-update behavior for all existing consumers.
+        If Not DeferCommit Then
+            CommitValue()
+        End If
+    End Sub
+
+    Private Sub PART_Slider_DragCompleted(sender As Object, e As DragCompletedEventArgs)
+        If DeferCommit Then CommitValue()
+    End Sub
+
+    Private Sub PART_Slider_PreviewMouseUp(sender As Object, e As MouseButtonEventArgs)
+        If DeferCommit Then CommitValue()
+    End Sub
+
+    Private Sub PART_Slider_KeyUp(sender As Object, e As KeyEventArgs)
+        If DeferCommit Then CommitValue()
+    End Sub
+
+    Private Sub CommitValue()
+        Dim expr = BindingOperations.GetBindingExpression(PART_Slider, Slider.ValueProperty)
+        expr?.UpdateSource()
+    End Sub
 
 End Class

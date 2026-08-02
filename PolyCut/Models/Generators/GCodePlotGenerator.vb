@@ -23,7 +23,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
 
         args = args & " """ & tempFilePath & """"
 
-        Dim ret As (String, String) = Await RunEmbeddedExecutable("gcodeplot.exe", args)
+        Dim ret As (String, String) = Await RunEmbeddedExecutable.Run("gcodeplot.exe", args)
         Dim output = ret.Item1
         Dim eroutput = ret.Item2
 
@@ -134,45 +134,7 @@ Public Class GCodePlotGenerator : Implements IGenerator
         Return GCodes
     End Function
 
-    Shared Async Function RunEmbeddedExecutable(executableName As String, args As String) As Task(Of (String, String))
-        Dim executingAssembly As Assembly = Assembly.GetExecutingAssembly()
 
-        Dim executablePath As String = Path.Combine(SettingsHandler.DataFolder.FullName, executableName)
-
-        If Not File.Exists(executablePath) Then
-            Using stream As Stream = executingAssembly.GetManifestResourceStream(executingAssembly.GetName().Name & "." & executableName)
-                If stream IsNot Nothing Then
-                    Dim exeBytes(CInt(stream.Length) - 1) As Byte
-                    stream.Read(exeBytes, 0, exeBytes.Length)
-
-                    Using tempFileStream As FileStream = File.Create(executablePath)
-                        tempFileStream.Write(exeBytes, 0, exeBytes.Length)
-                    End Using
-                End If
-            End Using
-        End If
-
-
-        ' Run the extracted executable
-        Dim process As New Process()
-        process.StartInfo.FileName = executablePath
-        process.StartInfo.Arguments = args
-        process.StartInfo.RedirectStandardOutput = True
-        process.StartInfo.RedirectStandardError = True
-        process.StartInfo.UseShellExecute = False
-        process.StartInfo.CreateNoWindow = True
-        process.Start()
-        Dim output As String = process.StandardOutput.ReadToEnd()
-        Dim outputER As String = process.StandardError.ReadToEnd()
-
-        ' Optionally, wait for the process to exit
-        Await process.WaitForExitAsync()
-
-
-        Return (output, outputER)
-
-
-    End Function
 
 
 

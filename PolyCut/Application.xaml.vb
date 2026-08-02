@@ -32,6 +32,7 @@ Partial Public Class Application
                                services.AddSingleton(Of UndoRedoService)()
                                services.AddSingleton(Of ProjectSerializationService)()
                                services.AddSingleton(Of ClipboardService)()
+                               services.AddSingleton(Of VTracerService)()
 
                                ' Main window with navigation
                                services.AddNavigationViewPageProvider()
@@ -53,6 +54,10 @@ Partial Public Class Application
 
                                services.AddSingleton(Of SettingsPage)()
                                services.AddSingleton(Of SettingsPageViewModel)()
+
+                               services.AddTransient(Of BitmapToSVGWindow)()
+                               services.AddTransient(Of BitmapToSVGWindowViewModel)()
+
                            End Sub) _
         .Build()
 

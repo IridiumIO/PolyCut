@@ -32,6 +32,7 @@
     <None Remove="Resources\gcodeplot.exe" />
     <None Remove="Resources\logo.ico" />
     <None Remove="Resources\logo.svg" />
+    <None Remove="Resources\vtracer.exe" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +41,7 @@
     <EmbeddedResource Include="Resources\CuttingMat.Dark.svg" />
     <EmbeddedResource Include="Resources\CuttingMat.svg" />
     <EmbeddedResource Include="Resources\gcodeplot.exe" />
+    <EmbeddedResource Include="Resources\vtracer.exe" />
     <Resource Include="Resources\banner_dark.svg" />
     <Resource Include="Resources\banner_light.svg" />
     <Resource Include="Resources\logo.ico" />
@@ -70,7 +72,7 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="All" />
-    <PackageReference Include="SharpVectors.Wpf" Version="1.8.2" />
+    <PackageReference Include="SharpVectors.Wpf" Version="1.8.5" />
     <PackageReference Include="spicermicer.ZoomBorder" Version="1.0.0" />
     <PackageReference Include="Svg" Version="3.4.6" />
     <PackageReference Include="ValueConverters" Version="3.0.26" />

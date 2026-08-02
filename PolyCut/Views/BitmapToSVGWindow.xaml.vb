@@ -29,18 +29,14 @@
         Dim drawing = vm?.PreviewDrawing
         If drawing Is Nothing Then Return
 
-        _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).
-        Where(Function(s) Not ReferenceEquals(s.Source, vm.BoundsSentinel)).
-        ToList()
+        _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).ToList()
 
         Dim canvasSize = vm.PreviewCanvasSize
         HitTestCanvas.Width = canvasSize.Width
         HitTestCanvas.Height = canvasSize.Height
-        PreviewImageOverlay.Width = canvasSize.Width
-        PreviewImageOverlay.Height = canvasSize.Height
-
 
         HighlightPath.Data = Nothing
+        HighlightPath.Visibility = Visibility.Collapsed
     End Sub
 
     Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
@@ -82,7 +78,7 @@
     Private Sub FluentWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs)
         If e.SystemKey = Key.LeftAlt OrElse e.SystemKey = Key.RightAlt Then
             OriginalImageOverlay.Visibility = Visibility.Visible
-            PreviewImageOverlay.Visibility = Visibility.Collapsed
+            PreviewDrawingHost.Visibility = Visibility.Collapsed
         End If
 
         If e.Key = Key.LeftShift Then
@@ -94,12 +90,39 @@
     Private Sub FluentWindow_PreviewKeyUp(sender As Object, e As KeyEventArgs)
         If e.SystemKey = Key.LeftAlt OrElse e.SystemKey = Key.RightAlt Then
             OriginalImageOverlay.Visibility = Visibility.Collapsed
-            PreviewImageOverlay.Visibility = Visibility.Visible
+            PreviewDrawingHost.Visibility = Visibility.Visible
         End If
 
         If e.Key = Key.LeftShift Then
             HighlightPath.Visibility = Visibility.Collapsed
+
         End If
 
     End Sub
+End Class
+
+
+Public Class DrawingHost
+    Inherits FrameworkElement
+
+    Public Shared ReadOnly DrawingProperty As DependencyProperty =
+        DependencyProperty.Register(NameOf(Drawing), GetType(Drawing), GetType(DrawingHost),
+            New FrameworkPropertyMetadata(Nothing, FrameworkPropertyMetadataOptions.AffectsRender))
+
+    Public Property Drawing As Drawing
+        Get
+            Return CType(GetValue(DrawingProperty), Drawing)
+        End Get
+        Set(value As Drawing)
+            SetValue(DrawingProperty, value)
+        End Set
+    End Property
+
+    Protected Overrides Sub OnRender(drawingContext As DrawingContext)
+        MyBase.OnRender(drawingContext)
+        If Drawing IsNot Nothing Then
+            drawingContext.DrawDrawing(Drawing)
+        End If
+    End Sub
+
 End Class

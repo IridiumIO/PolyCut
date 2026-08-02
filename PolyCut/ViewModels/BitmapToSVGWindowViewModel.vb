@@ -221,10 +221,8 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
         Dim canvasSize = GetDeclaredCanvasSize(svg)
         PreviewCanvasSize = canvasSize
-        drawing = NormalizeDrawing(drawing, canvasSize.Width, canvasSize.Height) 'Pretty sure this is needed because of SharpVectors btu I can't prove it. 
-
         PreviewDrawing = drawing 'SIDE EFFECT: TODO refactor to make it clearer
-        Debug.WriteLine($"Drawing.Bounds = {drawing.Bounds}")
+
         Return New DrawingImage(drawing)
 
     End Function
@@ -260,36 +258,6 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
         Return New Size(0, 0)
     End Function
-
-    Private _boundsSentinel As GeometryDrawing
-
-    Private Function NormalizeDrawing(rawDrawing As Drawing, canvasWidth As Double, canvasHeight As Double) As Drawing
-        If canvasWidth <= 0 OrElse canvasHeight <= 0 Then Return rawDrawing
-
-        Dim originalBounds = rawDrawing.Bounds
-
-        Dim shiftedContent As New DrawingGroup()
-        shiftedContent.Transform = New TranslateTransform(-originalBounds.X, -originalBounds.Y)
-        shiftedContent.Children.Add(rawDrawing)
-
-        _boundsSentinel = New GeometryDrawing(
-        System.Windows.Media.Brushes.Transparent,
-        Nothing,
-        New RectangleGeometry(New Rect(0, 0, canvasWidth, canvasHeight)))
-
-        Dim root As New DrawingGroup()
-        root.Children.Add(_boundsSentinel)
-        root.Children.Add(shiftedContent)
-
-        Return root
-    End Function
-
-    Public ReadOnly Property BoundsSentinel As GeometryDrawing
-        Get
-            Return _boundsSentinel
-        End Get
-    End Property
-
 
     Public Sub Cleanup()
 

@@ -70,7 +70,7 @@
         </ui:Card>
 
         <zb:ZoomBorder Grid.Row="1"
-                       Background="Transparent" MiddleButtonAction="Move" RightButtonAction="Reset">
+                       Background="Transparent" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
             <Grid x:Name="mainCanvas"
                   Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Canvas>
@@ -99,8 +99,8 @@
 
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"
-                            Background="Transparent" MouseLeave="HitTestCanvas_MouseLeave" MouseMove="HitTestCanvas_MouseMove">
-                        <Image x:Name="PreviewImageOverlay" Source="{Binding PreviewImage}" Stretch="None" />
+                            Background="Transparent" ClipToBounds="True" MouseLeave="HitTestCanvas_MouseLeave" MouseMove="HitTestCanvas_MouseMove">
+                        <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" />
 
                         <Path x:Name="HighlightPath"
                               Fill="#504cAF50" IsHitTestVisible="False"

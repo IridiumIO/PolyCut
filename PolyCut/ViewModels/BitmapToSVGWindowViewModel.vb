@@ -242,7 +242,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
         IO.File.WriteAllText(tempSvgPath, _WorkingSVGString)
         ResultSvgPath = tempSvgPath
         RaiseEvent RequestClose(True)
-
+        Cleanup()
     End Sub
 
     Private Function GetDeclaredCanvasSize(svgPath As String) As Size
@@ -294,6 +294,19 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
             Return _boundsSentinel
         End Get
     End Property
+
+
+    Public Sub Cleanup()
+
+        Dim tempPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-working.svg")
+
+        If Not IO.File.Exists(tempPath) Then Return
+        Try
+            IO.File.Delete(tempPath)
+        Catch ex As Exception
+            Debug.WriteLine($"Failed to delete temporary SVG file: {ex.Message}")
+        End Try
+    End Sub
 
 End Class
 

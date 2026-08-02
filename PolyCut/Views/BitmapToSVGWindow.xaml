@@ -100,7 +100,7 @@
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"
                             Background="Transparent" ClipToBounds="True" MouseLeave="HitTestCanvas_MouseLeave" MouseMove="HitTestCanvas_MouseMove">
-                        <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" />
+                        <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" IsHitTestVisible="False" />
 
                         <Path x:Name="HighlightPath"
                               Fill="#504cAF50" IsHitTestVisible="False"

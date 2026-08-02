@@ -39,11 +39,9 @@
         HighlightPath.Visibility = Visibility.Collapsed
     End Sub
 
-    Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
+
+    Private Sub UpdateHighlightPath(point As Point)
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
-
-        Dim point = e.GetPosition(HitTestCanvas)
-
         For i = _flattenedShapes.Count - 1 To 0 Step -1
             Dim shape = _flattenedShapes(i)
             If shape.Geometry.FillContains(point) Then
@@ -51,8 +49,13 @@
                 Return
             End If
         Next
-
         HighlightPath.Data = Nothing
+    End Sub
+
+    Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
+        If Not Keyboard.IsKeyDown(Key.LeftShift) OrElse _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
+        Dim point = e.GetPosition(HitTestCanvas)
+        UpdateHighlightPath(point)
     End Sub
 
     Private Sub HitTestCanvas_MouseLeave(sender As Object, e As MouseEventArgs)
@@ -83,6 +86,8 @@
 
         If e.Key = Key.LeftShift Then
             HighlightPath.Visibility = Visibility.Visible
+            Dim point = Mouse.GetPosition(HitTestCanvas)
+            UpdateHighlightPath(point)
         End If
 
     End Sub

@@ -471,7 +471,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function GetStrokeWidthOrZero(svg As SvgVisualElement) As Single
         Try
-            If svg Is Nothing OrElse svg.StrokeWidth = Nothing Then Return 0.0F
+            If svg Is Nothing OrElse svg.Stroke Is Nothing OrElse svg.StrokeWidth = Nothing Then Return 0.0F
             Return svg.StrokeWidth.Value
         Catch
             Return 0.0F
@@ -601,7 +601,9 @@ Public Class SVGImportService : Implements ISvgImportService
             }
 
             Dim idrawable = FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
-            idrawable.StrokeThickness = original.StrokeWidth
+
+            idrawable.StrokeThickness = GetStrokeWidthOrZero(original)
+
             Return idrawable
         Catch ex As Exception
             Return Nothing

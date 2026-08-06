@@ -173,7 +173,14 @@
                                           SelectedItem="{Binding VTracerOptions.Clustering}" />
                             </local:LabeledControl.ValueContent>
                             <local:LabeledControl.ToolTip>
-                                <TextBlock Text="Hello" />
+                                <StackPanel TextBlock.TextAlignment="Left">
+                                    <TextBlock FontWeight="SemiBold" Text="Default = Colour Clustering" />
+                                    <TextBlock Margin="0 2 0 0" Text="Chooses the algorithm used to form regions before tracing." TextWrapping="Wrap" />
+                                    <Separator Margin="0 6" />
+                                    <TextBlock Text="Colour Cluster - Groups pixels of similar colour together to determine boundaries" TextWrapping="Wrap" />
+                                    <TextBlock Margin="0 6 0 0" Text="Black &amp; White - Uses a single threshold to collapse the image into two tones. More useful for scanned paper." TextWrapping="Wrap" />
+                                    <TextBlock Margin="0 6 0 0" Text="Watershed - uses a hierarchical algorithm to form content-adaptive regions that closely follow object shape." TextWrapping="Wrap" />
+                                </StackPanel>
                             </local:LabeledControl.ToolTip>
                         </local:LabeledControl>
 
@@ -185,7 +192,17 @@
                                           SelectedItem="{Binding VTracerOptions.Hierarchical}" />
                             </local:LabeledControl.ValueContent>
                             <local:LabeledControl.ToolTip>
-                                <TextBlock Text="Hello" />
+                                <StackPanel MaxWidth="280" TextBlock.TextAlignment="Left">
+                                    <TextBlock FontWeight="SemiBold" Text="Stacking (Default = Cutout)" />
+                                    <TextBlock Margin="0 2 0 0" Text="Controls how the detected regions are layered on top of one another." TextWrapping="Wrap" />
+                                    <Separator Margin="0 6" />
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Cutout - " /><Run Text="Produces a true seam-free mosaic, avoiding overlaps or visible seams between regions." /><Run FontWeight="SemiBold" Text=" NOTE: " /><Run Text="Cutout will cause a ripple/oscillating effect visible along edges. This is a VTracer bug for now. If the ripples are too obvious, correct them with Path Simplification or use the Stacked option instead. " />
+                                    </TextBlock>
+                                    <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Stacked - " /><Run Text="Layers each region as a separate overlapping shape, like sheets of coloured paper." />
+                                    </TextBlock>
+                                </StackPanel>
                             </local:LabeledControl.ToolTip>
                         </local:LabeledControl>
 
@@ -198,7 +215,20 @@
 
                             </local:LabeledControl.ValueContent>
                             <local:LabeledControl.ToolTip>
-                                <TextBlock Text="Hello" />
+                                <StackPanel MaxWidth="280" TextBlock.TextAlignment="Left">
+                                    <TextBlock FontWeight="SemiBold" Text="Tracing Mode (Default = Spline)" />
+                                    <TextBlock Margin="0 2 0 0" Text="Sets the curve-fitting style used to outline each region." TextWrapping="Wrap" />
+                                    <Separator Margin="0 6" />
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Pixel - " /><Run Text="Keeps hard, blocky pixel-edge outlines with no curve fitting. Great for pixel art" />
+                                    </TextBlock>
+                                    <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Polygon - " /><Run Text="Uses straight line segments" />
+                                    </TextBlock>
+                                    <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Spline - " /><Run Text="Fits edges using smooth curves for organic outlines." />
+                                    </TextBlock>
+                                </StackPanel>
                             </local:LabeledControl.ToolTip>
                         </local:LabeledControl>
 
@@ -211,7 +241,20 @@
 
                             </local:LabeledControl.ValueContent>
                             <local:LabeledControl.ToolTip>
-                                <TextBlock Text="Hello" />
+                                <StackPanel MaxWidth="280">
+                                    <TextBlock FontWeight="SemiBold" Text="Optimisation Mode (Default = Off)" />
+                                    <TextBlock Margin="0 2 0 0" Text="Controls post-processing applied to the output SVG." TextWrapping="Wrap" />
+                                    <Separator Margin="0 6" />
+                                    <TextBlock TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Off - " /><Run Text="Applies no optimisation to the output." />
+                                    </TextBlock>
+                                    <TextBlock Margin="0 4 0 0" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Quantize + Cleanup - " /><Run Text="Rounds colours and strips redundant path data." />
+                                    </TextBlock>
+                                    <TextBlock Margin="0 4 0 0" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="+ Shorthands - " /><Run Text="Additionally rewrites path commands using compact SVG shorthand syntax to further reduce file size." />
+                                    </TextBlock>
+                                </StackPanel>
                             </local:LabeledControl.ToolTip>
                         </local:LabeledControl>
 
@@ -228,6 +271,7 @@
                             <StackPanel Margin="15 -15 15 20" FlowDirection="LeftToRight">
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Watershed Detail" Maximum="255" Minimum="0" TickFrequency="1"
+                                                            ToolTip="Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions."
                                                             Value="{Binding VTracerOptions.WatershedDetail}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
@@ -244,7 +288,7 @@
 
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Colour Precision" Maximum="8" Minimum="0" TickFrequency="1"
-                                                            UnitText="bits"
+                                                            ToolTip="Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." UnitText="bits"
                                                             Value="{Binding VTracerOptions.ColorPrecision}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
@@ -259,6 +303,7 @@
                                 </local:LabeledSliderControl>
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Colour Gradient Step" Maximum="64" Minimum="0" TickFrequency="1"
+                                                            ToolTip="Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers."
                                                             Value="{Binding VTracerOptions.GradientStep}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
@@ -273,7 +318,7 @@
                                 </local:LabeledSliderControl>
 
 
-                                <Grid Margin="-10 10 0 0">
+                                <Grid Margin="-10 10 0 0" ToolTip="Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally.">
                                     <CheckBox Content="Adaptive Sampling" IsChecked="{Binding VTracerOptions.AdaptiveSampling}" />
                                     <Grid.Style>
                                         <Style TargetType="Grid">
@@ -288,15 +333,19 @@
                                 </Grid>
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Threshold" Maximum="255" Minimum="0" TickFrequency="1"
-                                                            UnitText="px"
+                                                            ToolTip="Fixed brightness cutoff (0-255) used for Black &amp; White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." UnitText="px"
                                                             Value="{Binding VTracerOptions.BWThreshold}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}">
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}" />
+                                                        <Condition Binding="{Binding VTracerOptions.AdaptiveSampling}" Value="False" />
+                                                    </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </local:LabeledSliderControl.Style>
@@ -305,15 +354,20 @@
 
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Adaptive Sampling Window" Maximum="100" Minimum="0" TickFrequency="1"
-                                                            UnitText="px"
+                                                            ToolTip="Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes." UnitText="px"
                                                             Value="{Binding VTracerOptions.AdaptiveSamplingWindow}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}">
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}" />
+                                                        <Condition Binding="{Binding VTracerOptions.AdaptiveSampling}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
+                                                </MultiDataTrigger>
+
                                             </Style.Triggers>
                                         </Style>
                                     </local:LabeledSliderControl.Style>
@@ -321,15 +375,19 @@
 
                                 <local:LabeledSliderControl Margin="0 -5"
                                                             DeferCommit="True" LabelText="Adaptive Sampling Sensitivity" Maximum="100" Minimum="0" TickFrequency="1"
-                                                            UnitText="%"
+                                                            ToolTip="Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." UnitText="%"
                                                             Value="{Binding VTracerOptions.AdapativeSensitivity}">
                                     <local:LabeledSliderControl.Style>
                                         <Style TargetType="local:LabeledSliderControl">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}">
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding VTracerOptions.Clustering}" Value="{x:Static local:ClusteringMethod.BW}" />
+                                                        <Condition Binding="{Binding VTracerOptions.AdaptiveSampling}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </local:LabeledSliderControl.Style>
@@ -347,12 +405,12 @@
 
                         <local:LabeledSliderControl Margin="0 -5"
                                                     DeferCommit="True" LabelText="Speckle Filtering" Maximum="64" Minimum="0" TickFrequency="1"
-                                                    UnitText="px"
+                                                    ToolTip="Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." UnitText="px"
                                                     Value="{Binding VTracerOptions.FilterSpeckle}" />
 
                         <local:LabeledSliderControl Margin="0 -5"
                                                     DeferCommit="True" LabelText="Path Simplification" Maximum="5" Minimum="0" TickFrequency="0.1"
-                                                    UnitText="px"
+                                                    ToolTip="Curve simplification tolerance in pixels (try 0.5-2.5). Higher values simplify more aggressively at the cost of precision." UnitText="px"
                                                     Value="{Binding VTracerOptions.Simplify}">
                             <local:LabeledSliderControl.Style>
                                 <Style TargetType="local:LabeledSliderControl">
@@ -367,10 +425,11 @@
                         </local:LabeledSliderControl>
                         <local:LabeledSliderControl Margin="0 -5"
                                                     DeferCommit="True" LabelText="Path Precision" Maximum="10" Minimum="0" TickFrequency="1"
-                                                    UnitText="decimals"
+                                                    ToolTip="Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." UnitText="decimals"
                                                     Value="{Binding VTracerOptions.PathPrecision}" />
                         <local:LabeledSliderControl Margin="0 -5"
                                                     DeferCommit="True" LabelText="Maximum Colours (0 = Unlimited)" Maximum="256" Minimum="0" TickFrequency="1"
+                                                    ToolTip="Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used."
                                                     Value="{Binding VTracerOptions.MaxColors}">
                             <local:LabeledSliderControl.Style>
                                 <Style TargetType="local:LabeledSliderControl">

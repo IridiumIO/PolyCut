@@ -61,8 +61,8 @@
                      Height="32" />
 
         <ui:Card Grid.Row="1" Grid.Column="0"
-                 Margin="20" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2"
-                 local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.SampleY="2">
+                 Margin="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2"
+                 local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.SampleY="2" Opacity="0.95">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding NodeCount, StringFormat='Nodes: {0}'}" />
                 <TextBlock Text="  |  " />
@@ -78,8 +78,8 @@
                  Margin="20 20 0 0" Padding="10" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="2"
                  local:BackdropSampler.Corner="TopLeft" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.TintColor="#20FFFFFF">
             <StackPanel>
-                <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Info12" />
-                <StackPanel x:Name="controlsInfoGuide">
+                <ui:SymbolIcon HorizontalAlignment="Left" FontSize="16" Symbol="Info16" />
+                <StackPanel x:Name="controlsInfoGuide" Margin="15 0 15 15">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -118,35 +118,35 @@
                 </Style>
             </ui:Card.Style>
         </ui:Card>
-
+        <Canvas Grid.Row="0" Grid.RowSpan="2">
+            <Canvas.Background>
+                <DrawingBrush TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
+                    <DrawingBrush.Drawing>
+                        <DrawingGroup>
+                            <GeometryDrawing Brush="#00222222">
+                                <GeometryDrawing.Geometry>
+                                    <RectangleGeometry Rect="0,0,20,20" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                            <GeometryDrawing Brush="#40333333">
+                                <GeometryDrawing.Geometry>
+                                    <GeometryGroup>
+                                        <RectangleGeometry Rect="0,0,10,10" />
+                                        <RectangleGeometry Rect="10,10,10,10" />
+                                    </GeometryGroup>
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Canvas.Background>
+        </Canvas>
 
         <zb:ZoomBorder Grid.Row="1"
                        Background="Transparent" LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
             <Grid x:Name="mainCanvas"
                   Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Canvas>
-                    <Canvas.Background>
-                        <DrawingBrush TileMode="Tile" Viewport="0,0,20,20" ViewportUnits="Absolute">
-                            <DrawingBrush.Drawing>
-                                <DrawingGroup>
-                                    <GeometryDrawing Brush="#222222">
-                                        <GeometryDrawing.Geometry>
-                                            <RectangleGeometry Rect="0,0,20,20" />
-                                        </GeometryDrawing.Geometry>
-                                    </GeometryDrawing>
-                                    <GeometryDrawing Brush="#333333">
-                                        <GeometryDrawing.Geometry>
-                                            <GeometryGroup>
-                                                <RectangleGeometry Rect="0,0,10,10" />
-                                                <RectangleGeometry Rect="10,10,10,10" />
-                                            </GeometryGroup>
-                                        </GeometryDrawing.Geometry>
-                                    </GeometryDrawing>
-                                </DrawingGroup>
-                            </DrawingBrush.Drawing>
-                        </DrawingBrush>
-                    </Canvas.Background>
-                </Canvas>
+
 
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"

@@ -70,7 +70,7 @@
         </ui:Card>
 
         <zb:ZoomBorder Grid.Row="1"
-                       Background="Transparent" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
+                       Background="Transparent" LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
             <Grid x:Name="mainCanvas"
                   Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Canvas>

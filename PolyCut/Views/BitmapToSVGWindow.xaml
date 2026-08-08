@@ -60,18 +60,75 @@
                      Grid.Row="0" Grid.ColumnSpan="2"
                      Height="32" />
 
-        <ui:Card Grid.Row="1" Grid.Column="0"
-                 Margin="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2"
-                 local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.SampleY="2" Opacity="0.95">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding NodeCount, StringFormat='Nodes: {0}'}" />
-                <TextBlock Text="  |  " />
-                <TextBlock Text="{Binding RegionCount, StringFormat='Total Regions: {0}'}" />
-                <TextBlock Text="  |  " />
-                <TextBlock Text="{Binding ExcludedRegionIndices.Count, StringFormat='Excluded Regions: {0}'}" />
+        <Grid Grid.Row="1" Grid.Column="0"
+              Margin="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            </StackPanel>
-        </ui:Card>
+            <ui:Card Width="150" Height="35"
+                     Padding="0"
+                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                <Grid Height="35">
+                    <TextBlock Width="70"
+                               Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Text="Nodes" TextAlignment="Center" />
+                    <Border Width="60"
+                            HorizontalAlignment="Right"
+                            Background="{StaticResource CardBackground}"
+                            CornerRadius="0 4 4 0">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Text="{Binding NodeCount}"
+                                   TextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </ui:Card>
+
+            <ui:Card Grid.Column="1"
+                     Width="150" Height="35"
+                     Margin="20 0" Padding="0"
+                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                <Grid Height="35">
+                    <TextBlock Width="70"
+                               Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Text="Shapes" TextAlignment="Center" />
+                    <Border Width="60"
+                            HorizontalAlignment="Right"
+                            Background="{StaticResource CardBackground}"
+                            CornerRadius="0 4 4 0">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Text="{Binding RegionCount}"
+                                   TextAlignment="Center" />
+                    </Border>
+                </Grid>
+
+
+            </ui:Card>
+
+            <ui:Card Grid.Column="2"
+                     Width="150" Height="35"
+                     Padding="0"
+                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                <Grid Height="35">
+                    <TextBlock Width="70"
+                               Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                               Text="Exclusions" TextAlignment="Center" />
+                    <Border Width="60"
+                            HorizontalAlignment="Right"
+                            Background="{StaticResource CardBackground}"
+                            CornerRadius="0 4 4 0">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Text="{Binding ExcludedRegionIndices.Count}"
+                                   TextAlignment="Center" />
+                    </Border>
+                </Grid>
+
+
+            </ui:Card>
+
+        </Grid>
 
         <ui:Card Grid.Row="1"
                  MaxWidth="300"

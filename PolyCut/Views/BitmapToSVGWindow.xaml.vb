@@ -4,6 +4,7 @@
     Private _drawingBounds As Rect
 
     Private _excludedIndices As New HashSet(Of Integer)
+    Private _visibleGeometryCache As New Dictionary(Of Integer, Geometry)
 
     Public Sub New(vm As BitmapToSVGWindowViewModel)
         InitializeComponent()
@@ -33,6 +34,7 @@
 
         _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).ToList()
         _excludedIndices.Clear()
+        _visibleGeometryCache.Clear()
 
         Dim canvasSize = vm.PreviewCanvasSize
         HitTestCanvas.Width = canvasSize.Width
@@ -46,6 +48,29 @@
         vm.ExcludedRegionIndices = _excludedIndices
     End Sub
 
+
+    '####################
+    ' VISIBLE GEOMETRY MANAGEMENT
+    '####################
+
+    Private Function GetVisibleGeometry(index As Integer) As Geometry
+        Dim cached As Geometry = Nothing
+        If _visibleGeometryCache.TryGetValue(index, cached) Then Return cached
+
+        Dim result As Geometry = _flattenedShapes(index).Geometry
+
+        ' Subtract every shape that sits above this one in paint order
+        For i = index + 1 To _flattenedShapes.Count - 1
+            Dim above = _flattenedShapes(i).Geometry
+            ' Skip empty geometry to avoid destroying performanc
+            If above.Bounds.IsEmpty Then Continue For
+            result = Geometry.Combine(result, above, GeometryCombineMode.Exclude, Nothing)
+            If result.IsEmpty() Then Exit For
+        Next
+
+        _visibleGeometryCache(index) = result
+        Return result
+    End Function
 
 
     Private Function HitTestIndex(point As Point) As Integer
@@ -74,7 +99,8 @@
         Dim group As New GeometryGroup()
         group.FillRule = FillRule.Nonzero
         For Each idx In _excludedIndices
-            group.Children.Add(_flattenedShapes(idx).Geometry)
+            Dim vis = GetVisibleGeometry(idx)
+            If Not vis.IsEmpty() Then group.Children.Add(vis)
         Next
         ExclusionPath.Data = group
     End Sub

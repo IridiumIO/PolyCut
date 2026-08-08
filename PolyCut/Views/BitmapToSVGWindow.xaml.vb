@@ -3,16 +3,13 @@
     Private _flattenedShapes As List(Of (Geometry As Geometry, Source As GeometryDrawing))
     Private _drawingBounds As Rect
 
+    Private _excludedIndices As New HashSet(Of Integer)
+
     Public Sub New(vm As BitmapToSVGWindowViewModel)
-
         InitializeComponent()
-
         DataContext = vm
         AddHandler vm.RequestClose, AddressOf OnRequestClose
-
-
     End Sub
-
 
     Private Sub BitmapToSVGWindow_Loaded(sender As Object, e As RoutedEventArgs)
         AddHandler DirectCast(DataContext, ComponentModel.INotifyPropertyChanged).PropertyChanged, AddressOf ViewModel_PropertyChanged
@@ -24,12 +21,18 @@
         End If
     End Sub
 
+
+    '####################
+    ' HIT TESTING
+    '####################
+
     Private Sub UpdateHitTestGeometry()
         Dim vm = TryCast(DataContext, BitmapToSVGWindowViewModel)
         Dim drawing = vm?.PreviewDrawing
         If drawing Is Nothing Then Return
 
         _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).ToList()
+        _excludedIndices.Clear()
 
         Dim canvasSize = vm.PreviewCanvasSize
         HitTestCanvas.Width = canvasSize.Width
@@ -37,20 +40,48 @@
 
         HighlightPath.Data = Nothing
         HighlightPath.Visibility = Visibility.Collapsed
+        ExclusionPath.Data = Nothing
+
+        ' Sync cleared exclusions back to VM
+        vm.ExcludedRegionIndices = _excludedIndices
     End Sub
 
+
+
+    Private Function HitTestIndex(point As Point) As Integer
+        If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return -1
+        For i = _flattenedShapes.Count - 1 To 0 Step -1
+            If _flattenedShapes(i).Geometry.FillContains(point) Then Return i
+        Next
+        Return -1
+    End Function
 
     Private Sub UpdateHighlightPath(point As Point)
-        If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
-        For i = _flattenedShapes.Count - 1 To 0 Step -1
-            Dim shape = _flattenedShapes(i)
-            If shape.Geometry.FillContains(point) Then
-                HighlightPath.Data = shape.Geometry
-                Return
-            End If
-        Next
-        HighlightPath.Data = Nothing
+        Dim idx = HitTestIndex(point)
+        If idx >= 0 Then
+            HighlightPath.Data = _flattenedShapes(idx).Geometry
+        Else
+            HighlightPath.Data = Nothing
+        End If
     End Sub
+
+    Private Sub RefreshExclusionOverlay()
+        If _excludedIndices.Count = 0 Then
+            ExclusionPath.Data = Nothing
+            Return
+        End If
+
+        Dim group As New GeometryGroup()
+        group.FillRule = FillRule.Nonzero
+        For Each idx In _excludedIndices
+            group.Children.Add(_flattenedShapes(idx).Geometry)
+        Next
+        ExclusionPath.Data = group
+    End Sub
+
+    '####################
+    ' MOUSE EVENTS
+    '####################
 
     Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
         If Not Keyboard.IsKeyDown(Key.LeftCtrl) OrElse _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
@@ -58,25 +89,41 @@
         UpdateHighlightPath(point)
     End Sub
 
+    Private Sub HitTestCanvas_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs)
+
+        If Not Keyboard.IsKeyDown(Key.LeftCtrl) Then Return
+        If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
+
+        Dim point = e.GetPosition(HitTestCanvas)
+        Dim idx = HitTestIndex(point)
+        If idx < 0 Then Return
+
+        ' Toggle exclusion
+        If _excludedIndices.Contains(idx) Then
+            _excludedIndices.Remove(idx)
+        Else
+            _excludedIndices.Add(idx)
+        End If
+
+        ' Push updated set to ViewModel so Finish() can use it
+        Dim vm = TryCast(DataContext, BitmapToSVGWindowViewModel)
+        If vm IsNot Nothing Then vm.ExcludedRegionIndices = New HashSet(Of Integer)(_excludedIndices)
+
+        RefreshExclusionOverlay()
+
+        ' Keep highlight on the same shape after click
+        UpdateHighlightPath(point)
+
+        e.Handled = True
+    End Sub
+
     Private Sub HitTestCanvas_MouseLeave(sender As Object, e As MouseEventArgs)
         HighlightPath.Data = Nothing
     End Sub
 
-
-
-
-
-
-
-
-
-
-    Private Sub OnRequestClose(result As Boolean)
-
-        DialogResult = result
-        Close()
-
-    End Sub
+    '####################
+    ' KEYBOARD EVENTS
+    '####################
 
     Private Sub FluentWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs)
         If e.SystemKey = Key.LeftAlt OrElse e.SystemKey = Key.RightAlt Then
@@ -89,7 +136,6 @@
             Dim point = Mouse.GetPosition(HitTestCanvas)
             UpdateHighlightPath(point)
         End If
-
     End Sub
 
     Private Sub FluentWindow_PreviewKeyUp(sender As Object, e As KeyEventArgs)
@@ -100,10 +146,14 @@
 
         If e.Key = Key.LeftCtrl Then
             HighlightPath.Visibility = Visibility.Collapsed
-
         End If
-
     End Sub
+
+    Private Sub OnRequestClose(result As Boolean)
+        DialogResult = result
+        Close()
+    End Sub
+
 End Class
 
 

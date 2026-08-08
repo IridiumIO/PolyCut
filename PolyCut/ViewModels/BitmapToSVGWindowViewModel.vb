@@ -76,7 +76,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
     Public Property BaseImagePath As String
     Public Property ResultSvgPath As String
-
+    Public Property ExcludedRegionIndices As HashSet(Of Integer) = New HashSet(Of Integer)
 
     Private _WorkingSVGString As String
     Public Event RequestClose(DialogResult As Boolean)
@@ -229,13 +229,41 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Sub Finish()
-
         Dim tempSvgPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-{Guid.NewGuid:N}.svg")
-        IO.File.WriteAllText(tempSvgPath, _WorkingSVGString)
+
+        Dim svgToWrite As String
+        If ExcludedRegionIndices IsNot Nothing AndAlso ExcludedRegionIndices.Count > 0 Then
+            svgToWrite = RemoveExcludedPaths(_WorkingSVGString, ExcludedRegionIndices)
+        Else
+            svgToWrite = _WorkingSVGString
+        End If
+
+        IO.File.WriteAllText(tempSvgPath, svgToWrite)
         ResultSvgPath = tempSvgPath
         RaiseEvent RequestClose(True)
         Cleanup()
     End Sub
+
+    Private Shared Function RemoveExcludedPaths(svgContent As String, excludedIndices As HashSet(Of Integer)) As String
+        Try
+            Dim doc = XDocument.Parse(svgContent)
+            Dim ns = doc.Root.GetDefaultNamespace()
+
+            Dim paths = doc.Descendants(ns + "path").ToList()
+
+            ' Remove excluded indices in reverse order otherwise layer ordering will be revesred
+            For Each idx In excludedIndices.OrderByDescending(Function(i) i)
+                If idx >= 0 AndAlso idx < paths.Count Then
+                    paths(idx).Remove()
+                End If
+            Next
+
+            Return doc.ToString()
+        Catch ex As Exception
+            Debug.WriteLine($"Failed to remove excluded paths: {ex.Message}")
+            Return svgContent
+        End Try
+    End Function
 
     Private Function GetDeclaredCanvasSize(svgPath As String) As Size
         Try

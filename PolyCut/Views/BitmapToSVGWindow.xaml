@@ -61,11 +61,15 @@
                      Height="32" />
 
         <ui:Card Grid.Row="1" Grid.Column="0"
-                 Margin="20" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2">
+                 Margin="20" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="2"
+                 local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.SampleY="2">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding NodeCount, StringFormat='Nodes: {0}'}" />
-                <TextBlock Text=" | " />
-                <TextBlock Text="{Binding RegionCount, StringFormat='Regions: {0}'}" />
+                <TextBlock Text="  |  " />
+                <TextBlock Text="{Binding RegionCount, StringFormat='Total Regions: {0}'}" />
+                <TextBlock Text="  |  " />
+                <TextBlock Text="{Binding ExcludedRegionIndices.Count, StringFormat='Excluded Regions: {0}'}" />
+                
             </StackPanel>
         </ui:Card>
 
@@ -99,11 +103,25 @@
 
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"
-                            Background="Transparent" ClipToBounds="True" MouseLeave="HitTestCanvas_MouseLeave" MouseMove="HitTestCanvas_MouseMove">
+                            Background="Transparent" ClipToBounds="True" MouseLeave="HitTestCanvas_MouseLeave" MouseLeftButtonDown="HitTestCanvas_MouseLeftButtonDown" MouseMove="HitTestCanvas_MouseMove">
                         <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" IsHitTestVisible="False" />
 
+                        <Path x:Name="ExclusionPath"
+                              IsHitTestVisible="False" Stroke="#CCFF4444" StrokeThickness="0.4">
+                            <Path.Fill>
+                                <VisualBrush TileMode="Tile" Viewbox="0,0,5,5" ViewboxUnits="Absolute" Viewport="0,0,5,5" ViewportUnits="Absolute">
+                                    <VisualBrush.Visual>
+                                        <Canvas>
+                                            <Rectangle Width="10" Height="10" Fill="#60FF4444" />
+                                            <Path Data="M 0 5 L 5 0 M -2 2 L 2 -2 M 3 7 L 7 3" Stroke="#DDFF8888" />
+                                        </Canvas>
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </Path.Fill>
+                        </Path>
+
                         <Path x:Name="HighlightPath"
-                              Fill="#504cAF50" IsHitTestVisible="False"
+                              Fill="#604cAF50" IsHitTestVisible="False"
                               Stroke="{StaticResource PaletteGreenBrush}"
                               StrokeThickness="0.4" Visibility="Collapsed" />
                     </Canvas>

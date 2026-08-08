@@ -44,7 +44,7 @@ Public Class VTracerOptions : Inherits ObservableObject
     <ObservableProperty> Private _FilterSpeckle As Integer = 8
     <ObservableProperty> Private _ColorPrecision As Integer = 6
     <ObservableProperty> Private _GradientStep As Integer = 16
-    <ObservableProperty> Private _Simplify As Double = 0.0 '0 = disabled
+    <ObservableProperty> Private _Simplify As Double = 0.5 '0 = disabled
     <ObservableProperty> Private _PathPrecision As Integer = 3
     <ObservableProperty> Private _MaxColors As Integer = 0 '0 = no limit
     <ObservableProperty> Private _Optimize As OptimizationMode = OptimizationMode.QuantizeAndCleanup

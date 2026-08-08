@@ -446,7 +446,7 @@
                                                     ToolTip="Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." UnitText="decimals"
                                                     Value="{Binding VTracerOptions.PathPrecision}" />
                         <local:LabeledSliderControl Margin="0 -5"
-                                                    DeferCommit="True" LabelText="Maximum Colours (0 = Unlimited)" Maximum="256" Minimum="0" TickFrequency="1"
+                                                    DeferCommit="True" LabelText="Maximum Colours (0 = Unlimited)" Maximum="20" Minimum="0" TickFrequency="1"
                                                     ToolTip="Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used."
                                                     Value="{Binding VTracerOptions.MaxColors}">
                             <local:LabeledSliderControl.Style>

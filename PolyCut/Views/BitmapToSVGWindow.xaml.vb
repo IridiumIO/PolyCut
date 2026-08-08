@@ -89,7 +89,7 @@
     Private Function HitTestIndex(point As Point) As Integer
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return -1
         For i = _flattenedShapes.Count - 1 To 0 Step -1
-            If _flattenedShapes(i).Geometry.FillContains(point) Then Return i
+            If _flattenedShapes(i).Geometry.FillContains(point, 0.001, ToleranceType.Absolute) Then Return i
         Next
         Return -1
     End Function

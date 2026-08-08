@@ -107,7 +107,7 @@
                         <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" IsHitTestVisible="False" />
 
                         <Path x:Name="ExclusionPath"
-                              IsHitTestVisible="False" Stroke="#CCFF4444" StrokeThickness="0.4" StrokeEndLineCap="Round" StrokeStartLineCap="Round" StrokeLineJoin="Bevel">
+                              IsHitTestVisible="False" Stroke="#CCFF4444" StrokeLineJoin="Round" StrokeThickness="0.4">
                             <Path.Fill>
                                 <VisualBrush TileMode="Tile" Viewbox="0,0,5,5" ViewboxUnits="Absolute" Viewport="0,0,5,5" ViewportUnits="Absolute">
                                     <VisualBrush.Visual>
@@ -123,7 +123,7 @@
                         <Path x:Name="HighlightPath"
                               Fill="#604cAF50" IsHitTestVisible="False"
                               Stroke="{StaticResource PaletteGreenBrush}"
-                              StrokeThickness="0.4" Visibility="Collapsed" />
+                              StrokeLineJoin="Round" StrokeThickness="0.4" Visibility="Collapsed" />
                     </Canvas>
                 </Viewbox>
 

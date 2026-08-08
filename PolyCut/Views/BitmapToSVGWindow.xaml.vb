@@ -22,6 +22,41 @@
         End If
     End Sub
 
+    '####################
+    ' VISIBLE GEOMETRY MANAGEMENT
+    '####################
+
+    Private Function GetVisibleGeometry(index As Integer) As Geometry
+        Dim cached As Geometry = Nothing
+        If _visibleGeometryCache.TryGetValue(index, cached) Then Return cached
+
+        Dim result As Geometry = _flattenedShapes(index).Geometry
+
+        ' Subtract every shape that sits above this one in paint order
+        For i = index + 1 To _flattenedShapes.Count - 1
+            Dim above = _flattenedShapes(i).Geometry
+            ' Skip empty geometry to avoid destroying performanc
+            If above.Bounds.IsEmpty Then Continue For
+            result = Geometry.Combine(result, above, GeometryCombineMode.Exclude, Nothing)
+            If result.IsEmpty() Then Exit For
+        Next
+
+        _visibleGeometryCache(index) = result
+        Return result
+    End Function
+    Private Shared Function GetColorKey(gd As GeometryDrawing) As Color?
+        Dim scb = TryCast(gd.Brush, SolidColorBrush)
+        If scb Is Nothing Then Return Nothing
+        Return scb.Color
+    End Function
+
+    Private Function GetIndicesMatchingColor(referenceIndex As Integer) As IEnumerable(Of Integer)
+        Dim refColor = GetColorKey(_flattenedShapes(referenceIndex).Source)
+        If refColor Is Nothing Then Return {referenceIndex} ' can't match by colour; fall back to single
+        Return Enumerable.Range(0, _flattenedShapes.Count) _
+                         .Where(Function(i) GetColorKey(_flattenedShapes(i).Source)?.Equals(refColor.Value))
+    End Function
+
 
     '####################
     ' HIT TESTING
@@ -49,28 +84,6 @@
     End Sub
 
 
-    '####################
-    ' VISIBLE GEOMETRY MANAGEMENT
-    '####################
-
-    Private Function GetVisibleGeometry(index As Integer) As Geometry
-        Dim cached As Geometry = Nothing
-        If _visibleGeometryCache.TryGetValue(index, cached) Then Return cached
-
-        Dim result As Geometry = _flattenedShapes(index).Geometry
-
-        ' Subtract every shape that sits above this one in paint order
-        For i = index + 1 To _flattenedShapes.Count - 1
-            Dim above = _flattenedShapes(i).Geometry
-            ' Skip empty geometry to avoid destroying performanc
-            If above.Bounds.IsEmpty Then Continue For
-            result = Geometry.Combine(result, above, GeometryCombineMode.Exclude, Nothing)
-            If result.IsEmpty() Then Exit For
-        Next
-
-        _visibleGeometryCache(index) = result
-        Return result
-    End Function
 
 
     Private Function HitTestIndex(point As Point) As Integer
@@ -83,10 +96,21 @@
 
     Private Sub UpdateHighlightPath(point As Point)
         Dim idx = HitTestIndex(point)
-        If idx >= 0 Then
-            HighlightPath.Data = _flattenedShapes(idx).Geometry
-        Else
+        If idx < 0 Then
             HighlightPath.Data = Nothing
+            Return
+        End If
+
+        ' Ctrl+Shift: preview ALL shapes of the same colour
+        If Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift) Then
+            Dim group As New GeometryGroup()
+            group.FillRule = FillRule.Nonzero
+            For Each i In GetIndicesMatchingColor(idx)
+                group.Children.Add(GetVisibleGeometry(i))
+            Next
+            HighlightPath.Data = group
+        Else
+            HighlightPath.Data = GetVisibleGeometry(idx)
         End If
     End Sub
 
@@ -124,22 +148,37 @@
         Dim idx = HitTestIndex(point)
         If idx < 0 Then Return
 
-        ' Toggle exclusion
-        If _excludedIndices.Contains(idx) Then
-            _excludedIndices.Remove(idx)
+        Dim shiftHeld = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+
+        If shiftHeld Then
+            ' Ctrl+Shift+Click: toggle ALL shapes sharing the same fill colour
+            Dim matchingIndices = GetIndicesMatchingColor(idx).ToList()
+
+            ' If every matching shape is already excluded -> un-exclude all; otherwise exclude all
+            Dim allAlreadyExcluded = matchingIndices.All(Function(i) _excludedIndices.Contains(i))
+            If allAlreadyExcluded Then
+                For Each i In matchingIndices
+                    _excludedIndices.Remove(i)
+                Next
+            Else
+                For Each i In matchingIndices
+                    _excludedIndices.Add(i)
+                Next
+            End If
         Else
-            _excludedIndices.Add(idx)
+            ' Ctrl+Click: toggle just the hovered shape
+            If _excludedIndices.Contains(idx) Then
+                _excludedIndices.Remove(idx)
+            Else
+                _excludedIndices.Add(idx)
+            End If
         End If
 
-        ' Push updated set to ViewModel so Finish() can use it
         Dim vm = TryCast(DataContext, BitmapToSVGWindowViewModel)
         If vm IsNot Nothing Then vm.ExcludedRegionIndices = New HashSet(Of Integer)(_excludedIndices)
 
         RefreshExclusionOverlay()
-
-        ' Keep highlight on the same shape after click
         UpdateHighlightPath(point)
-
         e.Handled = True
     End Sub
 

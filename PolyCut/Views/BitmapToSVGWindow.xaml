@@ -69,7 +69,7 @@
                 <TextBlock Text="{Binding RegionCount, StringFormat='Total Regions: {0}'}" />
                 <TextBlock Text="  |  " />
                 <TextBlock Text="{Binding ExcludedRegionIndices.Count, StringFormat='Excluded Regions: {0}'}" />
-                
+
             </StackPanel>
         </ui:Card>
 
@@ -107,7 +107,7 @@
                         <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" IsHitTestVisible="False" />
 
                         <Path x:Name="ExclusionPath"
-                              IsHitTestVisible="False" Stroke="#CCFF4444" StrokeThickness="0.4">
+                              IsHitTestVisible="False" Stroke="#CCFF4444" StrokeThickness="0.4" StrokeEndLineCap="Round" StrokeStartLineCap="Round" StrokeLineJoin="Bevel">
                             <Path.Fill>
                                 <VisualBrush TileMode="Tile" Viewbox="0,0,5,5" ViewboxUnits="Absolute" Viewport="0,0,5,5" ViewportUnits="Absolute">
                                     <VisualBrush.Visual>

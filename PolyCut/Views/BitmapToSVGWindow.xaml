@@ -73,6 +73,53 @@
             </StackPanel>
         </ui:Card>
 
+        <ui:Card Grid.Row="1"
+                 MaxWidth="300"
+                 Margin="20 20 0 0" Padding="10" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="2"
+                 local:BackdropSampler.Corner="TopLeft" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.TintColor="#20FFFFFF">
+            <StackPanel>
+                <ui:SymbolIcon HorizontalAlignment="Left" FontSize="22" Symbol="Info12" />
+                <StackPanel x:Name="controlsInfoGuide">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=ui:Card}}" Value="Visible">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Margin="0 10 0 10"
+                               FontSize="18" FontWeight="SemiBold" Text="Controls" />
+                    <TextBlock FontWeight="Bold" Text="Alt Key" />
+                    <TextBlock Text="Shows an overlay of the original image" TextWrapping="Wrap" />
+                    <TextBlock Margin="0 10 0 0" FontWeight="Bold" Text="Ctrl + Hover" />
+                    <TextBlock Text="Highlights the shape region under the cursor" TextWrapping="Wrap" />
+                    <TextBlock Margin="0 10 0 0" FontWeight="Bold" Text="Ctrl + Click" />
+                    <TextBlock Text="Enables/Disables the shape region under the cursor, dictating whether it will be included in the import" TextWrapping="Wrap" />
+
+                    <TextBlock Margin="0 10 0 0" FontWeight="Bold" Text="Ctrl + Shift + Click" />
+                    <TextBlock Text="Enables/Disables ALL regions that match the colour of the region under the cursor" TextWrapping="Wrap" />
+                    <TextBlock Text="Note: You may need to reduce the 'Maximum Colours' setting if not all expected regions are enabled/disabled" TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+
+            <ui:Card.Style>
+                <Style BasedOn="{StaticResource {x:Type ui:Card}}" TargetType="ui:Card">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Tag" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="False">
+                            <Setter Property="Tag" Value="Collapsed" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ui:Card.Style>
+        </ui:Card>
+
+
         <zb:ZoomBorder Grid.Row="1"
                        Background="Transparent" LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
             <Grid x:Name="mainCanvas"

@@ -218,9 +218,14 @@
 
         If e.Key = Key.LeftCtrl Then
             HighlightPath.Visibility = Visibility.Visible
-            Dim point = Mouse.GetPosition(HitTestCanvas)
-            UpdateHighlightPath(point)
+            UpdateHighlightPath(Mouse.GetPosition(HitTestCanvas))
         End If
+
+        ' Shift pressed while Ctrl already held — refresh
+        If (e.Key = Key.LeftShift OrElse e.Key = Key.RightShift) AndAlso Keyboard.IsKeyDown(Key.LeftCtrl) Then
+            UpdateHighlightPath(Mouse.GetPosition(HitTestCanvas))
+        End If
+
     End Sub
 
     Private Sub FluentWindow_PreviewKeyUp(sender As Object, e As KeyEventArgs)
@@ -233,6 +238,12 @@
             HighlightPath.Visibility = Visibility.Collapsed
             OcclusionDrawingHost.Drawing = Nothing
         End If
+
+        ' Shift released while Ctrl still held — refresh
+        If (e.Key = Key.LeftShift OrElse e.Key = Key.RightShift) AndAlso Keyboard.IsKeyDown(Key.LeftCtrl) Then
+            UpdateHighlightPath(Mouse.GetPosition(HitTestCanvas))
+        End If
+
     End Sub
 
     Private Sub OnRequestClose(result As Boolean)

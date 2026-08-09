@@ -4,7 +4,7 @@
     Private _drawingBounds As Rect
 
     Private _excludedIndices As New HashSet(Of Integer)
-    Private _visibleGeometryCache As New Dictionary(Of Integer, Geometry)
+    Private _occlusionCache As New Dictionary(Of (Integer, String), Drawing)
 
     Public Sub New(vm As BitmapToSVGWindowViewModel)
         InitializeComponent()
@@ -22,28 +22,37 @@
         End If
     End Sub
 
+
+
     '####################
     ' VISIBLE GEOMETRY MANAGEMENT
     '####################
 
-    Private Function GetVisibleGeometry(index As Integer) As Geometry
-        Dim cached As Geometry = Nothing
-        If _visibleGeometryCache.TryGetValue(index, cached) Then Return cached
+    Private Function BuildOcclusionDrawing(aboveIndex As Integer, skipIndices As ICollection(Of Integer)) As Drawing
+        Dim cacheKey = (aboveIndex, String.Join("|"c, skipIndices.OrderBy(Function(i) i)))
 
-        Dim result As Geometry = _flattenedShapes(index).Geometry
+        Dim cached As Drawing = Nothing
+        If _occlusionCache.TryGetValue(cacheKey, cached) Then Return cached
 
-        ' Subtract every shape that sits above this one in paint order
-        For i = index + 1 To _flattenedShapes.Count - 1
-            Dim above = _flattenedShapes(i).Geometry
-            ' Skip empty geometry to avoid destroying performanc
-            If above.Bounds.IsEmpty Then Continue For
-            result = Geometry.Combine(result, above, GeometryCombineMode.Exclude, Nothing)
-            If result.IsEmpty() Then Exit For
+        Dim group As New DrawingGroup()
+        For i = aboveIndex + 1 To _flattenedShapes.Count - 1
+            If Not skipIndices.Contains(i) Then
+                Dim shape = _flattenedShapes(i)
+                group.Children.Add(New GeometryDrawing(shape.Source.Brush, shape.Source.Pen, shape.Geometry))
+            End If
         Next
 
-        _visibleGeometryCache(index) = result
+        Dim result As Drawing = If(group.Children.Count > 0, group, Nothing)
+        _occlusionCache(cacheKey) = result
         Return result
     End Function
+
+
+
+    '####################
+    ' COLOUR MATCHING
+    '####################
+
     Private Shared Function GetColorKey(gd As GeometryDrawing) As Color?
         Dim scb = TryCast(gd.Brush, SolidColorBrush)
         If scb Is Nothing Then Return Nothing
@@ -52,10 +61,11 @@
 
     Private Function GetIndicesMatchingColor(referenceIndex As Integer) As IEnumerable(Of Integer)
         Dim refColor = GetColorKey(_flattenedShapes(referenceIndex).Source)
-        If refColor Is Nothing Then Return {referenceIndex} ' can't match by colour; fall back to single
+        If refColor Is Nothing Then Return {referenceIndex}
         Return Enumerable.Range(0, _flattenedShapes.Count) _
                          .Where(Function(i) GetColorKey(_flattenedShapes(i).Source)?.Equals(refColor.Value))
     End Function
+
 
 
     '####################
@@ -69,7 +79,7 @@
 
         _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).ToList()
         _excludedIndices.Clear()
-        _visibleGeometryCache.Clear()
+        _occlusionCache.Clear()
 
         Dim canvasSize = vm.PreviewCanvasSize
         HitTestCanvas.Width = canvasSize.Width
@@ -78,8 +88,8 @@
         HighlightPath.Data = Nothing
         HighlightPath.Visibility = Visibility.Collapsed
         ExclusionPath.Data = Nothing
+        OcclusionDrawingHost.Drawing = Nothing
 
-        ' Sync cleared exclusions back to VM
         vm.ExcludedRegionIndices = _excludedIndices
     End Sub
 
@@ -98,36 +108,47 @@
         Dim idx = HitTestIndex(point)
         If idx < 0 Then
             HighlightPath.Data = Nothing
+            OcclusionDrawingHost.Drawing = Nothing
             Return
         End If
 
-        ' Ctrl+Shift: preview ALL shapes of the same colour
         If Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift) Then
-            Dim group As New GeometryGroup()
-            group.FillRule = FillRule.Nonzero
-            For Each i In GetIndicesMatchingColor(idx)
-                group.Children.Add(GetVisibleGeometry(i))
+            ' Ctrl+Shift: preview all shapes of the same colour
+            Dim matchedSet = New HashSet(Of Integer)(GetIndicesMatchingColor(idx))
+            Dim minIdx = matchedSet.Min()
+
+            Dim geomGroup As New GeometryGroup()
+            geomGroup.FillRule = FillRule.Nonzero
+            For Each i In matchedSet
+                geomGroup.Children.Add(_flattenedShapes(i).Geometry)
             Next
-            HighlightPath.Data = group
+            HighlightPath.Data = geomGroup
+            OcclusionDrawingHost.Drawing = BuildOcclusionDrawing(matchedSet.Min(), matchedSet)
         Else
-            HighlightPath.Data = GetVisibleGeometry(idx)
+            ' Ctrl only: single shape 
+            HighlightPath.Data = _flattenedShapes(idx).Geometry
+            OcclusionDrawingHost.Drawing = BuildOcclusionDrawing(idx, {idx})
         End If
     End Sub
 
     Private Sub RefreshExclusionOverlay()
         If _excludedIndices.Count = 0 Then
             ExclusionPath.Data = Nothing
+            ExclusionOcclusionDrawingHost.Drawing = Nothing
             Return
         End If
 
-        Dim group As New GeometryGroup()
-        group.FillRule = FillRule.Nonzero
+        ' 1. Build ExclusionPath from all excluded raw geometries (full, unclipped)
+        Dim geomGroup As New GeometryGroup()
+        geomGroup.FillRule = FillRule.Nonzero
         For Each idx In _excludedIndices
-            Dim vis = GetVisibleGeometry(idx)
-            If Not vis.IsEmpty() Then group.Children.Add(vis)
+            geomGroup.Children.Add(_flattenedShapes(idx).Geometry)
         Next
-        ExclusionPath.Data = group
+        ExclusionPath.Data = geomGroup
+
+        ExclusionOcclusionDrawingHost.Drawing = BuildOcclusionDrawing(_excludedIndices.Min(), _excludedIndices)
     End Sub
+
 
     '####################
     ' MOUSE EVENTS
@@ -140,7 +161,6 @@
     End Sub
 
     Private Sub HitTestCanvas_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs)
-
         If Not Keyboard.IsKeyDown(Key.LeftCtrl) Then Return
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
 
@@ -153,8 +173,6 @@
         If shiftHeld Then
             ' Ctrl+Shift+Click: toggle ALL shapes sharing the same fill colour
             Dim matchingIndices = GetIndicesMatchingColor(idx).ToList()
-
-            ' If every matching shape is already excluded -> un-exclude all; otherwise exclude all
             Dim allAlreadyExcluded = matchingIndices.All(Function(i) _excludedIndices.Contains(i))
             If allAlreadyExcluded Then
                 For Each i In matchingIndices
@@ -184,7 +202,9 @@
 
     Private Sub HitTestCanvas_MouseLeave(sender As Object, e As MouseEventArgs)
         HighlightPath.Data = Nothing
+        OcclusionDrawingHost.Drawing = Nothing
     End Sub
+
 
     '####################
     ' KEYBOARD EVENTS
@@ -211,6 +231,7 @@
 
         If e.Key = Key.LeftCtrl Then
             HighlightPath.Visibility = Visibility.Collapsed
+            OcclusionDrawingHost.Drawing = Nothing
         End If
     End Sub
 

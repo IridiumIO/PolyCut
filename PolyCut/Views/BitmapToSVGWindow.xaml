@@ -224,10 +224,17 @@
                             </Path.Fill>
                         </Path>
 
+                        <!--  Occludes the excluded shapes highlight with non-excluded shapes above the hovered one  -->
+                        <local:DrawingHost x:Name="ExclusionOcclusionDrawingHost" IsHitTestVisible="False" />
+
+
                         <Path x:Name="HighlightPath"
                               Fill="#604cAF50" IsHitTestVisible="False"
                               Stroke="{StaticResource PaletteGreenBrush}"
                               StrokeLineJoin="Round" StrokeThickness="0.4" Visibility="Collapsed" />
+                        <!--  Occludes the hover highlight with shapes above the hovered one  -->
+                        <local:DrawingHost x:Name="OcclusionDrawingHost" IsHitTestVisible="False" />
+
                     </Canvas>
                 </Viewbox>
 

@@ -22,6 +22,7 @@ End Enum
 
 Public Enum HeiarchicalMethod
     Cutout
+    CutoutV2
     Stacked
 End Enum
 

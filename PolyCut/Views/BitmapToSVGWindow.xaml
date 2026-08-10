@@ -56,7 +56,7 @@
             <ColumnDefinition />
             <ColumnDefinition Width="360" />
         </Grid.ColumnDefinitions>
-        <ui:TitleBar Title="Convert Bitmap to SVG"
+        <ui:TitleBar Title=""
                      Grid.Row="0" Grid.ColumnSpan="2"
                      Height="32" />
 
@@ -199,7 +199,7 @@
             </Canvas.Background>
         </Canvas>
 
-        <zb:ZoomBorder Grid.Row="1"
+        <zb:ZoomBorder Grid.Row="0" Grid.RowSpan="2"
                        Background="Transparent" LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleMax="114">
             <Grid x:Name="mainCanvas"
                   Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -286,8 +286,8 @@
 
                 <Grid Grid.Row="0" VerticalAlignment="Stretch" Background="#70FFFFFF" />
 
-                <TextBlock Margin="20 40 0 5"
-                           DockPanel.Dock="Top" FontSize="18" FontWeight="SemiBold" Text="Import Configuration" />
+                <TextBlock Margin="20 35 0 20"
+                           DockPanel.Dock="Top" FontSize="18" FontWeight="SemiBold" Text="Import as SVG" />
 
                 <ScrollViewer Grid.Row="0"
                               Margin="20 0 0 0" Padding="0 0 30 0" VerticalAlignment="Stretch" VerticalContentAlignment="Top"
@@ -328,8 +328,11 @@
                                     <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                         <Run FontWeight="SemiBold" Text="Cutout - " /><Run Text="Produces a true seam-free mosaic, avoiding overlaps or visible seams between regions." /><Run FontWeight="SemiBold" Text=" NOTE: " /><Run Text="Cutout will cause a ripple/oscillating effect visible along edges. This is a VTracer bug for now. If the ripples are too obvious, correct them with Path Simplification or use the Stacked option instead. " />
                                     </TextBlock>
+                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run FontWeight="SemiBold" Text="Cutout V2 - " /><Run Text="Same as Cutout, but with my own attempt at fixing the ripple/oscillating effect in VTracer. Only works with" /><Run FontWeight="SemiBold" Text=" Tracing mode = spline." />
+                                    </TextBlock>
                                     <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
-                                        <Run FontWeight="SemiBold" Text="Stacked - " /><Run Text="Layers each region as a separate overlapping shape, like sheets of coloured paper." />
+                                        <Run FontWeight="SemiBold" Text="Stacked - " /><Run Text="Layers each region as a separate overlapping shape, like sheets of coloured paper. Can provide the cleanest edges to shapes, but can require a lot more cleanup effort after import." />
                                     </TextBlock>
                                 </StackPanel>
                             </local:LabeledControl.ToolTip>

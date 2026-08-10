@@ -1,4 +1,5 @@
-﻿Imports System.Drawing
+﻿Imports System.ComponentModel
+Imports System.Drawing
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Threading
@@ -15,15 +16,15 @@ Imports Vecto.Core
 
 
 Public Enum ClusteringMethod
-    ColorCluster
-    Watershed
-    BW
+    <Description("Colour Cluster")> ColorCluster
+    <Description("Watershed")> Watershed
+    <Description("Black & White")> BW
 End Enum
 
 Public Enum HeiarchicalMethod
-    Cutout
-    CutoutV2
-    Stacked
+    <Description("Cutout")> Cutout
+    <Description("Cutout V2")> CutoutV2
+    <Description("Stacked")> Stacked
 End Enum
 
 Public Enum TracingMode

@@ -25,6 +25,9 @@
                  mc:Ignorable="d">
 
     <ui:FluentWindow.Resources>
+        <DataTemplate x:Key="EnumDisplayTemplate">
+            <TextBlock Text="{Binding Converter={local:EnumToDescriptionConverter}}" />
+        </DataTemplate>
         <ObjectDataProvider x:Key="ClusteringMethodValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="local:ClusteringMethod" />
@@ -272,11 +275,12 @@
                             <TextBlock Text="Cancel Preview" />
                         </StackPanel>
                     </Button>
-                    <Button Height="40" IsEnabled="{Binding IsNotProcessing}"
+                    <Button Height="40"
                             Margin="20 0" HorizontalAlignment="Right"
                             Background="{StaticResource PaletteGreenBrush}"
                             Command="{Binding FinishCommand}"
-                            Content="Finish Import" />
+                            Content="Finish Import"
+                            IsEnabled="{Binding IsNotProcessing}" />
 
                 </Grid>
 
@@ -298,6 +302,7 @@
                             <local:LabeledControl.ValueContent>
                                 <ComboBox Width="170"
                                           HorizontalAlignment="Right"
+                                          ItemTemplate="{StaticResource EnumDisplayTemplate}"
                                           ItemsSource="{Binding Source={StaticResource ClusteringMethodValues}}"
                                           SelectedItem="{Binding VTracerOptions.Clustering}" />
                             </local:LabeledControl.ValueContent>
@@ -317,6 +322,7 @@
                             <local:LabeledControl.ValueContent>
                                 <ComboBox Width="170"
                                           HorizontalAlignment="Right"
+                                          ItemTemplate="{StaticResource EnumDisplayTemplate}"
                                           ItemsSource="{Binding Source={StaticResource HeiarchicalMethodValues}}"
                                           SelectedItem="{Binding VTracerOptions.Hierarchical}" />
                             </local:LabeledControl.ValueContent>

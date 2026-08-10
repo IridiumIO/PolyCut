@@ -272,7 +272,7 @@
                             <TextBlock Text="Cancel Preview" />
                         </StackPanel>
                     </Button>
-                    <Button Height="40"
+                    <Button Height="40" IsEnabled="{Binding IsNotProcessing}"
                             Margin="20 0" HorizontalAlignment="Right"
                             Background="{StaticResource PaletteGreenBrush}"
                             Command="{Binding FinishCommand}"

@@ -40,7 +40,7 @@ End Enum
 
 Public Class VTracerOptions : Inherits ObservableObject
     <ObservableProperty> Private _Clustering As ClusteringMethod = ClusteringMethod.ColorCluster
-    <ObservableProperty> Private _Hierarchical As HeiarchicalMethod = HeiarchicalMethod.Cutout
+    <ObservableProperty> Private _Hierarchical As HeiarchicalMethod = HeiarchicalMethod.CutoutV2
     <ObservableProperty> Private _Mode As TracingMode = TracingMode.Spline
     <ObservableProperty> Private _FilterSpeckle As Integer = 8
     <ObservableProperty> Private _ColorPrecision As Integer = 6

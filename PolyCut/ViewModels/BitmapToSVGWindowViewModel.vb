@@ -1,19 +1,17 @@
 ﻿Imports System.Drawing
-Imports System.Text.RegularExpressions
 Imports System.Threading
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
-Imports SharpVectors.Converters
-Imports SharpVectors.Renderers.Wpf
-
 
 
 Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
+    Private _WorkingSVGString As String
+    Private _VTracerService As VTracerService
+
     <ObservableProperty> Private _OriginalImage As BitmapImage
-    <ObservableProperty> Private _PreviewImage As DrawingImage
     <ObservableProperty> Private _PreviewDrawing As Drawing
     <ObservableProperty> Private _PreviewCanvasSize As Size
 
@@ -22,21 +20,22 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
     <ObservableProperty> Private _RegionCount As Integer = 0
     <ObservableProperty> Private _NodeCount As Integer = 0
 
-    <ObservableProperty>
     <NotifyCanExecuteChangedFor(NameOf(UpdatePreviewCommand))>
-    Private _IsNotProcessing As Boolean = True
+    <ObservableProperty> Private _IsNotProcessing As Boolean = True
 
     Public Property BaseImagePath As String
     Public Property ResultSvgPath As String
     Public Property ExcludedRegionIndices As HashSet(Of Integer) = New HashSet(Of Integer)
 
-    Private _WorkingSVGString As String
     Public Event RequestClose(DialogResult As Boolean)
 
-    Public Sub New()
+
+    Public Sub New(vtracerService As VTracerService)
+        _VTracerService = vtracerService
         VTracerOptions = New VTracerOptions()
         AddHandler VTracerOptions.PropertyChanged, AddressOf OnVTracerOptionsChanged
     End Sub
+
 
     Public Async Sub Initialise()
         Dim img = New BitmapImage(New Uri(BaseImagePath))
@@ -44,244 +43,45 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
         Await UpdatePreviewCommand.ExecuteAsync(Nothing)
     End Sub
 
+
     Private Async Sub OnVTracerOptionsChanged(sender As Object, e As ComponentModel.PropertyChangedEventArgs)
         Await UpdatePreviewCommand.ExecuteAsync(Nothing)
     End Sub
-
 
 
     Private Function CanUpdatePreview() As Boolean
         Return IsNotProcessing
     End Function
 
+
     <RelayCommand(IncludeCancelCommand:=True)>
     Private Async Function UpdatePreview(ctx As CancellationToken) As Task
         IsNotProcessing = False
-        Dim tempSvgPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-working.svg")
-
-        Dim args = BuildVTracerArgs(VTracerOptions, BaseImagePath, tempSvgPath)
 
         Try
-            Dim result = Await RunEmbeddedExecutable.Run("vtracer.exe", args, ctx)
-            Debug.WriteLine(result)
+            Dim result = Await _VTracerService.RunConversionAsync(VTracerOptions, BaseImagePath, _VTracerService.GetWorkingSvgPath(), ctx)
 
-            Dim svgX = Await IO.File.ReadAllTextAsync(tempSvgPath, ctx)
+            PreviewCanvasSize = result.CanvasSize
+            PreviewDrawing = result.Drawing
+            RegionCount = result.RegionCount
+            NodeCount = result.NodeCount
+            _WorkingSVGString = result.SvgContent
 
-            PreviewImage = Render(tempSvgPath) 'Render has a side effect of setting PreviewDrawing, used for hit testing. TODO Refactor
-            AnalyzeSvg(svgX)
-
-            _WorkingSVGString = svgX
         Catch ex As OperationCanceledException
             Debug.WriteLine("Preview update canceled.")
         Catch ex As Exception
             Debug.WriteLine($"Error during preview update: {ex.Message}")
-
         End Try
 
         IsNotProcessing = True
-
     End Function
 
-
-    Private Function BuildVTracerArgs(opts As VTracerOptions, inputPath As String, outputPath As String) As String
-
-        Dim clustering As String
-        Select Case opts.Clustering
-            Case ClusteringMethod.Watershed
-                clustering = "watershed"
-            Case ClusteringMethod.ColorCluster
-                clustering = "color-cluster"
-            Case Else
-                clustering = "bw"
-        End Select
-
-
-        Dim args = $"
---clustering {clustering} 
---hierarchical {opts.Hierarchical.ToString().ToLower()} 
---mode {opts.Mode.ToString().ToLower()} 
---filter-speckle {opts.FilterSpeckle} 
---color-precision {opts.ColorPrecision}
---gradient-step {opts.GradientStep}
-{If(opts.Simplify > 0, "--simplify " & opts.Simplify, "")} 
---path-precision {opts.PathPrecision} 
-{If(opts.MaxColors > 0, "--max-colors " & opts.MaxColors, "")}
---optimize {CInt(opts.Optimize)}
---watershed-detail {opts.WatershedDetail}
---threshold {opts.BWThreshold}
-{If(opts.AdaptiveSampling, "--adaptive", "")}
-{If(opts.AdaptiveSampling, "--adaptive-window " & opts.AdaptiveSamplingWindow, "")}
-{If(opts.AdaptiveSampling, "--adaptive-t " & opts.AdapativeSensitivity, "")}
--i ""{inputPath}"" -o ""{outputPath}"""
-
-
-        args = args.Replace(Environment.NewLine, " ").Trim()
-        Debug.WriteLine(args)
-
-        Return args
-    End Function
-
-
-
-
-    Private Sub AnalyzeSvg(svgContent As String)
-
-        Try
-            Dim doc = XDocument.Parse(svgContent)
-            Dim ns = doc.Root.GetDefaultNamespace()
-
-            Dim pathElements = doc.Descendants(ns + "path").ToList()
-            RegionCount = pathElements.Count
-
-            Dim totalNodes = 0
-            For Each pathEl In pathElements
-                Dim d = pathEl.Attribute("d")?.Value
-                If Not String.IsNullOrEmpty(d) Then
-                    totalNodes += CountPathNodes(d)
-                End If
-            Next
-
-            NodeCount = totalNodes
-
-        Catch ex As Exception
-            Debug.WriteLine($"Failed to analyze SVG: {ex.Message}")
-            RegionCount = 0
-            NodeCount = 0
-        End Try
-
-    End Sub
-
-    Private Function CountPathNodes(d As String) As Integer
-        Dim matches = Regex.Matches(d, "[MmLlHhVvCcSsQqTtAaZz]")
-        Return matches.Count
-
-    End Function
-
-
-
-    Public Function Render(svg As String) As DrawingImage
-
-        Dim settings = New WpfDrawingSettings()
-
-        settings.IncludeRuntime = False
-        settings.TextAsGeometry = False
-
-
-        Dim converter = New FileSvgReader(settings)
-
-        Dim drawing = converter.Read(svg)
-
-        Dim canvasSize = GetDeclaredCanvasSize(svg)
-        PreviewCanvasSize = canvasSize
-        PreviewDrawing = drawing 'SIDE EFFECT: TODO refactor to make it clearer
-
-        Return New DrawingImage(drawing)
-
-    End Function
 
     <RelayCommand>
     Private Sub Finish()
-        Dim tempSvgPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-{Guid.NewGuid:N}.svg")
-
-        Dim svgToWrite As String
-        If ExcludedRegionIndices IsNot Nothing AndAlso ExcludedRegionIndices.Count > 0 Then
-            svgToWrite = RemoveExcludedPaths(_WorkingSVGString, ExcludedRegionIndices)
-        Else
-            svgToWrite = _WorkingSVGString
-        End If
-
-        IO.File.WriteAllText(tempSvgPath, svgToWrite)
-        ResultSvgPath = tempSvgPath
+        ResultSvgPath = _VTracerService.FinalizeSvg(_WorkingSVGString, ExcludedRegionIndices)
         RaiseEvent RequestClose(True)
-        Cleanup()
     End Sub
 
-    Private Shared Function RemoveExcludedPaths(svgContent As String, excludedIndices As HashSet(Of Integer)) As String
-        Try
-            Dim doc = XDocument.Parse(svgContent)
-            Dim ns = doc.Root.GetDefaultNamespace()
-
-            Dim paths = doc.Descendants(ns + "path").ToList()
-
-            ' Remove excluded indices in reverse order otherwise layer ordering will be revesred
-            For Each idx In excludedIndices.OrderByDescending(Function(i) i)
-                If idx >= 0 AndAlso idx < paths.Count Then
-                    paths(idx).Remove()
-                End If
-            Next
-
-            Return doc.ToString()
-        Catch ex As Exception
-            Debug.WriteLine($"Failed to remove excluded paths: {ex.Message}")
-            Return svgContent
-        End Try
-    End Function
-
-    Private Function GetDeclaredCanvasSize(svgPath As String) As Size
-        Try
-            Dim doc = XDocument.Load(svgPath)
-            Dim root = doc.Root
-
-            Dim widthAttr = root.Attribute("width")?.Value
-            Dim heightAttr = root.Attribute("height")?.Value
-
-            Dim width As Double
-            Dim height As Double
-            If Double.TryParse(Regex.Match(widthAttr, "[\d.]+").Value, width) AndAlso
-               Double.TryParse(Regex.Match(heightAttr, "[\d.]+").Value, height) Then
-                Return New Size(width, height)
-            End If
-
-        Catch ex As Exception
-            Debug.WriteLine($"Failed to parse SVG canvas size: {ex.Message}")
-        End Try
-
-        Return New Size(0, 0)
-    End Function
-
-    Public Sub Cleanup()
-
-        Dim tempPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-working.svg")
-
-        If Not IO.File.Exists(tempPath) Then Return
-        Try
-            IO.File.Delete(tempPath)
-        Catch ex As Exception
-            Debug.WriteLine($"Failed to delete temporary SVG file: {ex.Message}")
-        End Try
-    End Sub
 
 End Class
-
-
-Public Module SvgHitTestHelper
-
-    Public Function FlattenDrawing(drawing As Drawing) As List(Of (Geometry As Geometry, Source As GeometryDrawing))
-        Dim results As New List(Of (Geometry, GeometryDrawing))
-        If drawing IsNot Nothing Then Flatten(drawing, Matrix.Identity, results)
-        Return results
-    End Function
-
-    Private Sub Flatten(drawing As Drawing, transform As Matrix, results As List(Of (Geometry, GeometryDrawing)))
-        Select Case True
-            Case TypeOf drawing Is DrawingGroup
-                Dim group = CType(drawing, DrawingGroup)
-                Dim childTransform = transform
-                If group.Transform IsNot Nothing Then
-                    childTransform = Matrix.Multiply(group.Transform.Value, transform)
-                End If
-                For Each child In group.Children
-                    Flatten(child, childTransform, results)
-                Next
-
-            Case TypeOf drawing Is GeometryDrawing
-                Dim gd = CType(drawing, GeometryDrawing)
-                If gd.Geometry IsNot Nothing Then
-                    Dim geom = gd.Geometry.Clone()
-                    geom.Transform = New MatrixTransform(transform)
-                    results.Add((geom, gd))
-                End If
-        End Select
-    End Sub
-
-End Module

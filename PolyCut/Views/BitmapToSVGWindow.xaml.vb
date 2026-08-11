@@ -326,3 +326,37 @@ Public Class DrawingHost
     End Sub
 
 End Class
+
+
+
+Public Module SvgHitTestHelper
+
+    Public Function FlattenDrawing(drawing As Drawing) As List(Of (Geometry As Geometry, Source As GeometryDrawing))
+        Dim results As New List(Of (Geometry, GeometryDrawing))
+        If drawing IsNot Nothing Then Flatten(drawing, Matrix.Identity, results)
+        Return results
+    End Function
+
+    Private Sub Flatten(drawing As Drawing, transform As Matrix, results As List(Of (Geometry, GeometryDrawing)))
+        Select Case True
+            Case TypeOf drawing Is DrawingGroup
+                Dim group = CType(drawing, DrawingGroup)
+                Dim childTransform = transform
+                If group.Transform IsNot Nothing Then
+                    childTransform = Matrix.Multiply(group.Transform.Value, transform)
+                End If
+                For Each child In group.Children
+                    Flatten(child, childTransform, results)
+                Next
+
+            Case TypeOf drawing Is GeometryDrawing
+                Dim gd = CType(drawing, GeometryDrawing)
+                If gd.Geometry IsNot Nothing Then
+                    Dim geom = gd.Geometry.Clone()
+                    geom.Transform = New MatrixTransform(transform)
+                    results.Add((geom, gd))
+                End If
+        End Select
+    End Sub
+
+End Module

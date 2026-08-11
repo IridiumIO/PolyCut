@@ -390,11 +390,12 @@ Partial Public Class MainViewModel
         If fs.ShowDialog Then
             Dim actions As New List(Of IUndoableAction)()
 
+            Dim vtracer = Application.GetService(Of VTracerService)
+
             For Each fl In fs.FileNames
 
                 If IO.Path.GetExtension(fl).ToLower() <> ".svg" Then
-                    Dim vtracer = Application.GetService(Of VTracerService)
-                    Dim svgPath = vtracer.ConvertPNGToSVG(fl)
+                    Dim svgPath = vtracer.ConvertRasterToSVG(fl)
                     If svgPath Is Nothing Then
                         Continue For
                     End If

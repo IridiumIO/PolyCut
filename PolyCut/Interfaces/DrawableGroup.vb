@@ -193,7 +193,7 @@ Public Class DrawableGroup : Inherits BaseDrawable
         End Set
     End Property
 
-    Public Sub AddChild(child As IDrawable)
+    Public Sub AddChild(child As IDrawable, Optional index As Integer = -1)
         If child Is Nothing Then Return
         If GroupChildren.Contains(child) Then Return
 
@@ -202,7 +202,11 @@ Public Class DrawableGroup : Inherits BaseDrawable
             If prior IsNot Nothing Then prior.GroupChildren.Remove(child)
         End If
         child.ParentGroup = Me
-        GroupChildren.Add(child)
+        If index >= 0 AndAlso index < GroupChildren.Count Then
+            GroupChildren.Insert(index, child)
+        Else
+            GroupChildren.Add(child)
+        End If
     End Sub
 
     Public Sub RemoveChild(child As IDrawable)

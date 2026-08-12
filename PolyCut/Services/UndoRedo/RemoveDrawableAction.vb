@@ -8,6 +8,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
     Private ReadOnly _drawable As IDrawable
     Private ReadOnly _parentGroup As DrawableGroup
     Private ReadOnly _indexInCollection As Integer
+    Private ReadOnly _indexInGroup As Integer
     Private ReadOnly _transformSnapshot As TransformAction.Snapshot
 
     Public Sub New(manager As IDrawableManager, drawable As IDrawable)
@@ -16,6 +17,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         _parentGroup = TryCast(drawable.ParentGroup, DrawableGroup)
         _indexInCollection = If(_manager.DrawableCollection IsNot Nothing, _manager.DrawableCollection.IndexOf(drawable), -1)
+        _indexInGroup = If(_parentGroup IsNot Nothing, _parentGroup.GroupChildren.IndexOf(drawable), -1)
 
         Try
             Dim wrapper = TryCast(_drawable?.DrawableElement?.Parent, ContentControl)
@@ -74,7 +76,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         If _parentGroup IsNot Nothing Then
             If Not _parentGroup.GroupChildren.Contains(_drawable) Then
-                _parentGroup.AddChild(_drawable)
+                _parentGroup.AddChild(_drawable, _indexInGroup)
             End If
 
             If Not _manager.DrawableCollection.Contains(_drawable) Then

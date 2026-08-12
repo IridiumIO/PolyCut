@@ -181,8 +181,28 @@ Public Class VTracerService
             svgToWrite = svgContent
         End If
 
+        svgToWrite = AssignIncrementingPathNames(svgToWrite)
+
         IO.File.WriteAllText(tempSvgPath, svgToWrite)
         Return tempSvgPath
+    End Function
+
+    Private Shared Function AssignIncrementingPathNames(svgContent As String) As String
+        Try
+            Dim doc = XDocument.Parse(svgContent)
+            Dim ns = doc.Root.GetDefaultNamespace()
+
+            Dim counter = 1
+            For Each pathEl In doc.Descendants(ns + "path")
+                pathEl.SetAttributeValue("id", $"path{counter}")
+                counter += 1
+            Next
+
+            Return doc.ToString()
+        Catch ex As Exception
+            Debug.WriteLine($"Failed to assign path names: {ex.Message}")
+            Return svgContent
+        End Try
     End Function
 
     Private Shared Function RemoveExcludedPaths(svgContent As String, excludedIndices As HashSet(Of Integer)) As String

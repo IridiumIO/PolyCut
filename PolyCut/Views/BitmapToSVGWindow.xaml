@@ -25,6 +25,15 @@
                  mc:Ignorable="d">
 
     <ui:FluentWindow.Resources>
+        <VisualBrush x:Key="ExclusionHatchBrush"
+                     TileMode="Tile" Viewbox="0,0,5,5" ViewboxUnits="Absolute" Viewport="0,0,5,5" ViewportUnits="Absolute">
+            <VisualBrush.Visual>
+                <Canvas>
+                    <Rectangle Width="10" Height="10" Fill="#60FF4444" />
+                    <Path Data="M 0 5 L 5 0 M -2 2 L 2 -2 M 3 7 L 7 3" Stroke="#FFFF8888" />
+                </Canvas>
+            </VisualBrush.Visual>
+        </VisualBrush>
         <DataTemplate x:Key="EnumDisplayTemplate">
             <TextBlock Text="{Binding Converter={local:EnumToDescriptionConverter}}" />
         </DataTemplate>
@@ -211,10 +220,10 @@
                 <Viewbox Stretch="Uniform">
                     <Canvas x:Name="HitTestCanvas"
                             Background="Transparent" ClipToBounds="True" MouseLeave="HitTestCanvas_MouseLeave" MouseLeftButtonDown="HitTestCanvas_MouseLeftButtonDown" MouseMove="HitTestCanvas_MouseMove">
-                        <local:DrawingHost x:Name="PreviewDrawingHost" Drawing="{Binding PreviewDrawing}" IsHitTestVisible="False" />
+                        <local:DrawingHost x:Name="PreviewDrawingHost" IsHitTestVisible="False" />
 
                         <Path x:Name="ExclusionPath"
-                              IsHitTestVisible="False" Stroke="#FFFF4444" StrokeLineJoin="Round" StrokeThickness="0.4">
+                              IsHitTestVisible="False" Stroke="#FFFF4444" StrokeLineJoin="Round" StrokeThickness="0.4" Visibility="Collapsed">
                             <Path.Fill>
                                 <VisualBrush TileMode="Tile" Viewbox="0,0,5,5" ViewboxUnits="Absolute" Viewport="0,0,5,5" ViewportUnits="Absolute">
                                     <VisualBrush.Visual>

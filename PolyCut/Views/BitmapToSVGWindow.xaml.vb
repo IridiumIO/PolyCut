@@ -7,6 +7,7 @@
 
     Private _excludedIndices As New HashSet(Of Integer)
     Private _occlusionCache As New Dictionary(Of (Integer, String), Drawing)
+    Private _fullPreviewDrawing As Drawing
 
     ' Hit test cache
     Private _lastHitIndex As Integer = -1
@@ -91,9 +92,12 @@
         Dim drawing = _vm?.PreviewDrawing
         If drawing Is Nothing Then Return
 
+        _fullPreviewDrawing = drawing
+
         _flattenedShapes = SvgHitTestHelper.FlattenDrawing(drawing).ToList()
         _excludedIndices.Clear()
         _occlusionCache.Clear()
+        _exclusionOverlayCache.Clear()
         _lastHitIndex = -1
         _lastHitBounds = Rect.Empty
 
@@ -114,15 +118,34 @@
         HitTestCanvas.Width = canvasSize.Width
         HitTestCanvas.Height = canvasSize.Height
 
+        PreviewDrawingHost.Drawing = _fullPreviewDrawing
+        ExclusionPath.Visibility = Visibility.Collapsed
+        ExclusionOcclusionDrawingHost.Drawing = Nothing
         HighlightPath.Data = Nothing
         HighlightPath.Visibility = Visibility.Collapsed
-        ExclusionPath.Data = Nothing
         OcclusionDrawingHost.Drawing = Nothing
 
         _vm.ExcludedRegionIndices = _excludedIndices
     End Sub
 
 
+    Private Sub RebuildPreviewDrawing()
+        If _fullPreviewDrawing Is Nothing Then Return
+
+        If _excludedIndices.Count = 0 Then
+            PreviewDrawingHost.Drawing = _fullPreviewDrawing
+            Return
+        End If
+
+        Dim group As New DrawingGroup()
+        For i = 0 To _flattenedShapes.Count - 1
+            If Not _excludedIndices.Contains(i) Then
+                Dim shape = _flattenedShapes(i)
+                group.Children.Add(New GeometryDrawing(shape.Source.Brush, shape.Source.Pen, shape.Geometry))
+            End If
+        Next
+        PreviewDrawingHost.Drawing = group
+    End Sub
 
 
     Private Function HitTestIndex(point As Point) As Integer
@@ -154,7 +177,7 @@
 
     Private Sub UpdateHighlightPath(point As Point)
         Dim idx = HitTestIndex(point)
-        If idx < 0 Then
+        If idx < 0 OrElse _excludedIndices.Contains(idx) Then
             HighlightPath.Data = Nothing
             OcclusionDrawingHost.Drawing = Nothing
             Return
@@ -179,22 +202,45 @@
         End If
     End Sub
 
+    Private _exclusionOverlayCache As New Dictionary(Of String, Drawing)   ' add field
+
     Private Sub RefreshExclusionOverlay()
         If _excludedIndices.Count = 0 Then
-            ExclusionPath.Data = Nothing
+            ExclusionPath.Visibility = Visibility.Collapsed
             ExclusionOcclusionDrawingHost.Drawing = Nothing
             Return
         End If
 
-        ' 1. Build ExclusionPath from all excluded raw geometries (full, unclipped)
-        Dim geomGroup As New GeometryGroup()
-        geomGroup.FillRule = FillRule.Nonzero
-        For Each idx In _excludedIndices
-            geomGroup.Children.Add(_flattenedShapes(idx).Geometry)
-        Next
-        ExclusionPath.Data = geomGroup
+        ' Red is now rendered by the interleaved overlay; the standalone path is unused
+        ExclusionPath.Data = Nothing
+        ExclusionPath.Visibility = Visibility.Collapsed
 
-        ExclusionOcclusionDrawingHost.Drawing = BuildOcclusionDrawing(_excludedIndices.Min(), _excludedIndices, True)
+        Dim key = String.Join("|"c, _excludedIndices.OrderBy(Function(i) i))
+        Dim cached As Drawing = Nothing
+        If _exclusionOverlayCache.TryGetValue(key, cached) Then
+            ExclusionOcclusionDrawingHost.Drawing = cached
+            Return
+        End If
+
+        Dim hatch = TryCast(FindResource("ExclusionHatchBrush"), Brush)
+        Dim redPen = New Pen(New SolidColorBrush(Color.FromArgb(&HFF, &HFF, &H44, &H44)), 0.4)
+        redPen.LineJoin = PenLineJoin.Round
+
+        ' Walk shapes in paint order (bottom -> top) and interleave:
+        '   excluded shape  -> emit its red hatch HERE, at its true z-position
+        '   non-excluded    -> emit the shape itself, which correctly occludes any red below it
+        Dim group As New DrawingGroup()
+        For i = 0 To _flattenedShapes.Count - 1
+            If _excludedIndices.Contains(i) Then
+                group.Children.Add(New GeometryDrawing(hatch, redPen, _flattenedShapes(i).Geometry))
+            Else
+                Dim shape = _flattenedShapes(i)
+                group.Children.Add(New GeometryDrawing(shape.Source.Brush, shape.Source.Pen, shape.Geometry))
+            End If
+        Next
+
+        _exclusionOverlayCache(key) = group
+        ExclusionOcclusionDrawingHost.Drawing = group
     End Sub
 
 
@@ -209,14 +255,16 @@
     End Sub
 
     Private Sub HitTestCanvas_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs)
+
+        Dim shiftHeld = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
         If Not Keyboard.IsKeyDown(Key.LeftCtrl) Then Return
+
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
 
         Dim point = e.GetPosition(HitTestCanvas)
         Dim idx = HitTestIndex(point)
         If idx < 0 Then Return
 
-        Dim shiftHeld = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
 
         If shiftHeld Then
             ' Ctrl+Shift+Click: toggle ALL shapes sharing the same fill colour
@@ -243,8 +291,20 @@
         Dim vm = TryCast(DataContext, BitmapToSVGWindowViewModel)
         If vm IsNot Nothing Then vm.ExcludedRegionIndices = New HashSet(Of Integer)(_excludedIndices)
 
-        RefreshExclusionOverlay()
-        UpdateHighlightPath(point)
+        PreviewDrawingHost.Drawing = _fullPreviewDrawing
+
+        If _excludedIndices.Count > 0 Then
+            ExclusionPath.Visibility = Visibility.Visible
+            RefreshExclusionOverlay()
+        Else
+            ExclusionPath.Visibility = Visibility.Collapsed
+            ExclusionOcclusionDrawingHost.Drawing = Nothing
+        End If
+
+        HighlightPath.Visibility = Visibility.Visible
+        HighlightPath.Data = Nothing
+        OcclusionDrawingHost.Drawing = Nothing
+
         e.Handled = True
     End Sub
 
@@ -265,6 +325,12 @@
         End If
 
         If e.Key = Key.LeftCtrl Then
+            ' While Ctrl is held, bring excluded shapes back and show the red exclusion overlay
+            PreviewDrawingHost.Drawing = _fullPreviewDrawing
+            If _excludedIndices.Count > 0 Then
+                ExclusionPath.Visibility = Visibility.Visible
+                RefreshExclusionOverlay()
+            End If
             HighlightPath.Visibility = Visibility.Visible
             UpdateHighlightPath(Mouse.GetPosition(HitTestCanvas))
         End If
@@ -283,6 +349,10 @@
         End If
 
         If e.Key = Key.LeftCtrl Then
+            ' Excluded shapes vanish from the preview until Ctrl is pressed again
+            RebuildPreviewDrawing()
+            ExclusionPath.Visibility = Visibility.Collapsed
+            ExclusionOcclusionDrawingHost.Drawing = Nothing
             HighlightPath.Visibility = Visibility.Collapsed
             OcclusionDrawingHost.Drawing = Nothing
         End If

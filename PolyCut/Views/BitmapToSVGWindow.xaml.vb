@@ -317,8 +317,9 @@
     '####################
     ' KEYBOARD EVENTS
     '####################
-
     Private Sub FluentWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs)
+        If e.IsRepeat Then Return
+
         If e.SystemKey = Key.LeftAlt OrElse e.SystemKey = Key.RightAlt Then
             OriginalImageOverlay.Visibility = Visibility.Visible
             PreviewDrawingHost.Visibility = Visibility.Collapsed

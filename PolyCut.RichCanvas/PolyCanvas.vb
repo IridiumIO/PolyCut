@@ -322,7 +322,13 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
         e.Handled = True
 
-        Dim drawable = FindDrawableForWrapper(wrapper)
+        ' Click on actual shapes not just the wrapper. 
+        Dim point = e.GetPosition(Me)
+        Dim drawable = GeometryHitTestHelper.HitTestTopmost(ChildrenCollection, point)
+
+        ' Fall back to the clicked wrapper if there is no underlying drawable (e.g., clicking on a transparent area of a wrapper)
+        If drawable Is Nothing Then drawable = FindDrawableForWrapper(wrapper)
+
         If drawable IsNot Nothing Then
             Dim isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
 

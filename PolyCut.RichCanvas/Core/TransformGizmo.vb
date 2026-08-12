@@ -364,6 +364,17 @@ Public Class TransformGizmo
                 StartRotate(e.GetPosition(Me))
 
             Case "Move"
+                ' A click inside the selection bounds normally starts a drag. But if the point falls on empty geometry (e.g. a donut hole) with a different shape underneath, select that shape instead.
+                Dim pc = TryCast(_canvas, PolyCanvas)
+                If pc IsNot Nothing Then
+                    Dim canvasPos = e.GetPosition(_canvas)
+                    Dim below = GeometryHitTestHelper.HitTestTopmost(pc.ChildrenCollection, canvasPos)
+                    If below IsNot Nothing AndAlso Not _selectionManager.SelectedItems.Contains(below) Then
+                        _selectionManager.SelectItem(below, False)
+                        e.Handled = True
+                        Return
+                    End If
+                End If
                 StartMove(e.GetPosition(Me))
 
             Case Else

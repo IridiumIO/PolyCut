@@ -40,7 +40,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
 
         Dim geometries As New List(Of Geometry)
         For Each drawable In _selectedItems
-            Dim geometry = GetTransformedGeometry(drawable)
+            Dim geometry = GeometryHitTestHelper.GetTransformedGeometry(drawable)
             If geometry IsNot Nothing Then
                 geometries.Add(geometry)
             End If
@@ -154,94 +154,6 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         Canvas.SetLeft(newPath, bounds.Left)
         Canvas.SetTop(newPath, bounds.Top)
         Return newPath
-    End Function
-
-    Private Function GetTransformedGeometry(drawable As IDrawable) As Geometry
-        If drawable?.DrawableElement Is Nothing Then Return Nothing
-
-        Dim element = drawable.DrawableElement
-        Dim wrapper = TryCast(element.Parent, ContentControl)
-        If wrapper Is Nothing Then Return Nothing
-
-        Dim geometry As Geometry = Nothing
-
-        If TypeOf element Is Rectangle Then
-            Dim rect = CType(element, Rectangle)
-            geometry = New RectangleGeometry(New Rect(0, 0, rect.ActualWidth, rect.ActualHeight))
-
-        ElseIf TypeOf element Is Ellipse Then
-            Dim ellipse = CType(element, Ellipse)
-            Dim radiusX = ellipse.ActualWidth / 2
-            Dim radiusY = ellipse.ActualHeight / 2
-            geometry = New EllipseGeometry(New Point(radiusX, radiusY), radiusX, radiusY)
-
-        ElseIf TypeOf element Is Line Then
-            Dim line = CType(element, Line)
-            Dim lineGeometry As New LineGeometry(New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
-            Dim thickness = If(line.StrokeThickness > 0, line.StrokeThickness, 1.0)
-            geometry = lineGeometry.GetWidenedPathGeometry(New Pen(Brushes.Black, thickness))
-
-        ElseIf TypeOf element Is System.Windows.Shapes.Path Then
-            Dim path = CType(element, System.Windows.Shapes.Path)
-            If path.Data IsNot Nothing Then
-                geometry = path.Data.Clone()
-            End If
-
-        ElseIf TypeOf element Is TextBox Then
-            Dim textBox = CType(element, TextBox)
-            If Not String.IsNullOrEmpty(textBox.Text) Then
-                Dim formattedText As New FormattedText(
-                    textBox.Text,
-                    Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    New Typeface(textBox.FontFamily, textBox.FontStyle, textBox.FontWeight, textBox.FontStretch),
-                    textBox.FontSize,
-                    Brushes.Black,
-                    1.0)
-
-                geometry = formattedText.BuildGeometry(New Point(0, 0))
-            End If
-        End If
-
-        If geometry Is Nothing Then Return Nothing
-
-        Dim elementTransformGroup = TryCast(element.RenderTransform, TransformGroup)
-        If elementTransformGroup IsNot Nothing Then
-            Dim elementScale = elementTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-            If elementScale IsNot Nothing Then
-                Dim scaleTransform = New ScaleTransform(elementScale.ScaleX, elementScale.ScaleY,
-                    geometry.Bounds.Width / 2, geometry.Bounds.Height / 2)
-                geometry = Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, scaleTransform)
-            End If
-        End If
-
-        Dim transformGroup As New TransformGroup()
-
-        If Not TypeOf element Is TextBox Then
-            If geometry.Bounds.Width > 0 AndAlso geometry.Bounds.Height > 0 Then
-                Dim scaleX = wrapper.ActualWidth / geometry.Bounds.Width
-                Dim scaleY = wrapper.ActualHeight / geometry.Bounds.Height
-                transformGroup.Children.Add(New ScaleTransform(scaleX, scaleY))
-            End If
-        End If
-
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            transformGroup.Children.Add(New RotateTransform(rotateTransform.Angle,
-                wrapper.ActualWidth / 2, wrapper.ActualHeight / 2))
-        End If
-
-        Dim left = Canvas.GetLeft(wrapper)
-        Dim top = Canvas.GetTop(wrapper)
-        If Not Double.IsNaN(left) AndAlso Not Double.IsNaN(top) Then
-            If TypeOf element Is TextBox Then
-                transformGroup.Children.Add(New TranslateTransform(left + 3, top + 1))
-            Else
-                transformGroup.Children.Add(New TranslateTransform(left, top))
-            End If
-        End If
-
-        Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
     End Function
 
     Public Sub Undo() Implements IUndoableAction.Undo

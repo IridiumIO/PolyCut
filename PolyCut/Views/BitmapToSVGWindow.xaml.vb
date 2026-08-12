@@ -248,10 +248,27 @@
     ' MOUSE EVENTS
     '####################
 
-    Private Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
+
+    Private Const MouseMoveThrottleInterval As Integer = 100
+    Private _lastMouseMove As DateTime
+    Private _pendingMouseMove As Boolean
+
+    Private Async Sub HitTestCanvas_MouseMove(sender As Object, e As MouseEventArgs)
         If Not Keyboard.IsKeyDown(Key.LeftCtrl) OrElse _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return
+
         Dim point = e.GetPosition(HitTestCanvas)
-        UpdateHighlightPath(point)
+        Dim elapsed = (DateTime.UtcNow - _lastMouseMove).TotalMilliseconds
+
+        If elapsed >= MouseMoveThrottleInterval Then
+            _lastMouseMove = DateTime.UtcNow
+            UpdateHighlightPath(point)
+        ElseIf Not _pendingMouseMove Then
+            _pendingMouseMove = True
+            Await Task.Delay(CInt(MouseMoveThrottleInterval - elapsed))
+            _pendingMouseMove = False
+            _lastMouseMove = DateTime.UtcNow
+            UpdateHighlightPath(e.GetPosition(HitTestCanvas))
+        End If
     End Sub
 
     Private Sub HitTestCanvas_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs)

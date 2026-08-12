@@ -74,7 +74,7 @@
                     <Border x:Name="GridClipBorder"
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
-                            Panel.ZIndex="-2"
+                            Panel.ZIndex="-1"
                             ClipToBounds="True" CornerRadius="7">
 
                         <Border.Clip>

@@ -18,38 +18,40 @@ Public Class ProjectData
 End Class
 
 
-    Public Class DrawableData
-        Public Property Id As Guid = Guid.NewGuid()
-        Public Property Name As String
-        Public Property Type As String ' "Path", "Rectangle", "Ellipse", "Text", "Line"
-        Public Property Left As Double
-        Public Property Top As Double
-        Public Property Width As Double
-        Public Property Height As Double
-        Public Property RotationAngle As Double
-        Public Property ScaleX As Double = 1.0
-        Public Property ScaleY As Double = 1.0
-        Public Property IsHidden As Boolean
-        Public Property ZIndex As Integer
+Public Class DrawableData
+    Public Property Id As Guid = Guid.NewGuid()
+    Public Property Name As String
+    Public Property Type As String ' "Path", "Rectangle", "Ellipse", "Text", "Line"
+    Public Property Left As Double
+    Public Property Top As Double
+    Public Property Width As Double
+    Public Property Height As Double
+    Public Property RotationAngle As Double
+    Public Property ScaleX As Double = 1.0
+    Public Property ScaleY As Double = 1.0
+    Public Property IsHidden As Boolean
+    Public Property ZIndex As Integer
 
-        ' Visual properties
-        Public Property StrokeColor As String
-        Public Property StrokeThickness As Double
-        Public Property FillColor As String
+    Public Property IsRegistrationMark As Boolean 'Always export regardless of single-colour filtering
 
-        ' Type-specific data
-        Public Property PathData As String ' For Path elements
-        Public Property TextContent As String ' For TextBox
-        Public Property FontFamily As String
-        Public Property FontSize As Double
-        Public Property LineX1 As Double ' For Line
-        Public Property LineY1 As Double
-        Public Property LineX2 As Double
-        Public Property LineY2 As Double
+    ' Visual properties
+    Public Property StrokeColor As String
+    Public Property StrokeThickness As Double
+    Public Property FillColor As String
 
-        ' Group membership
-        Public Property ParentGroupId As Guid?
-    End Class
+    ' Type-specific data
+    Public Property PathData As String ' For Path elements
+    Public Property TextContent As String ' For TextBox
+    Public Property FontFamily As String
+    Public Property FontSize As Double
+    Public Property LineX1 As Double ' For Line
+    Public Property LineY1 As Double
+    Public Property LineX2 As Double
+    Public Property LineY2 As Double
+
+    ' Group membership
+    Public Property ParentGroupId As Guid?
+End Class
 
 
 Public Class GroupData

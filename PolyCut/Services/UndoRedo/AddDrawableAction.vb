@@ -43,7 +43,9 @@ Public Class AddDrawableAction : Implements IUndoableAction
     Private Function CreateDrawableFromElement(element As FrameworkElement) As IDrawable
         Dim drawable As IDrawable = Nothing
 
-        If TypeOf element Is Line Then
+        If TypeOf element Is Rectangle AndAlso RegistrationMarkHelper.IsRegistrationMark(element) Then
+            drawable = New DrawableRegistrationMark(element)
+        ElseIf TypeOf element Is Line Then
             drawable = New DrawableLine(element)
         ElseIf TypeOf element Is Rectangle Then
             drawable = New DrawableRectangle(element)
@@ -77,6 +79,8 @@ Public Class AddDrawableAction : Implements IUndoableAction
 
         If TypeOf drawable Is DrawableLine Then
             baseName = "Line"
+        ElseIf TypeOf drawable Is DrawableRegistrationMark AndAlso RegistrationMarkHelper.IsRegistrationMark(drawable) Then
+            baseName = "Registration Mark"
         ElseIf TypeOf drawable Is DrawableRectangle Then
             baseName = "Rect"
         ElseIf TypeOf drawable Is DrawableEllipse Then

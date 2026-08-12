@@ -26,7 +26,7 @@ Public Class GeometryExtractor
             Return results
         End If
 
-        If cfg.ExtractOneColour Then
+        If cfg.ExtractOneColour AndAlso Not RegistrationMarkHelper.IsRegistrationMark(drawable) Then
             Dim fillColor = GetFillColor(drawable, True)
             Dim strokeColor = If(drawable.Stroke IsNot Nothing, TryCast(drawable.Stroke, SolidColorBrush)?.Color, Nothing)
             'only want to extract this if its stroke or fill matches the extraction color

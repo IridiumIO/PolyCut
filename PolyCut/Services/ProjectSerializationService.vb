@@ -370,6 +370,7 @@ Friend NotInheritable Class DrawableCodec
 
         ElseIf TypeOf element Is Rectangle Then
             data.Type = "Rectangle"
+            data.IsRegistrationMark = RegistrationMarkHelper.IsRegistrationMark(element)
 
         ElseIf TypeOf element Is Ellipse Then
             data.Type = "Ellipse"
@@ -461,6 +462,7 @@ Friend NotInheritable Class DrawableCodec
 
             Case "Rectangle"
                 element = New Rectangle()
+                If data.IsRegistrationMark Then RegistrationMarkHelper.SetIsRegistrationMark(element, True)
 
             Case "Ellipse"
                 element = New Ellipse()

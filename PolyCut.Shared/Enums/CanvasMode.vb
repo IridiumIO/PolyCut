@@ -5,4 +5,5 @@
     Ellipse
     Text
     Path
+    RegistrationMark
 End Enum

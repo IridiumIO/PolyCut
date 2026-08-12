@@ -22,6 +22,8 @@ Public Class DrawingManager
                 _currentShape = CreatePen(startPoint)
             Case CanvasMode.Text
                 _currentShape = Nothing
+            Case CanvasMode.RegistrationMark
+                _currentShape = CreateRegistrationMark(startPoint)
 
         End Select
 
@@ -30,13 +32,15 @@ Public Class DrawingManager
         End If
     End Sub
 
+
+
     Public Sub UpdateDrawing(mode As CanvasMode, currentPoint As Point, squareAspect As Boolean, snapToGrid As Boolean)
         If _currentShape Is Nothing Then Return
         DrawingManager.SNAPTOGRID = snapToGrid
         Select Case mode
             Case CanvasMode.Line
                 UpdateLine(DirectCast(_currentShape, Line), currentPoint, squareAspect)
-            Case CanvasMode.Rectangle
+            Case CanvasMode.Rectangle, CanvasMode.RegistrationMark
                 UpdateRectangle(DirectCast(_currentShape, Rectangle), currentPoint, squareAspect)
             Case CanvasMode.Ellipse
                 UpdateEllipse(DirectCast(_currentShape, Ellipse), currentPoint, squareAspect)
@@ -222,6 +226,27 @@ Public Class DrawingManager
 
         Return tb
 
+    End Function
+
+    Private Function CreateRegistrationMark(startPoint As Point) As Rectangle
+        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
+
+        Dim rect As New Rectangle With {
+            .Stroke = Brushes.Magenta,
+            .StrokeThickness = 0.1,
+            .Width = 0,
+            .Height = 0,
+            .Fill = Brushes.Magenta,
+            .StrokeLineJoin = PenLineJoin.Round,
+            .StrokeStartLineCap = PenLineCap.Round,
+            .StrokeEndLineCap = PenLineCap.Round
+        }
+        RegistrationMarkHelper.SetIsRegistrationMark(rect, True)
+
+        Canvas.SetLeft(rect, startPoint.X)
+        Canvas.SetTop(rect, startPoint.Y)
+
+        Return rect
     End Function
 
 

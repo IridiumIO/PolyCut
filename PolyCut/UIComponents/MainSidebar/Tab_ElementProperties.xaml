@@ -168,7 +168,8 @@
                         <StackPanel Margin="15 -5 15 0" FlowDirection="LeftToRight">
 
 
-                            <local:ColorPickerControl Margin="0 6 0 0"
+                            <local:ColorPickerControl x:Name="FillColorPicker"
+                                                      Margin="0 6 0 0"
                                                       ColorSelected="FillColorPicker_ColorSelected"
                                                       CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
                                                       LabelText="Fill" PopupOpening="FillColorPicker_PopupOpening" />

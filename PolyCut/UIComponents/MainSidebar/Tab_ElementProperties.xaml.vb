@@ -75,8 +75,20 @@ Public Class Tab_ElementProperties
             AddHandler d.PropertyChanged, AddressOf OnDrawablePropertyChanged
             _subscribedDrawables.Add(d)
         Next
+
+        UpdateFillPickerState()
+
     End Sub
 
+    Private Sub UpdateFillPickerState()
+        If MainVM Is Nothing Then Return
+
+        Dim selected = MainVM.SelectedDrawables?.ToList()
+        If selected Is Nothing OrElse selected.Count = 0 Then Return
+
+        ' Only lock the picker when every selected item is a registration mark, with a mixed selection we can still fill the normal shapes.
+        FillColorPicker.IsEnabled = Not selected.All(Function(d) RegistrationMarkHelper.IsRegistrationMark(d))
+    End Sub
 
     ' ===== Fill =====
 

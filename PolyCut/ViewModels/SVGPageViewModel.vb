@@ -266,6 +266,13 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         Next
         items = items.Where(Function(x) x IsNot Nothing).Distinct().ToList()
 
+        'Don't apply style to registration marks.
+        If fill IsNot Nothing Then
+            items = items.Where(Function(x) Not RegistrationMarkHelper.IsRegistrationMark(x)).ToList()
+        End If
+
+        If items.Count = 0 Then Return
+
         Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub

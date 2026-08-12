@@ -14,7 +14,9 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
 
     Public Shared Function DrawableFactory(element As FrameworkElement) As IDrawable
-        If TypeOf element Is Rectangle Then
+        If TypeOf element Is Rectangle AndAlso RegistrationMarkHelper.IsRegistrationMark(element) Then
+            Return New DrawableRegistrationMark(element)
+        ElseIf TypeOf element Is Rectangle Then
             Return New DrawableRectangle(element)
         ElseIf TypeOf element Is Ellipse Then
             Return New DrawableEllipse(element)

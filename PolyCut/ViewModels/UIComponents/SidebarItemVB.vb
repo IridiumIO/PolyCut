@@ -17,22 +17,29 @@ Partial Public Class SidebarItemVM : Inherits ObservableObject
     Public ReadOnly Property Item As IDrawable
 
 
-
     <RelayCommand>
     Public Sub BeginRename()
         _nameBeforeEdit = Item?.Name
         IsEditingName = True
     End Sub
 
-
     Public Sub CommitRename()
         Dim newName = Item?.Name?.Trim()
+        Dim effectiveName As String
         If String.IsNullOrEmpty(newName) Then
+            effectiveName = _nameBeforeEdit
             If Item IsNot Nothing Then Item.Name = _nameBeforeEdit
         Else
+            effectiveName = newName
             If Item IsNot Nothing Then Item.Name = newName
         End If
         IsEditingName = False
+
+        If Item Is Nothing OrElse String.Equals(_nameBeforeEdit, effectiveName) Then Return
+
+        Dim action As New RenameDrawableAction(Item, _nameBeforeEdit, effectiveName)
+        If action.Execute() Then Application.GetService(Of UndoRedoService)().Push(action)
+
     End Sub
 
     Public Sub CancelRename()

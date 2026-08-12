@@ -26,6 +26,17 @@ Public Class GeometryExtractor
             Return results
         End If
 
+        If cfg.ExtractOneColour Then
+            Dim fillColor = GetFillColor(drawable, True)
+            Dim strokeColor = If(drawable.Stroke IsNot Nothing, TryCast(drawable.Stroke, SolidColorBrush)?.Color, Nothing)
+            'only want to extract this if its stroke or fill matches the extraction color
+            If Not String.Equals(fillColor, cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase) AndAlso
+               Not (strokeColor.HasValue AndAlso String.Equals($"#{strokeColor.Value.R:X2}{strokeColor.Value.G:X2}{strokeColor.Value.B:X2}", cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase)) Then
+                Return New List(Of IPathBasedElement)
+            End If
+
+        End If
+
         ' Handle simple (non-group) drawable
         Dim element = TryCast(drawable.DrawableElement, FrameworkElement)
         If element Is Nothing Then Return New List(Of IPathBasedElement)
@@ -201,7 +212,7 @@ Public Class GeometryExtractor
     End Function
 
 
-    Private Shared Function GetFillColor(drawable As IDrawable) As String
+    Private Shared Function GetFillColor(drawable As IDrawable, Optional includeAlpha As Boolean = False) As String
         If drawable Is Nothing Then Return Nothing
 
         Try
@@ -211,7 +222,11 @@ Public Class GeometryExtractor
             Dim solidBrush = TryCast(fillBrush, SolidColorBrush)
             If solidBrush IsNot Nothing Then
                 Dim c = solidBrush.Color
-                Return String.Format("#{0:X2}{1:X2}{2:X2}", c.R, c.G, c.B)
+                If includeAlpha Then
+                    Return String.Format("#{0:X2}{1:X2}{2:X2}{3:X2}", c.A, c.R, c.G, c.B)
+                Else
+                    Return String.Format("#{0:X2}{1:X2}{2:X2}", c.R, c.G, c.B)
+                End If
             End If
 
             Return "#000000"

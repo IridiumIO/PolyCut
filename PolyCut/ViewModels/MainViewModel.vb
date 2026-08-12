@@ -211,94 +211,15 @@ Partial Public Class MainViewModel
 
     Private Sub ReorderSelectedItem(item As IDrawable, direction As Integer)
         If item Is Nothing OrElse TypeOf item Is DrawableGroup Then Return
-        ReorderSelectedItems(New IDrawable() {item}, direction)
+        ReorderSelectedItems({item}, direction)
     End Sub
 
     Private Sub ReorderSelectedItems(items As IEnumerable(Of IDrawable), direction As Integer)
-        Dim selected = items.Where(Function(x) x IsNot Nothing AndAlso Not TypeOf x Is DrawableGroup).ToList()
-        If selected.Count = 0 Then Return
-
-        Dim selectedSet As New HashSet(Of IDrawable)(selected)
-
-        ' For absolute moves (to very top / bottom), pre-compute each item's rank within the selection so the block lands contiguously, in order.
-        Dim ranks As New Dictionary(Of IDrawable, Integer)()
-        Dim isAbsoluteMove = (direction = Integer.MaxValue OrElse direction = Integer.MinValue)
-        If isAbsoluteMove Then
-            Dim byIndex = selected.OrderBy(Function(x) DrawableCollection.IndexOf(x)).ToList()
-            For i = 0 To byIndex.Count - 1
-                ranks(byIndex(i)) = i
-            Next
-        End If
-
-        ' Process in the direction of travel so earlier moves never collide with later tagrets: descending for higher indices, ascending for lower.
-        Dim ordered As List(Of IDrawable)
-        If direction > 0 Then
-            ordered = selected.OrderByDescending(Function(x) DrawableCollection.IndexOf(x)).ToList()
-        Else
-            ordered = selected.OrderBy(Function(x) DrawableCollection.IndexOf(x)).ToList()
-        End If
-
-        Dim actions As New List(Of IUndoableAction)()
-        For Each item In ordered
-            Dim rank As Integer = 0
-            ranks.TryGetValue(item, rank)
-            Dim action = BuildReorderAction(item, direction, selectedSet, rank, selected.Count)
-            If action IsNot Nothing AndAlso action.Execute() Then
-                actions.Add(action)
-            End If
-        Next
-
+        Dim actions = ReorderPlanner.Move(Me, items, direction, AddressOf GetParentGroup)
         If actions.Count > 0 Then
             _undoRedoService.Push(New CompositeAction(actions))
         End If
     End Sub
-
-    Private Function BuildReorderAction(item As IDrawable, direction As Integer, selected As HashSet(Of IDrawable), rank As Integer, selectedCount As Integer) As ReorderDrawableAction
-        Dim parentGroup = GetParentGroup(item)
-        If parentGroup Is Nothing Then Return Nothing
-
-        Dim srcGroupIndex = parentGroup.GroupChildren.IndexOf(item)
-        If srcGroupIndex < 0 Then Return Nothing
-
-        Dim dstGroupIndex = ComputeReorderTarget(item, parentGroup.GroupChildren, direction, selected, rank, selectedCount)
-        If dstGroupIndex = srcGroupIndex Then Return Nothing
-
-        Dim srcCollIndex = DrawableCollection.IndexOf(item)
-        If srcCollIndex < 0 Then Return Nothing
-
-        Dim dstCollIndex = ComputeReorderTarget(item, DrawableCollection, direction, selected, rank, selectedCount)
-        If dstCollIndex = srcCollIndex Then Return Nothing
-
-        Return New ReorderDrawableAction(Me, item, parentGroup, srcGroupIndex, dstGroupIndex, srcCollIndex, dstCollIndex)
-    End Function
-
-    Private Function ComputeReorderTarget(item As IDrawable, collection As ObservableCollection(Of IDrawable),
-                                          direction As Integer, selected As HashSet(Of IDrawable),
-                                          Optional rank As Integer = 0, Optional selectedCount As Integer = 0) As Integer
-        Dim src = collection.IndexOf(item)
-        If src < 0 Then Return src
-
-        Select Case direction
-            Case Integer.MinValue
-                ' Very bottom
-                Return rank
-            Case Integer.MaxValue
-                ' Very top
-                Return Math.Max(0, collection.Count - selectedCount) + rank
-            Case 1
-                ' Move up one unless at the end or another selected item is above it
-                If src >= collection.Count - 1 Then Return src
-                If selected.Contains(collection(src + 1)) Then Return src
-                Return src + 1
-            Case -1
-                ' Mirror image of above
-                If src <= 0 Then Return src
-                If selected.Contains(collection(src - 1)) Then Return src
-                Return src - 1
-            Case Else
-                Return src
-        End Select
-    End Function
 
 
 

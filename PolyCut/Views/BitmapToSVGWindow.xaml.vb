@@ -129,7 +129,7 @@
         If _flattenedShapes Is Nothing OrElse _flattenedShapes.Count = 0 Then Return -1
 
         ' Fast path: check if still within the previously hit shape, but only if we are not in Stacked mode
-        If _lastHitIndex >= 0 AndAlso _vm.VTracerOptions.Hierarchical = HeiarchicalMethod.Cutout Then
+        If _lastHitIndex >= 0 AndAlso _vm.VTracerOptions.Hierarchical <> HeiarchicalMethod.Stacked Then
             If _lastHitBounds.Contains(point) Then
                 If _flattenedShapes(_lastHitIndex).Geometry.FillContains(point, 0.001, ToleranceType.Absolute) Then
                     Return _lastHitIndex    ' Mouse hasn't left the shape — skip full scan

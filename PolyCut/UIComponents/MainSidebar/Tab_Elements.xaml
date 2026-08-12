@@ -21,11 +21,12 @@
 
 
         <ScrollViewer Grid.Row="3"
-                      Margin="-14 0 -14 0" Padding="10 0 25 0"
+                      Margin="-14 0 -14 0" Padding="5 0 25 0"
                       CanContentScroll="True" VerticalScrollBarVisibility="Visible">
 
-            <ui:ListView x:Name="FilesList" FocusVisualStyle="{x:Null}" 
+            <ui:ListView x:Name="FilesList"
                          VerticalAlignment="Top"
+                         FocusVisualStyle="{x:Null}"
                          ItemsSource="{Binding MainVM.FlatSidebarItems}"
                          SelectionChanged="ListView_SelectionChanged" SelectionMode="Extended">
 
@@ -99,7 +100,7 @@
                     <DataTemplate>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="15" />
+                                <ColumnDefinition Width="24" />
                                 <ColumnDefinition Width="25" />
                                 <ColumnDefinition Width="15" />
                                 <ColumnDefinition />
@@ -121,15 +122,70 @@
                                         <GradientStop Offset="1" Color="#FFFFFFFF" />
                                     </LinearGradientBrush>
                                 </Border.Background>
+
                             </Border>
+
+                            <StackPanel Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                        Margin="0 0 0 0" VerticalAlignment="Center" Panel.ZIndex="12">
+                                <Button Padding="4"
+                                        Background="Transparent" BorderThickness="0"
+                                        Command="{Binding DataContext.MainVM.MoveSelectedItemUpCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                        CommandParameter="{Binding Item}">
+                                    <ui:SymbolIcon FontSize="16" Symbol="ArrowUp12" />
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
+                                            <Setter Property="Visibility" Value="Hidden" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+
+                                </Button>
+                                <Button Padding="4"
+                                        Background="Transparent" BorderThickness="0"
+                                        Command="{Binding DataContext.MainVM.MoveSelectedItemDownCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                        CommandParameter="{Binding Item}">
+                                    <ui:SymbolIcon FontSize="16" Symbol="ArrowDown12" />
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
+                                            <Setter Property="Visibility" Value="Hidden" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+
+                                </Button>
+                            </StackPanel>
+
 
                             <!--  Selection bar  -->
                             <Border Grid.RowSpan="2" Grid.Column="0"
-                                    Width="2"
-                                    Margin="-4 5 0 5"
+                                    Width="4"
+                                    Margin="0 5 0 5"
                                     Background="{StaticResource PaletteBlueBrush}"
-                                    CornerRadius="2"
-                                    Visibility="{Binding Item.IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    CornerRadius="2">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="False" />
+                                                    <Condition Binding="{Binding Item.IsSelected}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
 
                             <ContentControl Grid.RowSpan="2" Grid.Column="1"
                                             Width="24" Height="24"
@@ -192,7 +248,7 @@
 
 
                             <TextBlock Grid.Row="2" Grid.Column="3"
-                                       VerticalAlignment="Top" 
+                                       VerticalAlignment="Top"
                                        FontSize="11" Foreground="#60FFFFFF"
                                        Text="{Binding ParentName}" />
 
@@ -220,7 +276,7 @@
             </ui:ListView>
 
         </ScrollViewer>
-        <Separator Grid.Row="4" Margin="5" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <Separator Grid.Row="4" Margin="5" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
         <Grid Grid.Row="5" Margin="10 0 10 -10" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
 
@@ -246,8 +302,7 @@
                        Width="65" Height="40"
                        Margin="20 0 0 0" Padding="0"
                        Background="Transparent" BorderThickness="0"
-                       Command="{Binding DeleteDrawableElementCommand}"
-                       >
+                       Command="{Binding DeleteDrawableElementCommand}">
                 <StackPanel Orientation="Vertical">
                     <ui:SymbolIcon FontSize="16" Symbol="Delete20" />
                     <TextBlock FontSize="9" Text="Delete" />
@@ -269,10 +324,10 @@
 
                 <ui:DropDownButton.Flyout>
                     <ContextMenu>
-                        <MenuItem Header="Union" Icon="{ui:SymbolIcon Symbol=ShapeUnion20}" Command="{Binding MainVM.UnionShapesCommand}" />
-                        <MenuItem Header="Intersect" Icon="{ui:SymbolIcon Symbol=ShapeIntersect20}" Command="{Binding MainVM.IntersectShapesCommand}"/>
-                        <MenuItem Header="Subtract" Icon="{ui:SymbolIcon Symbol=ShapeSubtract20}" Command="{Binding MainVM.SubtractShapesCommand}"/>
-                        <MenuItem Header="Exclude" Icon="{ui:SymbolIcon Symbol=ShapeExclude20}" Command="{Binding MainVM.XorShapesCommand}"/>
+                        <MenuItem Command="{Binding MainVM.UnionShapesCommand}" Header="Union" Icon="{ui:SymbolIcon Symbol=ShapeUnion20}" />
+                        <MenuItem Command="{Binding MainVM.IntersectShapesCommand}" Header="Intersect" Icon="{ui:SymbolIcon Symbol=ShapeIntersect20}" />
+                        <MenuItem Command="{Binding MainVM.SubtractShapesCommand}" Header="Subtract" Icon="{ui:SymbolIcon Symbol=ShapeSubtract20}" />
+                        <MenuItem Command="{Binding MainVM.XorShapesCommand}" Header="Exclude" Icon="{ui:SymbolIcon Symbol=ShapeExclude20}" />
                     </ContextMenu>
                 </ui:DropDownButton.Flyout>
 

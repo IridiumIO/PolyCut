@@ -320,6 +320,11 @@
         <KeyBinding Command="{Binding BrowseSVGCommand}" Gesture="Ctrl+I" />
         <KeyBinding Command="{Binding SelectAllCommand}" Gesture="Ctrl+A" />
         <KeyBinding Command="{Binding GenerateGCodeCommand}" Gesture="F5" />
+        
+        <KeyBinding Command="{Binding MoveSelectedItemsCanvasUpCommand}" Gesture="Ctrl+OemCloseBrackets" />
+        <KeyBinding Command="{Binding MoveSelectedItemsCanvasDownCommand}" Gesture="Ctrl+OemOpenBrackets" />
+        <KeyBinding Command="{Binding MoveSelectedItemsCanvasToTopCommand}" Gesture="Ctrl+Shift+OemCloseBrackets" />
+        <KeyBinding Command="{Binding MoveSelectedItemsCanvasToBottomCommand}" Gesture="Ctrl+Shift+OemOpenBrackets" />
     </ui:FluentWindow.InputBindings>
 
 

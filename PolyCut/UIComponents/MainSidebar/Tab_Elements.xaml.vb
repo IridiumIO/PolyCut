@@ -40,6 +40,25 @@ Public Class Tab_Elements
     End Function
 
     Private Sub ListView_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+
+        Dim mainViewModel = TryCast(DataContext, SVGPageViewModel)?.MainVM
+        If mainViewModel IsNot Nothing AndAlso e.RemovedItems.Count > 0 Then
+            Dim isProgrammaticRebuild = False
+            For Each item In e.RemovedItems
+                Dim vm = TryCast(item, SidebarItemVM)
+                If vm IsNot Nothing AndAlso Not mainViewModel.FlatSidebarItems.Contains(vm) Then
+                    isProgrammaticRebuild = True
+                    Exit For
+                End If
+            Next
+
+            If isProgrammaticRebuild Then
+                ' Once the rebuild settles, restore the sidebar highlight from the canvas.
+                Me.Dispatcher.BeginInvoke(Sub() SyncListViewSelection(PolyCanvas.SelectedItems))
+                Return
+            End If
+        End If
+
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
         Dim isCtrlPressed As Boolean = Keyboard.IsKeyDown(Key.LeftCtrl) OrElse Keyboard.IsKeyDown(Key.RightCtrl)
 
@@ -63,7 +82,6 @@ Public Class Tab_Elements
             End If
         Next
 
-        Dim mainViewModel = TryCast(DataContext, SVGPageViewModel)?.MainVM
         If mainViewModel IsNot Nothing Then
             SelectionHelper.SyncSelectionStates(mainViewModel.DrawableCollection)
         End If

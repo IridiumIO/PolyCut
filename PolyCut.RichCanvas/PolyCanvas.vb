@@ -215,6 +215,14 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                         _selectionManager.DeselectItem(oldItem)
                     End If
                 Next
+            Case NotifyCollectionChangedAction.Move
+                Dim oldIndex As Integer = e.OldStartingIndex
+                Dim newIndex As Integer = e.NewStartingIndex
+                If oldIndex >= 0 AndAlso oldIndex < Me.Children.Count Then
+                    Dim movedVisual As UIElement = Me.Children(oldIndex)
+                    Me.Children.RemoveAt(oldIndex)
+                    Me.Children.Insert(Math.Min(newIndex, Me.Children.Count), movedVisual)
+                End If
             Case NotifyCollectionChangedAction.Reset
                 Me.Children.Clear()
                 _selectionManager.ClearSelection()

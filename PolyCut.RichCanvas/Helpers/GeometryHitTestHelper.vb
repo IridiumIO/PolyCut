@@ -97,6 +97,8 @@ Public Class GeometryHitTestHelper
         Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
     End Function
 
+    Private Const STROKE_HIT_PAD As Double = 2.0
+
     Public Shared Function ContainsPoint(drawable As IDrawable, point As Point) As Boolean
         If drawable Is Nothing OrElse drawable.IsHidden Then Return False
 
@@ -105,7 +107,8 @@ Public Class GeometryHitTestHelper
 
         ' Lines are widened into a filled body, so their "fill" is the stroke region.
         If TypeOf drawable.DrawableElement Is Line Then
-            If geometry.FillContains(point, ToleranceType.Absolute, 0.5) Then Return True
+            Dim padded = geometry.GetWidenedPathGeometry(New Pen(Brushes.Black, STROKE_HIT_PAD))
+            Return padded.FillContains(point, ToleranceType.Absolute, 0.5)
         ElseIf drawable.Fill IsNot Nothing Then
             Dim solid = TryCast(drawable.Fill, SolidColorBrush)
             If solid Is Nothing OrElse solid.Color.A > 0 Then
@@ -117,8 +120,9 @@ Public Class GeometryHitTestHelper
             Dim solidStroke = TryCast(drawable.Stroke, SolidColorBrush)
             If solidStroke Is Nothing OrElse solidStroke.Color.A > 0 Then
                 Dim thickness = If(drawable.StrokeThickness > 0, drawable.StrokeThickness, 1.0)
-                Dim pen As New Pen(drawable.Stroke, thickness)
-                If geometry.StrokeContains(pen, point, ToleranceType.Absolute, 0.5) Then Return True
+                Dim hitPen As New Pen(drawable.Stroke, thickness + STROKE_HIT_PAD)
+                Dim stroked = geometry.GetWidenedPathGeometry(hitPen)
+                If stroked.FillContains(point, ToleranceType.Absolute, 0.5) Then Return True
             End If
         End If
 

@@ -6,9 +6,10 @@ Imports PolyCut.Shared
 
 Imports Svg
 
-Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
+Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
 
-    Public Property Name As String Implements IDrawable.Name
+    <ImplementsProperty(GetType(IDrawable), NameOf(IDrawable.Name))>
+    <ObservableProperty> Private _name As String
     Private _drawableElement As FrameworkElement
 
 

@@ -1,6 +1,13 @@
-﻿Imports PolyCut.Shared
+﻿Imports CommunityToolkit.Mvvm.ComponentModel
+Imports CommunityToolkit.Mvvm.Input
 
-Public Class SidebarItemVM
+Imports PolyCut.Shared
+
+Partial Public Class SidebarItemVM : Inherits ObservableObject
+
+    <ObservableProperty> Private _isEditingName As Boolean
+    Private _nameBeforeEdit As String
+
     Public Sub New(parent As DrawableGroup, item As IDrawable)
         Me.ParentGroup = parent
         Me.Item = item
@@ -8,6 +15,30 @@ Public Class SidebarItemVM
 
     Public ReadOnly Property ParentGroup As DrawableGroup
     Public ReadOnly Property Item As IDrawable
+
+
+
+    <RelayCommand>
+    Public Sub BeginRename()
+        _nameBeforeEdit = Item?.Name
+        IsEditingName = True
+    End Sub
+
+
+    Public Sub CommitRename()
+        Dim newName = Item?.Name?.Trim()
+        If String.IsNullOrEmpty(newName) Then
+            If Item IsNot Nothing Then Item.Name = _nameBeforeEdit
+        Else
+            If Item IsNot Nothing Then Item.Name = newName
+        End If
+        IsEditingName = False
+    End Sub
+
+    Public Sub CancelRename()
+        If Item IsNot Nothing Then Item.Name = _nameBeforeEdit
+        IsEditingName = False
+    End Sub
 
     Public ReadOnly Property ParentName As String
         Get

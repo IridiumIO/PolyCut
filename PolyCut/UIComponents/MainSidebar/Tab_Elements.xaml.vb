@@ -87,6 +87,39 @@ Public Class Tab_Elements
         End If
     End Sub
 
+    Private Sub NameTextBox_KeyDown(sender As Object, e As KeyEventArgs)
+        Dim tb = TryCast(sender, TextBox)
+        If tb Is Nothing Then Return
+        Dim vm = TryCast(tb.DataContext, SidebarItemVM)
+
+        If e.Key = Key.Enter Then
+            vm?.CommitRename()
+            e.Handled = True
+        ElseIf e.Key = Key.Escape Then
+            vm?.CancelRename()
+            e.Handled = True
+        End If
+    End Sub
+
+    Private Sub NameTextBox_LostFocus(sender As Object, e As RoutedEventArgs)
+        Dim tb = TryCast(sender, TextBox)
+        If tb Is Nothing Then Return
+        Dim vm = TryCast(tb.DataContext, SidebarItemVM)
+        If vm IsNot Nothing AndAlso vm.IsEditingName Then
+            vm.CommitRename()
+        End If
+    End Sub
+
+    Private Sub NameTextBox_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
+        Dim tb = TryCast(sender, TextBox)
+        If tb IsNot Nothing AndAlso tb.IsVisible Then
+            Dispatcher.BeginInvoke(Sub()
+                                       tb.Focus()
+                                       tb.SelectAll()
+                                   End Sub)
+        End If
+    End Sub
+
 End Class
 
 

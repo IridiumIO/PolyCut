@@ -234,7 +234,39 @@
                                         Margin="0 5" VerticalAlignment="Center"
                                         Orientation="Horizontal">
 
-                                <TextBlock VerticalAlignment="Center" Text="{Binding Item.Name}" />
+                                <Grid VerticalAlignment="Center">
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Item.Name}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                        <TextBlock.InputBindings>
+                                            <MouseBinding Command="{Binding BeginRenameCommand}" MouseAction="LeftDoubleClick" />
+                                        </TextBlock.InputBindings>
+                                    </TextBlock>
+
+                                    <TextBox MinWidth="80"
+                                             Padding="2 1" VerticalAlignment="Center"
+                                             Background="{StaticResource CardBackground}" IsVisibleChanged="NameTextBox_IsVisibleChanged" KeyDown="NameTextBox_KeyDown" LostFocus="NameTextBox_LostFocus"
+                                             Text="{Binding Item.Name, UpdateSourceTrigger=PropertyChanged}">
+                                        <TextBox.Style>
+                                            <Style BasedOn="{StaticResource {x:Type TextBox}}" TargetType="TextBox">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </Grid>
 
                                 <!--<Border Margin="5 0" Padding="10 2" VerticalAlignment="Center"
                                         Background="{StaticResource CardBackground}"

@@ -61,6 +61,9 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         Dim bounds = pathGeometry.Bounds
         Dim localGeometry = CreateLocalGeometry(pathGeometry, bounds)
         Dim newPath = CreatePathElement(localGeometry, bounds)
+        newPath.Fill = _selectedItems.FirstOrDefault(Function(f) f.Fill IsNot Nothing AndAlso CType(f.Fill, SolidColorBrush).Color.A <> 0)?.Fill
+        newPath.Stroke = _selectedItems.First.Stroke
+        newPath.StrokeThickness = _selectedItems.First.StrokeThickness
 
         Dim parentGroups As New HashSet(Of DrawableGroup)()
         For Each drawable In _selectedItems

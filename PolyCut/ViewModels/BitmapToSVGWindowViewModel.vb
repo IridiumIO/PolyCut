@@ -25,7 +25,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
     <ObservableProperty> Private _BaseImagePath As String
     <ObservableProperty> Private _ResultSvgPath As String
-    Public Property ExcludedRegionIndices As HashSet(Of Integer) = New HashSet(Of Integer)
+    <ObservableProperty> Private _ExcludedRegionIndices As HashSet(Of Integer) = New HashSet(Of Integer)
 
     Public Event RequestClose(DialogResult As Boolean)
 

@@ -103,7 +103,7 @@
 
                                 <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + N" Command="{Binding NewProjectCommand}" Header="_New" />
                                 <Separator />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG" />
+                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG/Image..." />
                                 <MenuItem local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" Header="_Load Project" />
                                 <Separator />
                                 <MenuItem local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" Header="_Save" />

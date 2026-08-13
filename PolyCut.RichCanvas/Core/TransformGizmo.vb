@@ -76,6 +76,8 @@ Public Class TransformGizmo
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
 
         EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnScaleChanged)
+
+        _scale = GetCurrentZoomScale()
     End Sub
 
     Public Property Scale As Double
@@ -93,7 +95,18 @@ Public Class TransformGizmo
         Scale = CType(message, ScaleChangedMessage).NewScale
     End Sub
 
+    Private Function GetCurrentZoomScale() As Double
 
+        Dim current As DependencyObject = _canvas
+        While current IsNot Nothing
+            Dim zb = TryCast(current, ZoomBorder)
+            If zb IsNot Nothing Then Return zb.Scale
+            current = VisualTreeHelper.GetParent(current)
+        End While
+
+        Dim last = ScaleChangedMessage.LastScale
+        Return If(last > 0, last, 1.0)
+    End Function
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
         For Each wrapper In _subscribedWrappers
@@ -128,6 +141,8 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub RequestGizmoRefresh()
+
+        _scale = GetCurrentZoomScale()
         ' Coalesce multiple triggers into a single render-tick update.
         _needsRefresh = True
         If _renderHooked Then Return

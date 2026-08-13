@@ -171,8 +171,8 @@ Public Class VTracerService
     ' ======================================================================
     '  Finalisation and Cleanup
     ' ======================================================================
-    Public Function FinalizeSvg(svgContent As String, excludedIndices As HashSet(Of Integer)) As String
-        Dim tempSvgPath = IO.Path.Combine(IO.Path.GetTempPath(), $"polycut-{Guid.NewGuid:N}.svg")
+    Public Function FinalizeSvg(OriginalImagePath As String, svgContent As String, excludedIndices As HashSet(Of Integer)) As String
+        Dim tempSvgPath = IO.Path.Combine(IO.Path.GetTempPath(), $"{IO.Path.GetFileNameWithoutExtension(OriginalImagePath)}.svg")
 
         Dim svgToWrite As String
         If excludedIndices IsNot Nothing AndAlso excludedIndices.Count > 0 Then

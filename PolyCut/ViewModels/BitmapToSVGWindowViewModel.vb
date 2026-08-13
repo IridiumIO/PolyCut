@@ -79,7 +79,7 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Sub Finish()
-        ResultSvgPath = _VTracerService.FinalizeSvg(_WorkingSVGString, ExcludedRegionIndices)
+        ResultSvgPath = _VTracerService.FinalizeSvg(BaseImagePath, _WorkingSVGString, ExcludedRegionIndices)
         RaiseEvent RequestClose(True)
     End Sub
 

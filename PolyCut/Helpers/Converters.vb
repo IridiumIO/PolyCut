@@ -702,3 +702,30 @@ Public Class EnumToDescriptionConverter : Inherits Markup.MarkupExtension
         Return Me
     End Function
 End Class
+
+Public Class IconBrushConverter : Inherits Markup.MarkupExtension
+    Implements System.Windows.Data.IMultiValueConverter
+
+    Public Function Convert(values As Object(), targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements System.Windows.Data.IMultiValueConverter.Convert
+        ' values(0) = the drawable's Fill, values(1) = its Stroke
+        If IsUsableBrush(values(0)) Then Return values(0)
+        If IsUsableBrush(values(1)) Then Return values(1)
+        Return If(System.Windows.Application.Current?.TryFindResource("TextFillColorSecondaryBrush"), System.Windows.Media.Brushes.White)
+    End Function
+
+    Public Function ConvertBack(value As Object, targetTypes As Type(), parameter As Object, culture As CultureInfo) As Object() Implements System.Windows.Data.IMultiValueConverter.ConvertBack
+        Throw New NotSupportedException()
+    End Function
+
+    Private Shared Function IsUsableBrush(value As Object) As Boolean
+        Dim brush = TryCast(value, System.Windows.Media.Brush)
+        If brush Is Nothing Then Return False
+        Dim scb = TryCast(brush, System.Windows.Media.SolidColorBrush)
+        If scb Is Nothing Then Return True ' gradient / non-solid brushes -> use as-is
+        Return Not (scb.Color = System.Windows.Media.Colors.Black OrElse scb.Color = System.Windows.Media.Colors.Transparent)
+    End Function
+
+    Public Overrides Function ProvideValue(serviceProvider As IServiceProvider) As Object
+        Return Me
+    End Function
+End Class

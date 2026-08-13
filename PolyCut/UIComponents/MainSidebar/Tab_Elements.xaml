@@ -34,51 +34,51 @@
                     <!--  Default / fallback (Group / unknown)  -->
 
                     <Style x:Key="DrawableIconStyle" TargetType="ui:SymbolIcon">
-                        <!--  default color  -->
-                        <Setter Property="Foreground" Value="{StaticResource TextFillColorSecondaryBrush}" />
+                        <!--  Fill colour; falls back to stroke, then theme white (see IconBrushConverter)  -->
+                        <Setter Property="Filled" Value="True" />
+                        <Setter Property="Foreground">
+                            <Setter.Value>
+                                <MultiBinding Converter="{local:IconBrushConverter}">
+                                    <Binding Path="Fill" />
+                                    <Binding Path="Stroke" />
+                                </MultiBinding>
+                            </Setter.Value>
+                        </Setter>
 
                         <Style.Triggers>
                             <!--  when row selected  -->
                             <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource PaletteBlueBrush}" />
+                                <Setter Property="Filled" Value="False" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
 
                     <DataTemplate DataType="{x:Type local:DrawableEllipse}">
-                        <ui:SymbolIcon Filled="True" FontSize="20"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Circle24" />
+                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Circle24" />
                     </DataTemplate>
 
                     <DataTemplate DataType="{x:Type local:DrawableRectangle}">
-                        <ui:SymbolIcon Filled="True" FontSize="20"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Square24" />
+                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Square24" />
                     </DataTemplate>
 
                     <DataTemplate DataType="{x:Type local:DrawableLine}">
-                        <ui:SymbolIcon Filled="True" FontSize="20"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Line24" />
+                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Line24" />
                     </DataTemplate>
 
                     <DataTemplate DataType="{x:Type local:DrawablePath}">
-                        <ui:SymbolIcon Filled="True" FontSize="20"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Pentagon20" />
+                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Pentagon20" />
                     </DataTemplate>
 
                     <DataTemplate DataType="{x:Type local:DrawableText}">
-                        <ui:SymbolIcon Filled="True" FontSize="20"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Text16" />
+                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Text16" />
                     </DataTemplate>
 
                     <DataTemplate DataType="{x:Type local:NestedDrawableGroup}">
-                        <ui:SymbolIcon Filled="True" FontSize="23"
-                                       Style="{StaticResource DrawableIconStyle}"
-                                       Symbol="Shapes20" />
+                        <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Shapes20" />
+                    </DataTemplate>
+
+                    <DataTemplate DataType="{x:Type local:DrawableRegistrationMark}">
+                        <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Bookmark20" />
                     </DataTemplate>
                 </ui:ListView.Resources>
 

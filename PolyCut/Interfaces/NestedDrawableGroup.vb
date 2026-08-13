@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
+Imports System.ComponentModel
 Imports System.Windows.Ink
 
 Imports PolyCut.RichCanvas
@@ -110,8 +111,26 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Private Sub OnGroupChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
         RebuildDisplayChildren()
+
+        For Each child In GroupChildren
+            Dim npc = TryCast(child, INotifyPropertyChanged)
+            If npc IsNot Nothing Then RemoveHandler npc.PropertyChanged, AddressOf OnChildPropertyChanged
+        Next
+        For Each child In GroupChildren
+            Dim npc = TryCast(child, INotifyPropertyChanged)
+            If npc IsNot Nothing Then AddHandler npc.PropertyChanged, AddressOf OnChildPropertyChanged
+        Next
+
     End Sub
 
+    Private Sub OnChildPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
+        Select Case e.PropertyName
+            Case NameOf(Fill)
+                OnPropertyChanged(NameOf(Fill))
+            Case NameOf(Stroke)
+                OnPropertyChanged(NameOf(Stroke))
+        End Select
+    End Sub
 
     Private Iterator Function EnumerateLeafChildren() As IEnumerable(Of IDrawable)
         For Each ch In GroupChildren
@@ -552,7 +571,10 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Public Overrides Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
         Get
-            Return _stroke
+            ' Groups have no inherent stroke; fall back to the first child's
+            If IsUsableBrush(_stroke) Then Return _stroke
+            Dim first = GroupChildren.FirstOrDefault(Function(c) c IsNot Nothing)
+            Return If(first IsNot Nothing, first.Stroke, _stroke)
         End Get
         Set(value As System.Windows.Media.Brush)
             _stroke = value
@@ -566,7 +588,10 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Public Overloads Property Fill As System.Windows.Media.Brush Implements IDrawable.Fill
         Get
-            Return _fill
+            ' Groups have no inherent fill; fall back to the first child's
+            If IsUsableBrush(_fill) Then Return _fill
+            Dim first = GroupChildren.FirstOrDefault(Function(c) c IsNot Nothing)
+            Return If(first IsNot Nothing, first.Fill, _fill)
         End Get
         Set(value As System.Windows.Media.Brush)
             _fill = value
@@ -577,6 +602,13 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             OnPropertyChanged(NameOf(Fill))
         End Set
     End Property
+
+    Private Shared Function IsUsableBrush(brush As System.Windows.Media.Brush) As Boolean
+        If brush Is Nothing Then Return False
+        Dim scb = TryCast(brush, System.Windows.Media.SolidColorBrush)
+        If scb Is Nothing Then Return True ' gradient / non-solid -> usable as-is
+        Return Not (scb.Color = System.Windows.Media.Colors.Black OrElse scb.Color = System.Windows.Media.Colors.Transparent)
+    End Function
 
     Public Overrides Property StrokeThickness As Double Implements IDrawable.StrokeThickness
         Get

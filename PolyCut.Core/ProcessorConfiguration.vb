@@ -4,9 +4,12 @@ Imports CommunityToolkit.Mvvm.ComponentModel
 
 Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implements ISaveable
 
-    Public Property Version As Single = 0.2 Implements ISaveable.Version
-    Public Property SoftwareVersion As String = "0.7"
-    Public Property Name As String = "Configuration" Implements ISaveable.Name
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Version))>
+    <ObservableProperty> Private _Version As Single = 0.2
+    <ObservableProperty> Private _SoftwareVersion As String = "0.7"
+
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Name))>
+    <ObservableProperty> Private _Name As String = "Configuration"
 
     Public Enum ToolMode
         Cut
@@ -17,38 +20,42 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
 
     End Enum
 
-    Public Property SelectedToolMode As ToolMode = ToolMode.Draw
+    <ObservableProperty> Private _SelectedToolMode As ToolMode = ToolMode.Draw
 
     'Shared Variables
-    Public Property Tolerance As Double = 0.01
-    Public Property AutoUnionText As Boolean = True
-    Public Property WorkSpeed As Double = 40
-    Public Property TravelSpeed As Double = 60
-    Public Property ZSpeed As Double = 10
-    Public Property WorkZ As Double = 0
-    Public Property TravelZ As Double = 5
-    Public Property SafeZ As Double = 10
+    <ObservableProperty> Private _Tolerance As Double = 0.01
+    <ObservableProperty> Private _AutoUnionText As Boolean = True
+    <ObservableProperty> Private _WorkSpeed As Double = 40
+    <ObservableProperty> Private _TravelSpeed As Double = 60
+    <ObservableProperty> Private _ZSpeed As Double = 10
+    <ObservableProperty> Private _WorkZ As Double = 0
+    <ObservableProperty> Private _TravelZ As Double = 5
+    <ObservableProperty> Private _SafeZ As Double = 10
 
-    Public Property Passes As Integer = 1
-    Public Property PassHeightDelta As Double = 0
+    <ObservableProperty> Private _Passes As Integer = 1
+    <ObservableProperty> Private _PassHeightDelta As Double = 0
 
-    Public Property WorkAreaWidth As Double = 200
-    Public Property WorkAreaHeight As Double = 200
-    Public Property ToolOffsetX As Double = 0
-    Public Property ToolOffsetY As Double = 0
-
-
-    Public Property CuttingConfig As New CuttingConfiguration
-    Public Property DrawingConfig As New DrawingConfiguration
-    Public Property ExportConfig As New ExportConfiguration
+    <NotifyPropertyChangedFor(NameOf(Area))>
+    <ObservableProperty> Private _WorkAreaWidth As Double = 200
+    <NotifyPropertyChangedFor(NameOf(Area))>
+    <ObservableProperty> Private _WorkAreaHeight As Double = 200
+    <ObservableProperty> Private _ToolOffsetX As Double = 0
+    <ObservableProperty> Private _ToolOffsetY As Double = 0
 
 
-    Public Property OptimisedToolPath As Boolean = True
+    <ObservableProperty> Private _CuttingConfig As New CuttingConfiguration
+    <ObservableProperty> Private _DrawingConfig As New DrawingConfiguration
+    <ObservableProperty> Private _ExportConfig As New ExportConfiguration
+
+
+    <NotifyPropertyChangedFor(NameOf(OptimisationTimeout))>
+    <ObservableProperty> Private _OptimisedToolPath As Boolean = True
+
+    <ObservableProperty> Private _ExtractOneColour As Boolean = False
+    <ObservableProperty> Private _ExtractionColor As String = ""
 
     ''' Currently only supported by GCodePlot
-    Public Property ExtractOneColour As Boolean = False
-    Public Property ExtractionColor As String = ""
-    Public Property InsideOutCuttingOrder As Boolean = False
+    <ObservableProperty> Private _InsideOutCuttingOrder As Boolean = False
     Public ReadOnly Property OptimisationTimeout As Integer
         Get
             Return If(OptimisedToolPath, 60, 0)
@@ -79,8 +86,9 @@ End Class
 
 Partial Public Class CuttingConfiguration : Inherits ObservableObject
 
-    Public Property ToolDiameter As Double = 0.9
-    Public Property Overcut As Double = 0
+    <NotifyPropertyChangedFor(NameOf(ToolRadius))>
+    <ObservableProperty> Private _ToolDiameter As Double = 0.9
+    <ObservableProperty> Private _Overcut As Double = 0
 
     Public ReadOnly Property ToolRadius
         Get
@@ -106,15 +114,16 @@ End Enum
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject
 
-    Public Property MinStrokeWidth As Double = 1
-    Public Property ShadingAngle As Double = 45
-    Public Property KeepOutlines As Boolean = True
-    Public Property FillType As FillType = FillType.Hatch
+    <ObservableProperty> Private _MinStrokeWidth As Double = 1
+    <ObservableProperty> Private _ShadingAngle As Double = 45
+    <ObservableProperty> Private _KeepOutlines As Boolean = True
+    <NotifyPropertyChangedFor(NameOf(CrossHatch))>
+    <ObservableProperty> Private _FillType As FillType = FillType.Hatch
 
-    Public Property AllowDrawingOverOutlines As Boolean = True
-    Public Property MaxStrokeWidth As Double = 1
-    Public Property ShadingThreshold As Double = 1
-    Public Property OutlinesBeforeFill As Boolean = False
+    <ObservableProperty> Private _AllowDrawingOverOutlines As Boolean = True
+    <ObservableProperty> Private _MaxStrokeWidth As Double = 1
+    <ObservableProperty> Private _ShadingThreshold As Double = 1
+    <ObservableProperty> Private _OutlinesBeforeFill As Boolean = False
 
 
     Public ReadOnly Property CrossHatch As Boolean
@@ -125,7 +134,7 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
 
 
     ''' Currently only supported by GCodePlot
-    Public Property DrawingDirection As Integer? = Nothing
+    <ObservableProperty> Private _DrawingDirection As Integer? = Nothing
 
 
     Public Function Clone() As DrawingConfiguration
@@ -173,20 +182,19 @@ Partial Public Class ExportConfiguration : Inherits ObservableObject
         File
     End Enum
 
-    Public Property Type As ExporterType = ExporterType.Network
-    Public Property FileDestination As String = Nothing
+    <ObservableProperty> Private _Type As ExporterType = ExporterType.Network
+    <ObservableProperty> Private _FileDestination As String = Nothing
     Private _DestinationIP As String = "http://klipper.local"
     Public Property DestinationIP As String
         Get
             Return _DestinationIP
         End Get
         Set(value As String)
-            Dim uri = BuildURI(value, Nothing)
-            _DestinationIP = uri.ToString
+            SetProperty(_DestinationIP, BuildURI(value, Nothing).ToString(), NameOf(DestinationIP))
         End Set
     End Property
-    Public Property DestinationPort As Integer = 7125
-    Public Property AutoPrint As Boolean = True
+    <ObservableProperty> Private _DestinationPort As Integer = 7125
+    <ObservableProperty> Private _AutoPrint As Boolean = True
 
     Public Function Clone() As ExportConfiguration
         Return DirectCast(Me.MemberwiseClone(), ExportConfiguration)

@@ -10,7 +10,27 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
     <ImplementsProperty(GetType(IDrawable), NameOf(IDrawable.Name))>
     <ObservableProperty> Private _name As String
-    Private _drawableElement As FrameworkElement
+
+    <ImplementsProperty(GetType(IDrawable), NameOf(IDrawable.DrawableElement))>
+    <ObservableProperty> Private _drawableElement As FrameworkElement
+
+    Private Sub OnDrawableElementChanged(oldValue As FrameworkElement, newValue As FrameworkElement)
+        If newValue IsNot Nothing Then
+            Try
+                If TypeOf newValue Is System.Windows.Shapes.Shape Then
+                    Dim s = CType(newValue, System.Windows.Shapes.Shape)
+                    If s.Stroke IsNot Nothing Then _stroke = s.Stroke
+                    If s.Fill IsNot Nothing Then _fill = s.Fill
+                    If s.StrokeThickness > 0 Then _strokeThickness = s.StrokeThickness
+                ElseIf TypeOf newValue Is TextBox Then
+                    Dim tb = CType(newValue, TextBox)
+                    If tb.Foreground IsNot Nothing Then _fill = tb.Foreground
+                End If
+            Catch
+            End Try
+        End If
+        ApplyVisualStyle()
+    End Sub
 
 
     Public Shared Function DrawableFactory(element As FrameworkElement) As IDrawable
@@ -32,29 +52,6 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
     End Function
 
 
-    Public Property DrawableElement As FrameworkElement Implements IDrawable.DrawableElement
-        Get
-            Return _drawableElement
-        End Get
-        Set(value As FrameworkElement)
-            _drawableElement = value
-            If _drawableElement IsNot Nothing Then
-                Try
-                    If TypeOf _drawableElement Is System.Windows.Shapes.Shape Then
-                        Dim s = CType(_drawableElement, System.Windows.Shapes.Shape)
-                        If s.Stroke IsNot Nothing Then _stroke = s.Stroke
-                        If s.Fill IsNot Nothing Then _fill = s.Fill
-                        If s.StrokeThickness > 0 Then _strokeThickness = s.StrokeThickness
-                    ElseIf TypeOf _drawableElement Is TextBox Then
-                        Dim tb = CType(_drawableElement, TextBox)
-                        If tb.Foreground IsNot Nothing Then _fill = tb.Foreground
-                    End If
-                Catch
-                End Try
-            End If
-            ApplyVisualStyle()
-        End Set
-    End Property
     Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
     Public Property IsHidden As Boolean Implements IDrawable.IsHidden
         Get
@@ -67,6 +64,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
             Else
                 DrawableElement.Visibility = Visibility.Visible
             End If
+            OnPropertyChanged(NameOf(IsHidden))
         End Set
     End Property
 

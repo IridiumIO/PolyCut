@@ -3,8 +3,6 @@ Imports System.Windows
 Imports System.Windows.Media
 Imports System.Windows.Shapes
 
-Imports MeasurePerformance.IL.Weaver
-
 Imports PolyCut.[Shared]
 
 Imports Svg
@@ -22,7 +20,6 @@ Public Class PathElement : Implements IPathBasedElement
     Public Property IsFilled As Boolean = False Implements IPathBasedElement.IsFilled
     Public Property FillColor As String Implements IPathBasedElement.FillColor
 
-    <MeasurePerformance>
     Public Sub CompileFromSVGElement(element As SvgVisualElement, cfg As ProcessorConfiguration) Implements IPathBasedElement.CompileFromSVGElement
 
         Dim path = DirectCast(element, SvgPath)

@@ -4,8 +4,6 @@ Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports System.Windows.Threading
 
-Imports MeasurePerformance.IL.Weaver
-
 
 Imports WPF.Ui.Abstractions.Controls
 
@@ -328,7 +326,6 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     }
 
 
-    <MeasurePerformance>
     Private Function DrawToolPaths()
 
         ' Clear existing visuals in the VisualHost

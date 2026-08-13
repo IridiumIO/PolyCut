@@ -8,10 +8,14 @@ End Class
 
 Partial Public Class UIConfiguration : Inherits ObservableObject : Implements ISaveable
 
-    Public Property Version As Single = 0.1 Implements ISaveable.Version
-    Public Property Name As String = "UIConfiguration" Implements ISaveable.Name
-    Public Property ShowGrid As Boolean = True
-    Public Property ShowWorkArea As Boolean = False
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Version))>
+    <ObservableProperty> Private _Version As Single = 0.1
+
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Name))>
+    <ObservableProperty> Private _Name As String = "UIConfiguration"
+
+    <ObservableProperty> Private _ShowGrid As Boolean = True
+    <ObservableProperty> Private _ShowWorkArea As Boolean = False
 
 
     <ObservableProperty> Private _GridConfig As GridConfiguration = New GridConfiguration()

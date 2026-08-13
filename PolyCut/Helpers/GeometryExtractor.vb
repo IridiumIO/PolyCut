@@ -1,8 +1,6 @@
 
 Imports System.Numerics
 
-Imports MeasurePerformance.IL.Weaver
-
 Imports PolyCut.Core
 Imports PolyCut.[Shared]
 

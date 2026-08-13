@@ -7,9 +7,9 @@ Imports CommunityToolkit.Mvvm.Input
 Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
-Public Class SVGPageViewModel : Inherits ObservableObject
+Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
-    Public Property MainVM As MainViewModel
+    <ObservableProperty> Private _MainVM As MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
     Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
     Public Property CanvasThemeColor As String
@@ -18,6 +18,7 @@ Public Class SVGPageViewModel : Inherits ObservableObject
         End Get
         Set(value As String)
             CanvasColor = If(value = "Light", Brushes.White, New SolidColorBrush(Color.FromArgb(64, 100, 100, 100)))
+            OnPropertyChanged(NameOf(CanvasThemeColor))
         End Set
     End Property
 

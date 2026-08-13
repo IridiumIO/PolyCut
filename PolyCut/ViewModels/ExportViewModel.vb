@@ -9,8 +9,8 @@ Imports PolyCut.Core
 
 Partial Public Class ExportViewModel : Inherits ObservableObject
 
-    Public Property MainVM As MainViewModel
-    Public Property FilePath As String
+    <ObservableProperty> Private _MainVM As MainViewModel
+    <ObservableProperty> Private _FilePath As String
 
     Public Sub New(mainvm As MainViewModel)
 

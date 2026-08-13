@@ -2,8 +2,6 @@
 Imports System.Windows
 Imports System.Windows.Shapes
 
-Imports MeasurePerformance.IL.Weaver
-
 Public Class FillProcessor : Implements IProcessor
 
     ' -------------------------
@@ -83,7 +81,6 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    <MeasurePerformance>
     Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double, cfg As ProcessorConfiguration) As List(Of List(Of GeoLine))
         Dim result As New List(Of List(Of GeoLine))
 

@@ -938,6 +938,7 @@ Partial Public Class MainViewModel
         End Get
         Set(value As Boolean)
             UIConfiguration.ShowWorkArea = value
+            OnPropertyChanged(NameOf(WorkingAreaVisibility))
         End Set
     End Property
 
@@ -959,6 +960,7 @@ Partial Public Class MainViewModel
                 Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
             End If
             Application.GetService(Of SVGPageViewModel).NotifyPropertyChangedForGrid()
+            OnPropertyChanged(NameOf(IsGridVisible))
         End Set
     End Property
 

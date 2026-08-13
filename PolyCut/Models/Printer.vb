@@ -4,70 +4,74 @@ Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.Core
 
-Public Class Printer : Inherits ObservableObject : Implements ISaveable
-    Public Property Version As Single = 0.1 Implements ISaveable.Version
-    Public Property Name As String = "Ender 3 S1" Implements ISaveable.Name
+Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
 
-    Public Property BedWidth As Decimal
-        Get
-            Return _BedWidth
-        End Get
-        Set(value As Decimal)
-            _BedWidth = value
-            WorkingOffsetX = If(WorkingOffsetX < value, WorkingOffsetX, 0)
-            WorkingWidth = If(WorkingWidth < value - WorkingOffsetX, WorkingWidth, value - WorkingOffsetX)
-        End Set
-    End Property
-    Public Property BedHeight As Decimal
-        Get
-            Return _BedHeight
-        End Get
-        Set(value As Decimal)
-            _BedHeight = value
-            WorkingOffsetY = If(WorkingOffsetY < value, WorkingOffsetY, 0)
-            WorkingHeight = If(WorkingHeight < value - WorkingOffsetY, WorkingHeight, value - WorkingOffsetY)
-        End Set
-    End Property
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Version))>
+    <ObservableProperty> Private _Version As Single = 0.1
+
+    <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Name))>
+    <ObservableProperty> Private _Name As String = "Ender 3 S1"
+
+    <NotifyPropertyChangedFor(NameOf(BedRect))>
+    <ObservableProperty> Private _BedWidth As Decimal = 235
+
+    <NotifyPropertyChangedFor(NameOf(BedRect))>
+    <ObservableProperty> Private _BedHeight As Decimal = 235
+
+    Private Sub OnBedWidthChanged(oldValue As Decimal, newValue As Decimal)
+        WorkingOffsetX = If(WorkingOffsetX < newValue, WorkingOffsetX, 0)
+        WorkingWidth = If(WorkingWidth < newValue - WorkingOffsetX, WorkingWidth, newValue - WorkingOffsetX)
+    End Sub
+
+    Private Sub OnBedHeightChanged(oldValue As Decimal, newValue As Decimal)
+        WorkingOffsetY = If(WorkingOffsetY < newValue, WorkingOffsetY, 0)
+        WorkingHeight = If(WorkingHeight < newValue - WorkingOffsetY, WorkingHeight, newValue - WorkingOffsetY)
+    End Sub
+
+    Private _WorkingOffsetX As Decimal = 0
+    Private _WorkingOffsetY As Decimal = 0
+    Private _WorkingWidth As Decimal = 235
+    Private _WorkingHeight As Decimal = 235
+
     Public Property WorkingOffsetX As Decimal
         Get
             Return _WorkingOffsetX
         End Get
         Set(value As Decimal)
-
-
-            _WorkingOffsetX = If(value <= BedWidth, value, _WorkingOffsetX)
+            SetProperty(_WorkingOffsetX, If(value <= BedWidth, value, _WorkingOffsetX), NameOf(WorkingOffsetX))
+            OnPropertyChanged(NameOf(WorkingRect))
             WorkingWidth = If(WorkingWidth <= BedWidth - WorkingOffsetX, WorkingWidth, BedWidth - WorkingOffsetX)
-
         End Set
     End Property
+
     Public Property WorkingOffsetY As Decimal
         Get
             Return _WorkingOffsetY
         End Get
         Set(value As Decimal)
-
-
-            _WorkingOffsetY = If(value <= BedHeight, value, _WorkingOffsetY)
+            SetProperty(_WorkingOffsetY, If(value <= BedHeight, value, _WorkingOffsetY), NameOf(WorkingOffsetY))
+            OnPropertyChanged(NameOf(WorkingRect))
             WorkingHeight = If(WorkingHeight <= BedHeight - WorkingOffsetY, WorkingHeight, BedWidth - WorkingOffsetY)
         End Set
     End Property
+
     Public Property WorkingWidth As Decimal
         Get
             Return _WorkingWidth
         End Get
         Set(value As Decimal)
-
-
-            _WorkingWidth = If(value <= BedWidth - WorkingOffsetX, value, BedWidth - WorkingOffsetX)
+            SetProperty(_WorkingWidth, If(value <= BedWidth - WorkingOffsetX, value, BedWidth - WorkingOffsetX), NameOf(WorkingWidth))
+            OnPropertyChanged(NameOf(WorkingRect))
         End Set
     End Property
+
     Public Property WorkingHeight As Decimal
         Get
             Return _WorkingHeight
         End Get
         Set(value As Decimal)
-
-            _WorkingHeight = If(value <= BedHeight - WorkingOffsetY, value, BedHeight - WorkingOffsetY)
+            SetProperty(_WorkingHeight, If(value <= BedHeight - WorkingOffsetY, value, BedHeight - WorkingOffsetY), NameOf(WorkingHeight))
+            OnPropertyChanged(NameOf(WorkingRect))
         End Set
     End Property
 
@@ -83,56 +87,13 @@ Public Class Printer : Inherits ObservableObject : Implements ISaveable
         End Get
     End Property
 
-    Public Property StartGCode As String
-        Get
-            Return _StartGCode
-        End Get
-        Set(value As String)
-            _StartGCode = value
-        End Set
-    End Property
-    Public Property EndGCode As String
-        Get
-            Return _EndGCode
-        End Get
-        Set(value As String)
-            _EndGCode = value
-        End Set
-    End Property
-
-    Public Property PreviewStartGCode As String
-        Get
-            Return _PreviewStartGCode
-        End Get
-        Set(value As String)
-            _PreviewStartGCode = value
-        End Set
-    End Property
-
-    Public Property PreviewEndGCode As String
-        Get
-            Return _PreviewEndGCode
-        End Get
-        Set(value As String)
-            _PreviewEndGCode = value
-        End Set
-    End Property
-
-
-    Private _BedWidth As Decimal = 235
-    Private _BedHeight As Decimal = 235
-    Private _WorkingWidth As Decimal = 235
-    Private _WorkingHeight As Decimal = 235
-    Private _WorkingOffsetX As Decimal = 0
-    Private _WorkingOffsetY As Decimal = 0
+    <ObservableProperty> Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
+    <ObservableProperty> Private _EndGCode As String = $""
+    <ObservableProperty> Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
+    <ObservableProperty> Private _PreviewEndGCode As String = $""
 
     <ObservableProperty> Private _ToolOffsetX As Decimal = 0
     <ObservableProperty> Private _ToolOffsetY As Decimal = 0
-
-    Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
-    Private _EndGCode As String = $""
-    Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
-    Private _PreviewEndGCode As String = $""
 
     Public Function Clone() As Printer
         Dim p As New Printer With {

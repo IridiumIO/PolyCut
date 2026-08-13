@@ -23,8 +23,8 @@ Partial Public Class BitmapToSVGWindowViewModel : Inherits ObservableObject
     <NotifyCanExecuteChangedFor(NameOf(UpdatePreviewCommand))>
     <ObservableProperty> Private _IsNotProcessing As Boolean = True
 
-    Public Property BaseImagePath As String
-    Public Property ResultSvgPath As String
+    <ObservableProperty> Private _BaseImagePath As String
+    <ObservableProperty> Private _ResultSvgPath As String
     Public Property ExcludedRegionIndices As HashSet(Of Integer) = New HashSet(Of Integer)
 
     Public Event RequestClose(DialogResult As Boolean)

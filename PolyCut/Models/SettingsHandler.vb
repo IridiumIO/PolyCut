@@ -5,8 +5,6 @@ Imports System.Text.Json
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
-Imports MeasurePerformance.IL.Weaver
-
 Imports PolyCut.Core
 
 Imports SharpVectors.Renderers

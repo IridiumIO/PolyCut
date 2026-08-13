@@ -1,12 +1,9 @@
 ﻿Imports System.Numerics
 
-Imports MeasurePerformance.IL.Weaver
-
 Public Class FillOptimiser
 
 
 
-    <MeasurePerformance>
     Public Shared Function Optimise(segments As List(Of List(Of GeoLine)), geometrybounds As List(Of GeoLine), allowTravelInOutlines As Boolean, cfg As ProcessorConfiguration, Optional preferDirection As Boolean = True, Optional startPoint As Nullable(Of Vector2) = Nothing) As List(Of GeoLine)
 
         If segments Is Nothing OrElse segments.Count = 0 Then Return New List(Of GeoLine)()

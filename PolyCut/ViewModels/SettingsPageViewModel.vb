@@ -1,6 +1,6 @@
 ﻿Imports CommunityToolkit.Mvvm.ComponentModel
 
-Public Class SettingsPageViewModel : Inherits ObservableObject
+Partial Public Class SettingsPageViewModel : Inherits ObservableObject
 
     <ObservableProperty> Private _MainVM As MainViewModel
 

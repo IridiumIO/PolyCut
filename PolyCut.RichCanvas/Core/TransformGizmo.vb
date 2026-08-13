@@ -16,7 +16,6 @@ Public Class TransformGizmo
     Private _selectionManager As SelectionManager
     Private _canvas As Canvas
     Private _rotateHandleRect As Rect
-    Private _scale As Double = 1.0
 
     Private _lastClickTime As DateTime = DateTime.MinValue
     Private _lastClickPosition As Point
@@ -73,39 +72,62 @@ Public Class TransformGizmo
         AddHandler Me.MouseLeftButtonDown, AddressOf OnMouseDown
         AddHandler Me.MouseMove, AddressOf OnMouseMove
         AddHandler Me.MouseLeftButtonUp, AddressOf OnMouseUp
+        AddHandler Me.MouseWheel, AddressOf OnMouseWheel
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
 
-        EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnScaleChanged)
-
-        _scale = GetCurrentZoomScale()
+        EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnViewportChanged)
+        EventAggregator.Subscribe(Of TranslationChangedMessage)(AddressOf OnViewportChanged)
     End Sub
 
-    Public Property Scale As Double
-        Get
-            Return _scale
-        End Get
-        Set(value As Double)
-            _scale = value
-            InvalidateVisual()
-        End Set
-    End Property
-
-    Private Sub OnScaleChanged(message As Object)
-        If TypeOf message IsNot ScaleChangedMessage Then Return
-        Scale = CType(message, ScaleChangedMessage).NewScale
+    Private Sub OnViewportChanged(message As Object)
+        RequestGizmoRefresh()
     End Sub
 
-    Private Function GetCurrentZoomScale() As Double
+    Private Sub OnMouseWheel(sender As Object, e As MouseWheelEventArgs)
+        'passthrough mouse back to zoomborder for scroling to zoom
+        Dim zb = GetZoomBorder()
+        If zb IsNot Nothing Then
+            zb.ZoomByWheel(e.Delta)
+            e.Handled = True
+        End If
+    End Sub
 
+    Private Function GetZoomBorder() As ZoomBorder
         Dim current As DependencyObject = _canvas
         While current IsNot Nothing
             Dim zb = TryCast(current, ZoomBorder)
-            If zb IsNot Nothing Then Return zb.Scale
+            If zb IsNot Nothing Then Return zb
             current = VisualTreeHelper.GetParent(current)
         End While
+        Return Nothing
+    End Function
 
-        Dim last = ScaleChangedMessage.LastScale
-        Return If(last > 0, last, 1.0)
+    Private Function GetCanvasToGizmoMatrix() As Matrix
+        If _canvas Is Nothing Then Return Matrix.Identity
+        Try
+            ' TransformToVisual requires both elements to be connected to the visual tree.
+            If PresentationSource.FromVisual(_canvas) IsNot Nothing AndAlso PresentationSource.FromVisual(Me) IsNot Nothing Then
+                Dim gt = _canvas.TransformToVisual(Me)
+                Dim tr = TryCast(gt, Transform)
+                If tr IsNot Nothing Then Return tr.Value
+            End If
+        Catch
+        End Try
+        Return Matrix.Identity
+    End Function
+
+    Private Shared Function TransformRect(m As Matrix, r As Rect) As Rect
+        Dim topLeft = m.Transform(New Point(r.Left, r.Top))
+        Dim topRight = m.Transform(New Point(r.Right, r.Top))
+        Dim bottomLeft = m.Transform(New Point(r.Left, r.Bottom))
+        Dim bottomRight = m.Transform(New Point(r.Right, r.Bottom))
+
+        Dim minX = Math.Min(topLeft.X, Math.Min(topRight.X, Math.Min(bottomLeft.X, bottomRight.X)))
+        Dim minY = Math.Min(topLeft.Y, Math.Min(topRight.Y, Math.Min(bottomLeft.Y, bottomRight.Y)))
+        Dim maxX = Math.Max(topLeft.X, Math.Max(topRight.X, Math.Max(bottomLeft.X, bottomRight.X)))
+        Dim maxY = Math.Max(topLeft.Y, Math.Max(topRight.Y, Math.Max(bottomLeft.Y, bottomRight.Y)))
+
+        Return New Rect(minX, minY, maxX - minX, maxY - minY)
     End Function
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
@@ -141,8 +163,6 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub RequestGizmoRefresh()
-
-        _scale = GetCurrentZoomScale()
         ' Coalesce multiple triggers into a single render-tick update.
         _needsRefresh = True
         If _renderHooked Then Return
@@ -186,7 +206,7 @@ Public Class TransformGizmo
 
         _rotateHandleRect = New Rect(rect.Left + rect.Width / 2 - rotateHandleSize / 2, rect.Top - rotateOffset - rotateHandleSize / 2, rotateHandleSize, rotateHandleSize)
 
-        Dim pad = HANDLE_HIT_PAD / _scale
+        Dim pad = HANDLE_HIT_PAD
         For i = 0 To 7
             Dim r = _handleRects(i)
             r.Inflate(pad, pad)
@@ -198,14 +218,15 @@ Public Class TransformGizmo
     Protected Overrides Sub OnRender(drawingContext As DrawingContext)
         MyBase.OnRender(drawingContext)
 
-        _styleCache.EnsurePens(_scale)
+        _styleCache.EnsurePens()
 
         Dim bounds = _selectionManager.GetUnrotatedBounds()
         If Not bounds.HasValue Then Return
 
         Dim dpi = VisualTreeHelper.GetDpi(Me).PixelsPerDip
 
-        Dim rect = bounds.Value
+        ' Map canvas-space selection bounds into this overlay's 1:1 screen space
+        Dim rect = TransformRect(GetCanvasToGizmoMatrix(), bounds.Value)
         Dim rotationAngle = GetSelectionRotation()
         Dim hasRotation = Math.Abs(rotationAngle) > 0.01
 
@@ -214,10 +235,10 @@ Public Class TransformGizmo
             drawingContext.PushTransform(New RotateTransform(rotationAngle, boundsCenter.X, boundsCenter.Y))
         End If
 
-        Dim handleSize = HANDLE_SIZE / _scale
-        Dim cardinalHandleSize = CARDINAL_HANDLE_SIZE / _scale
-        Dim rotateHandleSize = ROTATE_HANDLE_SIZE / _scale
-        Dim rotateOffset = ROTATE_HANDLE_OFFSET / _scale
+        Dim handleSize = HANDLE_SIZE
+        Dim cardinalHandleSize = CARDINAL_HANDLE_SIZE
+        Dim rotateHandleSize = ROTATE_HANDLE_SIZE
+        Dim rotateOffset = ROTATE_HANDLE_OFFSET
 
         UpdateHandleRects(rect, handleSize, cardinalHandleSize, rotateHandleSize, rotateOffset)
 
@@ -232,17 +253,17 @@ Public Class TransformGizmo
         drawingContext.DrawRectangle(_styleCache.HandleBrush, _styleCache.HandlePen, _handleRects(HandleId.BottomRight))
 
         ' Draw edge handles
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top), 5 / _scale, 5 / _scale)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom), 5 / _scale, 5 / _scale)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left), 5 / _scale, 5 / _scale)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right), 5 / _scale, 5 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top), 5, 5)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom), 5, 5)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left), 5, 5)
+        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right), 5, 5)
 
         ' Draw rotate handle background
-        Dim iconCenter = New Point(_rotateHandleRect.Left + _rotateHandleRect.Width / 2, _rotateHandleRect.Top + _rotateHandleRect.Height - (8 / _scale))
+        Dim iconCenter = New Point(_rotateHandleRect.Left + _rotateHandleRect.Width / 2, _rotateHandleRect.Top + _rotateHandleRect.Height - 8)
         drawingContext.DrawEllipse(_styleCache.RotateBackBrush, _styleCache.RotatePen, iconCenter, _rotateHandleRect.Width / 2.5, _rotateHandleRect.Height / 2.5)
 
         ' Draw rotate handle icon
-        Dim arcGeom = _renderCache.GetArcWithArrowGeometry(_scale)
+        Dim arcGeom = _renderCache.GetArcWithArrowGeometry()
         drawingContext.PushTransform(New TranslateTransform(iconCenter.X, iconCenter.Y))
         drawingContext.DrawGeometry(Nothing, _styleCache.ArcPen, arcGeom)
         drawingContext.Pop()
@@ -260,13 +281,13 @@ Public Class TransformGizmo
         If _activeHandle <> "Rotate" OrElse _selectionManager.Count <> 1 Then Return
 
         Dim angleText = $"{Math.Round(GetCurrentRotationAngle(), 1):F1}°"
-        Dim ft = _renderCache.GetAngleText(angleText, 14 / _scale, dpi)
+        Dim ft = _renderCache.GetAngleText(angleText, 14, dpi)
 
         Dim textX = iconCenter.X - ft.Width / 2
-        Dim textY = _rotateHandleRect.Top - rotateOffset / 2 + 8 / _scale
-        Dim bgRect As New Rect(textX - 4 / _scale, textY - 2 / _scale, ft.Width + 8 / _scale, ft.Height + 4 / _scale)
+        Dim textY = _rotateHandleRect.Top - rotateOffset / 2 + 8
+        Dim bgRect As New Rect(textX - 4, textY - 2, ft.Width + 8, ft.Height + 4)
 
-        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, bgRect, 3 / _scale, 3 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, bgRect, 3, 3)
         drawingContext.DrawText(ft, New Point(textX, textY))
 
     End Sub
@@ -282,20 +303,20 @@ Public Class TransformGizmo
         Dim w = Math.Round(dims.Value.Width, 1)
         Dim h = Math.Round(dims.Value.Height, 1)
 
-        Dim widthFt = _renderCache.GetWidthText($"{w:F1} mm", 12 / _scale, dpi)
+        Dim widthFt = _renderCache.GetWidthText($"{w:F1} mm", 12, dpi)
         Dim widthX = rect.Left + rect.Width / 2 - widthFt.Width / 2
-        Dim widthY = rect.Bottom + 18 / _scale
-        Dim widthBgRect As New Rect(widthX - 4 / _scale, widthY - 2 / _scale, widthFt.Width + 8 / _scale, widthFt.Height + 4 / _scale)
+        Dim widthY = rect.Bottom + 18
+        Dim widthBgRect As New Rect(widthX - 4, widthY - 2, widthFt.Width + 8, widthFt.Height + 4)
 
-        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, widthBgRect, 3 / _scale, 3 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, widthBgRect, 3, 3)
         drawingContext.DrawText(widthFt, New Point(widthX, widthY))
 
-        Dim heightFt = _renderCache.GetHeightText($"{h:F1} mm", 12 / _scale, dpi)
-        Dim heightX = rect.Right + 18 / _scale
+        Dim heightFt = _renderCache.GetHeightText($"{h:F1} mm", 12, dpi)
+        Dim heightX = rect.Right + 18
         Dim heightY = rect.Top + rect.Height / 2 - heightFt.Height / 2
-        Dim heightBgRect As New Rect(heightX - 4 / _scale, heightY - 2 / _scale, heightFt.Width + 8 / _scale, heightFt.Height + 4 / _scale)
+        Dim heightBgRect As New Rect(heightX - 4, heightY - 2, heightFt.Width + 8, heightFt.Height + 4)
 
-        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, heightBgRect, 3 / _scale, 3 / _scale)
+        drawingContext.DrawRoundedRectangle(_styleCache.DimBgBrush, Nothing, heightBgRect, 3, 3)
         drawingContext.DrawText(heightFt, New Point(heightX, heightY))
 
     End Sub
@@ -372,17 +393,17 @@ Public Class TransformGizmo
         _lastClickTime = DateTime.Now
         _lastClickPosition = pos
 
-
+        ' Drag math runs in canvas space (OnMouseMove uses e.GetPosition(_canvas)), so drag starts must also capture canvas-space positions.
+        Dim canvasPos = e.GetPosition(_canvas)
 
         Select Case hit
             Case "Rotate"
-                StartRotate(e.GetPosition(Me))
+                StartRotate(canvasPos)
 
             Case "Move"
                 ' A click inside the selection bounds normally starts a drag. But if the point falls on empty geometry (e.g. a donut hole) with a different shape underneath, select that shape instead.
                 Dim pc = TryCast(_canvas, PolyCanvas)
                 If pc IsNot Nothing Then
-                    Dim canvasPos = e.GetPosition(_canvas)
                     Dim below = GeometryHitTestHelper.HitTestTopmost(pc.ChildrenCollection, canvasPos)
                     If below IsNot Nothing AndAlso Not _selectionManager.SelectedItems.Contains(below) Then
                         _selectionManager.SelectItem(below, False)
@@ -390,10 +411,10 @@ Public Class TransformGizmo
                         Return
                     End If
                 End If
-                StartMove(e.GetPosition(Me))
+                StartMove(canvasPos)
 
             Case Else
-                StartResize(hit, e.GetPosition(Me))
+                StartResize(hit, canvasPos)
         End Select
 
         e.Handled = True
@@ -414,7 +435,8 @@ Public Class TransformGizmo
     End Function
 
     Private Sub HandleDoubleClick(pos As Point, bounds As Rect)
-        Dim hitBounds = bounds
+        ' pos is in gizmo (screen) space; map the canvas-space bounds into it.
+        Dim hitBounds = TransformRect(GetCanvasToGizmoMatrix(), bounds)
         hitBounds.Inflate(5, 5)
 
         If hitBounds.Contains(pos) AndAlso _selectionManager.Count = 1 Then
@@ -588,11 +610,13 @@ Public Class TransformGizmo
         Dim bounds = _selectionManager.GetUnrotatedBounds()
         If Not bounds.HasValue Then Return Nothing
 
+        ' pos is in gizmo (1:1 screen) space - map the canvas-space bounds into it.
+        Dim mapped = TransformRect(GetCanvasToGizmoMatrix(), bounds.Value)
+
         ' ----- inverse rotate mouse into gizmo space -----
         Dim rotationAngle = GetSelectionRotation()
         If Math.Abs(rotationAngle) > 0.01 Then
-            Dim b = bounds.Value
-            Dim centerPt = New Point(b.Left + b.Width / 2, b.Top + b.Height / 2)
+            Dim centerPt = New Point(mapped.Left + mapped.Width / 2, mapped.Top + mapped.Height / 2)
             pos = InverseRotatePoint(pos, centerPt, rotationAngle)
         End If
 
@@ -606,7 +630,7 @@ Public Class TransformGizmo
 
 
         ' ----- move area (inflated bounds) -----
-        Dim hitBounds = bounds.Value
+        Dim hitBounds = mapped
         hitBounds.Inflate(5, 5)
         If hitBounds.Contains(pos) Then Return "Move"
 
@@ -945,27 +969,25 @@ Friend NotInheritable Class BrushCache
     Public ReadOnly IconBrush As Brush = Freeze(Brushes.White)
     Public ReadOnly DimBgBrush As Brush = Freeze(New SolidColorBrush(Color.FromArgb(&HC0, &H20, &H20, &H20)))
 
-    ' ---- Scale-dependent Pens ----'
-    Private _scale As Double = Double.NaN
-
+    ' ---- Pens ----'
     Public BoundsPen As Pen
     Public HandlePen As Pen
     Public EdgePen As Pen
     Public RotatePen As Pen
     Public ArcPen As Pen
+    Private _pensInitialized As Boolean
 
+    Public Sub EnsurePens()
+        If _pensInitialized Then Return
+        _pensInitialized = True
 
-    Public Sub EnsurePens(scale As Double)
-        If scale = _scale Then Return
-        _scale = scale
+        Dim blue = New SolidColorBrush(Color.FromArgb(255, 33, 150, 243))
 
-        Dim t = 1.0 / _scale
-
-        BoundsPen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t) With {.DashStyle = DashStyles.Dash})
-        HandlePen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t))
-        EdgePen = Freeze(New Pen(New SolidColorBrush(Color.FromArgb(255, 33, 150, 243)), t))
-        RotatePen = Freeze(New Pen(RotateStrokeBrush, t))
-        ArcPen = Freeze(New Pen(IconBrush, t * 2) With {.StartLineCap = PenLineCap.Round, .EndLineCap = PenLineCap.Triangle})
+        BoundsPen = Freeze(New Pen(blue, 1) With {.DashStyle = DashStyles.Dash})
+        HandlePen = Freeze(New Pen(blue, 1))
+        EdgePen = Freeze(New Pen(blue, 1))
+        RotatePen = Freeze(New Pen(RotateStrokeBrush, 1))
+        ArcPen = Freeze(New Pen(IconBrush, 2) With {.StartLineCap = PenLineCap.Round, .EndLineCap = PenLineCap.Triangle})
 
     End Sub
 
@@ -978,37 +1000,31 @@ End Class
 
 Friend NotInheritable Class RenderCache
 
-    ' ---------- Arc + Arrow cache (scale-dependent) ----------
-    Private _scale As Double = Double.NaN
-    Private _arcRadius As Double
-    Private _arcStartAngle As Double = Math.PI / 4
-    Private _arcSweepAngle As Double = (3 * Math.PI / 2)
+    ' ---------- Arc + Arrow cache ----------
     Private _arcWithArrowGeom As StreamGeometry
+    Private _arcInitialized As Boolean
 
-    Public Function GetArcWithArrowGeometry(scale As Double) As StreamGeometry
-        EnsureArc(scale)
+    Public Function GetArcWithArrowGeometry() As StreamGeometry
+        If Not _arcInitialized Then
+            _arcInitialized = True
+            _arcWithArrowGeom = BuildArcGeometry()
+        End If
         Return _arcWithArrowGeom
     End Function
 
-    Private Sub EnsureArc(scale As Double)
+    Private Shared Function BuildArcGeometry() As StreamGeometry
+        Const iconSize As Double = 6
+        Const radius As Double = iconSize
 
-        scale = Math.Round(scale, 2) 'round to avoid tiny changes causing regen
+        Dim startAngle = Math.PI / 4
+        Dim sweepAngle As Double = (3 * Math.PI / 2)
+        Dim endAngle = startAngle + sweepAngle
 
-        If _arcWithArrowGeom IsNot Nothing AndAlso _scale = scale Then Return
-        _scale = scale
+        Dim startPt = New Point(radius * Math.Cos(startAngle), radius * Math.Sin(startAngle))
+        Dim endPt = New Point(radius * Math.Cos(endAngle), radius * Math.Sin(endAngle))
 
-        Dim iconSize = 6 / scale
-        _arcRadius = iconSize / 1
-
-        Dim r = _arcRadius
-        Dim startAngle = _arcStartAngle
-        Dim endAngle = startAngle + _arcSweepAngle
-
-        Dim startPt = New Point(r * Math.Cos(startAngle), r * Math.Sin(startAngle))
-        Dim endPt = New Point(r * Math.Cos(endAngle), r * Math.Sin(endAngle))
-
-        ' Arrow head baked in 
-        Dim arrowSize = 4 / scale
+        ' Arrow head baked in
+        Const arrowSize As Double = 4
         Dim arrowAngle = endAngle + Math.PI / 2
 
         Dim leftPt = New Point(
@@ -1023,7 +1039,7 @@ Friend NotInheritable Class RenderCache
         Using ctx = g.Open()
             ' Arc
             ctx.BeginFigure(startPt, isFilled:=False, isClosed:=False)
-            ctx.ArcTo(endPt, New Size(r, r), 0, True, SweepDirection.Clockwise, True, False)
+            ctx.ArcTo(endPt, New Size(radius, radius), 0, True, SweepDirection.Clockwise, True, False)
 
             ' Arrow head (two short strokes)
             ctx.BeginFigure(endPt, isFilled:=False, isClosed:=False)
@@ -1034,8 +1050,8 @@ Friend NotInheritable Class RenderCache
         End Using
         g.Freeze()
 
-        _arcWithArrowGeom = g
-    End Sub
+        Return g
+    End Function
 
 
     ' ---------- DPI-aware text cache ----------

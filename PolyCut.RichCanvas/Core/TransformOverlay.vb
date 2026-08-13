@@ -10,7 +10,7 @@ Public Class TransformOverlay
     Public Sub New()
         Me.IsHitTestVisible = True
         Me.Background = Nothing
-        Me.ClipToBounds = False
+        Me.ClipToBounds = True
     End Sub
 
     Public Sub Initialize(selectionManager As SelectionManager, contentCanvas As Canvas)
@@ -74,12 +74,6 @@ Public Class TransformOverlay
         _gizmo.IsHitTestVisible = Not isTextBoxFocused
 
         _gizmo.InvalidateVisual()
-    End Sub
-
-    Public Sub SetScale(scale As Double)
-        If _gizmo IsNot Nothing Then
-            _gizmo.Scale = scale
-        End If
     End Sub
 
     Public Sub UpdateGizmoImmediate()

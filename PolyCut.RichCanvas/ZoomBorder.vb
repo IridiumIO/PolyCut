@@ -374,18 +374,24 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_MouseWheel(ByVal sender As Object, ByVal e As MouseWheelEventArgs)
+        ZoomByWheel(e.Delta)
+        e.Handled = False
+    End Sub
+
+    'break out from above handler so we can call it from transformgizmo (Probably cursed)
+    Public Sub ZoomByWheel(delta As Integer)
         If Child Is Nothing Then Return
 
-        Dim zoomFactor As Double = e.Delta * ScaleAmount
+        Dim zoomFactor As Double = delta * ScaleAmount
         Dim targetScale As Double = Scale + (zoomFactor * Scale)
 
         ' Constrain the new scale within the allowed range
         targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
 
         ' Early return if zooming out too much
-        If e.Delta <= 0 AndAlso (ScaleTransform.ScaleX < ScaleMin OrElse ScaleTransform.ScaleY < ScaleMin) Then Return
+        If delta <= 0 AndAlso (ScaleTransform.ScaleX < ScaleMin OrElse ScaleTransform.ScaleY < ScaleMin) Then Return
 
-        Dim relative As Point = e.GetPosition(Child)
+        Dim relative As Point = Mouse.GetPosition(Child)
         ' Calculate the absolute positions based on the current scale
         Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
         Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
@@ -397,9 +403,6 @@ Public Class ZoomBorder
         ' Adjust the translation based on the new scale
         TranslateTransform.X = absoluteX - (relative.X * Scale)
         TranslateTransform.Y = absoluteY - (relative.Y * Scale)
-
-        e.Handled = False
-
     End Sub
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)

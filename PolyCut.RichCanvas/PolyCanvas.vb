@@ -43,35 +43,47 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
     End Sub
 
     Private Sub InitializeOverlay()
-        Dim parent As Panel = FindSuitableParent()
+        ' Host the overlay OUTSIDE the ZoomBorder's transformed layer so the gizmo renders at a constant 1:1 screen size regardless of zoom.
+        Dim zoomHost As ZoomBorder = FindAncestorZoomBorder()
+        Dim hostPanel As Panel = TryCast(zoomHost?.Parent, Panel)
+        If hostPanel Is Nothing Then Return
 
-        If parent IsNot Nothing Then
-            _transformOverlay = New TransformOverlay()
-            _transformOverlay.Initialize(_selectionManager, Me)
+        _transformOverlay = New TransformOverlay()
+        _transformOverlay.Initialize(_selectionManager, Me)
 
-            Dim widthBinding As New Binding("ActualWidth") With {.Source = Me}
-            Dim heightBinding As New Binding("ActualHeight") With {.Source = Me}
-            _transformOverlay.SetBinding(WidthProperty, widthBinding)
-            _transformOverlay.SetBinding(HeightProperty, heightBinding)
+        ' Size to the ZoomBorder viewport so the overlay covers exactly the canvas region.
+        Dim widthBinding As New Binding("ActualWidth") With {.Source = zoomHost}
+        Dim heightBinding As New Binding("ActualHeight") With {.Source = zoomHost}
+        _transformOverlay.SetBinding(WidthProperty, widthBinding)
+        _transformOverlay.SetBinding(HeightProperty, heightBinding)
 
-            parent.Children.Add(_transformOverlay)
-            Panel.SetZIndex(_transformOverlay, 1000)
-        End If
+        ' Match the ZoomBorder's Grid placement so the overlay covers the same area.
+        CopyGridPlacement(zoomHost, _transformOverlay)
+
+        hostPanel.Children.Add(_transformOverlay)
+        Panel.SetZIndex(_transformOverlay, 0)
     End Sub
 
-    Private Function FindSuitableParent() As Panel
-        Dim currentParent As FrameworkElement = TryCast(Me.Parent, FrameworkElement)
-
-        While currentParent IsNot Nothing
-            If TypeOf currentParent Is Panel Then
-                Return CType(currentParent, Panel)
-            End If
-
-            currentParent = TryCast(VisualTreeHelper.GetParent(currentParent), FrameworkElement)
+    Private Function FindAncestorZoomBorder() As ZoomBorder
+        Dim current As DependencyObject = Me
+        While current IsNot Nothing
+            Dim zb = TryCast(current, ZoomBorder)
+            If zb IsNot Nothing Then Return zb
+            current = VisualTreeHelper.GetParent(current)
         End While
-
         Return Nothing
     End Function
+
+    Private Shared Sub CopyGridPlacement(source As FrameworkElement, target As FrameworkElement)
+        Dim row = Grid.GetRow(source)
+        Dim column = Grid.GetColumn(source)
+        Dim rowSpan = Grid.GetRowSpan(source)
+        Dim columnSpan = Grid.GetColumnSpan(source)
+        If row > 0 Then Grid.SetRow(target, row)
+        If column > 0 Then Grid.SetColumn(target, column)
+        If rowSpan > 1 Then Grid.SetRowSpan(target, rowSpan)
+        If columnSpan > 1 Then Grid.SetColumnSpan(target, columnSpan)
+    End Sub
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
         RaiseEvent InstanceSelectionCountChanged(Me, EventArgs.Empty)

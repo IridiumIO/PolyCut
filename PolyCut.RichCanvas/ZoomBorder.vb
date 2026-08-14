@@ -324,6 +324,8 @@ Public Class ZoomBorder
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
+        If ClickedOnActiveTextBox(e) Then Return
+
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
             Dim _polyCanvas = GetPolyCanvas()
@@ -349,6 +351,8 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
+
+        If ClickedOnActiveTextBox(e) Then Return
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
 
@@ -426,6 +430,7 @@ Public Class ZoomBorder
 
 
     Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
+        DrawingManager.AttachTextStyleSource(CanvasTextBox)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
 
@@ -435,6 +440,21 @@ Public Class ZoomBorder
         End If
     End Sub
 
+
+    Private Function ClickedOnActiveTextBox(e As MouseButtonEventArgs) As Boolean
+        If CanvasMode <> CanvasMode.Text OrElse e.ChangedButton <> MouseButton.Left Then Return False
+        Dim source = TryCast(e.OriginalSource, DependencyObject)
+        Return source IsNot Nothing AndAlso IsVisualDescendantOf(source, DrawingManager.ActiveTextBox)
+    End Function
+
+    Private Shared Function IsVisualDescendantOf(descendant As DependencyObject, ancestor As DependencyObject) As Boolean
+        Dim current = descendant
+        While current IsNot Nothing
+            If current Is ancestor Then Return True
+            current = VisualTreeHelper.GetParent(current)
+        End While
+        Return False
+    End Function
 
     Private Function GetPolyCanvas() As PolyCanvas
         ' Try direct name lookup first

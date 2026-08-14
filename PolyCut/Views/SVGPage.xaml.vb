@@ -197,4 +197,30 @@ Class SVGPage
         Dim rx = sender.GetHashCode
         Debug.WriteLine($"zoomPanControl_PreviewMouseDown: Sender HashCode={rx}")
     End Sub
+
+    Private Sub TextStyleCard_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
+        Dim dm = GetDrawingManager()
+        If dm IsNot Nothing Then dm.SuppressTextCommit = True
+    End Sub
+
+    Private Sub TextStyleControl_DropDownClosed(sender As Object, e As EventArgs)
+        Dim dm = GetDrawingManager()
+        If dm Is Nothing Then Return
+        dm.SuppressTextCommit = False
+        dm.RefocusActiveTextBox()
+    End Sub
+
+    Private Sub TextStyleCard_IsKeyboardFocusWithinChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
+        Dim dm = GetDrawingManager()
+        If dm Is Nothing Then Return
+        If Not CBool(e.NewValue) Then
+            dm.SuppressTextCommit = False
+            dm.EvaluateTextCommit()
+        End If
+    End Sub
+
+    Private Function GetDrawingManager() As DrawingManager
+        Return zoomPanControl?.DrawingManager
+    End Function
+
 End Class

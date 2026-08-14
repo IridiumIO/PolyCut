@@ -84,7 +84,8 @@
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="20"
                  beh:BackdropSampler.Corner="Left"
                  beh:BackdropSampler.IsEnabled="{Binding MainVM.IsWindows}"
-                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" Background="#323232" BorderThickness="0"
+                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" Background="#323232" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
+                 PreviewMouseDown="TextStyleCard_PreviewMouseDown"
                  Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
@@ -93,12 +94,12 @@
 
                 <StackPanel Orientation="Horizontal">
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Font" />
-                    <local:FontPickerComboBox Width="200" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
+                    <local:FontPickerComboBox Width="200" DropDownClosed="TextStyleControl_DropDownClosed" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
                     <Separator Margin="5 0" />
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Size (pt)" />
                     <ComboBox Width="80"
                               Padding="7"
-                              Background="Transparent" IsEditable="True" SelectedIndex="6"
+                              Background="Transparent" DropDownClosed="TextStyleControl_DropDownClosed" IsEditable="True" SelectedIndex="6"
                               Text="{Binding CanvasFontSize, Mode=OneWayToSource}">
                         <ComboBoxItem Content="3" />
                         <ComboBoxItem Content="4" />

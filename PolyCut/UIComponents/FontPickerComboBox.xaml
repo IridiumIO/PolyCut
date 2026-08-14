@@ -10,7 +10,8 @@
              d:DesignHeight="450"
              d:DesignWidth="800"
              mc:Ignorable="d">
-    <ComboBox Background="Transparent"
+    <ComboBox x:Name="FontComboBox"
+              Background="Transparent"
               ItemTemplate="{DynamicResource FontTemplate}"
               ScrollViewer.VerticalScrollBarVisibility="Visible"
               SelectedItem="{Binding SelectedFont, ElementName=FPCRoot, Mode=TwoWay}">

@@ -107,6 +107,20 @@ Public Class DrawingManager
         _currentShape = Nothing
     End Sub
 
+    Public ReadOnly Property IsDrawing As Boolean
+        Get
+            Return _currentShape IsNot Nothing
+        End Get
+    End Property
+
+    Public Sub CancelDrawing(pcanvas As PolyCanvas)
+        If _currentShape Is Nothing Then Return
+        If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(_currentShape) Then
+            pcanvas.Children.Remove(_currentShape)
+        End If
+        _currentShape = Nothing
+    End Sub
+
     Private Sub OnTextBoxLostFocus(sender As Object, e As RoutedEventArgs)
         Dim textBox = DirectCast(sender, TextBox)
         Dim pCanvas = DirectCast(textBox.Parent, PolyCanvas)

@@ -180,6 +180,7 @@ Public Class ZoomBorder
         AddHandler Me.MouseMove, AddressOf ZoomBorder_MouseMove
         AddHandler Me.Loaded, AddressOf ZoomBorder_Loaded
         AddHandler Me.PreviewMouseDown, AddressOf ZoomBorder_PreviewMouseDown
+        AddHandler Me.LostMouseCapture, AddressOf ZoomBorder_LostMouseCapture
     End Sub
 
 
@@ -328,6 +329,7 @@ Public Class ZoomBorder
             Dim _polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(_polyCanvas)
             DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
+            Me.CaptureMouse()
         Else
             If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
                 Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
@@ -353,6 +355,7 @@ Public Class ZoomBorder
             Dim _polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(_polyCanvas)
             DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
+            Me.CaptureMouse()
             e.Handled = True
         End If
 
@@ -364,6 +367,7 @@ Public Class ZoomBorder
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
             Dim polyCanvas = GetPolyCanvas()
             DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
+            Me.ReleaseMouseCapture()
             Return
         End If
 
@@ -425,6 +429,11 @@ Public Class ZoomBorder
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
 
+    Private Sub ZoomBorder_LostMouseCapture(sender As Object, e As MouseEventArgs)
+        If CanvasMode <> CanvasMode.Selection AndAlso DrawingManager.IsDrawing Then
+            DrawingManager.CancelDrawing(GetPolyCanvas())
+        End If
+    End Sub
 
 
     Private Function GetPolyCanvas() As PolyCanvas

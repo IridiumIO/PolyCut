@@ -42,8 +42,10 @@ Public Class TransformState
         Dim left = Canvas.GetLeft(wrapper)
         Dim top = Canvas.GetTop(wrapper)
         state.Translation = New Point(If(Double.IsNaN(left), 0, left), If(Double.IsNaN(top), 0, top))
-        state.Width = wrapper.ActualWidth
-        state.Height = wrapper.ActualHeight
+        state.Width = If(wrapper.ActualWidth > 0, wrapper.ActualWidth,
+                  If(Double.IsNaN(wrapper.Width) OrElse wrapper.Width < 0, 0, wrapper.Width))
+        state.Height = If(wrapper.ActualHeight > 0, wrapper.ActualHeight,
+                  If(Double.IsNaN(wrapper.Height) OrElse wrapper.Height < 0, 0, wrapper.Height))
         state.TransformOrigin = wrapper.RenderTransformOrigin
 
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)

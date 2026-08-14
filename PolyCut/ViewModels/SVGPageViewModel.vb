@@ -53,9 +53,11 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             Return _CanvasFontFamily
         End Get
         Set(value As FontFamily)
+            If value Is Nothing Then Return
+            If String.Equals(_CanvasFontFamily?.Source, value.Source, StringComparison.OrdinalIgnoreCase) Then Return
             _CanvasFontFamily = value
-            CanvasTextBox.FontFamily = value
-            OnPropertyChanged(NameOf(CanvasTextBox))
+            OnPropertyChanged(NameOf(CanvasFontFamily))
+            If Not _syncingOverlayStyle Then CanvasTextBox.FontFamily = value
         End Set
     End Property
 
@@ -67,13 +69,28 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         End Get
         Set(value As String)
             If String.IsNullOrEmpty(value) Then value = "14"
+            If String.Equals(_CanvasFontSize, value, StringComparison.Ordinal) Then Return
 
             _CanvasFontSize = value
-            CanvasTextBox.FontSize = CInt(value)
-            OnPropertyChanged(NameOf(CanvasTextBox))
-
+            OnPropertyChanged(NameOf(CanvasFontSize))
+            If Not _syncingOverlayStyle Then CanvasTextBox.FontSize = CInt(value)
         End Set
     End Property
+
+    ' ===== Overlay style synchronisation =====
+    ' While _syncingOverlayStyle is True the font setters only update the overlay display
+    ' (and raise PropertyChanged) - they do NOT propagate to CanvasTextBox, which is the
+    ' live style source for the active text-edit session. This keeps a programmatic overlay
+    ' sync from ever changing the textbox currently being edited.
+    Private _syncingOverlayStyle As Boolean
+
+    Public Sub BeginOverlaySync()
+        _syncingOverlayStyle = True
+    End Sub
+
+    Public Sub EndOverlaySync()
+        _syncingOverlayStyle = False
+    End Sub
 
     Public Property CanvasTextBox As TextBox = New TextBox With {.FontFamily = New FontFamily("Calibri"), .FontSize = 14}
 
@@ -275,6 +292,11 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         If items.Count = 0 Then Return
 
         Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
+        If action.Execute() Then _undoRedoService.Push(action)
+    End Sub
+
+    Public Sub RecordTextEdit(textBox As TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
+        Dim action As New TextEditAction(textBox, oldText, oldFontFamily, oldFontSize, newText, newFontFamily, newFontSize)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 

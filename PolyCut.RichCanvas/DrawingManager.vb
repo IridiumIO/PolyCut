@@ -1,84 +1,25 @@
 ﻿
-Imports System.ComponentModel
-Imports System.Windows.Threading
-
 Imports PolyCut.Shared
 
 Public Class DrawingManager
     Private _currentShape As Shape
     Private _startPos As Point
 
-    Private _activeTextBox As TextBox
-    Private _textFinalised As Boolean
-    Private _textCommitSuppressed As Boolean
-
     Public Shared SNAPTOGRID As Boolean = False
 
+    Public ReadOnly Property TextEditor As TextEditingController
 
-    Public ReadOnly Property ActiveTextBox As TextBox
-        Get
-            Return _activeTextBox
-        End Get
-    End Property
-
-    Public Property SuppressTextCommit As Boolean
-        Get
-            Return _textCommitSuppressed
-        End Get
-        Set(value As Boolean)
-            _textCommitSuppressed = value
-        End Set
-    End Property
-
-    Public Sub CommitActiveText(pcanvas As PolyCanvas)
-        If _activeTextBox Is Nothing OrElse _textFinalised Then Return
-        Dim textBox = _activeTextBox
-        _activeTextBox = Nothing
-        _textFinalised = True
-        _textCommitSuppressed = False
-        RemoveHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
-        RemoveHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
-        If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(textBox) Then
-            pcanvas.Children.Remove(textBox)
-        End If
-        If Not String.IsNullOrEmpty(textBox.Text) Then
-            RaiseEvent DrawingFinished(Me, textBox)
-        End If
+    Public Sub New()
+        TextEditor = New TextEditingController()
+        AddHandler TextEditor.SessionFinished, AddressOf OnTextSessionFinished
     End Sub
 
-    Private Sub CancelActiveText(pcanvas As PolyCanvas)
-        If _activeTextBox Is Nothing OrElse _textFinalised Then Return
-        Dim textBox = _activeTextBox
-        _activeTextBox = Nothing
-        _textFinalised = True
-        _textCommitSuppressed = False
-        RemoveHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
-        RemoveHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
-        If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(textBox) Then
-            pcanvas.Children.Remove(textBox)
-        End If
-    End Sub
-
-    Private Sub OnActiveTextBoxLostFocus(sender As Object, e As RoutedEventArgs)
-        Dim textBox = DirectCast(sender, TextBox)
-        If _activeTextBox IsNot textBox OrElse _textFinalised Then Return
-        If _textCommitSuppressed Then Return
-        CommitActiveText(TryCast(textBox.Parent, PolyCanvas))
-    End Sub
-
-    Private Sub OnActiveTextBoxKeyDown(sender As Object, e As KeyEventArgs)
-        Dim textBox = DirectCast(sender, TextBox)
-        If e.Key = Key.Escape Then
-            e.Handled = True
-            CancelActiveText(TryCast(textBox.Parent, PolyCanvas))
-        ElseIf e.Key = Key.Enter AndAlso Not textBox.AcceptsReturn Then
-            e.Handled = True
-            CommitActiveText(TryCast(textBox.Parent, PolyCanvas))
-        End If
+    Private Sub OnTextSessionFinished(element As UIElement)
+        RaiseEvent DrawingFinished(Me, element)
     End Sub
 
     Public Sub StartDrawing(mode As CanvasMode, startPoint As Point, pcanvas As PolyCanvas)
-        CommitActiveText(pcanvas)
+        TextEditor.CommitActiveText(pcanvas)
         _startPos = startPoint
 
         Select Case mode
@@ -117,21 +58,7 @@ Public Class DrawingManager
     Public Sub FinishDrawing(mode As CanvasMode, pCanvas As PolyCanvas, ctextbox As TextBox)
 
         If mode = CanvasMode.Text Then
-            If _activeTextBox IsNot Nothing AndAlso Not _textFinalised Then Return
-
-            Dim fontSize As Double = ctextbox.FontSize
-            Dim fontFamily As FontFamily = ctextbox.FontFamily
-            Dim textBox = CreateTextBox(_startPos, fontSize, fontFamily)
-            Canvas.SetLeft(textBox, _startPos.X)
-            Canvas.SetTop(textBox, _startPos.Y)
-            pCanvas.Children.Add(textBox)
-
-            _activeTextBox = textBox
-            _textFinalised = False
-            _textCommitSuppressed = False
-            AddHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
-            AddHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
-            textBox.Focus()
+            TextEditor.StartNewText(_startPos, ctextbox.FontSize, ctextbox.FontFamily, pCanvas)
             Return
         End If
 
@@ -183,7 +110,7 @@ Public Class DrawingManager
     End Property
 
     Public Sub CancelDrawing(pcanvas As PolyCanvas)
-        CancelActiveText(pcanvas)
+        TextEditor.CancelActiveText(pcanvas)
         If _currentShape Is Nothing Then Return
         If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(_currentShape) Then
             pcanvas.Children.Remove(_currentShape)
@@ -196,47 +123,6 @@ Public Class DrawingManager
         Dim dy = current.Y - start.Y
         Return dx * dx + dy * dy < 2
     End Function
-
-    Private Sub OnTextBoxLostFocus(sender As Object, e As RoutedEventArgs)
-        Dim textBox = DirectCast(sender, TextBox)
-        Dim pCanvas = DirectCast(textBox.Parent, PolyCanvas)
-
-        If pCanvas.Children.Contains(textBox) Then
-            pCanvas.Children.Remove(textBox)
-            If Not String.IsNullOrEmpty(textBox.Text) Then
-                RaiseEvent DrawingFinished(Me, textBox)
-            End If
-        End If
-
-        ' Remove the event handler
-        RemoveHandler textBox.LostFocus, AddressOf OnTextBoxLostFocus
-    End Sub
-
-    Private _styleSource As TextBox
-
-    Public Sub AttachTextStyleSource(source As TextBox)
-        If source Is Nothing OrElse _styleSource Is source Then Return
-        _styleSource = source
-        DependencyPropertyDescriptor.FromProperty(TextBox.FontSizeProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceChanged)
-        DependencyPropertyDescriptor.FromProperty(TextBox.FontFamilyProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceChanged)
-    End Sub
-
-    Private Sub OnStyleSourceChanged(sender As Object, e As EventArgs)
-        If _activeTextBox Is Nothing OrElse _textFinalised OrElse _styleSource Is Nothing Then Return
-        _activeTextBox.FontSize = _styleSource.FontSize
-        _activeTextBox.FontFamily = _styleSource.FontFamily
-    End Sub
-    Public Sub RefocusActiveTextBox()
-        If _activeTextBox Is Nothing OrElse _textFinalised Then Return
-        Dim textBox = _activeTextBox
-        textBox.Dispatcher.BeginInvoke(Sub() textBox.Focus(), DispatcherPriority.Input)
-    End Sub
-
-    Public Sub EvaluateTextCommit()
-        If _activeTextBox Is Nothing OrElse _textFinalised OrElse _textCommitSuppressed Then Return
-        If _activeTextBox.IsKeyboardFocusWithin Then Return
-        CommitActiveText(TryCast(_activeTextBox.Parent, PolyCanvas))
-    End Sub
 
     Private Shared Function CreateLine(startPoint As Point) As Line
         Dim line As New Line With {
@@ -309,31 +195,6 @@ Public Class DrawingManager
         Return shape
     End Function
 
-
-    Private Shared Function CreateTextBox(p As Point, fontSize As Double, fontFamily As FontFamily) As TextBox
-        Dim tb As New TextBox With {
-            .Width = Double.NaN,
-            .Height = Double.NaN,
-            .Background = Brushes.Transparent,
-            .BorderBrush = Brushes.Transparent,
-            .Foreground = Brushes.Black,
-            .BorderThickness = New Thickness(1),
-            .Style = Nothing,
-            .Text = "",
-            .AcceptsReturn = False,
-            .AcceptsTab = True,
-            .FontSize = fontSize,
-            .FontFamily = fontFamily,
-            .FontWeight = FontWeights.Regular,
-            .Padding = New Thickness(0)
-        }
-
-        Canvas.SetLeft(tb, p.X)
-        Canvas.SetTop(tb, p.Y)
-
-        Return tb
-
-    End Function
 
     Private Sub UpdateLine(line As Line, currentPoint As Point, squareAspect As Boolean)
 

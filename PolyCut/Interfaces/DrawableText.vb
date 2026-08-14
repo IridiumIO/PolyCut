@@ -24,8 +24,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     Private _strokePen As Pen
     Private _attachedTextBox As TextBox
 
-    Private _fontPropertyDescriptors As List(Of DependencyPropertyDescriptor)
-
     Private Sub InitializeStrokeRendering()
         Dim tb = TryCast(DrawableElement, TextBox)
         If tb Is Nothing Then Return
@@ -63,7 +61,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         AddHandler Me.PropertyChanged, AddressOf OnDrawablePropertyChanged
 
         ' Watch for font / layout-related property changes so geometry updates automatically
-        _fontPropertyDescriptors = New List(Of DependencyPropertyDescriptor)()
         Dim watchProps() As DependencyProperty = {
             TextBox.FontStyleProperty,
             TextBox.FontWeightProperty,
@@ -76,33 +73,38 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
             Dim desc = DependencyPropertyDescriptor.FromProperty(dp, GetType(TextBox))
             If desc IsNot Nothing Then
                 desc.AddValueChanged(tb, AddressOf OnTextBoxVisualChanged)
-                _fontPropertyDescriptors.Add(desc)
             End If
         Next
 
         Dim fontSizeDesc = DependencyPropertyDescriptor.FromProperty(TextBox.FontSizeProperty, GetType(TextBox))
         If fontSizeDesc IsNot Nothing Then
-            fontSizeDesc.AddValueChanged(tb, AddressOf OnFontSizeChanged)
+            fontSizeDesc.AddValueChanged(tb, AddressOf OnFontPropertyChanged)
         End If
         Dim fontFamilyDesc = DependencyPropertyDescriptor.FromProperty(TextBox.FontFamilyProperty, GetType(TextBox))
         If fontFamilyDesc IsNot Nothing Then
-            fontFamilyDesc.AddValueChanged(tb, AddressOf OnFontFamilyChanged)
+            fontFamilyDesc.AddValueChanged(tb, AddressOf OnFontPropertyChanged)
+        End If
+
+        Dim editingDesc = DependencyPropertyDescriptor.FromProperty(TextEditHelper.IsEditingProperty, GetType(TextBox))
+        If editingDesc IsNot Nothing Then
+            editingDesc.AddValueChanged(tb, AddressOf OnIsEditingChanged)
         End If
 
         ' Initial update (defer to allow control to be measured/rendered)
         tb.Dispatcher.BeginInvoke(New Action(Sub() UpdateTextGeometry()), DispatcherPriority.Loaded)
     End Sub
 
+    Private Sub OnIsEditingChanged(sender As Object, e As EventArgs)
+        If Not TextEditHelper.GetIsEditing(_attachedTextBox) Then
+            UpdateTextGeometry()
+        End If
+    End Sub
+
     Private Sub OnTextBoxVisualChanged(sender As Object, e As EventArgs)
         UpdateTextGeometry()
     End Sub
 
-    Private Sub OnFontSizeChanged(sender As Object, e As EventArgs)
-        RefreshVisualBox()
-        UpdateTextGeometry()
-    End Sub
-
-    Private Sub OnFontFamilyChanged(sender As Object, e As EventArgs)
+    Private Sub OnFontPropertyChanged(sender As Object, e As EventArgs)
         RefreshVisualBox()
         UpdateTextGeometry()
     End Sub
@@ -160,17 +162,26 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
         If _drawingBrush.IsFrozen Then _drawingBrush = _drawingBrush.Clone()
 
-        tb.Background = _drawingBrush
+        If Not TextEditHelper.GetIsEditing(tb) Then
+            tb.Background = _drawingBrush
+        End If
     End Sub
 
     Public Sub RefreshVisualBox()
-        _attachedTextBox.Focus()
-        _attachedTextBox.UpdateLayout()
-        Dim wrapper As ContentControl = CType(_attachedTextBox.Parent, ContentControl)
-        wrapper.Width = _attachedTextBox.ActualWidth
-        wrapper.Height = _attachedTextBox.ActualHeight
-        wrapper.FocusVisualStyle = Nothing
-        wrapper.Focus()
+        Dim tb = _attachedTextBox
+        Dim wrapper As ContentControl = CType(tb.Parent, ContentControl)
+        tb.UpdateLayout()
+
+        If TextEditHelper.GetIsEditing(tb) Then
+            wrapper.Width = Double.NaN
+            wrapper.Height = Double.NaN
+        Else
+            tb.Focus()
+            wrapper.Width = tb.ActualWidth
+            wrapper.Height = tb.ActualHeight
+            wrapper.FocusVisualStyle = Nothing
+            wrapper.Focus()
+        End If
     End Sub
 
 

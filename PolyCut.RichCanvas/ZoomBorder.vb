@@ -318,48 +318,32 @@ Public Class ZoomBorder
 
     Public DrawingManager As New DrawingManager
 
-
     Private Sub ZoomBorder_MouseDown(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
-
-        EventAggregator.Publish(New ScaleChangedMessage(Scale))
-        EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
-
-        If ClickedOnActiveTextBox(e) Then Return
-
-        If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
-
-            Dim _polyCanvas = GetPolyCanvas()
-            Dim position As Point = e.GetPosition(_polyCanvas)
-            DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
-            Me.CaptureMouse()
-        Else
-            If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
-                Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
-                If Not isShiftPressed Then
-                    Dim _polyCanvas = GetPolyCanvas()
-
-                    _polyCanvas?.SelectionManager.ClearSelection()
-                End If
-                e.Handled = True
-            End If
-        End If
-
-        If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
+        HandleMouseDown(e, isPreview:=False)
     End Sub
 
-
     Private Sub ZoomBorder_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
+        HandleMouseDown(e, isPreview:=True)
+    End Sub
+
+    Private Sub HandleMouseDown(e As MouseButtonEventArgs, isPreview As Boolean)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
-        If ClickedOnActiveTextBox(e) Then Return
+        If DrawingManager.TextEditor.HandleTextMouseDown(CanvasMode, e) Then Return
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
-
             Dim _polyCanvas = GetPolyCanvas()
             Dim position As Point = e.GetPosition(_polyCanvas)
             DrawingManager.StartDrawing(CanvasMode, position, _polyCanvas)
             Me.CaptureMouse()
+            If isPreview Then e.Handled = True
+        ElseIf Not isPreview AndAlso (e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background) Then
+            Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+            If Not isShiftPressed Then
+                Dim _polyCanvas = GetPolyCanvas()
+                _polyCanvas?.SelectionManager.ClearSelection()
+            End If
             e.Handled = True
         End If
 
@@ -430,7 +414,7 @@ Public Class ZoomBorder
 
 
     Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
-        DrawingManager.AttachTextStyleSource(CanvasTextBox)
+        DrawingManager.TextEditor.AttachTextStyleSource(CanvasTextBox)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
     End Sub
 
@@ -440,21 +424,6 @@ Public Class ZoomBorder
         End If
     End Sub
 
-
-    Private Function ClickedOnActiveTextBox(e As MouseButtonEventArgs) As Boolean
-        If CanvasMode <> CanvasMode.Text OrElse e.ChangedButton <> MouseButton.Left Then Return False
-        Dim source = TryCast(e.OriginalSource, DependencyObject)
-        Return source IsNot Nothing AndAlso IsVisualDescendantOf(source, DrawingManager.ActiveTextBox)
-    End Function
-
-    Private Shared Function IsVisualDescendantOf(descendant As DependencyObject, ancestor As DependencyObject) As Boolean
-        Dim current = descendant
-        While current IsNot Nothing
-            If current Is ancestor Then Return True
-            current = VisualTreeHelper.GetParent(current)
-        End While
-        Return False
-    End Function
 
     Private Function GetPolyCanvas() As PolyCanvas
         ' Try direct name lookup first

@@ -265,10 +265,10 @@
 
                         </StackPanel>
                     </ui:CardExpander>
-                    <ui:CardExpander Margin="-15 -10" VerticalAlignment="Top"
+                    <!--<ui:CardExpander Margin="-15 -10" VerticalAlignment="Top"
                                      Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
                                      Style="{StaticResource CustomCardExpanderStyle}"
-                                     Visibility="{Binding MainVM.SelectedDrawable.DrawableElement, Converter={StaticResource SelectedObjectIsTextboxToVisConverter}, FallbackValue=Collapsed}">
+                                     Visibility="Collapsed">
                         <ui:CardExpander.Header>
                             <Grid Margin="10 0" FlowDirection="LeftToRight">
 
@@ -323,7 +323,7 @@
 
                             </Grid>
                         </StackPanel>
-                    </ui:CardExpander>
+                    </ui:CardExpander>-->
 
                     <Separator Margin="2" Visibility="Hidden" />
 

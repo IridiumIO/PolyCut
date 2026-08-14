@@ -85,7 +85,7 @@
                  beh:BackdropSampler.Corner="Left"
                  beh:BackdropSampler.IsEnabled="{Binding MainVM.IsWindows}"
                  beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" Background="#323232" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
-                 PreviewMouseDown="TextStyleCard_PreviewMouseDown"
+                 polycutShared:TextEditHelper.IsTextStyleHost="True"
                  Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
@@ -94,13 +94,13 @@
 
                 <StackPanel Orientation="Horizontal">
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Font" />
-                    <local:FontPickerComboBox Width="200" DropDownClosed="TextStyleControl_DropDownClosed" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
+                    <local:FontPickerComboBox x:Name="OverlayFontPicker" Width="200" DropDownClosed="TextStyleControl_DropDownClosed" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
                     <Separator Margin="5 0" />
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Size (pt)" />
-                    <ComboBox Width="80"
+                    <ComboBox x:Name="OverlayFontSizeComboBox" Width="80"
                               Padding="7"
                               Background="Transparent" DropDownClosed="TextStyleControl_DropDownClosed" IsEditable="True" SelectedIndex="6"
-                              Text="{Binding CanvasFontSize, Mode=OneWayToSource}">
+                              Text="{Binding CanvasFontSize, Mode=TwoWay}">
                         <ComboBoxItem Content="3" />
                         <ComboBoxItem Content="4" />
                         <ComboBoxItem Content="6" />
@@ -130,7 +130,7 @@
                        CanvasTextBox="{Binding CanvasTextBox}"
                        ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
-                       LeftButtonAction="None" MiddleButtonAction="Move" PreviewMouseDown="zoomPanControl_PreviewMouseDown" RightButtonAction="Reset" ScaleAmount="0.002"
+                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002"
                        ScaleMax="150" ScaleMin="0.01">
 
 

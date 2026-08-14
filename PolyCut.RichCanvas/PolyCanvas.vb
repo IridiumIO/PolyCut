@@ -99,8 +99,8 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
                 Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
                     Dim textBox = TryCast(wrapper.Content, TextBox)
-                    If textBox IsNot Nothing AndAlso (textBox.IsFocused OrElse textBox.IsKeyboardFocusWithin) Then
-                        ' Unfocus the textbox
+                    If textBox IsNot Nothing AndAlso (textBox.IsFocused OrElse textBox.IsKeyboardFocusWithin) AndAlso Not TextEditHelper.GetIsEditing(textBox) Then
+                        ' Unfocus the textbox (unless it is inside an active DrawingManager edit session)
                         Keyboard.ClearFocus()
                     End If
                 End If
@@ -448,6 +448,19 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         End If
     End Sub
 
+    Public Function IsClickOnCanvasChild(source As DependencyObject) As Boolean
+        If source Is Nothing Then Return False
+        Dim current = source
+        While current IsNot Nothing
+            If TypeOf current Is ContentControl Then
+                If VisualTreeHelper.GetParent(current) Is Me Then Return True
+            End If
+            If current Is Me Then Return False
+            current = VisualTreeHelper.GetParent(current)
+        End While
+        Return False
+    End Function
+
     ' Instance methods (prefixed with Instance for clarity)
     Public Sub InstanceClearSelection()
         _selectionManager.ClearSelection()
@@ -494,6 +507,13 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
     Public Shared Sub UpdateGridDefinition(gd As GridDefinition)
         GridDefinition = gd
+    End Sub
+
+    Public Sub RefreshTextWrapper(wrapper As ContentControl)
+        If wrapper Is Nothing Then Return
+        If _transformOverlay IsNot Nothing Then
+            _transformOverlay.UpdateGizmoImmediate()
+        End If
     End Sub
 
 

@@ -5,6 +5,7 @@ Imports WPF.Ui.Controls
 Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
+Imports System.Linq
 Imports CommunityToolkit.Mvvm.ComponentModel
 Imports Svg
 Imports System.Windows.Controls.Primitives
@@ -34,6 +35,8 @@ Class SVGPage
 
         AddHandler MainViewModel.Configuration.PropertyChanged, AddressOf PropertyChangedHandler
         AddHandler zoomPanControl.DrawingManager.DrawingFinished, AddressOf DrawingFinishedHandler
+        AddHandler zoomPanControl.DrawingManager.TextEditor.EditRequested, AddressOf OnTextEditRequested
+        AddHandler zoomPanControl.DrawingManager.TextEditor.TextEdited, AddressOf OnTextEdited
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnSelectionCountChanged
 
     End Sub
@@ -41,6 +44,18 @@ Class SVGPage
     Private Sub OnSelectionCountChanged(sender As Object, e As EventArgs)
 
         MainSidebar.ElementsTab.SyncListViewSelection(PolyCanvas.SelectedItems)
+        SyncTextStyleOverlayToSelection()
+    End Sub
+
+    Private Sub SyncTextStyleOverlayToSelection()
+        Dim selected = PolyCanvas.SelectedItems
+        If selected Is Nothing OrElse selected.Count = 0 Then Return
+        Dim drawable = selected.FirstOrDefault()
+        If drawable Is Nothing Then Return
+        Dim textBox = TryCast(drawable.DrawableElement, System.Windows.Controls.TextBox)
+        If textBox IsNot Nothing Then
+            SyncOverlayTo(textBox)
+        End If
     End Sub
 
 
@@ -103,37 +118,8 @@ Class SVGPage
     End Sub
 
     Private Sub DrawingCanvas_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
-        Dim originalSource = TryCast(e.OriginalSource, DependencyObject)
-        If originalSource IsNot Nothing Then
+        If mainCanvas.IsClickOnCanvasChild(e.OriginalSource) Then Return
 
-            Dim current = originalSource
-            While current IsNot Nothing
-
-                If TypeOf current Is ContentControl Then
-                    Dim wrapper = CType(current, ContentControl)
-
-                    Dim visualParent = VisualTreeHelper.GetParent(wrapper)
-
-                    If visualParent Is mainCanvas Then
-                        Dim textBox = FindTextBoxInWrapper(wrapper)
-
-                        If textBox IsNot Nothing Then
-                            If textBox.IsFocused OrElse textBox.IsKeyboardFocusWithin Then
-                                Exit While
-                            End If
-                        End If
-
-                        Return
-                    End If
-                End If
-
-                If current Is mainCanvas Then
-                    Exit While
-                End If
-
-                current = VisualTreeHelper.GetParent(current)
-            End While
-        End If
         StartPos = e.GetPosition(mainCanvas)
 
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
@@ -164,63 +150,78 @@ Class SVGPage
         SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 
-    Private Function FindVisualChild(Of T As Visual)(parent As DependencyObject) As T
-        If parent Is Nothing Then Return Nothing
-
-        For i As Integer = 0 To VisualTreeHelper.GetChildrenCount(parent) - 1
-            Dim child = VisualTreeHelper.GetChild(parent, i)
-            Dim result = TryCast(child, T)
-            If result IsNot Nothing Then
-                Return result
-            End If
-
-            result = FindVisualChild(Of T)(child)
-            If result IsNot Nothing Then
-                Return result
-            End If
-        Next
-
-        Return Nothing
-    End Function
-
-    Private Function FindTextBoxInWrapper(wrapper As ContentControl) As System.Windows.Controls.TextBox
-
-        If TypeOf wrapper.Content Is System.Windows.Controls.TextBox Then
-            Return CType(wrapper.Content, System.Windows.Controls.TextBox)
-        End If
-
-        Dim result = FindVisualChild(Of System.Windows.Controls.TextBox)(wrapper)
-        Return result
-    End Function
-
     Private Sub zoomPanControl_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
         Dim rx = sender.GetHashCode
         Debug.WriteLine($"zoomPanControl_PreviewMouseDown: Sender HashCode={rx}")
     End Sub
 
-    Private Sub TextStyleCard_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
-        Dim dm = GetDrawingManager()
-        If dm IsNot Nothing Then dm.SuppressTextCommit = True
-    End Sub
-
     Private Sub TextStyleControl_DropDownClosed(sender As Object, e As EventArgs)
-        Dim dm = GetDrawingManager()
-        If dm Is Nothing Then Return
-        dm.SuppressTextCommit = False
-        dm.RefocusActiveTextBox()
+        GetTextEditor()?.RefocusActiveTextBox()
     End Sub
 
     Private Sub TextStyleCard_IsKeyboardFocusWithinChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
-        Dim dm = GetDrawingManager()
-        If dm Is Nothing Then Return
         If Not CBool(e.NewValue) Then
-            dm.SuppressTextCommit = False
-            dm.EvaluateTextCommit()
+            GetTextEditor()?.EvaluateTextCommit()
         End If
     End Sub
 
-    Private Function GetDrawingManager() As DrawingManager
-        Return zoomPanControl?.DrawingManager
+    Private Sub OnTextEditRequested(sender As Object, textBox As System.Windows.Controls.TextBox)
+        If textBox Is Nothing Then Return
+        SVGPageViewModel.CanvasToolMode = CanvasMode.Text
+
+        SyncOverlayTo(textBox)
+
+        zoomPanControl.DrawingManager.TextEditor.BeginEditingText(textBox, mainCanvas)
+
+        Dim editor = GetTextEditor()
+        If editor IsNot Nothing Then editor.SuppressStyleSourceApply = True
+        Try
+            SVGPageViewModel.CanvasTextBox.FontFamily = textBox.FontFamily
+            SVGPageViewModel.CanvasTextBox.FontSize = textBox.FontSize
+        Finally
+            If editor IsNot Nothing Then editor.SuppressStyleSourceApply = False
+        End Try
+
+        SelectTextDrawable(textBox)
+    End Sub
+
+    Private Sub OnTextEdited(sender As Object, textBox As System.Windows.Controls.TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
+        If textBox Is Nothing Then Return
+        SVGPageViewModel.RecordTextEdit(textBox, oldText, oldFontFamily, oldFontSize, newText, newFontFamily, newFontSize)
+    End Sub
+
+    Private Sub SelectTextDrawable(textBox As System.Windows.Controls.TextBox)
+
+        If textBox Is Nothing Then Return
+        Dim wrapper = TryCast(textBox.Parent, ContentControl)
+        If wrapper Is Nothing Then Return
+        Dim drawable = MetadataHelper.GetDrawableReference(wrapper)
+        If drawable Is Nothing Then Return
+        If Not PolyCanvas.SelectedItems.Contains(drawable) Then
+            PolyCanvas.ClearSelection()
+            PolyCanvas.AddToSelection(drawable)
+        End If
+    End Sub
+
+    Private Sub SyncOverlayTo(textBox As System.Windows.Controls.TextBox)
+        If textBox Is Nothing Then Return
+
+        Dim editor = GetTextEditor()
+        If editor IsNot Nothing Then editor.SuppressStyleSourceApply = True
+        SVGPageViewModel.BeginOverlaySync()
+        Try
+            SVGPageViewModel.CanvasFontFamily = textBox.FontFamily
+            SVGPageViewModel.CanvasFontSize = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            OverlayFontPicker.SelectedFont = textBox.FontFamily
+            OverlayFontSizeComboBox.Text = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+        Finally
+            SVGPageViewModel.EndOverlaySync()
+            If editor IsNot Nothing Then editor.SuppressStyleSourceApply = False
+        End Try
+    End Sub
+
+    Private Function GetTextEditor() As TextEditingController
+        Return zoomPanControl?.DrawingManager.TextEditor
     End Function
 
 End Class

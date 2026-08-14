@@ -39,7 +39,7 @@
                             Margin="{TemplateBinding Padding}"
                             ClipToBounds="False"
                             Content="{TemplateBinding ContentControl.Content}"
-                            IsHitTestVisible="False" />
+                            IsHitTestVisible="True" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

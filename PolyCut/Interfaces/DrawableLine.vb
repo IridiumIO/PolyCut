@@ -53,7 +53,7 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
 
-        Return component.BakeTransforms(DrawableElement)
+        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=False)
 
     End Function
 End Class

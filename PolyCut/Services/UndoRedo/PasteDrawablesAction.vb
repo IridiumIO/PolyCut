@@ -326,36 +326,17 @@ Friend NotInheritable Class ProjectApplyHelper
 
     Public Shared Sub ApplyWrapperState(wrapper As ContentControl, wrapperState As WrapperState, Optional applyScaleToContent As Boolean = False)
 
-        wrapper.Width = wrapperState.Width
-        wrapper.Height = wrapperState.Height
-        Canvas.SetLeft(wrapper, wrapperState.Left)
-        Canvas.SetTop(wrapper, wrapperState.Top)
+        Dim state As New TransformState() With {
+            .Translation = New Point(wrapperState.Left, wrapperState.Top),
+            .Width = wrapperState.Width,
+            .Height = wrapperState.Height,
+            .Rotation = wrapperState.RotationAngle,
+            .Scale = New Point(wrapperState.ScaleX, wrapperState.ScaleY)
+        }
+
+        state.ApplyToWrapper(wrapper, applyScale:=applyScaleToContent)
+
         Panel.SetZIndex(wrapper, wrapperState.ZIndex)
-
-        wrapper.RenderTransform = If(Math.Abs(wrapperState.RotationAngle) > 0.01, New RotateTransform(wrapperState.RotationAngle), Nothing)
-
-        If applyScaleToContent Then
-            Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
-            If contentFe IsNot Nothing Then
-                If Math.Abs(wrapperState.ScaleX - 1.0) > 0.0001 OrElse Math.Abs(wrapperState.ScaleY - 1.0) > 0.0001 Then
-                    Dim tg = TryCast(contentFe.RenderTransform, TransformGroup)
-                    If tg Is Nothing Then
-                        tg = New TransformGroup()
-                        contentFe.RenderTransform = tg
-                    End If
-
-                    Dim st = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-                    If st Is Nothing Then
-                        st = New ScaleTransform(1, 1)
-                        tg.Children.Add(st)
-                    End If
-
-                    st.ScaleX = wrapperState.ScaleX
-                    st.ScaleY = wrapperState.ScaleY
-                    contentFe.RenderTransformOrigin = New Point(0.5, 0.5)
-                End If
-            End If
-        End If
 
         MetadataHelper.SetOriginalDimensions(wrapper, (wrapperState.Width, wrapperState.Height))
         wrapper.InvalidateMeasure()

@@ -1,9 +1,6 @@
-﻿Imports CommunityToolkit.Mvvm.ComponentModel
-
-Imports PolyCut.Shared
+﻿Imports PolyCut.Shared
 
 Imports Svg
-Imports Svg.Transforms
 
 Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
 
@@ -64,7 +61,7 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
 
-        Return component.BakeTransforms(DrawableElement)
+        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=True)
 
     End Function
 End Class

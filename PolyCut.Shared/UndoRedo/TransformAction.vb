@@ -57,15 +57,12 @@ Public Class TransformAction
 
     Public Shared Function MakeSnapshotFromWrapper(wrapper As ContentControl) As Snapshot
         If wrapper Is Nothing Then Return Nothing
-        Dim left = Canvas.GetLeft(wrapper)
-        If Double.IsNaN(left) Then left = 0
-        Dim top = Canvas.GetTop(wrapper)
-        If Double.IsNaN(top) Then top = 0
+        Dim state = TransformState.FromWrapper(wrapper)
         Return New Snapshot With {
-            .Left = left,
-            .Top = top,
-            .Width = wrapper.ActualWidth,
-            .Height = wrapper.ActualHeight,
+            .Left = state.Translation.X,
+            .Top = state.Translation.Y,
+            .Width = state.Width,
+            .Height = state.Height,
             .RenderTransform = If(wrapper.RenderTransform, Nothing)
         }
     End Function
@@ -111,12 +108,12 @@ Public Class TransformAction
 
         Dim angle As Double = 0
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            angle = rotateTransform.Angle * Math.PI / 180.0
-        End If
+        If rotateTransform IsNot Nothing Then angle = rotateTransform.Angle
 
-        Dim cosA = Math.Cos(-angle)
-        Dim sinA = Math.Sin(-angle)
+
+        Dim angleRad = angle * Math.PI / 180.0
+        Dim cosA = Math.Cos(-angleRad)
+        Dim sinA = Math.Sin(-angleRad)
         Dim localDeltaX = deltaX * cosA - deltaY * sinA
         Dim localDeltaY = deltaX * sinA + deltaY * cosA
 
@@ -174,24 +171,23 @@ Public Class TransformAction
 
         Dim currentTop = Canvas.GetTop(wrapper)
         Dim currentLeft = Canvas.GetLeft(wrapper)
-        Dim newTop = currentTop
-        Dim newLeft = currentLeft
 
-        If verticalAlignment <> VerticalAlignment.Center Then
-            newTop += GetCanvasTopOffsetForVertical(verticalAlignment, deltaVertical, angle, transformOrigin)
-            newLeft += GetCanvasLeftOffsetForVertical(verticalAlignment, deltaVertical, angle, transformOrigin)
-        End If
+        Dim newWidth = wrapper.ActualWidth - deltaHorizontal
+        Dim newHeight = wrapper.ActualHeight - deltaVertical
 
-        If horizontalAlignment <> HorizontalAlignment.Center Then
-            newTop += GetCanvasTopOffsetForHorizontal(horizontalAlignment, deltaHorizontal, angle, transformOrigin)
-            newLeft += GetCanvasLeftOffsetForHorizontal(horizontalAlignment, deltaHorizontal, angle, transformOrigin)
-        End If
+
+        Dim moveTop = (verticalAlignment = VerticalAlignment.Top)
+        Dim moveLeft = (horizontalAlignment = HorizontalAlignment.Left)
+
+        Dim placement = TransformMath.ComputeResizePlacement(
+            currentLeft, currentTop, wrapper.ActualWidth, wrapper.ActualHeight,
+            angle, transformOrigin, newWidth, newHeight, moveTop, moveLeft)
 
         wrapper.Height -= deltaVertical
         wrapper.Width -= deltaHorizontal
 
-        Canvas.SetTop(wrapper, newTop)
-        Canvas.SetLeft(wrapper, newLeft)
+        Canvas.SetTop(wrapper, placement.Top)
+        Canvas.SetLeft(wrapper, placement.Left)
     End Sub
 
 
@@ -236,87 +232,29 @@ Public Class TransformAction
             Return True
         End If
 
-        Dim deltaWidth = e.NewSize.Width - e.PreviousSize.Width
-        Dim deltaHeight = e.NewSize.Height - e.PreviousSize.Height
-
-        If Math.Abs(deltaWidth) < 0.01 AndAlso Math.Abs(deltaHeight) < 0.01 Then
+        If Math.Abs(e.NewSize.Width - e.PreviousSize.Width) < 0.01 AndAlso
+           Math.Abs(e.NewSize.Height - e.PreviousSize.Height) < 0.01 Then
             Return True
         End If
 
-        Dim angle As Double = 0
-        Dim rt = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rt IsNot Nothing Then
-            angle = rt.Angle * Math.PI / 180.0
-        End If
-
+        Dim angle = GetRotationAngle(wrapper)
         Dim transformOrigin = wrapper.RenderTransformOrigin
-
-        Dim deltaHorizontal = -deltaWidth
-        Dim deltaVertical = -deltaHeight
 
         Dim newTop = Canvas.GetTop(wrapper)
         If Double.IsNaN(newTop) Then newTop = 0
         Dim newLeft = Canvas.GetLeft(wrapper)
         If Double.IsNaN(newLeft) Then newLeft = 0
 
-        newTop += GetCanvasTopOffsetForVertical(VerticalAlignment.Bottom, deltaVertical, angle, transformOrigin)
-        newLeft += GetCanvasLeftOffsetForVertical(VerticalAlignment.Bottom, deltaVertical, angle, transformOrigin)
+        ' Bottom-right resize semantics: the top-left corner stays anchored.
+        Dim placement = TransformMath.ComputeResizePlacement(
+            newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
+            angle, transformOrigin, e.NewSize.Width, e.NewSize.Height,
+            moveTop:=False, moveLeft:=False)
 
-        newTop += GetCanvasTopOffsetForHorizontal(HorizontalAlignment.Right, deltaHorizontal, angle, transformOrigin)
-        newLeft += GetCanvasLeftOffsetForHorizontal(HorizontalAlignment.Right, deltaHorizontal, angle, transformOrigin)
-
-        Canvas.SetTop(wrapper, newTop)
-        Canvas.SetLeft(wrapper, newLeft)
+        Canvas.SetTop(wrapper, placement.Top)
+        Canvas.SetLeft(wrapper, placement.Left)
 
         Return True
-    End Function
-
-    ' ==========================
-    ' Transform Helper Functions
-    ' ==========================
-
-    Private Shared Function GetCanvasTopOffsetForVertical(alignment As VerticalAlignment, deltaVertical As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case VerticalAlignment.Top
-                Return deltaVertical * Math.Cos(-angle) + (transformOrigin.Y * deltaVertical * (1 - Math.Cos(-angle)))
-            Case VerticalAlignment.Bottom
-                Return transformOrigin.Y * deltaVertical * (1 - Math.Cos(-angle))
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasTopOffsetForHorizontal(alignment As HorizontalAlignment, deltaHorizontal As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case HorizontalAlignment.Left
-                Return deltaHorizontal * Math.Sin(angle) - transformOrigin.X * deltaHorizontal * Math.Sin(angle)
-            Case HorizontalAlignment.Right
-                Return -transformOrigin.X * deltaHorizontal * Math.Sin(angle)
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasLeftOffsetForVertical(alignment As VerticalAlignment, deltaVertical As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case VerticalAlignment.Top
-                Return deltaVertical * Math.Sin(-angle) - (transformOrigin.Y * deltaVertical * Math.Sin(-angle))
-            Case VerticalAlignment.Bottom
-                Return -deltaVertical * transformOrigin.Y * Math.Sin(-angle)
-            Case Else
-                Return 0
-        End Select
-    End Function
-
-    Private Shared Function GetCanvasLeftOffsetForHorizontal(alignment As HorizontalAlignment, deltaHorizontal As Double, angle As Double, transformOrigin As Point) As Double
-        Select Case alignment
-            Case HorizontalAlignment.Left
-                Return deltaHorizontal * Math.Cos(angle) + (transformOrigin.X * deltaHorizontal * (1 - Math.Cos(angle)))
-            Case HorizontalAlignment.Right
-                Return deltaHorizontal * transformOrigin.X * (1 - Math.Cos(angle))
-            Case Else
-                Return 0
-        End Select
     End Function
 
     ' ====================
@@ -351,7 +289,7 @@ Public Class TransformAction
         Dim newRotation = CalculateMirroredRotation(currentRotation, mirrorX, mirrorY)
         wrapper.RenderTransform = New RotateTransform(newRotation)
 
-        ' Mirror visual appearance
+        ' Mirror visual appearance (mirror scale on the child element)
         ApplyScaleTransform(wrapper.Content, mirrorX, mirrorY)
 
         wrapper.InvalidateMeasure()
@@ -360,42 +298,7 @@ Public Class TransformAction
     End Sub
 
 
-    Public Shared Function GetRotatedCorners(wrapper As ContentControl) As List(Of Point)
-        If wrapper Is Nothing Then Return New List(Of Point)
 
-        Dim left = Canvas.GetLeft(wrapper)
-        Dim top = Canvas.GetTop(wrapper)
-        Dim width = wrapper.ActualWidth
-        Dim height = wrapper.ActualHeight
-
-        Dim rotationAngle As Double = 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            rotationAngle = rotateTransform.Angle * Math.PI / 180.0
-        End If
-
-        Dim transformOrigin = wrapper.RenderTransformOrigin
-        Dim pivotX = left + width * transformOrigin.X
-        Dim pivotY = top + height * transformOrigin.Y
-
-        Dim corners As New List(Of Point) From {
-            New Point(left, top),
-            New Point(left + width, top),
-            New Point(left + width, top + height),
-            New Point(left, top + height)
-        }
-
-        Dim rotatedCorners As New List(Of Point)
-        For Each corner In corners
-            Dim dx = corner.X - pivotX
-            Dim dy = corner.Y - pivotY
-            Dim rotatedX = pivotX + (dx * Math.Cos(rotationAngle) - dy * Math.Sin(rotationAngle))
-            Dim rotatedY = pivotY + (dx * Math.Sin(rotationAngle) + dy * Math.Cos(rotationAngle))
-            rotatedCorners.Add(New Point(rotatedX, rotatedY))
-        Next
-
-        Return rotatedCorners
-    End Function
 
 
     Public Shared Function CalculateMirroredRotation(currentRotation As Double, mirrorX As Boolean, mirrorY As Boolean) As Double
@@ -416,6 +319,13 @@ Public Class TransformAction
         End While
 
         Return newRotation
+    End Function
+
+
+    Public Shared Function GetRotationAngle(wrapper As ContentControl) As Double
+        If wrapper Is Nothing Then Return 0
+        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
+        Return If(rotateTransform IsNot Nothing, rotateTransform.Angle, 0)
     End Function
 
 
@@ -442,13 +352,6 @@ Public Class TransformAction
         If mirrorX Then scale.ScaleX *= -1
         If mirrorY Then scale.ScaleY *= -1
     End Sub
-
-
-    Public Shared Function GetRotationAngle(wrapper As ContentControl) As Double
-        If wrapper Is Nothing Then Return 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        Return If(rotateTransform IsNot Nothing, rotateTransform.Angle, 0)
-    End Function
 
 
 End Class

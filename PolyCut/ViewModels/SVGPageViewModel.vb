@@ -123,7 +123,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             Dim wrapper = TryCast(selected.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
 
-            Dim rotatedCorners = TransformAction.GetRotatedCorners(wrapper)
+            Dim rotatedCorners = TransformMath.RotatedCornersOf(wrapper)
             For Each corner In rotatedCorners
                 minX = Math.Min(minX, corner.X)
                 minY = Math.Min(minY, corner.Y)

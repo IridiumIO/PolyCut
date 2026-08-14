@@ -249,36 +249,17 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 Me.Children.Add(child)
             End If
         Else
-            Dim wrapper As New ContentControl With {
-                    .Content = child,
-                    .Width = If(Not Double.IsNaN(child.Width), child.Width, child.ActualWidth),
-                    .Height = If(Not Double.IsNaN(child.Height), child.Height, child.ActualHeight),
-                    .RenderTransform = New RotateTransform(0),
-                    .Background = Brushes.Transparent,
-                    .IsHitTestVisible = True
-                }
+            Dim style As Style = Nothing
+            Try
+                style = CType(Me.FindResource("DesignerItemStyle"), Style)
+            Catch
+                style = TryCast(Application.Current?.TryFindResource("DesignerItemStyle"), Style)
+            End Try
 
-            If TypeOf child Is Line Then
-                Dim line As Line = CType(child, Line)
-                wrapper.Width = Math.Abs(line.X2 - line.X1) + (line.StrokeThickness)
-                wrapper.Height = Math.Abs(line.Y2 - line.Y1) + (line.StrokeThickness)
-                FitLineToWrapper(line, wrapper, line.StrokeThickness)
-            ElseIf TypeOf child Is Path Then
-                Dim path As Path = CType(child, Path)
-                path.Stretch = Stretch.Fill
-            End If
+            'Move wrapper creation to factory but keep interactive wiring here
+            Dim wrapper = DrawableWrapperFactory.CreateWrapper(child, parentIDrawable, style)
+            If wrapper Is Nothing Then Return
 
-            MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
-
-            wrapper.ClipToBounds = False
-            child.HorizontalAlignment = HorizontalAlignment.Stretch
-
-            child.Width = Double.NaN
-            child.Height = Double.NaN
-            Canvas.SetLeft(wrapper, If(Double.IsNaN(Canvas.GetLeft(child)), 0, Canvas.GetLeft(child)))
-            Canvas.SetTop(wrapper, If(Double.IsNaN(Canvas.GetTop(child)), 0, Canvas.GetTop(child)))
-
-            wrapper.Style = CType(Me.FindResource("DesignerItemStyle"), Style)
 
             AddHandler wrapper.PreviewMouseLeftButtonDown, AddressOf OnWrapperPreviewMouseDown
             AddHandler wrapper.MouseLeftButtonDown, AddressOf OnWrapperMouseDown
@@ -288,10 +269,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 AddHandler textBox.GotFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.LostFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.KeyDown, AddressOf OnTextBoxKeyDown
-            End If
-
-            If parentIDrawable IsNot Nothing Then
-                MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
             End If
 
             If insertIndex >= 0 AndAlso insertIndex <= Me.Children.Count Then
@@ -522,34 +499,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
 
-    Public Sub FitLineToWrapper(line As Line, wrapper As ContentControl, strokeThickness As Double)
-        If line Is Nothing OrElse wrapper Is Nothing Then Return
-
-        Dim w As Double = If(Double.IsNaN(wrapper.Width), wrapper.ActualWidth, wrapper.Width)
-        Dim h As Double = If(Double.IsNaN(wrapper.Height), wrapper.ActualHeight, wrapper.Height)
-        If w <= 0 OrElse h <= 0 Then Return
-
-        Dim half As Double = Math.Max(0.0, strokeThickness) * 0.5
-
-        ' Clamp so we don't go negative when wrapper is tiny
-        Dim xMin As Double = Math.Min(w * 0.5, half)
-        Dim yMin As Double = Math.Min(h * 0.5, half)
-        Dim xMax As Double = Math.Max(xMin, w - half)
-        Dim yMax As Double = Math.Max(yMin, h - half)
-
-        ' Preserve direction (so reverse lines don't flip)
-        Dim leftToRight As Boolean = (line.X2 >= line.X1)
-        Dim topToBottom As Boolean = (line.Y2 >= line.Y1)
-
-        line.X1 = If(leftToRight, xMin, xMax)
-        line.Y1 = If(topToBottom, yMin, yMax)
-        line.X2 = If(leftToRight, xMax, xMin)
-        line.Y2 = If(topToBottom, yMax, yMin)
-    End Sub
-
-
-
-
     Private Sub DesignerItem_SizeChanged(sender As Object, e As SizeChangedEventArgs)
 
         Dim wrapper As ContentControl = CType(sender, ContentControl)
@@ -568,7 +517,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
         If TypeOf content Is Line Then
             Dim line As Line = CType(content, Line)
-            FitLineToWrapper(line, wrapper, line.StrokeThickness)
+            DrawableWrapperFactory.FitLineToWrapper(line, wrapper, line.StrokeThickness)
             Return
         End If
 

@@ -116,20 +116,6 @@ Public Class TransformGizmo
         Return Matrix.Identity
     End Function
 
-    Private Shared Function TransformRect(m As Matrix, r As Rect) As Rect
-        Dim topLeft = m.Transform(New Point(r.Left, r.Top))
-        Dim topRight = m.Transform(New Point(r.Right, r.Top))
-        Dim bottomLeft = m.Transform(New Point(r.Left, r.Bottom))
-        Dim bottomRight = m.Transform(New Point(r.Right, r.Bottom))
-
-        Dim minX = Math.Min(topLeft.X, Math.Min(topRight.X, Math.Min(bottomLeft.X, bottomRight.X)))
-        Dim minY = Math.Min(topLeft.Y, Math.Min(topRight.Y, Math.Min(bottomLeft.Y, bottomRight.Y)))
-        Dim maxX = Math.Max(topLeft.X, Math.Max(topRight.X, Math.Max(bottomLeft.X, bottomRight.X)))
-        Dim maxY = Math.Max(topLeft.Y, Math.Max(topRight.Y, Math.Max(bottomLeft.Y, bottomRight.Y)))
-
-        Return New Rect(minX, minY, maxX - minX, maxY - minY)
-    End Function
-
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
         For Each wrapper In _subscribedWrappers
             RemoveHandler wrapper.SizeChanged, AddressOf OnWrapperPropertyChanged
@@ -226,7 +212,7 @@ Public Class TransformGizmo
         Dim dpi = VisualTreeHelper.GetDpi(Me).PixelsPerDip
 
         ' Map canvas-space selection bounds into this overlay's 1:1 screen space
-        Dim rect = TransformRect(GetCanvasToGizmoMatrix(), bounds.Value)
+        Dim rect = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
         Dim rotationAngle = GetSelectionRotation()
         Dim hasRotation = Math.Abs(rotationAngle) > 0.01
 
@@ -436,7 +422,7 @@ Public Class TransformGizmo
 
     Private Sub HandleDoubleClick(pos As Point, bounds As Rect)
         ' pos is in gizmo (screen) space; map the canvas-space bounds into it.
-        Dim hitBounds = TransformRect(GetCanvasToGizmoMatrix(), bounds)
+        Dim hitBounds = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds)
         hitBounds.Inflate(5, 5)
 
         If hitBounds.Contains(pos) AndAlso _selectionManager.Count = 1 Then
@@ -611,7 +597,7 @@ Public Class TransformGizmo
         If Not bounds.HasValue Then Return Nothing
 
         ' pos is in gizmo (1:1 screen) space - map the canvas-space bounds into it.
-        Dim mapped = TransformRect(GetCanvasToGizmoMatrix(), bounds.Value)
+        Dim mapped = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
 
         ' ----- inverse rotate mouse into gizmo space -----
         Dim rotationAngle = GetSelectionRotation()
@@ -708,7 +694,7 @@ Public Class TransformGizmo
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
-                    _initialTransforms(item) = TransformState.FromElement(wrapper)
+                    _initialTransforms(item) = TransformState.FromWrapper(wrapper)
 
                     Try
                         Dim snap = TransformAction.MakeSnapshotFromWrapper(wrapper)

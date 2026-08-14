@@ -31,52 +31,6 @@ Public Module Extensions
 
 
     <Extension()>
-    Public Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
-
-        Dim component As SvgVisualElement = SVGelement.DeepCopy
-        Dim originalBounds = component.Bounds
-        Dim transformableContentControl As ContentControl = drawableElement.Parent
-        If component.Transforms Is Nothing Then component.Transforms = New Transforms.SvgTransformCollection
-
-        ' Check for scale transforms on the element's RenderTransform (mirror)
-        Dim tfg As TransformGroup = TryCast(drawableElement.RenderTransform, TransformGroup)
-        If tfg IsNot Nothing Then
-            For Each transform As Transform In tfg.Children
-                If TypeOf transform Is ScaleTransform Then
-                    Dim st = CType(transform, ScaleTransform)
-                    component.Transforms.Insert(0, New Transforms.SvgScale(st.ScaleX, st.ScaleY))
-                End If
-            Next
-        End If
-
-        Dim scaleTF As New Transforms.SvgScale(transformableContentControl.ActualWidth / component.Bounds.Width, transformableContentControl.ActualHeight / component.Bounds.Height)
-        component.Transforms.Insert(0, scaleTF)
-
-        'Need to recheck the bounds because the scaling affects the children and translates the parent. 
-        Dim newBounds = component.Bounds
-
-        'For some ghastly reason, all translations are ALSO scaled by the scale value so this needs to be undone
-        Dim scaledXTranslate = (-LCorrection + Canvas.GetLeft(transformableContentControl) - (newBounds.X - originalBounds.X))
-        Dim scaledYTranslate = (-TCorrection + Canvas.GetTop(transformableContentControl) - (newBounds.Y - originalBounds.Y))
-
-        Dim translateTF As New Transforms.SvgTranslate(scaledXTranslate, scaledYTranslate)
-        component.Transforms.Insert(0, translateTF)
-
-        ' Handle wrapper rotation (simple RotateTransform only)
-        Dim transformableCCTransforms = transformableContentControl.RenderTransform
-
-        If TypeOf transformableCCTransforms Is RotateTransform Then
-            Dim rt = CType(transformableCCTransforms, RotateTransform)
-            Dim rotateTF As New Transforms.SvgRotate(rt.Angle, component.Bounds.X + component.Bounds.Width / 2, component.Bounds.Y + component.Bounds.Height / 2)
-            component.Transforms.Insert(0, rotateTF)
-        End If
-
-        Return component
-
-    End Function
-
-
-    <Extension()>
     Public Function IsWithinBounds(svgElement As SvgVisualElement, x As Double, y As Double) As Boolean
         If svgElement Is Nothing Then Return False
 

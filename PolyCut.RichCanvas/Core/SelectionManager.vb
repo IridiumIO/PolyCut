@@ -171,49 +171,14 @@ Public Class SelectionManager
         Dim width = wrapper.ActualWidth
         Dim height = wrapper.ActualHeight
 
-        ' Handle rotation
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform Is Nothing OrElse Math.Abs(rotateTransform.Angle) < 0.01 Then
-            Return New Rect(left, top, width, height)
-        End If
+        ' Accumulate wrapper -> canvas via the visual tree and gets the AABB.
+        Dim parentCanvas = TryCast(wrapper.Parent, UIElement)
+        Dim m = TransformMath.GetAccumulatedMatrix(wrapper, parentCanvas)
 
-        ' Calculate rotated bounds
-        Dim angle = rotateTransform.Angle * Math.PI / 180.0
-        Dim cosAngle = Math.Cos(angle)
-        Dim sinAngle = Math.Sin(angle)
+        If m.IsIdentity Then Return New Rect(left, top, width, height)
 
-        Dim centerX = left + width * wrapper.RenderTransformOrigin.X
-        Dim centerY = top + height * wrapper.RenderTransformOrigin.Y
 
-        Dim corners() As Point = {
-            New Point(0, 0),
-            New Point(width, 0),
-            New Point(0, height),
-            New Point(width, height)
-        }
-
-        Dim minX = Double.MaxValue
-        Dim minY = Double.MaxValue
-        Dim maxX = Double.MinValue
-        Dim maxY = Double.MinValue
-
-        For Each corner In corners
-            Dim cx = left + corner.X
-            Dim cy = top + corner.Y
-
-            Dim offsetX = cx - centerX
-            Dim offsetY = cy - centerY
-
-            Dim rotatedX = centerX + (offsetX * cosAngle - offsetY * sinAngle)
-            Dim rotatedY = centerY + (offsetX * sinAngle + offsetY * cosAngle)
-
-            minX = Math.Min(minX, rotatedX)
-            minY = Math.Min(minY, rotatedY)
-            maxX = Math.Max(maxX, rotatedX)
-            maxY = Math.Max(maxY, rotatedY)
-        Next
-
-        Return New Rect(minX, minY, maxX - minX, maxY - minY)
+        Return TransformMath.TransformBounds(m, New Rect(0, 0, width, height))
     End Function
 
     Private Sub InvalidateBounds()

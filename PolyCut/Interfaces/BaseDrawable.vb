@@ -1,7 +1,6 @@
-﻿Imports System.Windows.Controls.Primitives
+﻿Imports CommunityToolkit.Mvvm.ComponentModel
 
-Imports CommunityToolkit.Mvvm.ComponentModel
-
+Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Imports Svg
@@ -160,7 +159,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
                 If line IsNot Nothing Then
                     Dim wrapper = TryCast(line.Parent, ContentControl)
                     If wrapper IsNot Nothing Then
-                        FitLineToWrapper(line, wrapper, s.StrokeThickness)
+                        DrawableWrapperFactory.FitLineToWrapper(line, wrapper, s.StrokeThickness)
                     End If
                 End If
 
@@ -177,7 +176,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
                     contentShape.InvalidateVisual()
                     Dim line = TryCast(contentShape, Line)
                     If line IsNot Nothing Then
-                        FitLineToWrapper(line, cc, contentShape.StrokeThickness)
+                        DrawableWrapperFactory.FitLineToWrapper(line, cc, contentShape.StrokeThickness)
                     End If
 
                 Else
@@ -224,31 +223,6 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
         End Try
     End Sub
 
-
-    Public Sub FitLineToWrapper(line As Line, wrapper As ContentControl, strokeThickness As Double)
-        If line Is Nothing OrElse wrapper Is Nothing Then Return
-
-        Dim w As Double = If(Double.IsNaN(wrapper.Width), wrapper.ActualWidth, wrapper.Width)
-        Dim h As Double = If(Double.IsNaN(wrapper.Height), wrapper.ActualHeight, wrapper.Height)
-        If w <= 0 OrElse h <= 0 Then Return
-
-        Dim half As Double = Math.Max(0.0, strokeThickness) * 0.5
-
-        ' Clamp so we don't go negative when wrapper is tiny
-        Dim xMin As Double = Math.Min(w * 0.5, half)
-        Dim yMin As Double = Math.Min(h * 0.5, half)
-        Dim xMax As Double = Math.Max(xMin, w - half)
-        Dim yMax As Double = Math.Max(yMin, h - half)
-
-        ' Preserve direction (so reverse lines don't flip)
-        Dim leftToRight As Boolean = (line.X2 >= line.X1)
-        Dim topToBottom As Boolean = (line.Y2 >= line.Y1)
-
-        line.X1 = If(leftToRight, xMin, xMax)
-        line.Y1 = If(topToBottom, yMin, yMax)
-        line.X2 = If(leftToRight, xMax, xMin)
-        line.Y2 = If(topToBottom, yMax, yMin)
-    End Sub
 
 
 End Class

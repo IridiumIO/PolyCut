@@ -51,7 +51,7 @@ Public Class GeometryExtractor
             Return New List(Of IPathBasedElement)
         End Try
 
-        Dim t As Transform = If(TryCast(gt, Transform), GeneralToMatrixTransform(gt))
+        Dim t As Transform = If(TryCast(gt, Transform), New MatrixTransform(TransformMath.GeneralTransformToMatrix(gt)))
 
         ' 3. Flatten in local space first
         Dim flattened As PathGeometry = geometry.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
@@ -94,17 +94,6 @@ Public Class GeometryExtractor
 
         Return New List(Of IPathBasedElement) From {pathElement}
     End Function
-
-    Private Shared Function GeneralToMatrixTransform(gt As GeneralTransform) As MatrixTransform
-        Dim p0 = gt.Transform(New Point(0, 0))
-        Dim p1 = gt.Transform(New Point(1, 0))
-        Dim p2 = gt.Transform(New Point(0, 1))
-
-        Dim m As New Matrix(p1.X - p0.X, p1.Y - p0.Y, p2.X - p0.X, p2.Y - p0.Y, p0.X, p0.Y)
-
-        Return New MatrixTransform(m)
-    End Function
-
 
     Private Shared Function GetGeometryFromElement(element As FrameworkElement) As Geometry
 

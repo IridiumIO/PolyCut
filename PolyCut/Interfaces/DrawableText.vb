@@ -6,8 +6,6 @@ Imports System.Windows.Threading
 Imports PolyCut.Shared
 
 Imports Svg
-Imports Svg.Pathing
-Imports Svg.Transforms
 
 Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
@@ -297,66 +295,9 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
 
-        Return BakeTransforms(component, DrawableElement, 0, 0, True)
+        ' Text is not stretched to the wrapper!!
+        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=False)
 
-    End Function
-
-
-    Private Shared Function BakeTransforms(SVGelement As SvgVisualElement, drawableElement As FrameworkElement, Optional LCorrection As Double = 0, Optional TCorrection As Double = 0, Optional IgnoreDrawableScale As Boolean = False) As SvgVisualElement
-        Dim component As SvgVisualElement = SVGelement.DeepCopy()
-        If component.Transforms Is Nothing Then component.Transforms = New SvgTransformCollection()
-
-        Dim container As ContentControl = CType(drawableElement.Parent, ContentControl)
-
-        Dim matrix As New Matrix()
-
-        Dim originX As Double = Canvas.GetLeft(container)
-        Dim originY As Double = Canvas.GetTop(container)
-        Dim width As Double = container.ActualWidth
-        Dim height As Double = container.ActualHeight
-
-        ' Scale
-        If Not IgnoreDrawableScale Then
-            Dim scaleX As Double = width / drawableElement.ActualWidth
-            Dim scaleY As Double = height / drawableElement.ActualHeight
-            matrix.Scale(scaleX, scaleY)
-        End If
-
-
-
-        ' Translate
-        matrix.Translate(originX - LCorrection, originY - TCorrection)
-
-        'Scale
-        Dim tfg As TransformGroup = TryCast(drawableElement.RenderTransform, TransformGroup)
-        If tfg IsNot Nothing Then
-            For Each transform As Transform In tfg.Children
-                If TypeOf transform Is ScaleTransform Then
-                    Dim st = CType(transform, ScaleTransform)
-                    matrix.ScaleAt(st.ScaleX, st.ScaleY, originX + width / 2, originY + height / 2)
-                End If
-            Next
-        End If
-
-
-        ' Rotate if present
-        If TypeOf container.RenderTransform Is RotateTransform Then
-            Dim rt = CType(container.RenderTransform, RotateTransform)
-            matrix.RotateAt(rt.Angle, originX + width / 2, originY + height / 2)
-        End If
-
-
-
-
-        ' Apply transform
-        Dim values As New List(Of Single) From {
-            CSng(matrix.M11), CSng(matrix.M12),
-            CSng(matrix.M21), CSng(matrix.M22),
-            CSng(matrix.OffsetX), CSng(matrix.OffsetY)
-        }
-
-        component.Transforms.Insert(0, New SvgMatrix(values))
-        Return component
     End Function
 
 

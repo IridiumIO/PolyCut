@@ -1,7 +1,6 @@
 ﻿Imports PolyCut.Shared
 
 Imports Svg
-Imports Svg.Transforms
 
 Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
 
@@ -60,8 +59,7 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
 
         Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
 
-        Dim sx = component.BakeTransforms(DrawableElement)
-        Return sx
+        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=True)
 
     End Function
 End Class

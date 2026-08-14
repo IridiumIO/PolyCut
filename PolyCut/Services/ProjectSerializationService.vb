@@ -327,35 +327,25 @@ Friend NotInheritable Class DrawableCodec
         Dim wrapper = TryCast(element.Parent, ContentControl)
         If wrapper Is Nothing Then Return Nothing
 
+        'Transform state: Left/Top + Width/Height on the wrapper, rotation on the wrapper, scale on the child element.
+        Dim state = TransformState.FromWrapper(wrapper)
+
         Dim data As New DrawableData With {
             .Id = id,
             .Name = drawable.Name,
-            .Left = Canvas.GetLeft(wrapper),
-            .Top = Canvas.GetTop(wrapper),
-            .Width = wrapper.ActualWidth,
-            .Height = wrapper.ActualHeight,
+            .Left = state.Translation.X,
+            .Top = state.Translation.Y,
+            .Width = state.Width,
+            .Height = state.Height,
+            .RotationAngle = state.Rotation,
+            .ScaleX = state.Scale.X,
+            .ScaleY = state.Scale.Y,
             .IsHidden = drawable.IsHidden,
             .ZIndex = Panel.GetZIndex(wrapper)
         }
 
         If Double.IsNaN(data.Left) Then data.Left = 0
         If Double.IsNaN(data.Top) Then data.Top = 0
-
-        ' Rotation
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            data.RotationAngle = rotateTransform.Angle
-        End If
-
-        ' Scale (from element's render transform)
-        Dim elementTransformGroup = TryCast(element.RenderTransform, TransformGroup)
-        If elementTransformGroup IsNot Nothing Then
-            Dim scale = elementTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-            If scale IsNot Nothing Then
-                data.ScaleX = scale.ScaleX
-                data.ScaleY = scale.ScaleY
-            End If
-        End If
 
         ' Visual properties
         data.StrokeColor = ColorAndBrushHelpers.SerializeBrush(drawable.Stroke)
@@ -412,34 +402,18 @@ Friend NotInheritable Class DrawableCodec
                 Return
             End If
 
-            groupData.Left = CanvasUtil.GetLeftSafe(wrapper)
-            groupData.Top = CanvasUtil.GetTopSafe(wrapper)
-            groupData.Width = wrapper.ActualWidth
-            groupData.Height = wrapper.ActualHeight
+            Dim state = TransformState.FromWrapper(wrapper)
+
+            groupData.Left = state.Translation.X
+            groupData.Top = state.Translation.Y
+            groupData.Width = state.Width
+            groupData.Height = state.Height
+            groupData.RotationAngle = state.Rotation
+            groupData.ScaleX = state.Scale.X
+            groupData.ScaleY = state.Scale.Y
 
             groupData.ZIndex = Panel.GetZIndex(wrapper)
             groupData.IsHidden = group.IsHidden
-
-            Dim rt = TryCast(wrapper.RenderTransform, RotateTransform)
-            If rt IsNot Nothing Then groupData.RotationAngle = rt.Angle
-
-            Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
-            If contentFe IsNot Nothing Then
-                Dim tg = TryCast(contentFe.RenderTransform, TransformGroup)
-                If tg IsNot Nothing Then
-                    Dim st = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-                    If st IsNot Nothing Then
-                        groupData.ScaleX = st.ScaleX
-                        groupData.ScaleY = st.ScaleY
-                    End If
-                Else
-                    Dim st = TryCast(contentFe.RenderTransform, ScaleTransform)
-                    If st IsNot Nothing Then
-                        groupData.ScaleX = st.ScaleX
-                        groupData.ScaleY = st.ScaleY
-                    End If
-                End If
-            End If
 
         Catch
         End Try
@@ -509,9 +483,14 @@ Friend NotInheritable Class DrawableCodec
             textBox.Foreground = ColorAndBrushHelpers.DeserializeBrush(data.FillColor)
         End If
 
-        If Math.Abs(data.ScaleX - 1.0) > 0.01 OrElse Math.Abs(data.ScaleY - 1.0) > 0.01 Then
+        'IMPROTANT: The child element carries the scale (mirror/resize); the wrapper carries position/size/rotation and is set up later via TransformState.ApplyToWrapper.
+        Dim state As New TransformState() With {
+            .Scale = New Point(data.ScaleX, data.ScaleY)
+        }
+
+        If Math.Abs(state.Scale.X - 1.0) > 0.01 OrElse Math.Abs(state.Scale.Y - 1.0) > 0.01 Then
             Dim tg As New TransformGroup()
-            tg.Children.Add(New ScaleTransform(data.ScaleX, data.ScaleY))
+            tg.Children.Add(New ScaleTransform(state.Scale.X, state.Scale.Y))
             element.RenderTransform = tg
             element.RenderTransformOrigin = New Point(0.5, 0.5)
         End If

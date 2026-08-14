@@ -1,14 +1,12 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.ComponentModel
-Imports System.Windows.Ink
 
 Imports PolyCut.RichCanvas
 
 Imports PolyCut.[Shared]
 
 Imports Svg
-Imports Svg.Transforms
 
 Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
@@ -62,7 +60,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         For Each d In items
             Dim fe = d.DrawableElement
-            Dim w = DrawableWrapperFactory.CreateDesignerWrapperForChild(fe, d, style)
+            Dim w = DrawableWrapperFactory.CreateWrapper(fe, d, style)
             If w Is Nothing Then Continue For
 
             Dim left = GetLeftSafe(fe)
@@ -205,250 +203,27 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
         Dim gRoot As New SvgGroup()
-        If gRoot.Transforms Is Nothing Then gRoot.Transforms = New SvgTransformCollection()
 
-        ' ----- Find group wrapper + viewbox + inner canvas -----
-        Dim vb = TryCast(Me.DrawableElement, Viewbox)
-        Dim inner = TryCast(vb?.Child, Canvas)
-
-        Dim groupWrapper = TryCast(Me.DrawableElement?.Parent, ContentControl)
-
-        ' 1) Apply GROUP WRAPPER transforms to gRoot (translate + rendertransform about center)
-        If groupWrapper IsNot Nothing Then
-            ApplyWrapperTransformAsSvgGroup(gRoot, groupWrapper)
-        Else
-            ' Fallback if export before it’s wrapped (I forget why I needed this)
-            Dim fe = TryCast(Me.DrawableElement, FrameworkElement)
-            If fe IsNot Nothing Then ApplyCanvasTranslateIfAny(gRoot, fe)
-        End If
-
-        ' 2) Apply VIEWBOX layout scaling as a nested group
-        Dim gScaled As New SvgGroup()
-        If gScaled.Transforms Is Nothing Then gScaled.Transforms = New SvgTransformCollection()
-
-        If vb IsNot Nothing AndAlso inner IsNot Nothing Then
-            Dim baseW = GetWidthSafe(inner)
-            Dim baseH = GetHeightSafe(inner)
-
-            Dim finalW As Double = If(groupWrapper IsNot Nothing, GetWidthSafe(groupWrapper), GetWidthSafe(vb))
-            Dim finalH As Double = If(groupWrapper IsNot Nothing, GetHeightSafe(groupWrapper), GetHeightSafe(vb))
-
-            If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
-                gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
-            End If
-
-        End If
-
-        ' 3) Export children under gScaled so their translations/centers scale correctly
-        Dim groupCanvas As Canvas = inner
-        If groupCanvas IsNot Nothing Then
-            For Each childDrawable In Me.GroupChildren
-                If childDrawable Is Nothing Then Continue For
-
-                Dim childWrapper = TryCast(childDrawable.DrawableElement?.Parent, ContentControl)
-                If childWrapper Is Nothing Then Continue For
-
-                Dim gChild As New SvgGroup()
-                ApplyWrapperTransformAsSvgGroup(gChild, childWrapper)
-
-                Dim childSvg As SvgVisualElement = Nothing
-                Try
-                    Dim nested = TryCast(childDrawable, NestedDrawableGroup)
-                    If nested IsNot Nothing Then
-                        ' IMPORTANT: nested groups export their !!contents!! (viewbox scale + children),
-                        ' NOT their outer wrapper transform (already applied it via gChild)
-                        childSvg = nested.GetSvgContentsOnly(childWrapper)
-                    Else
-                        childSvg = childDrawable.DrawingToSVG()
-                    End If
-                Catch
-                    childSvg = Nothing
-                End Try
-                If childSvg Is Nothing Then Continue For
-
-                gChild.Children.Add(childSvg)
-                gScaled.Children.Add(gChild)
-            Next
-        End If
-
-        gRoot.Children.Add(gScaled)
-        Return gRoot
-    End Function
-    ' --- Helpers ---
-
-    Friend Function GetSvgContentsOnly(selfWrapper As ContentControl) As SvgGroup
-        Dim gScaled As New SvgGroup()
-        If gScaled.Transforms Is Nothing Then gScaled.Transforms = New SvgTransformCollection()
-
-        Dim vbOuter = TryCast(selfWrapper?.Content, Viewbox)
-        If vbOuter Is Nothing Then vbOuter = TryCast(Me.DrawableElement, Viewbox)
-
-        Dim vbScan As DependencyObject = vbOuter
-        Dim inner As Canvas = Nothing
-
-        While vbScan IsNot Nothing AndAlso inner Is Nothing
-            inner = TryCast(TryCast(vbScan, Viewbox)?.Child, Canvas)
-            If inner IsNot Nothing Then Exit While
-            vbScan = TryCast(TryCast(vbScan, Viewbox)?.Child, Viewbox)
-        End While
-
-        ' --- Viewbox scale (Stretch.Fill) ---
-        If vbScan IsNot Nothing AndAlso inner IsNot Nothing AndAlso selfWrapper IsNot Nothing Then
-            Dim baseW = GetWidthSafe(inner)
-            Dim baseH = GetHeightSafe(inner)
-
-            Dim finalW = GetWidthSafe(selfWrapper)
-            Dim finalH = GetHeightSafe(selfWrapper)
-
-            If baseW > 0 AndAlso baseH > 0 AndAlso finalW > 0 AndAlso finalH > 0 Then
-                gScaled.Transforms.Add(New SvgScale(CSng(finalW / baseW), CSng(finalH / baseH)))
-
-                Dim rt = vbOuter.RenderTransform
-                If rt IsNot Nothing AndAlso Not rt.Value.IsIdentity Then
-                    Dim ox As Double = finalW * vbOuter.RenderTransformOrigin.X
-                    Dim oy As Double = finalH * vbOuter.RenderTransformOrigin.Y
-
-                    Dim m As Matrix = Matrix.Identity
-                    m.Translate(-ox, -oy)
-                    m = Matrix.Multiply(m, rt.Value)
-                    m.Translate(ox, oy)
-                    ApplySvgMatrixTransform(gScaled, m)
-                End If
-
-            End If
-        End If
-
-        ' --- Children (recurse groups) ---
+        ' Each child bakes its own absolute element -> document-root matrix via the visual tree (SvgExportHelper.BakeToRoot TransformToVisual).
+        ' FUTURE ME: This means groups are just organisational again, don't put cursed nested transforms here again
         For Each childDrawable In Me.GroupChildren
             If childDrawable Is Nothing Then Continue For
 
-            Dim childWrapper = TryCast(childDrawable.DrawableElement?.Parent, ContentControl)
-            If childWrapper Is Nothing Then Continue For
+            Dim childSvg As SvgVisualElement = Nothing
+            Try
+                childSvg = childDrawable.GetTransformedSVGElement()
+            Catch
+                childSvg = Nothing
+            End Try
+            If childSvg Is Nothing Then Continue For
 
             Dim gChild As New SvgGroup()
-            ApplyWrapperTransformAsSvgGroup(gChild, childWrapper)
-
-            Dim childSvg As SvgVisualElement = Nothing
-
-            Dim nested = TryCast(childDrawable, NestedDrawableGroup)
-            If nested IsNot Nothing Then
-                ' Nested group: export its CONTENTS only (so wrapper transform isn't doubled)
-                childSvg = nested.GetSvgContentsOnly(childWrapper)
-            Else
-                ' Leaf: local SVG
-                childSvg = childDrawable.DrawingToSVG()
-            End If
-
-            If childSvg Is Nothing Then Continue For
             gChild.Children.Add(childSvg)
-            gScaled.Children.Add(gChild)
+            gRoot.Children.Add(gChild)
         Next
 
-        Return gScaled
+        Return gRoot
     End Function
-
-    Private Shared Sub ApplyWrapperTransformAsSvgGroup(g As SvgGroup, wrapper As ContentControl)
-        If g Is Nothing OrElse wrapper Is Nothing Then Return
-        If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
-
-        ' 1) Canvas translate
-        Dim left = GetLeftSafe(wrapper)
-        Dim top = GetTopSafe(wrapper)
-        If left <> 0 OrElse top <> 0 Then g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
-
-        ' Use wrapper dimensions as the layout reference space
-        Dim w As Double = GetWidthSafe(wrapper)
-        Dim h As Double = GetHeightSafe(wrapper)
-
-        ' 2) Wrapper RenderTransform about wrapper center (existing behavior)
-        Dim cx As Single = CSng(w / 2.0)
-        Dim cy As Single = CSng(h / 2.0)
-        ApplyTransformAboutPoint(g, wrapper.RenderTransform, cx, cy)
-
-        ' 3) Content RenderTransform (Mirror lives here) about content.RenderTransformOrigin
-        Dim contentFe = TryCast(wrapper.Content, FrameworkElement)
-        If contentFe IsNot Nothing Then
-            Dim ox As Single = CSng(w * contentFe.RenderTransformOrigin.X)
-            Dim oy As Single = CSng(h * contentFe.RenderTransformOrigin.Y)
-            ApplyTransformAboutPoint(g, contentFe.RenderTransform, ox, oy)
-        End If
-    End Sub
-
-    Private Shared Sub ApplyTransformAboutPoint(g As SvgGroup, rt As Transform, ox As Single, oy As Single)
-        If rt Is Nothing OrElse rt.Value.IsIdentity Then Return
-        If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
-
-        Dim tg = TryCast(rt, TransformGroup)
-        If tg IsNot Nothing Then
-            ' Emit each child transform about the SAME pivot in the SAME order
-            For Each child In tg.Children
-                ApplyTransformAboutPoint(g, child, ox, oy)
-            Next
-            Return
-        End If
-
-        ' Prefer specific transforms when possible, but ALWAYS apply about (ox,oy)
-        Dim r = TryCast(rt, RotateTransform)
-        If r IsNot Nothing Then
-            g.Transforms.Add(New SvgRotate(r.Angle, ox, oy))
-            Return
-        End If
-
-        Dim s = TryCast(rt, ScaleTransform)
-        If s IsNot Nothing Then
-            g.Transforms.Add(New SvgTranslate(ox, oy))
-            g.Transforms.Add(New SvgScale(s.ScaleX, s.ScaleY))
-            g.Transforms.Add(New SvgTranslate(-ox, -oy))
-            Return
-        End If
-
-        ' General case: pivoted matrix
-        Dim m As Matrix = rt.Value
-        Dim composed As Matrix = Matrix.Identity
-        composed.Translate(-ox, -oy)
-        composed = Matrix.Multiply(composed, m)
-        composed.Translate(ox, oy)
-        ApplySvgMatrixTransform(g, composed)
-    End Sub
-
-
-    Private Shared Sub ApplyTransformAboutCenter(g As SvgGroup, rt As Transform, cx As Single, cy As Single)
-        If rt Is Nothing OrElse rt.Value.IsIdentity Then Return
-
-        Dim r = TryCast(rt, RotateTransform)
-        If r IsNot Nothing Then
-            g.Transforms.Add(New SvgRotate(r.Angle, cx, cy))
-            Return
-        End If
-
-        Dim s = TryCast(rt, ScaleTransform)
-        If s IsNot Nothing Then
-            g.Transforms.Add(New SvgTranslate(cx, cy))
-            g.Transforms.Add(New SvgScale(s.ScaleX, s.ScaleY))
-            g.Transforms.Add(New SvgTranslate(-cx, -cy))
-            Return
-        End If
-
-        Dim m As Matrix = rt.Value
-        Dim composed As Matrix = Matrix.Identity
-        composed.Translate(cx, cy)
-        composed = Matrix.Multiply(m, composed)
-        composed.Translate(-cx, -cy)
-        ApplySvgMatrixTransform(g, composed)
-    End Sub
-
-    Private Shared Sub ApplySvgMatrixTransform(svgElem As SvgVisualElement, m As Matrix)
-        If svgElem.Transforms Is Nothing Then svgElem.Transforms = New SvgTransformCollection()
-        Dim values As New List(Of Single) From {m.M11, m.M12, m.M21, m.M22, m.OffsetX, m.OffsetY}
-        svgElem.Transforms.Add(New SvgMatrix(values))
-    End Sub
-
-    Private Shared Sub ApplyCanvasTranslateIfAny(g As SvgGroup, fe As FrameworkElement)
-        If g.Transforms Is Nothing Then g.Transforms = New SvgTransformCollection()
-        Dim left = GetLeftSafe(fe)
-        Dim top = GetTopSafe(fe)
-        If left <> 0 OrElse top <> 0 Then g.Transforms.Add(New SvgTranslate(CSng(left), CSng(top)))
-    End Sub
     Public Sub SetNativeSize(w As Double, h As Double)
         Dim inner = GetInnerCanvas()
         If inner Is Nothing Then Return
@@ -500,7 +275,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Dim left = GetLeftSafe(fe)
             Dim top = GetTopSafe(fe)
 
-            Dim wrapper = DrawableWrapperFactory.CreateDesignerWrapperForChild(fe, child, designerItemStyle)
+            Dim wrapper = DrawableWrapperFactory.CreateWrapper(fe, child, designerItemStyle)
             If wrapper Is Nothing Then Continue For
 
             ' Localize into group space
@@ -627,54 +402,3 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
 
 End Class
-
-
-
-Public Module DrawableWrapperFactory
-
-    'TODO: Merge with Polycanvas.AddChild creation so it's all in one place
-    Public Function CreateDesignerWrapperForChild(
-        child As FrameworkElement,
-        parentIDrawable As IDrawable,
-        designerItemStyle As Style
-    ) As ContentControl
-
-        If child Is Nothing Then Return Nothing
-
-        Dim wrapper As New ContentControl With {
-            .Content = child,
-            .Width = If(Not Double.IsNaN(child.Width) AndAlso child.Width > 0, child.Width, child.ActualWidth),
-            .Height = If(Not Double.IsNaN(child.Height) AndAlso child.Height > 0, child.Height, child.ActualHeight),
-            .RenderTransform = New RotateTransform(0),
-            .Background = Brushes.Transparent,
-            .IsHitTestVisible = True,
-            .ClipToBounds = False,
-            .Style = designerItemStyle
-        }
-
-        If TypeOf child Is Canvas Then DirectCast(child, Canvas).ClipToBounds = True
-
-        If TypeOf child Is Line Then
-            Dim line = DirectCast(child, Line)
-            wrapper.Width = Math.Abs(line.X2 - line.X1) + line.StrokeThickness
-            wrapper.Height = Math.Abs(line.Y2 - line.Y1) + line.StrokeThickness
-            MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
-        ElseIf TypeOf child Is Path Then
-            DirectCast(child, Path).Stretch = Stretch.Fill
-        End If
-
-        MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
-
-        child.HorizontalAlignment = HorizontalAlignment.Stretch
-        child.Width = Double.NaN
-        child.Height = Double.NaN
-
-        If parentIDrawable IsNot Nothing Then MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
-
-        Return wrapper
-    End Function
-
-
-
-
-End Module

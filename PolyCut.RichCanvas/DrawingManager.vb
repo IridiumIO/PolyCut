@@ -14,17 +14,12 @@ Public Class DrawingManager
         Select Case mode
             Case CanvasMode.Line
                 _currentShape = CreateLine(startPoint)
-            Case CanvasMode.Rectangle
-                _currentShape = CreateRectangle(startPoint)
-            Case CanvasMode.Ellipse
-                _currentShape = CreateEllipse(startPoint)
+            Case CanvasMode.Rectangle, CanvasMode.Ellipse, CanvasMode.RegistrationMark
+                _currentShape = CreateShape(startPoint, mode)
             Case CanvasMode.Path
                 _currentShape = CreatePen(startPoint)
             Case CanvasMode.Text
                 _currentShape = Nothing
-            Case CanvasMode.RegistrationMark
-                _currentShape = CreateRegistrationMark(startPoint)
-
         End Select
 
         If _currentShape IsNot Nothing Then
@@ -40,10 +35,8 @@ Public Class DrawingManager
         Select Case mode
             Case CanvasMode.Line
                 UpdateLine(DirectCast(_currentShape, Line), currentPoint, squareAspect)
-            Case CanvasMode.Rectangle, CanvasMode.RegistrationMark
-                UpdateRectangle(DirectCast(_currentShape, Rectangle), currentPoint, squareAspect)
-            Case CanvasMode.Ellipse
-                UpdateEllipse(DirectCast(_currentShape, Ellipse), currentPoint, squareAspect)
+            Case CanvasMode.Rectangle, CanvasMode.RegistrationMark, CanvasMode.Ellipse
+                UpdateRectShape(DirectCast(_currentShape, Shape), currentPoint, squareAspect)
             Case CanvasMode.Path
                 UpdatePen(DirectCast(_currentShape, Polyline), currentPoint)
         End Select
@@ -75,7 +68,7 @@ Public Class DrawingManager
             Dim line As Line = DirectCast(_currentShape, Line)
             _currentShape = FinaliseLine(line)
 
-            If (currentCursorPosition.X - _startPos.X) ^ 2 + (currentCursorPosition.Y - _startPos.Y) ^ 2 < 2 Then
+            If IsClick(_startPos, currentCursorPosition) Then
                 pCanvas.Children.Remove(_currentShape)
                 _currentShape = Nothing
                 Return
@@ -93,7 +86,7 @@ Public Class DrawingManager
 
         Else
 
-            If (currentCursorPosition.X - _startPos.X) ^ 2 + (currentCursorPosition.Y - _startPos.Y) ^ 2 < 2 Then
+            If IsClick(_startPos, currentCursorPosition) Then
                 pCanvas.Children.Remove(_currentShape)
                 _currentShape = Nothing
                 Return
@@ -120,6 +113,12 @@ Public Class DrawingManager
         End If
         _currentShape = Nothing
     End Sub
+
+    Private Shared Function IsClick(start As Point, current As Point) As Boolean
+        Dim dx = current.X - start.X
+        Dim dy = current.Y - start.Y
+        Return dx * dx + dy * dy < 2
+    End Function
 
     Private Sub OnTextBoxLostFocus(sender As Object, e As RoutedEventArgs)
         Dim textBox = DirectCast(sender, TextBox)
@@ -175,45 +174,37 @@ Public Class DrawingManager
         Return polyline
     End Function
 
-    Private Shared Function CreateRectangle(startPoint As Point) As Rectangle
+    Private Shared Function CreateShape(startPoint As Point, mode As CanvasMode) As Shape
 
         If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
 
-        Dim rect As New Rectangle With {
-            .Stroke = Brushes.Black,
-            .StrokeThickness = 1,
-            .Width = 0,
-            .Height = 0,
-            .Fill = Brushes.Transparent,
-            .StrokeLineJoin = PenLineJoin.Round,
-            .StrokeStartLineCap = PenLineCap.Round,
-            .StrokeEndLineCap = PenLineCap.Round
-        }
-        Canvas.SetLeft(rect, startPoint.X)
-        Canvas.SetTop(rect, startPoint.Y)
+        Dim shape As Shape
 
+        If mode = CanvasMode.Ellipse Then
+            shape = New Ellipse
+        Else
+            shape = New Rectangle
 
-        Return rect
-    End Function
+            If mode = CanvasMode.RegistrationMark Then
+                RegistrationMarkHelper.SetIsRegistrationMark(shape, True)
+            End If
+        End If
 
-    Private Shared Function CreateEllipse(startPoint As Point) As Ellipse
+        Dim isRegistrationMark As Boolean = mode = CanvasMode.RegistrationMark
 
-        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
+        shape.Stroke = If(isRegistrationMark, Brushes.Magenta, Brushes.Black)
+        shape.StrokeThickness = 1
+        shape.Fill = If(isRegistrationMark, Brushes.Magenta, Brushes.Transparent)
+        shape.Width = 0
+        shape.Height = 0
+        shape.StrokeStartLineCap = PenLineCap.Round
+        shape.StrokeEndLineCap = PenLineCap.Round
+        shape.StrokeLineJoin = PenLineJoin.Round
 
-        Dim ellipse As New Ellipse With {
-            .Stroke = Brushes.Black,
-            .StrokeThickness = 1,
-            .Width = 0,
-            .Height = 0,
-            .Fill = Brushes.Transparent,
-            .StrokeStartLineCap = PenLineCap.Round,
-            .StrokeEndLineCap = PenLineCap.Round
-        }
-        Canvas.SetLeft(ellipse, startPoint.X)
-        Canvas.SetTop(ellipse, startPoint.Y)
+        Canvas.SetLeft(shape, startPoint.X)
+        Canvas.SetTop(shape, startPoint.Y)
 
-
-        Return ellipse
+        Return shape
     End Function
 
 
@@ -242,28 +233,6 @@ Public Class DrawingManager
 
     End Function
 
-    Private Function CreateRegistrationMark(startPoint As Point) As Rectangle
-        If SNAPTOGRID Then startPoint = SnapPoint(startPoint)
-
-        Dim rect As New Rectangle With {
-            .Stroke = Brushes.Magenta,
-            .StrokeThickness = 0.1,
-            .Width = 0,
-            .Height = 0,
-            .Fill = Brushes.Magenta,
-            .StrokeLineJoin = PenLineJoin.Round,
-            .StrokeStartLineCap = PenLineCap.Round,
-            .StrokeEndLineCap = PenLineCap.Round
-        }
-        RegistrationMarkHelper.SetIsRegistrationMark(rect, True)
-
-        Canvas.SetLeft(rect, startPoint.X)
-        Canvas.SetTop(rect, startPoint.Y)
-
-        Return rect
-    End Function
-
-
     Private Sub UpdateLine(line As Line, currentPoint As Point, squareAspect As Boolean)
 
         Dim newPoint As Point = currentPoint
@@ -291,17 +260,13 @@ Public Class DrawingManager
 
         If SNAPTOGRID Then currentPoint = SnapPoint(currentPoint)
 
-        If polyline.Points.Count > 0 Then
-            Dim lastPoint = polyline.Points(polyline.Points.Count - 1)
-            If lastPoint <> currentPoint Then
-                polyline.Points.Add(currentPoint)
-            End If
-        Else
+        Dim lastPoint = polyline.Points(polyline.Points.Count - 1)
+        If lastPoint <> currentPoint Then
             polyline.Points.Add(currentPoint)
         End If
     End Sub
 
-    Private Sub UpdateRectangle(rect As Rectangle, currentPoint As Point, squareAspect As Boolean)
+    Private Sub UpdateRectShape(shape As Shape, currentPoint As Point, squareAspect As Boolean)
 
         Dim sp = _startPos
         Dim cp = currentPoint
@@ -318,15 +283,15 @@ Public Class DrawingManager
 
         If squareAspect Then
             Dim size = Math.Max(w, h)
-            rect.Width = size
-            rect.Height = size
-            Canvas.SetLeft(rect, If(cp.X < sp.X, sp.X - size, sp.X))
-            Canvas.SetTop(rect, If(cp.Y < sp.Y, sp.Y - size, sp.Y))
+            shape.Width = size
+            shape.Height = size
+            Canvas.SetLeft(shape, If(cp.X < sp.X, sp.X - size, sp.X))
+            Canvas.SetTop(shape, If(cp.Y < sp.Y, sp.Y - size, sp.Y))
         Else
-            rect.Width = w
-            rect.Height = h
-            Canvas.SetLeft(rect, x)
-            Canvas.SetTop(rect, y)
+            shape.Width = w
+            shape.Height = h
+            Canvas.SetLeft(shape, x)
+            Canvas.SetTop(shape, y)
         End If
     End Sub
 
@@ -338,42 +303,12 @@ Public Class DrawingManager
         Return New Point(x, y)
     End Function
 
-    Private Sub UpdateEllipse(ellipse As Ellipse, currentPoint As Point, squareAspect As Boolean)
-
-        Dim sp = _startPos
-        Dim cp = currentPoint
-
-        If SNAPTOGRID Then
-            sp = SnapPoint(sp)
-            cp = SnapPoint(cp)
-        End If
-
-        Dim x = Math.Min(cp.X, sp.X)
-        Dim y = Math.Min(cp.Y, sp.Y)
-        Dim w = Math.Abs(cp.X - sp.X)
-        Dim h = Math.Abs(cp.Y - sp.Y)
-
-        If squareAspect Then
-            Dim size = Math.Max(w, h)
-            ellipse.Width = size
-            ellipse.Height = size
-            Canvas.SetLeft(ellipse, If(cp.X < sp.X, sp.X - size, sp.X))
-            Canvas.SetTop(ellipse, If(cp.Y < sp.Y, sp.Y - size, sp.Y))
-
-        Else
-            ellipse.Width = w
-            ellipse.Height = h
-            Canvas.SetLeft(ellipse, x)
-            Canvas.SetTop(ellipse, y)
-        End If
-    End Sub
-
     Private Shared Function FinaliseLine(l As Line) As Line
         Dim negativeDirection As Boolean = l.X2 < l.X1 OrElse (l.X1 = l.X2 AndAlso l.Y2 < l.Y1)
 
         If negativeDirection Then
-            Dim tempX As Double = l.X1 * 1
-            Dim tempY As Double = l.Y1 * 1
+            Dim tempX As Double = l.X1
+            Dim tempY As Double = l.Y1
 
             l.X1 = l.X2
             l.Y1 = l.Y2
@@ -430,33 +365,22 @@ Public Class DrawingManager
 
     Private Shared Function ConvertPolylineToBezierPath(polyline As Polyline, smoothingFactor As Double) As Path
         If polyline.Points.Count < 2 Then
-            ' Generate a single-point path
             Dim singlePoint As Point = polyline.Points(0)
 
-            ' Create a PathFigure with a single point
             Dim spathFigure As New PathFigure With {
                 .StartPoint = singlePoint,
                 .IsClosed = False
             }
 
-            ' Create a PathGeometry and add the PathFigure
-            Dim spathGeometry As New PathGeometry()
-            spathGeometry.Figures.Add(spathFigure)
-
-            ' Create the Path and set its geometry
-            Dim singlePointPath As New Path With {
-                .Stroke = polyline.Stroke,
-                .StrokeThickness = polyline.StrokeThickness,
-                .Data = spathGeometry
-            }
-
-            Return singlePointPath
+            Return CreatePath(spathFigure, polyline.Stroke, polyline.StrokeThickness)
         End If
 
         ' Check if the final segment is nearly at the start point
         Dim startPoint As Point = polyline.Points(0)
         Dim endPoint As Point = polyline.Points(polyline.Points.Count - 1)
-        Dim distance As Double = Math.Sqrt((endPoint.X - startPoint.X) ^ 2 + (endPoint.Y - startPoint.Y) ^ 2)
+        Dim deltaX As Double = endPoint.X - startPoint.X
+        Dim deltaY As Double = endPoint.Y - startPoint.Y
+        Dim distance As Double = Math.Sqrt(deltaX * deltaX + deltaY * deltaY)
 
         ' Close the path if the distance is below a threshold
         Dim closeThreshold As Double = 5.0 ' Adjust this value as needed
@@ -477,25 +401,22 @@ Public Class DrawingManager
 
 
 
-        ' Add the Bézier segments to the PathFigure
         For Each segment In bezierSegments
             pathFigure.Segments.Add(segment)
         Next
 
+        Return CreatePath(pathFigure, polyline.Stroke, 1)
+    End Function
 
-
-        ' Create a PathGeometry and add the PathFigure
+    Private Shared Function CreatePath(figure As PathFigure, stroke As Brush, strokeThickness As Double) As Path
         Dim pathGeometry As New PathGeometry()
-        pathGeometry.Figures.Add(pathFigure)
+        pathGeometry.Figures.Add(figure)
 
-        ' Create the Path and set its geometry
-        Dim path As New Path With {
-            .Stroke = polyline.Stroke,
-            .StrokeThickness = 1,
+        Return New Path With {
+            .Stroke = stroke,
+            .StrokeThickness = strokeThickness,
             .Data = pathGeometry
         }
-
-        Return path
     End Function
 
     Private Shared Function GenerateBezierControlPoints(points As PointCollection, smoothingFactor As Double) As List(Of BezierSegment)

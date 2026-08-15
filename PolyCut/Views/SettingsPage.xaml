@@ -34,7 +34,7 @@
                       Unchecked="AddToStartMenuCheckBox_Unchecked" />
 
             <Separator Margin="0 10" />
-            <Label Content="GCode Generator" FontWeight="SemiBold" />
+            <Label Margin="0 0 0 10" Content="GCode Generator" FontWeight="SemiBold" />
             <ComboBox MinWidth="300" HorizontalAlignment="Left" SelectedIndex="{Binding MainVM.UsingGCodePlot, Mode=TwoWay}">
                 <ComboBoxItem Content="Polycut.Core" />
                 <ComboBoxItem Content="GCodePlot" />
@@ -50,10 +50,10 @@
 
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <local:LabeledNumberBoxControl LabelText="Spacing"
+                    <local:LabeledNumberBoxControl LabelText="Spacing" Margin="10 0 0 0"
                                                    Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                    TextBoxWidth="100" UnitText="mm" />
-                    <Grid>
+                    <Grid Margin="10 0 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -67,7 +67,7 @@
                                                        Text="{Binding MainVM.UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
-                    <Grid>
+                    <Grid Margin="10 0 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -82,7 +82,7 @@
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
 
-                    <local:ColorPickerControl Margin="0 5"
+                    <local:ColorPickerControl Margin="10 5 0 5"
                                               ColorSelected="ColorPickerControl_ColorSelected"
                                               CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                               Foreground="{DynamicResource CardForeground}"
@@ -142,7 +142,7 @@
             </Grid>
 
             <Separator Margin="0 10" />
-            <Label Content="Preview Page Settings" />
+            <Label Content="Preview Page Settings" FontWeight="SemiBold"/>
             <StackPanel Width="390" MaxWidth="390"
                         Margin="10 0 0 0" HorizontalAlignment="Left">
                 <local:ColorPickerControl x:Name="PreviewPage_DrawingBrushColorSelector"

@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.ObjectModel
 Imports System.IO
 Imports System.Reflection
+Imports System.Text
 Imports System.Text.Json
 
 Imports CommunityToolkit.Mvvm.ComponentModel
@@ -11,7 +12,13 @@ Imports SharpVectors.Renderers
 
 Public Class SettingsHandler : Inherits ObservableObject
 
-    Public Shared Property Version As String = "0.9.2"
+    Public Shared Property SemanticVersion As NuGet.Versioning.NuGetVersion = New NuGet.Versioning.NuGetVersion(0, 10, 0)
+
+    Public Shared ReadOnly Property Version As String
+        Get
+            Return ToFriendlyVersion(SemanticVersion)
+        End Get
+    End Property
 
     Public Shared Property DataFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", "PolyCut"))
 
@@ -33,6 +40,15 @@ Public Class SettingsHandler : Inherits ObservableObject
 
     End Function
 
+    Public Shared Function ToFriendlyVersion(semVer As NuGet.Versioning.NuGetVersion) As String
+        Dim sb As New StringBuilder
+        sb.Append(semVer.Major).Append("."c).Append(semVer.Minor).Append("."c).Append(semVer.Patch)
+        If Not String.IsNullOrEmpty(semVer.Release) Then
+            sb.Append(" "c).Append(semVer.ReleaseLabels(0))
+            If semVer.ReleaseLabels.Count > 1 Then sb.Append(" "c).Append(semVer.ReleaseLabels(1))
+        End If
+        Return sb.ToString()
+    End Function
 
     Private Shared Async Sub GenerateEV()
 

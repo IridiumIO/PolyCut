@@ -25,6 +25,9 @@ Partial Public Class Application
                                services.AddSingleton(Of ITaskBarService, TaskBarService)()
                                ' Service containing navigation, same as INavigationWindow... but without window
 
+                               'Update service
+                               services.AddSingleton(Of UpdateService)()
+
                                services.AddSingleton(Of INavigationService, NavigationService)()
                                services.AddSingleton(Of SnackbarService)()
                                services.AddSingleton(Of IContentDialogService, ContentDialogService)()
@@ -67,6 +70,10 @@ Partial Public Class Application
 
     Private Shadows Async Sub OnStartup(sender As Object, e As StartupEventArgs)
         Await _host.StartAsync()
+
+        Dim updateTask = GetService(Of UpdateService)().CheckForUpdate(True)
+        Await Task.WhenAll(updateTask)
+
     End Sub
 
     Private Shadows Async Sub OnExit(sender As Object, e As ExitEventArgs)

@@ -110,6 +110,7 @@ Public Enum FillType
     DiamondCrossHatch
     Spiral
     Radial
+    Contour
 End Enum
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject

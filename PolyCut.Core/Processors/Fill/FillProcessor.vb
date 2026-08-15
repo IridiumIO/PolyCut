@@ -89,6 +89,8 @@ Public Class FillProcessor : Implements IProcessor
                 result.AddRange(SpiralFillGenerator.Generate(outline, spacingScaled, angle, cfg))
             Case FillType.Radial
                 result.AddRange(RadialFillGenerator.Generate(outline, spacingScaled, angle))
+            Case FillType.Contour
+                result.AddRange(ContourFillGenerator.Generate(outline, spacingScaled))
 
             Case FillType.CrossHatch
                 result.AddRange(HatchFillGenerator.GenerateHatch(outline, spacingScaled, angle))

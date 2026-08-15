@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Clipper2" Version="2.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="IridiumIO.MVVM.VBSourceGenerators" Version="0.6.2" />
     <PackageReference Include="Svg" Version="3.4.6" />

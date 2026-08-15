@@ -15,6 +15,11 @@
               ItemTemplate="{DynamicResource FontTemplate}"
               ScrollViewer.VerticalScrollBarVisibility="Visible"
               SelectedItem="{Binding SelectedFont, ElementName=FPCRoot, Mode=TwoWay}">
+        <ComboBox.ItemsPanel>
+            <ItemsPanelTemplate>
+                <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+            </ItemsPanelTemplate>
+        </ComboBox.ItemsPanel>
         <ComboBox.Resources>
 
             <Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="{x:Type ComboBox}">

@@ -52,7 +52,13 @@ Public Class GeometryHitTestHelper
                     textBox.FontSize,
                     Brushes.Black,
                     1.0)
-                geometry = formattedText.BuildGeometry(New Point(0, 0))
+
+                Dim contentOrigin As Point = New Point(3, 1)
+                Dim firstCharRect = textBox.GetRectFromCharacterIndex(0, False)
+                If Not firstCharRect.IsEmpty AndAlso Not Double.IsNaN(firstCharRect.X) AndAlso Not Double.IsNaN(firstCharRect.Y) Then
+                    contentOrigin = New Point(firstCharRect.X, firstCharRect.Y)
+                End If
+                geometry = formattedText.BuildGeometry(contentOrigin)
             End If
         End If
 
@@ -87,11 +93,7 @@ Public Class GeometryHitTestHelper
         Dim left = Canvas.GetLeft(wrapper)
         Dim top = Canvas.GetTop(wrapper)
         If Not Double.IsNaN(left) AndAlso Not Double.IsNaN(top) Then
-            If TypeOf element Is TextBox Then
-                transformGroup.Children.Add(New TranslateTransform(left + 3, top + 1))
-            Else
-                transformGroup.Children.Add(New TranslateTransform(left, top))
-            End If
+            transformGroup.Children.Add(New TranslateTransform(left, top))
         End If
 
         Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)

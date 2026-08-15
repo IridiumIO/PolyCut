@@ -123,6 +123,10 @@ Namespace Services.UndoRedo
                     End If
                 Next
 
+                If projectData.Configuration IsNot Nothing Then
+                    mainVM.Configuration = Text.Json.JsonSerializer.Deserialize(Of PolyCut.Core.ProcessorConfiguration)(projectData.Configuration)
+                End If
+
                 Application.Current.Dispatcher.BeginInvoke(New Action(Sub()
                                                                           ProjectApplyHelper.ApplyWrapperStateForPaste(projectData, built)
                                                                           PolyCanvas.ClearSelection()
@@ -148,11 +152,13 @@ Namespace Services.UndoRedo
     Public Class ProjectSnapshot
         Public Property DrawableSnapshots As List(Of (Id As Guid, Data As DrawableData))
         Public Property GroupSnapshots As List(Of GroupData)
+        Public Property ConfigurationSnapshot As Core.ProcessorConfiguration
 
         Public Shared Function Capture(manager As IDrawableManager) As ProjectSnapshot
             Dim snapshot As New ProjectSnapshot With {
                 .DrawableSnapshots = New List(Of (Guid, DrawableData)),
-                .GroupSnapshots = New List(Of GroupData)
+                .GroupSnapshots = New List(Of GroupData),
+                .ConfigurationSnapshot = Nothing
             }
 
             ' Capture all current drawables
@@ -165,11 +171,19 @@ Namespace Services.UndoRedo
 
                 snapshot.DrawableSnapshots.Add((id, Nothing))
             Next
+            snapshot.ConfigurationSnapshot = TryCast(manager, MainViewModel)?.Configuration
 
             Return snapshot
         End Function
 
         Public Sub Restore(manager As IDrawableManager, projectService As ProjectSerializationService)
+
+            If ConfigurationSnapshot IsNot Nothing Then
+                Dim mainVM = TryCast(manager, MainViewModel)
+                If mainVM IsNot Nothing Then
+                    mainVM.Configuration = ConfigurationSnapshot
+                End If
+            End If
 
             For Each snap In DrawableSnapshots
                 If snap.Data IsNot Nothing Then

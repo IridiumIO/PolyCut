@@ -817,7 +817,7 @@ Partial Public Class MainViewModel
         If String.IsNullOrEmpty(CurrentProjectPath) Then
             SaveProjectAs()
         Else
-            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups) Then
+            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
                 _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error", "Failed to save project", 3)
@@ -834,7 +834,7 @@ Partial Public Class MainViewModel
 
         If saveDialog.ShowDialog() = True Then
             CurrentProjectPath = saveDialog.FileName
-            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups) Then
+            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
                 _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error", "Failed to save project", 3)

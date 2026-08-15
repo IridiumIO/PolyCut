@@ -14,9 +14,9 @@ Public Class ProjectSerializationService
     ' SAVE / LOAD ProjectData
     ' --------------------
 
-    Public Function SaveProject(filePath As String, drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of IDrawable)) As Boolean
+    Public Function SaveProject(filePath As String, drawables As IEnumerable(Of IDrawable), groups As IEnumerable(Of IDrawable), config As Core.ProcessorConfiguration) As Boolean
         Try
-            Dim projectData = CreateProjectData(drawables, groups)
+            Dim projectData = CreateProjectData(drawables, groups, config)
             Dim json = JsonSerializer.Serialize(projectData, _jsonOptions)
             Using stream As New FileStream(filePath, FileMode.Create)
                 Using gzip As New IO.Compression.GZipStream(stream, IO.Compression.CompressionMode.Compress)
@@ -198,7 +198,8 @@ Public Class ProjectSerializationService
     End Function
 
     Public Function CreateProjectData(drawables As IEnumerable(Of IDrawable),
-                                  groups As IEnumerable(Of IDrawable)) As ProjectData
+                                  groups As IEnumerable(Of IDrawable),
+                                  config As Core.ProcessorConfiguration) As ProjectData
 
         Dim allGroups As HashSet(Of IDrawable) = Nothing
         Dim allLeaves As HashSet(Of IDrawable) = Nothing
@@ -209,12 +210,13 @@ Public Class ProjectSerializationService
         Dim groupList = If(allGroups, New HashSet(Of IDrawable)()).ToList()
         Dim leafList = If(allLeaves, New HashSet(Of IDrawable)()).ToList()
 
-        Return CreateProjectDataFromSets(groupList, leafList)
+        Return CreateProjectDataFromSets(groupList, leafList, config)
     End Function
 
 
-    Private Shared Function CreateProjectDataFromSets(groupList As List(Of IDrawable),
-                                                  leafList As List(Of IDrawable)) As ProjectData
+    Private Function CreateProjectDataFromSets(groupList As List(Of IDrawable),
+                                                  leafList As List(Of IDrawable),
+                                                  Optional config As Core.ProcessorConfiguration = Nothing) As ProjectData
 
         Dim projectData As New ProjectData()
 
@@ -292,6 +294,13 @@ Public Class ProjectSerializationService
 
             projectData.Drawables.Add(dd)
         Next
+
+        ' --- Config ---
+        If config IsNot Nothing Then
+            Dim jsonConfig = JsonSerializer.Serialize(config, _jsonOptions)
+            projectData.Configuration = jsonConfig
+        End If
+
 
         Return projectData
     End Function

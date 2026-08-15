@@ -127,7 +127,7 @@ Public Class DrawingManager
     Private Shared Function CreateLine(startPoint As Point) As Line
         Dim line As New Line With {
             .Stroke = Brushes.Black,
-            .StrokeThickness = 1,
+            .StrokeThickness = 0.5,
             .X1 = startPoint.X,
             .Y1 = startPoint.Y,
             .X2 = startPoint.X,
@@ -152,7 +152,7 @@ Public Class DrawingManager
 
         Dim polyline As New Polyline With {
             .Stroke = Brushes.Black,
-            .StrokeThickness = 1,
+            .StrokeThickness = 0.5,
             .StrokeStartLineCap = PenLineCap.Round,
             .StrokeEndLineCap = PenLineCap.Round,
             .StrokeDashCap = PenLineCap.Round,
@@ -181,7 +181,7 @@ Public Class DrawingManager
         Dim isRegistrationMark As Boolean = mode = CanvasMode.RegistrationMark
 
         shape.Stroke = If(isRegistrationMark, Brushes.Magenta, Brushes.Black)
-        shape.StrokeThickness = 1
+        shape.StrokeThickness = 0.5
         shape.Fill = If(isRegistrationMark, Brushes.Magenta, Brushes.Transparent)
         shape.Width = 0
         shape.Height = 0
@@ -298,8 +298,11 @@ Public Class DrawingManager
 
 
     Private Shared Function FinalisePolyline(polyline As Polyline) As Path
-        Dim simplifiedPoints As PointCollection = RamerDouglasPeucker(polyline.Points, epsilon:=1.0)
-        polyline.Points = simplifiedPoints
+
+        Dim isCtrlPressed As Boolean = Keyboard.IsKeyDown(Key.LeftCtrl) OrElse Keyboard.IsKeyDown(Key.RightCtrl)
+
+        polyline.Points = RamerDouglasPeucker(polyline.Points, epsilon:=1.0)
+
 
 
         Dim minX As Double = polyline.Points.Min(Function(p) p.X)
@@ -312,7 +315,7 @@ Public Class DrawingManager
             polyline.Points(i) = New Point(point.X - offsetX, point.Y - offsetY)
         Next
 
-        Dim path As Path = ConvertPolylineToBezierPath(polyline, smoothingFactor:=0.1)
+        Dim path As Path = ConvertPolylineToBezierPath(polyline, smoothingFactor:=If(isCtrlPressed, 0, 0.1))
         If path Is Nothing Then Return Nothing
 
         Dim bounds As Rect = path.Data.Bounds
@@ -368,7 +371,7 @@ Public Class DrawingManager
             pathFigure.Segments.Add(segment)
         Next
 
-        Return CreatePath(pathFigure, polyline.Stroke, 1)
+        Return CreatePath(pathFigure, polyline.Stroke, 0.5)
     End Function
 
     Private Shared Function CreatePath(figure As PathFigure, stroke As Brush, strokeThickness As Double) As Path

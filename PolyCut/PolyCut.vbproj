@@ -66,6 +66,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="NuGet.Versioning" Version="7.9.0" />
     <PackageReference Include="SharpVectors.Wpf" Version="1.8.5" />
     <PackageReference Include="spicermicer.ZoomBorder" Version="1.0.0" />
     <PackageReference Include="Svg" Version="3.4.6" />

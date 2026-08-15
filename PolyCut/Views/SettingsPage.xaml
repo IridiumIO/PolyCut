@@ -34,24 +34,15 @@
                       Unchecked="AddToStartMenuCheckBox_Unchecked" />
 
             <Separator Margin="0 10" />
-            <Label Content="GCode Generator" />
+            <Label Content="GCode Generator" FontWeight="SemiBold" />
             <ComboBox MinWidth="300" HorizontalAlignment="Left" SelectedIndex="{Binding MainVM.UsingGCodePlot, Mode=TwoWay}">
                 <ComboBoxItem Content="Polycut.Core" />
                 <ComboBoxItem Content="GCodePlot" />
             </ComboBox>
-            <Separator Margin="0 10" />
-            <!--<Label Content="Canvas Color" />
-            <ComboBox
-                MinWidth="300"
-                HorizontalAlignment="Left"
-                SelectedIndex="1"
-                Text="{Binding MainVM.CanvasThemeColor, Mode=OneWayToSource}">
-                <ComboBoxItem Content="Light" />
-                <ComboBoxItem Content="Dark" />
-            </ComboBox>
 
-            <Separator Margin="0,10" />-->
-            <Label Content="Grid Settings" />
+
+            <Separator Margin="0 10" />
+            <Label Content="Grid Settings" FontWeight="SemiBold" />
             <Grid HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" MinWidth="400" MaxWidth="600" />
@@ -96,19 +87,31 @@
                                               CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                               Foreground="{DynamicResource CardForeground}"
                                               LabelText="Gridline Colour" />
-
+                    <Separator Margin="0 10" />
+                    <Label Margin="0 0 0 10" Content="Canvas Color" FontWeight="SemiBold" />
+                    <ComboBox x:Name="CanvasColourSelection"
+                              MinWidth="300"
+                              HorizontalAlignment="Left"
+                              SelectionChanged="ComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Light" />
+                        <ComboBoxItem Content="Dark" />
+                        <ComboBoxItem Content="Translucent" />
+                    </ComboBox>
 
                 </StackPanel>
 
 
                 <Viewbox Grid.Column="1"
-                         MinWidth="100" MaxWidth="300" MaxHeight="300"
-                         Margin="20 0 0 0" HorizontalAlignment="Left"
+                         MinWidth="100" MaxWidth="600" MaxHeight="280"
+                         Margin="20 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Top"
                          SnapsToDevicePixels="True" Stretch="Uniform" StretchDirection="Both" UseLayoutRounding="True">
-                    <Grid Background="#424242">
+                    <Grid>
                         <Border Margin="-1" Panel.ZIndex="1"
-                                BorderBrush="White" BorderThickness="1" />
-                        <Border Width="{Binding MainVM.Printer.BedWidth}" Height="{Binding MainVM.Printer.BedHeight}" Margin="-1">
+                                Background="{Binding MainVM.UIConfiguration.CanvasThemeColour}"
+                                BorderBrush="DimGray" BorderThickness="1" CornerRadius="5" />
+                        <Border Width="{Binding MainVM.Printer.BedWidth}"
+                                Height="{Binding MainVM.Printer.BedHeight}"
+                                Margin="-1" Panel.ZIndex="1">
                             <Border.Clip>
                                 <RectangleGeometry Rect="{Binding GridClipRect}" />
                             </Border.Clip>

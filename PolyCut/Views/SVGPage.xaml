@@ -84,8 +84,8 @@
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="20"
                  beh:BackdropSampler.Corner="Left"
                  beh:BackdropSampler.IsEnabled="{Binding MainVM.IsWindows}"
-                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" Background="#323232" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
-                 polycutShared:TextEditHelper.IsTextStyleHost="True"
+                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" polycutShared:TextEditHelper.IsTextStyleHost="True" Background="#323232" BorderThickness="0"
+                 IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
                  Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
@@ -94,10 +94,14 @@
 
                 <StackPanel Orientation="Horizontal">
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Font" />
-                    <local:FontPickerComboBox x:Name="OverlayFontPicker" Width="200" DropDownClosed="TextStyleControl_DropDownClosed" SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
+                    <local:FontPickerComboBox x:Name="OverlayFontPicker"
+                                              Width="200"
+                                              DropDownClosed="TextStyleControl_DropDownClosed"
+                                              SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
                     <Separator Margin="5 0" />
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Size (pt)" />
-                    <ComboBox x:Name="OverlayFontSizeComboBox" Width="80"
+                    <ComboBox x:Name="OverlayFontSizeComboBox"
+                              Width="80"
                               Padding="7"
                               Background="Transparent" DropDownClosed="TextStyleControl_DropDownClosed" IsEditable="True" SelectedIndex="6"
                               Text="{Binding CanvasFontSize, Mode=TwoWay}">
@@ -130,8 +134,8 @@
                        CanvasTextBox="{Binding CanvasTextBox}"
                        ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
-                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002"
-                       ScaleMax="150" ScaleMin="0.01">
+                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002" ScaleMax="150"
+                       ScaleMin="0.01">
 
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -154,8 +158,8 @@
                             Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="-3"
-                            Background="{Binding CanvasThemeColor}"
-                            BorderBrush="White" BorderThickness="0.4" CornerRadius="0">
+                            Background="{Binding MainVM.UIConfiguration.CanvasThemeColour}"
+                            BorderBrush="White" BorderThickness="0.4" CornerRadius="5">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.78" ShadowDepth="0"
                                               Color="Black" />

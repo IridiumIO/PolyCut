@@ -30,6 +30,8 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
 
     <ObservableProperty> Private _AddToStartMenu As Boolean = False
 
+    <ObservableProperty> Private _CanvasThemeColour As String = "#16181D"
+
 End Class
 
 Partial Public Class GridConfiguration : Inherits ObservableObject

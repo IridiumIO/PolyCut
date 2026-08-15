@@ -11,16 +11,6 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     <ObservableProperty> Private _MainVM As MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
-    Private Property CanvasColor As SolidColorBrush = New SolidColorBrush(Color.FromArgb(64, 100, 100, 100))
-    Public Property CanvasThemeColor As String
-        Get
-            Return CanvasColor.ToString
-        End Get
-        Set(value As String)
-            CanvasColor = If(value = "Light", Brushes.White, New SolidColorBrush(Color.FromArgb(64, 100, 100, 100)))
-            OnPropertyChanged(NameOf(CanvasThemeColor))
-        End Set
-    End Property
 
 
     Private _CanvasToolMode As CanvasMode

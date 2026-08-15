@@ -14,14 +14,21 @@ Class SettingsPage
 
         DataContext = viewmodel
         _viewModel = viewmodel
-        ' This call is required by the designer.
         InitializeComponent()
 
-        ' Add any initialization after the InitializeComponent() call.
 
         If WineDetection.IsRunningUnderWine Then
             AddToStartMenuCheckBox.Visibility = Visibility.Collapsed
         End If
+
+        Select Case _viewModel.MainVM.UIConfiguration.CanvasThemeColour
+            Case "#FFFFFFFF"
+                CanvasColourSelection.SelectedIndex = 0
+            Case "#FF16181D"
+                CanvasColourSelection.SelectedIndex = 1
+            Case Else
+                CanvasColourSelection.SelectedIndex = 2
+        End Select
 
     End Sub
 
@@ -53,5 +60,19 @@ Class SettingsPage
     Private Sub AddToStartMenuCheckBox_Unchecked(sender As Object, e As RoutedEventArgs)
         _viewModel.RemoveFromStartMenu()
         _viewModel.MainVM.UIConfiguration.AddToStartMenu = False
+    End Sub
+
+    Private Sub ComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+        Dim selection As ComboBoxItem = TryCast(sender.SelectedItem, ComboBoxItem)
+
+        If selection.Content.ToString() = "Light" Then
+            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#FFFFFFFF"
+        ElseIf selection.Content.ToString() = "Dark" Then
+            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#FF16181D"
+        Else
+            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#40646464"
+
+        End If
+
     End Sub
 End Class

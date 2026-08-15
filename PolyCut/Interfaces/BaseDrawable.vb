@@ -89,12 +89,44 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
     Public Event SelectionChanged(sender As Object, e As EventArgs) Implements IDrawable.SelectionChanged
 
+    ' Whether the leaf SVG geometry should be un-stretched to the wrapper size before baking.
+    ' True for shapes that fill their wrapper (Rectangle/Ellipse/Path), False for Line/TextBox
+    Protected Overridable ReadOnly Property BakeStretchAsWrapper As Boolean
+        Get
+            Return TypeOf DrawableElement Is System.Windows.Shapes.Shape AndAlso Not TypeOf DrawableElement Is Line
+        End Get
+    End Property
+
     Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
-        Throw New NotImplementedException()
+        Dim component = DrawingToSVG()
+        If component Is Nothing Then Return Nothing
+        Dim copy = component.DeepCopy()
+        If copy Is Nothing Then Return Nothing
+        Return SvgExportHelper.BakeToRoot(copy, DrawableElement, stretchAsWrapper:=BakeStretchAsWrapper)
     End Function
 
     Public Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Throw New NotImplementedException()
+    End Function
+
+    'SVG paint-server helpers
+
+    Protected Function CreateSvgFillServer() As SvgColourServer
+        If Me.Fill Is Nothing Then Return Nothing
+        Try
+            Return ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
+        Catch
+            Return Nothing
+        End Try
+    End Function
+
+    Protected Function CreateSvgStrokeServer() As SvgColourServer
+        If Me.StrokeThickness <= 0.001 OrElse Me.Stroke Is Nothing Then Return Nothing
+        Try
+            Return ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
+        Catch
+            Return Nothing
+        End Try
     End Function
 
     Private _stroke As System.Windows.Media.Brush = Brushes.Transparent

@@ -152,28 +152,7 @@ Public Class GeometryExtractor
         End If
 
         Dim textToDraw As String = If(String.IsNullOrEmpty(tb.Text), " ", tb.Text)
-
-        Dim r As Rect = tb.GetRectFromCharacterIndex(0, False)
-        If r.IsEmpty OrElse Double.IsNaN(r.X) OrElse Double.IsNaN(r.Y) Then
-            r = New Rect(0, 0, 0, 0)
-        End If
-
-        Dim dpi = VisualTreeHelper.GetDpi(tb)
-        Dim ft As New FormattedText(
-            textToDraw,
-            Globalization.CultureInfo.CurrentCulture,
-            tb.FlowDirection,
-            New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-            tb.FontSize,
-            Brushes.Black,
-            dpi.PixelsPerDip
-        ) With {
-            .Trimming = TextTrimming.None,
-            .TextAlignment = tb.TextAlignment
-        }
-
-        Dim origin As New Point(r.X, r.Y)
-        Return ft.BuildGeometry(origin)
+        Return TextGeometryHelper.BuildTextGeometry(tb, textToDraw, TextGeometryHelper.GetContentOrigin(tb, New Point(0, 0)), , TextTrimming.None, tb.TextAlignment)
     End Function
 
 

@@ -136,25 +136,11 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
         Dim textToDraw As String = If(String.IsNullOrEmpty(tb.Text), " ", tb.Text)
 
-        Dim r As Rect = tb.GetRectFromCharacterIndex(0, False)
-        If r.IsEmpty OrElse Double.IsNaN(r.X) OrElse Double.IsNaN(r.Y) Then Return
+        Dim origin As Point
+        If Not TextGeometryHelper.TryGetContentOrigin(tb, origin) Then Return
 
-        Dim ft As New FormattedText(
-        textToDraw,
-        Globalization.CultureInfo.CurrentCulture,
-        tb.FlowDirection,
-        New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-        tb.FontSize,
-        Brushes.Black,
-        VisualTreeHelper.GetDpi(tb).PixelsPerDip
-        ) With {
-                .Trimming = TextTrimming.None,
-                .TextAlignment = tb.TextAlignment
-        }
-
-
-        Dim origin As New Point(r.X, r.Y)
-        Dim geom As Geometry = ft.BuildGeometry(origin)
+        Dim geom As Geometry = TextGeometryHelper.BuildTextGeometry(tb, textToDraw, origin, , TextTrimming.None, tb.TextAlignment)
+        If geom Is Nothing Then Return
 
         _strokeGeometryDrawing.Geometry = geom
 
@@ -192,36 +178,24 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         ' Ensure layout is ready; otherwise rects are often empty/invalid
         If tb.ActualWidth <= 0 OrElse tb.ActualHeight <= 0 Then Return Nothing
 
-        Dim dpi = VisualTreeHelper.GetDpi(tb)
-        Dim ppd = dpi.PixelsPerDip
+        Dim ppd As Double = TextGeometryHelper.GetPixelsPerDip(tb)
 
         Dim textValue As String = If(tb.Text, "")
-        Dim formattedText As New FormattedText(
-        If(textValue.Length = 0, " ", textValue),
-        Globalization.CultureInfo.CurrentCulture,
-        tb.FlowDirection,
-        New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-        tb.FontSize,
-        Brushes.Black,
-        ppd
-    )
+        Dim formattedText = TextGeometryHelper.CreateFormattedText(tb, If(textValue.Length = 0, " ", textValue), ppd)
+        If formattedText Is Nothing Then Return Nothing
 
         ' Anchor to the real rendered origin (includes padding/border/scroll)
-        Dim r As Rect = tb.GetRectFromCharacterIndex(0, False)
-        If r.IsEmpty OrElse Double.IsNaN(r.X) OrElse Double.IsNaN(r.Y) Then Return Nothing
+        Dim origin As Point
+        If Not TextGeometryHelper.TryGetContentOrigin(tb, origin) Then Return Nothing
 
         Dim baselineOffset As Double = formattedText.Baseline
 
         ' SVG text position should be at baseline
-        Dim svgStartX As Double = r.X
-        Dim svgBaselineY As Double = r.Y + baselineOffset
+        Dim svgStartX As Double = origin.X
+        Dim svgBaselineY As Double = origin.Y + baselineOffset
 
         ' Convert fill (foreground) color
-        Dim fillServer As SvgColourServer = Nothing
-        Try
-            fillServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
-        Catch
-        End Try
+        Dim fillServer As SvgColourServer = CreateSvgFillServer()
 
         Dim svgText As New Svg.SvgText With {
         .X = New SvgUnitCollection From {CSng(svgStartX)},
@@ -238,27 +212,14 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     }
 
         ' Only set stroke if thickness > 0 and stroke is not Nothing
-        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
-            Try
-                Dim strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
-                If strokeServer IsNot Nothing Then
-                    svgText.Stroke = strokeServer
-                    svgText.StrokeWidth = CSng(Me.StrokeThickness)
-                End If
-            Catch
-            End Try
+        Dim strokeServer = CreateSvgStrokeServer()
+        If strokeServer IsNot Nothing Then
+            svgText.Stroke = strokeServer
+            svgText.StrokeWidth = CSng(Me.StrokeThickness)
         End If
 
 
-        Dim tabWidth As Double = New FormattedText(
-            vbTab,
-            Globalization.CultureInfo.CurrentCulture,
-            tb.FlowDirection,
-            New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-            tb.FontSize,
-            Brushes.Black,
-            ppd
-        ).Width
+        Dim tabWidth As Double = TextGeometryHelper.MeasureTextWidth(tb, vbTab, ppd)
 
         svgText.Text = Nothing
 
@@ -270,15 +231,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
             Dim substringWidth As Double = tabWidth
             If substring.Length > 0 Then
-                substringWidth = New FormattedText(
-                substring,
-                Globalization.CultureInfo.CurrentCulture,
-                tb.FlowDirection,
-                New Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-                tb.FontSize,
-                Brushes.Black,
-                ppd
-            ).Width
+                substringWidth = TextGeometryHelper.MeasureTextWidth(tb, substring, ppd)
             End If
 
             Dim tspan As New Svg.SvgTextSpan With {
@@ -301,16 +254,6 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         Return svgText
     End Function
 
-
-
-    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
-
-        Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
-
-        ' Text is not stretched to the wrapper!!
-        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=False)
-
-    End Function
 
 
 End Class

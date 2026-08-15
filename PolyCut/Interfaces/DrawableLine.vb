@@ -16,21 +16,12 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
 
         Dim ln = CType(DrawableElement, Line)
 
-        Dim strokeServer As SvgColourServer = Nothing
-        Dim strokeW As Single = 0.001F
-
-        ' Lines must have a stroke to be visible
-        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
-            Try
-                strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
-                strokeW = CSng(Me.StrokeThickness)
-            Catch
-                strokeServer = New SvgColourServer(System.Drawing.Color.Black)
-            End Try
-        Else
-            ' Default stroke for lines (they need one to be visible)
+        ' Lines must have a stroke to be visible - fall back to black when the drawable
+        ' stroke can't be converted (transparent/none/thickness 0).
+        Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
+        Dim strokeW As Single = CSng(If(Me.StrokeThickness > 0, Me.StrokeThickness, 0.001))
+        If strokeServer Is Nothing Then
             strokeServer = New SvgColourServer(System.Drawing.Color.Black)
-            strokeW = CSng(If(Me.StrokeThickness > 0, Me.StrokeThickness, 0.001))
         End If
 
         Dim svgLine As New SvgLine With {
@@ -49,11 +40,4 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
 
 
 
-    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
-
-        Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
-
-        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=False)
-
-    End Function
 End Class

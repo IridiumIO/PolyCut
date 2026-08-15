@@ -17,23 +17,9 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
 
         Dim rt = CType(DrawableElement, Rectangle)
 
-        Dim fillServer As SvgColourServer = Nothing
-        Dim strokeServer As SvgColourServer = Nothing
+        Dim fillServer As SvgColourServer = CreateSvgFillServer()
+        Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
         Dim strokeW As Single = 0.001F
-
-        Try
-            fillServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
-        Catch
-        End Try
-
-        ' Only set stroke if thickness > 0 and stroke is not Nothing
-        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
-            Try
-                strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
-                'strokeW = CSng(Me.StrokeThickness)
-            Catch
-            End Try
-        End If
 
         Dim rect As New SvgRectangle With {
             .X = 0,
@@ -57,12 +43,5 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
     End Function
 
 
-    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
-
-        Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
-
-        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=True)
-
-    End Function
 End Class
 

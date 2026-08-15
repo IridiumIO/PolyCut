@@ -44,21 +44,8 @@ Public Class GeometryHitTestHelper
         ElseIf TypeOf element Is TextBox Then
             Dim textBox = CType(element, TextBox)
             If Not String.IsNullOrEmpty(textBox.Text) Then
-                Dim formattedText As New FormattedText(
-                    textBox.Text,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    New Typeface(textBox.FontFamily, textBox.FontStyle, textBox.FontWeight, textBox.FontStretch),
-                    textBox.FontSize,
-                    Brushes.Black,
-                    1.0)
 
-                Dim contentOrigin As Point = New Point(3, 1)
-                Dim firstCharRect = textBox.GetRectFromCharacterIndex(0, False)
-                If Not firstCharRect.IsEmpty AndAlso Not Double.IsNaN(firstCharRect.X) AndAlso Not Double.IsNaN(firstCharRect.Y) Then
-                    contentOrigin = New Point(firstCharRect.X, firstCharRect.Y)
-                End If
-                geometry = formattedText.BuildGeometry(contentOrigin)
+                geometry = TextGeometryHelper.BuildTextGeometry(textBox, , TextGeometryHelper.GetContentOrigin(textBox, New Point(3, 1)))
             End If
         End If
 

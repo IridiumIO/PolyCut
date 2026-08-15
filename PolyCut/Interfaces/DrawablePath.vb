@@ -17,23 +17,9 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
 
         Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(ln.Data.ToString())
 
-        Dim fillServer As SvgColourServer = Nothing
-        Dim strokeServer As SvgColourServer = Nothing
-        Dim strokeW As Single = 0.001F
-
-        Try
-            fillServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Fill)
-        Catch
-        End Try
-
-        ' Only set stroke if thickness > 0 and stroke is not Nothing
-        If Me.StrokeThickness > 0.001 AndAlso Me.Stroke IsNot Nothing Then
-            Try
-                strokeServer = ColorAndBrushHelpers.BrushToSvgColourServer(Me.Stroke)
-                strokeW = CSng(Me.StrokeThickness)
-            Catch
-            End Try
-        End If
+        Dim fillServer As SvgColourServer = CreateSvgFillServer()
+        Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
+        Dim strokeW As Single = If(strokeServer IsNot Nothing, CSng(Me.StrokeThickness), 0.001F)
 
         Dim svgPath As New SvgPath With {
             .PathData = paths,
@@ -86,14 +72,5 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
         Return sb.ToString()
     End Function
 
-
-    Public Overloads Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
-
-        Dim component As SvgVisualElement = DrawingToSVG().DeepCopy
-
-        ' Paths fill their wrapper (Stretch=Fill): un-stretch geometry bounds tothe wrapper size first then walk up transforms to doc
-        Return SvgExportHelper.BakeToRoot(component, DrawableElement, stretchAsWrapper:=True)
-
-    End Function
 
 End Class

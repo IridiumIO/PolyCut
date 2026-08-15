@@ -108,6 +108,7 @@ Public Class TextEditingController
         _sessionStartText = textBox.Text
         TextEditHelper.SetIsEditing(textBox, True)
         textBox.Background = Brushes.Transparent
+        textBox.Cursor = Cursors.IBeam
         AddHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
         AddHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
     End Sub
@@ -115,6 +116,7 @@ Public Class TextEditingController
     Private Sub EndSession(pcanvas As PolyCanvas, raiseSessionFinished As Boolean)
         If _activeTextBox Is Nothing Then Return
         Dim textBox = _activeTextBox
+        textBox.Cursor = Cursors.Arrow
         Dim wasEditingExisting = TypeOf textBox.Parent Is ContentControl
         _activeTextBox = Nothing
         RemoveHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus

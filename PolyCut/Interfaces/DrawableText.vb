@@ -13,6 +13,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
     Public Sub New(element As TextBox)
         DrawableElement = element
+        element.Cursor = Cursors.Arrow
         VisualName = "Text"
         Name = VisualName
         InitializeStrokeRendering()

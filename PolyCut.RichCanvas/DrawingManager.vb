@@ -58,7 +58,7 @@ Public Class DrawingManager
     Public Sub FinishDrawing(mode As CanvasMode, pCanvas As PolyCanvas, ctextbox As TextBox)
 
         If mode = CanvasMode.Text Then
-            TextEditor.StartNewText(_startPos, ctextbox.FontSize, ctextbox.FontFamily, pCanvas)
+            TextEditor.StartNewText(_startPos, TextCharacteristics.FromTextBox(ctextbox), pCanvas)
             Return
         End If
 

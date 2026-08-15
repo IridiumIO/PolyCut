@@ -122,6 +122,21 @@
                         <ComboBoxItem Content="48" />
                         <ComboBoxItem Content="72" />
                     </ComboBox>
+                    <Separator Margin="5 0"/>
+                    <ToggleButton x:Name="OverlayBoldToggleButton"
+                                  Width="30" Height="30"
+                                  Margin="0 0 5 0" Padding="2" 
+                                  BorderBrush="Transparent"
+                                  IsChecked="{Binding CanvasFontWeightIsBold, Mode=TwoWay}">
+                        <ui:SymbolIcon Symbol="TextBold16" />
+                    </ToggleButton>
+                    <ToggleButton x:Name="OverlayItalicToggleButton"
+                                  Width="30" Height="30"
+                                  Margin="0 0 5 0" Padding="2" 
+                                  BorderBrush="Transparent"
+                                  IsChecked="{Binding CanvasFontStyleIsItalic, Mode=TwoWay}">
+                        <ui:SymbolIcon Symbol="TextItalic16" />
+                    </ToggleButton>
                 </StackPanel>
             </Grid>
 

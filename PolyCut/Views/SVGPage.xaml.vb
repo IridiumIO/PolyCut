@@ -178,6 +178,8 @@ Class SVGPage
         Try
             SVGPageViewModel.CanvasTextBox.FontFamily = textBox.FontFamily
             SVGPageViewModel.CanvasTextBox.FontSize = textBox.FontSize
+            SVGPageViewModel.CanvasTextBox.FontStyle = textBox.FontStyle
+            SVGPageViewModel.CanvasTextBox.FontWeight = textBox.FontWeight
         Finally
             If editor IsNot Nothing Then editor.SuppressStyleSourceApply = False
         End Try
@@ -185,9 +187,9 @@ Class SVGPage
         SelectTextDrawable(textBox)
     End Sub
 
-    Private Sub OnTextEdited(sender As Object, textBox As System.Windows.Controls.TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
+    Private Sub OnTextEdited(sender As Object, textBox As System.Windows.Controls.TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
         If textBox Is Nothing Then Return
-        SVGPageViewModel.RecordTextEdit(textBox, oldText, oldFontFamily, oldFontSize, newText, newFontFamily, newFontSize)
+        SVGPageViewModel.RecordTextEdit(textBox, oldText, oldChars, newText, newChars)
     End Sub
 
     Private Sub SelectTextDrawable(textBox As System.Windows.Controls.TextBox)
@@ -212,8 +214,12 @@ Class SVGPage
         Try
             SVGPageViewModel.CanvasFontFamily = textBox.FontFamily
             SVGPageViewModel.CanvasFontSize = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            SVGPageViewModel.CanvasFontWeightIsBold = textBox.FontWeight = FontWeights.Bold
+            SVGPageViewModel.CanvasFontStyleIsItalic = textBox.FontStyle = FontStyles.Italic
             OverlayFontPicker.SelectedFont = textBox.FontFamily
             OverlayFontSizeComboBox.Text = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            OverlayBoldToggleButton.IsChecked = textBox.FontWeight = FontWeights.Bold
+            OverlayItalicToggleButton.IsChecked = textBox.FontStyle = FontStyles.Italic
         Finally
             SVGPageViewModel.EndOverlaySync()
             If editor IsNot Nothing Then editor.SuppressStyleSourceApply = False

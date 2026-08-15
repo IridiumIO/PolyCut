@@ -5,20 +5,16 @@ Public Class TextEditAction : Implements IUndoableAction
 
     Private ReadOnly _textBox As System.Windows.Controls.TextBox
     Private ReadOnly _oldText As String
-    Private ReadOnly _oldFontFamily As FontFamily
-    Private ReadOnly _oldFontSize As Double
+    Private ReadOnly _oldChars As TextCharacteristics
     Private ReadOnly _newText As String
-    Private ReadOnly _newFontFamily As FontFamily
-    Private ReadOnly _newFontSize As Double
+    Private ReadOnly _newChars As TextCharacteristics
 
-    Public Sub New(textBox As System.Windows.Controls.TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
+    Public Sub New(textBox As System.Windows.Controls.TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
         _textBox = textBox
         _oldText = oldText
-        _oldFontFamily = oldFontFamily
-        _oldFontSize = oldFontSize
+        _oldChars = oldChars
         _newText = newText
-        _newFontFamily = newFontFamily
-        _newFontSize = newFontSize
+        _newChars = newChars
     End Sub
 
     Public ReadOnly Property Description As String Implements IUndoableAction.Description
@@ -29,8 +25,8 @@ Public Class TextEditAction : Implements IUndoableAction
 
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _textBox Is Nothing Then Return False
-        If HasChanges(_newText, _newFontFamily, _newFontSize) Then
-            Apply(_newText, _newFontFamily, _newFontSize)
+        If HasChanges(_newText, _newChars) Then
+            Apply(_newText, _newChars)
             Return True
         End If
         Return False
@@ -38,24 +34,23 @@ Public Class TextEditAction : Implements IUndoableAction
 
     Public Sub Undo() Implements IUndoableAction.Undo
         If _textBox Is Nothing Then Return
-        Apply(_oldText, _oldFontFamily, _oldFontSize)
+        Apply(_oldText, _oldChars)
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo
         If _textBox Is Nothing Then Return
-        Apply(_newText, _newFontFamily, _newFontSize)
+        Apply(_newText, _newChars)
     End Sub
 
-    Private Function HasChanges(text As String, fontFamily As FontFamily, fontSize As Double) As Boolean
+    Private Function HasChanges(text As String, chars As TextCharacteristics) As Boolean
         If Not String.Equals(_oldText, text, StringComparison.Ordinal) Then Return True
-        If Not String.Equals(_oldFontFamily?.Source, fontFamily?.Source, StringComparison.OrdinalIgnoreCase) Then Return True
-        Return _oldFontSize <> fontSize
+        If _oldChars Is Nothing Then Return chars IsNot Nothing
+        Return Not _oldChars.SameAs(chars)
     End Function
 
-    Private Sub Apply(text As String, fontFamily As FontFamily, fontSize As Double)
+    Private Sub Apply(text As String, chars As TextCharacteristics)
         _textBox.Text = text
-        If fontFamily IsNot Nothing Then _textBox.FontFamily = fontFamily
-        _textBox.FontSize = fontSize
+        chars?.ApplyTo(_textBox)
         RefreshWrapperLayout()
     End Sub
 

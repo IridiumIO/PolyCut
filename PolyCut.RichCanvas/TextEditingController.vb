@@ -6,8 +6,7 @@ Imports PolyCut.Shared
 Public Class TextEditingController
     Private _activeTextBox As TextBox
     Private _styleSource As TextBox
-    Private _sessionStartFontFamily As FontFamily
-    Private _sessionStartFontSize As Double
+    Private _sessionStartChars As TextCharacteristics
     Private _sessionStartText As String
     Private _suppressStyleSourceApply As Boolean
 
@@ -28,7 +27,7 @@ Public Class TextEditingController
 
     Public Event SessionFinished(element As UIElement)
     Public Event EditRequested(sender As Object, textBox As TextBox)
-    Public Event TextEdited(sender As Object, textBox As TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
+    Public Event TextEdited(sender As Object, textBox As TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
 
     Public Sub BeginEditingText(textBox As TextBox, pcanvas As PolyCanvas)
         If textBox Is Nothing OrElse _activeTextBox Is textBox Then Return
@@ -36,9 +35,9 @@ Public Class TextEditingController
         FocusTextBox(textBox)
     End Sub
 
-    Public Sub StartNewText(startPos As Point, fontSize As Double, fontFamily As FontFamily, pcanvas As PolyCanvas)
+    Public Sub StartNewText(startPos As Point, chars As TextCharacteristics, pcanvas As PolyCanvas)
         If _activeTextBox IsNot Nothing Then Return
-        Dim textBox = CreateTextBox(startPos, fontSize, fontFamily)
+        Dim textBox = CreateTextBox(startPos, chars)
         pcanvas.Children.Add(textBox)
         BeginSession(textBox, pcanvas)
         FocusTextBox(textBox)
@@ -67,7 +66,11 @@ Public Class TextEditingController
         _styleSource = source
         DependencyPropertyDescriptor.FromProperty(TextBox.FontSizeProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceSizeChanged)
         DependencyPropertyDescriptor.FromProperty(TextBox.FontFamilyProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceFamilyChanged)
+        DependencyPropertyDescriptor.FromProperty(TextBox.FontStyleProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceStyleChanged)
+        DependencyPropertyDescriptor.FromProperty(TextBox.FontWeightProperty, GetType(TextBox)).AddValueChanged(source, AddressOf OnStyleSourceWeightChanged)
     End Sub
+
+
 
     Public Function HandleTextMouseDown(mode As CanvasMode, e As MouseButtonEventArgs) As Boolean
         If mode <> CanvasMode.Text OrElse e.ChangedButton <> MouseButton.Left Then Return False
@@ -103,8 +106,7 @@ Public Class TextEditingController
     Private Sub BeginSession(textBox As TextBox, pcanvas As PolyCanvas)
         CommitActiveText(pcanvas)
         _activeTextBox = textBox
-        _sessionStartFontFamily = textBox.FontFamily
-        _sessionStartFontSize = textBox.FontSize
+        _sessionStartChars = TextCharacteristics.FromTextBox(textBox)
         _sessionStartText = textBox.Text
         TextEditHelper.SetIsEditing(textBox, True)
         textBox.Background = Brushes.Transparent
@@ -126,10 +128,9 @@ Public Class TextEditingController
             pcanvas.Children.Remove(textBox)
         End If
         If wasEditingExisting AndAlso SessionChanged(textBox) Then
-            RaiseEvent TextEdited(Me, textBox, _sessionStartText, _sessionStartFontFamily, _sessionStartFontSize, textBox.Text, textBox.FontFamily, textBox.FontSize)
+            RaiseEvent TextEdited(Me, textBox, _sessionStartText, _sessionStartChars, textBox.Text, TextCharacteristics.FromTextBox(textBox))
         End If
-        _sessionStartFontFamily = Nothing
-        _sessionStartFontSize = 0
+        _sessionStartChars = Nothing
         _sessionStartText = Nothing
         If raiseSessionFinished AndAlso Not wasEditingExisting AndAlso Not String.IsNullOrEmpty(textBox.Text) Then
             RaiseEvent SessionFinished(textBox)
@@ -138,8 +139,8 @@ Public Class TextEditingController
 
     Private Function SessionChanged(textBox As TextBox) As Boolean
         If Not String.Equals(_sessionStartText, textBox.Text, StringComparison.Ordinal) Then Return True
-        If Not String.Equals(_sessionStartFontFamily?.Source, textBox.FontFamily?.Source, StringComparison.OrdinalIgnoreCase) Then Return True
-        Return _sessionStartFontSize <> textBox.FontSize
+        If _sessionStartChars Is Nothing Then Return False
+        Return Not _sessionStartChars.SameAs(TextCharacteristics.FromTextBox(textBox))
     End Function
 
     Private Shared Sub FocusTextBox(textBox As TextBox)
@@ -179,6 +180,16 @@ Public Class TextEditingController
         _activeTextBox.FontFamily = _styleSource.FontFamily
     End Sub
 
+    Private Sub OnStyleSourceStyleChanged(sender As Object, e As EventArgs)
+        If _activeTextBox Is Nothing OrElse _suppressStyleSourceApply Then Return
+        _activeTextBox.FontStyle = _styleSource.FontStyle
+    End Sub
+
+    Private Sub OnStyleSourceWeightChanged(sender As Object, e As EventArgs)
+        If _activeTextBox Is Nothing OrElse _suppressStyleSourceApply Then Return
+        _activeTextBox.FontWeight = _styleSource.FontWeight
+    End Sub
+
     Private Function IsFocusRetained() As Boolean
         If _activeTextBox Is Nothing Then Return False
         If _activeTextBox.IsKeyboardFocusWithin Then Return True
@@ -195,7 +206,7 @@ Public Class TextEditingController
         Return False
     End Function
 
-    Private Shared Function CreateTextBox(p As Point, fontSize As Double, fontFamily As FontFamily) As TextBox
+    Private Shared Function CreateTextBox(p As Point, chars As TextCharacteristics) As TextBox
         Dim tb As New TextBox With {
             .Width = Double.NaN,
             .Height = Double.NaN,
@@ -207,11 +218,10 @@ Public Class TextEditingController
             .Text = "",
             .AcceptsReturn = False,
             .AcceptsTab = True,
-            .FontSize = fontSize,
-            .FontFamily = fontFamily,
-            .FontWeight = FontWeights.Regular,
             .Padding = New Thickness(0)
         }
+
+        chars?.ApplyTo(tb)
 
         Canvas.SetLeft(tb, p.X)
         Canvas.SetTop(tb, p.Y)

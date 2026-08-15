@@ -31,6 +31,30 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         End Set
     End Property
 
+    Private _CanvasFontWeightIsBold As Boolean
+    Public Property CanvasFontWeightIsBold As Boolean
+        Get
+            Return _CanvasFontWeightIsBold
+        End Get
+        Set(value As Boolean)
+            _CanvasFontWeightIsBold = value
+            OnPropertyChanged(NameOf(CanvasFontWeightIsBold))
+            If Not _syncingOverlayStyle Then CanvasTextBox.FontWeight = If(value, FontWeights.Bold, FontWeights.Normal)
+        End Set
+    End Property
+
+    Private _CanvasFontStyleIsItalic As Boolean
+    Public Property CanvasFontStyleIsItalic As Boolean
+        Get
+            Return _CanvasFontStyleIsItalic
+        End Get
+        Set(value As Boolean)
+            _CanvasFontStyleIsItalic = value
+            OnPropertyChanged(NameOf(CanvasFontStyleIsItalic))
+            If Not _syncingOverlayStyle Then CanvasTextBox.FontStyle = If(value, FontStyles.Italic, FontStyles.Normal)
+        End Set
+    End Property
+
     Public ReadOnly Property CanvasToolModeIsText As Boolean
         Get
             Return CanvasToolMode = CanvasMode.Text
@@ -285,8 +309,8 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 
-    Public Sub RecordTextEdit(textBox As TextBox, oldText As String, oldFontFamily As FontFamily, oldFontSize As Double, newText As String, newFontFamily As FontFamily, newFontSize As Double)
-        Dim action As New TextEditAction(textBox, oldText, oldFontFamily, oldFontSize, newText, newFontFamily, newFontSize)
+    Public Sub RecordTextEdit(textBox As TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
+        Dim action As New TextEditAction(textBox, oldText, oldChars, newText, newChars)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 

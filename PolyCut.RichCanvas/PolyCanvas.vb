@@ -344,8 +344,26 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             textBox.Height = Double.NaN
         Else
             ' Exiting edit mode - fix size based on actual rendered size
+            Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
+            Dim preserveCenter As Boolean = rotate IsNot Nothing AndAlso Math.Abs(rotate.Angle) > 0.01
+            Dim centerX As Double = 0
+            Dim centerY As Double = 0
+            If preserveCenter Then
+                Dim left = Canvas.GetLeft(wrapper)
+                Dim top = Canvas.GetTop(wrapper)
+                If Double.IsNaN(left) Then left = 0
+                If Double.IsNaN(top) Then top = 0
+                centerX = left + wrapper.ActualWidth / 2
+                centerY = top + wrapper.ActualHeight / 2
+            End If
+
             wrapper.Width = textBox.ActualWidth
             wrapper.Height = textBox.ActualHeight
+
+            If preserveCenter Then
+                Canvas.SetLeft(wrapper, centerX - wrapper.Width / 2)
+                Canvas.SetTop(wrapper, centerY - wrapper.Height / 2)
+            End If
 
             ' Update stored original dimensions
             MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))

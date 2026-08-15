@@ -179,9 +179,12 @@ Public Class TransformAction
         Dim moveTop = (verticalAlignment = VerticalAlignment.Top)
         Dim moveLeft = (horizontalAlignment = HorizontalAlignment.Left)
 
+        Dim anchor = New Point(If(moveLeft, 1.0, 0.0),
+                               If(moveTop, 1.0, 0.0))
+
         Dim placement = TransformMath.ComputeResizePlacement(
             currentLeft, currentTop, wrapper.ActualWidth, wrapper.ActualHeight,
-            angle, transformOrigin, newWidth, newHeight, moveTop, moveLeft)
+            angle, transformOrigin, newWidth, newHeight, anchor)
 
         wrapper.Height -= deltaVertical
         wrapper.Width -= deltaHorizontal
@@ -245,11 +248,20 @@ Public Class TransformAction
         Dim newLeft = Canvas.GetLeft(wrapper)
         If Double.IsNaN(newLeft) Then newLeft = 0
 
-        ' Bottom-right resize semantics: the top-left corner stays anchored.
-        Dim placement = TransformMath.ComputeResizePlacement(
-            newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
-            angle, transformOrigin, e.NewSize.Width, e.NewSize.Height,
-            moveTop:=False, moveLeft:=False)
+        Dim placement As (Left As Double, Top As Double)
+        If Math.Abs(angle) > 0.01 Then
+            'If we are rotated, then resize from teh centre instead of the corner
+
+            placement = TransformMath.ComputeResizePlacement(
+                newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
+                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0.5, 0.5))
+        Else
+            ' Bottom-right resize semantics: the top-left corner stays anchored.
+
+            placement = TransformMath.ComputeResizePlacement(
+                newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
+                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0, 0))
+        End If
 
         Canvas.SetTop(wrapper, placement.Top)
         Canvas.SetLeft(wrapper, placement.Left)

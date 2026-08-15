@@ -63,6 +63,20 @@ Public Class TextEditAction : Implements IUndoableAction
         Dim wrapper = TryCast(_textBox.Parent, System.Windows.Controls.ContentControl)
         If wrapper Is Nothing Then Return
 
+        ' A rotated wrapper pivots around its center (RenderTransformOrigin 0.5,0.5), so a
+        Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
+        Dim preserveCenter As Boolean = rotate IsNot Nothing AndAlso Math.Abs(rotate.Angle) > 0.01
+        Dim centerX As Double = 0
+        Dim centerY As Double = 0
+        If preserveCenter Then
+            Dim left = Canvas.GetLeft(wrapper)
+            Dim top = Canvas.GetTop(wrapper)
+            If Double.IsNaN(left) Then left = 0
+            If Double.IsNaN(top) Then top = 0
+            centerX = left + wrapper.ActualWidth / 2
+            centerY = top + wrapper.ActualHeight / 2
+        End If
+
         ' Mirror the creation path: auto-size the textbox to its content so the
         ' wrapper can grow/shrink to fit the restored text, then fix the size.
         wrapper.Width = Double.NaN
@@ -77,6 +91,11 @@ Public Class TextEditAction : Implements IUndoableAction
         wrapper.Width = contentWidth
         wrapper.Height = contentHeight
         wrapper.UpdateLayout()
+
+        If preserveCenter Then
+            Canvas.SetLeft(wrapper, centerX - contentWidth / 2)
+            Canvas.SetTop(wrapper, centerY - contentHeight / 2)
+        End If
 
         MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
         PolyCanvas.ActiveInstance?.RefreshTextWrapper(wrapper)

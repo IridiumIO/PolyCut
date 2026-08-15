@@ -52,35 +52,33 @@ Public Module TransformMath
                                            angleDeg As Double,
                                            origin As Point,
                                            newW As Double, newH As Double,
-                                           moveTop As Boolean, moveLeft As Boolean) As (Left As Double, Top As Double)
+                                           anchor As Point) As (Left As Double, Top As Double)
 
         Dim angle = angleDeg * Math.PI / 180.0
         Dim cosA = Math.Cos(angle)
         Dim sinA = Math.Sin(angle)
 
-        ' Fixed corner's local coordinates in the old and new wrapper frames.
-        ' (Moving left edge anchors the right edge; moving top anchors the bottom.)
-        Dim fxOld = If(moveLeft, w, 0.0)
-        Dim fyOld = If(moveTop, h, 0.0)
-        Dim fxNew = If(moveLeft, newW, 0.0)
-        Dim fyNew = If(moveTop, newH, 0.0)
+        Dim fxOld = anchor.X * w
+        Dim fyOld = anchor.Y * h
+        Dim fxNew = anchor.X * newW
+        Dim fyNew = anchor.Y * newH
 
-        ' World position of the fixed corner under the OLD transform
         Dim oldPivotX = left + origin.X * w
         Dim oldPivotY = top + origin.Y * h
+
         Dim fixedWorldX = oldPivotX + cosA * (fxOld - origin.X * w) - sinA * (fyOld - origin.Y * h)
         Dim fixedWorldY = oldPivotY + sinA * (fxOld - origin.X * w) + cosA * (fyOld - origin.Y * h)
 
-        ' New rotation pivot (origin is relative to the NEW size)
         Dim newPivotX = origin.X * newW
         Dim newPivotY = origin.Y * newH
 
-        ' Solve: T(newLeft,newTop) · RotAt(θ, newPivot) maps (fxNew,fyNew) → fixedWorld
         Dim rotatedX = cosA * (fxNew - newPivotX) - sinA * (fyNew - newPivotY)
         Dim rotatedY = sinA * (fxNew - newPivotX) + cosA * (fyNew - newPivotY)
 
-        Return (fixedWorldX - newPivotX - rotatedX, fixedWorldY - newPivotY - rotatedY)
+        Return (fixedWorldX - newPivotX - rotatedX,
+            fixedWorldY - newPivotY - rotatedY)
     End Function
+
 
 
     Public Function RotatedCornersOf(wrapper As ContentControl) As List(Of Point)

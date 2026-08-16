@@ -37,6 +37,8 @@ Class SVGPage
         AddHandler zoomPanControl.DrawingManager.DrawingFinished, AddressOf DrawingFinishedHandler
         AddHandler zoomPanControl.DrawingManager.TextEditor.EditRequested, AddressOf OnTextEditRequested
         AddHandler zoomPanControl.DrawingManager.TextEditor.TextEdited, AddressOf OnTextEdited
+        AddHandler zoomPanControl.ContextMenuOpening, AddressOf OnCanvasContextMenuOpening
+        AddHandler zoomPanControl.ContextMenu.Opened, AddressOf OnCanvasContextMenuOpened
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnSelectionCountChanged
 
     End Sub
@@ -228,6 +230,83 @@ Class SVGPage
 
     Private Function GetTextEditor() As TextEditingController
         Return zoomPanControl?.DrawingManager.TextEditor
+    End Function
+
+
+    ' ===== Canvas context menu =====
+
+    Private _contextStrokeBeforeEditMap As Dictionary(Of IDrawable, Brush)
+    Private _contextFillBeforeEditMap As Dictionary(Of IDrawable, Brush)
+
+    Private Sub OnCanvasContextMenuOpening(sender As Object, e As ContextMenuEventArgs)
+        ' A text box being edited owns its own context menu.
+        If GetTextEditor()?.ActiveTextBox IsNot Nothing Then
+            e.Handled = True
+            Return
+        End If
+
+        UpdateCanvasContextMenuState()
+    End Sub
+
+    Private Sub OnCanvasContextMenuOpened(sender As Object, e As RoutedEventArgs)
+        ' The gizmo opens the menu directly when a right-click lands on it, which bypasses
+        ' ContextMenuOpening, so refresh the state here too.
+        UpdateCanvasContextMenuState()
+    End Sub
+
+    Private Sub UpdateCanvasContextMenuState()
+        Dim hasSelection = MainViewModel.HasSelection
+
+        CombineMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+        StyleMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+        CanvasContextMenuSeparator.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+
+        ContextCutButton.IsEnabled = hasSelection
+        ContextCopyButton.IsEnabled = hasSelection
+        ContextPasteButton.IsEnabled = Clipboard.ContainsData(ClipboardService.ClipFormat)
+
+        If hasSelection Then
+            Dim selected = MainViewModel.SelectedDrawables.ToList()
+            ContextFillPicker.IsEnabled = Not selected.All(Function(d) RegistrationMarkHelper.IsRegistrationMark(d))
+        End If
+    End Sub
+
+    Private Sub ContextStrokePicker_PopupOpening(sender As Object, e As EventArgs)
+        Dim leaves = ExpandSelectionToLeaves(MainViewModel.SelectedDrawables)
+        _contextStrokeBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Stroke)
+    End Sub
+
+    Private Sub ContextStrokePicker_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        SVGPageViewModel.ApplyStroke(e.SelectedBrush, _contextStrokeBeforeEditMap)
+        _contextStrokeBeforeEditMap = Nothing
+    End Sub
+
+    Private Sub ContextFillPicker_PopupOpening(sender As Object, e As EventArgs)
+        Dim leaves = ExpandSelectionToLeaves(MainViewModel.SelectedDrawables)
+        _contextFillBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Fill)
+    End Sub
+
+    Private Sub ContextFillPicker_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
+        SVGPageViewModel.ApplyFill(e.SelectedBrush, _contextFillBeforeEditMap)
+        _contextFillBeforeEditMap = Nothing
+    End Sub
+
+    Private Shared Function ExpandSelectionToLeaves(items As IEnumerable(Of IDrawable)) As List(Of IDrawable)
+        Dim result As New List(Of IDrawable)()
+        If items Is Nothing Then Return result
+
+        For Each d In items
+            If d Is Nothing Then Continue For
+
+            Dim ng = TryCast(d, NestedDrawableGroup)
+            If ng IsNot Nothing Then
+                result.AddRange(ng.GetAllLeafChildren())
+            Else
+                result.Add(d)
+            End If
+        Next
+
+        Return result.Where(Function(x) x IsNot Nothing).Distinct().ToList()
     End Function
 
 End Class

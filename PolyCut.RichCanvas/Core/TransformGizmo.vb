@@ -73,6 +73,7 @@ Public Class TransformGizmo
         AddHandler Me.MouseMove, AddressOf OnMouseMove
         AddHandler Me.MouseLeftButtonUp, AddressOf OnMouseUp
         AddHandler Me.MouseWheel, AddressOf OnMouseWheel
+        AddHandler Me.MouseRightButtonDown, AddressOf OnRightButtonDown
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
 
         EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnViewportChanged)
@@ -405,6 +406,45 @@ Public Class TransformGizmo
 
         e.Handled = True
     End Sub
+
+
+    Private Sub OnRightButtonDown(sender As Object, e As MouseButtonEventArgs)
+        ' The gizmo lives OUTSIDE the ZoomBorder's visual tree, so a right-click that lands on the gizmo never works and its context menu would never open. Open it explicitly 
+        Dim zb = GetZoomBorder()
+        If zb Is Nothing OrElse zb.ContextMenu Is Nothing Then Return
+
+        Dim menu = zb.ContextMenu
+        menu.PlacementTarget = zb
+        menu.DataContext = zb.DataContext
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint
+        menu.IsOpen = True
+        e.Handled = True
+    End Sub
+
+
+    Protected Overrides Function HitTestCore(hitTestParameters As PointHitTestParameters) As HitTestResult
+        ' The gizmo spans the whole viewport, so by default it would claim every click (left AND right) over the canvas.
+        If Not IsVisible OrElse Not IsHitTestVisible Then Return Nothing
+        If Not IsPointOverGizmoContent(hitTestParameters.HitPoint) Then Return Nothing
+        Return New PointHitTestResult(Me, hitTestParameters.HitPoint)
+    End Function
+
+    Private Function IsPointOverGizmoContent(p As Point) As Boolean
+        Dim bounds = _selectionManager?.GetUnrotatedBounds()
+        If bounds.HasValue Then
+            Dim rect = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
+            rect.Inflate(5, 5)
+            If rect.Contains(p) Then Return True
+        End If
+
+        For i As Integer = 0 To _handleHitRects.Length - 1
+            If _handleHitRects(i).Contains(p) Then Return True
+        Next
+
+        If _rotateHandleRect.Width > 0 AndAlso _rotateHandleRect.Contains(p) Then Return True
+
+        Return False
+    End Function
 
 
     Private Shared Function InverseRotatePoint(p As Point, center As Point, angleDeg As Double) As Point

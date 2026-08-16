@@ -4,7 +4,7 @@ Imports PolyCut.[Shared]
 
 Public Class ClipboardService
 
-    Private Const ClipFormat As String = "application/x-polycut-projectdata+json"
+    Public Const ClipFormat As String = "application/x-polycut-projectdata+json"
 
 
     Private ReadOnly _mainVM As MainViewModel

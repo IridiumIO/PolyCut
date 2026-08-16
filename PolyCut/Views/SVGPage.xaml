@@ -122,17 +122,17 @@
                         <ComboBoxItem Content="48" />
                         <ComboBoxItem Content="72" />
                     </ComboBox>
-                    <Separator Margin="5 0"/>
+                    <Separator Margin="5 0" />
                     <ToggleButton x:Name="OverlayBoldToggleButton"
                                   Width="30" Height="30"
-                                  Margin="0 0 5 0" Padding="2" 
+                                  Margin="0 0 5 0" Padding="2"
                                   BorderBrush="Transparent"
                                   IsChecked="{Binding CanvasFontWeightIsBold, Mode=TwoWay}">
                         <ui:SymbolIcon Symbol="TextBold16" />
                     </ToggleButton>
                     <ToggleButton x:Name="OverlayItalicToggleButton"
                                   Width="30" Height="30"
-                                  Margin="0 0 5 0" Padding="2" 
+                                  Margin="0 0 5 0" Padding="2"
                                   BorderBrush="Transparent"
                                   IsChecked="{Binding CanvasFontStyleIsItalic, Mode=TwoWay}">
                         <ui:SymbolIcon Symbol="TextItalic16" />
@@ -149,9 +149,122 @@
                        CanvasTextBox="{Binding CanvasTextBox}"
                        ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
-                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="Reset" ScaleAmount="0.002" ScaleMax="150"
+                       LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="None" ScaleAmount="0.002" ScaleMax="150"
                        ScaleMin="0.01">
+            <rc:ZoomBorder.ContextMenu>
+                <ContextMenu>
 
+                    <MenuItem>
+                        <MenuItem.Template>
+                            <ControlTemplate TargetType="MenuItem">
+                                <ContentPresenter Content="{TemplateBinding Header}" />
+                            </ControlTemplate>
+                        </MenuItem.Template>
+
+                        <MenuItem.Header>
+                            <StackPanel Margin="10 5" Orientation="Horizontal">
+                                <StackPanel.Resources>
+                                    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
+                                </StackPanel.Resources>
+
+                                <ui:Button x:Name="ContextCutButton"
+                                           Width="50"
+                                           Appearance="Transparent" BorderThickness="0"
+                                           Command="{Binding MainVM.CutSelectionCommand}">
+                                    <StackPanel>
+                                        <ui:SymbolIcon Symbol="Cut20" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Cut" />
+                                    </StackPanel>
+                                </ui:Button>
+
+                                <ui:Button x:Name="ContextCopyButton"
+                                           Width="50"
+                                           Appearance="Transparent" BorderThickness="0"
+                                           Command="{Binding MainVM.CopySelectionCommand}">
+                                    <StackPanel>
+                                        <ui:SymbolIcon Symbol="Copy20" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Copy" />
+                                    </StackPanel>
+                                </ui:Button>
+
+                                <ui:Button x:Name="ContextPasteButton"
+                                           Width="50"
+                                           Appearance="Transparent" BorderThickness="0"
+                                           Command="{Binding MainVM.PasteClipboardCommand}">
+                                    <StackPanel>
+                                        <ui:SymbolIcon Symbol="ClipboardPaste20" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Paste" />
+                                    </StackPanel>
+                                </ui:Button>
+
+                            </StackPanel>
+                        </MenuItem.Header>
+                    </MenuItem>
+
+                    <Separator x:Name="CanvasContextMenuSeparator" />
+
+                    <!--  selection-dependent entries (hidden when nothing is selected)  -->
+
+                    <MenuItem x:Name="StyleMenuItem">
+                        <MenuItem.Template>
+                            <ControlTemplate TargetType="MenuItem">
+                                <ContentPresenter Content="{TemplateBinding Header}" />
+                            </ControlTemplate>
+                        </MenuItem.Template>
+
+                        <MenuItem.Header>
+
+                            <Grid Margin="10 10 10 5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <local:ColorPickerControl x:Name="ContextStrokePicker"
+                                                          Grid.Row="0"
+                                                          ColorSelected="ContextStrokePicker_ColorSelected"
+                                                          CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
+                                                          LabelText="Stroke" PopupOpening="ContextStrokePicker_PopupOpening" />
+
+                                <local:ColorPickerControl x:Name="ContextFillPicker"
+                                                          Grid.Row="1"
+                                                          Margin="0 10"
+                                                          ColorSelected="ContextFillPicker_ColorSelected"
+                                                          CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
+                                                          LabelText="Fill" PopupOpening="ContextFillPicker_PopupOpening" />
+
+                            </Grid>
+
+                        </MenuItem.Header>
+                    </MenuItem>
+
+                    <Separator />
+                    
+                    <ui:MenuItem x:Name="CombineMenuItem" Header="Combine">
+                        <ui:MenuItem Command="{Binding MainVM.UnionShapesCommand}" Header="Union">
+                            <ui:MenuItem.Icon>
+                                <ui:SymbolIcon Filled="True" Symbol="ShapeUnion20" />
+                            </ui:MenuItem.Icon>
+                        </ui:MenuItem>
+                        <ui:MenuItem Command="{Binding MainVM.IntersectShapesCommand}" Header="Intersect">
+                            <ui:MenuItem.Icon>
+                                <ui:SymbolIcon Filled="True" Symbol="ShapeIntersect20" />
+                            </ui:MenuItem.Icon>
+                        </ui:MenuItem>
+                        <ui:MenuItem Command="{Binding MainVM.SubtractShapesCommand}" Header="Subtract">
+                            <ui:MenuItem.Icon>
+                                <ui:SymbolIcon Filled="True" Symbol="ShapeSubtract20" />
+                            </ui:MenuItem.Icon>
+                        </ui:MenuItem>
+                        <ui:MenuItem Command="{Binding MainVM.XorShapesCommand}" Header="Exclude">
+                            <ui:MenuItem.Icon>
+                                <ui:SymbolIcon Filled="True" Symbol="ShapeExclude20" />
+                            </ui:MenuItem.Icon>
+                        </ui:MenuItem>
+                    </ui:MenuItem>
+
+                </ContextMenu>
+            </rc:ZoomBorder.ContextMenu>
 
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 

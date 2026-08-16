@@ -347,7 +347,25 @@ Public Class ZoomBorder
             e.Handled = True
         End If
 
+        If e.ChangedButton = MouseButton.Right AndAlso isPreview Then
+
+            HandleCanvasRightClick(e)
+        End If
+
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then MoveDown(e)
+    End Sub
+
+    Private Sub HandleCanvasRightClick(e As MouseButtonEventArgs)
+        ' A text box being edited owns its own context menu.
+        If DrawingManager.TextEditor.ActiveTextBox IsNot Nothing Then Return
+
+        Dim polyCanvas = GetPolyCanvas()
+        If polyCanvas Is Nothing Then Return
+
+        Dim drawable = GeometryHitTestHelper.HitTestTopmost(polyCanvas.ChildrenCollection, e.GetPosition(polyCanvas))
+        If drawable Is Nothing OrElse polyCanvas.SelectionManager.SelectedItems.Contains(drawable) Then Return
+
+        polyCanvas.SelectionManager.SelectItem(drawable, multiSelect:=False)
     End Sub
 
     Private Sub ZoomBorder_MouseUp(ByVal sender As Object, ByVal e As MouseButtonEventArgs)

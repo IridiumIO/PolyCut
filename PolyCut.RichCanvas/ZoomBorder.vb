@@ -415,6 +415,23 @@ Public Class ZoomBorder
         TranslateTransform.Y = absoluteY - (relative.Y * Scale)
     End Sub
 
+    Public Sub ZoomByLinear(delta As Double)
+        If Child Is Nothing Then Return
+        Dim targetScale As Double = Scale + delta
+        ' Constrain the new scale within the allowed range
+        targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
+        Dim relative As Point = Mouse.GetPosition(Child)
+        ' Calculate the absolute positions based on the current scale
+        Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
+        Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
+        ' Apply the new scale
+        Scale = targetScale
+
+        ' Adjust the translation based on the new scale
+        TranslateTransform.X = absoluteX - (relative.X * Scale)
+        TranslateTransform.Y = absoluteY - (relative.Y * Scale)
+    End Sub
+
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
         Dim currentPosition As Point = e.GetPosition(Me)
         If CanvasMode <> CanvasMode.Selection AndAlso e.LeftButton = MouseButtonState.Pressed Then

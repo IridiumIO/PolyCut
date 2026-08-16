@@ -110,13 +110,19 @@ Partial Public Class MainViewModel
 
     Public ReadOnly Property HasSelection As Boolean
         Get
-            Return PolyCut.RichCanvas.PolyCanvas.SelectedItems IsNot Nothing AndAlso PolyCanvas.SelectedItems.Count > 0
+            Return PolyCut.RichCanvas.PolyCanvas.SelectedItems IsNot Nothing AndAlso PolyCanvas.SelectedItems.Where(Function(f) TypeOf (f) IsNot DrawableGroup).Any()
+        End Get
+    End Property
+
+    Public ReadOnly Property HasDrawables As Boolean
+        Get
+            Return DrawableCollection.Any(Function(d) TypeOf (d) IsNot DrawableGroup)
         End Get
     End Property
 
     Public ReadOnly Property HasMultipleSelected As Boolean
         Get
-            Return SelectedDrawables.Count() > 1
+            Return SelectedDrawables.Where(Function(f) TypeOf (f) IsNot DrawableGroup).Count() > 1
         End Get
     End Property
 
@@ -324,6 +330,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(HasDrawables))
     End Sub
 
     Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
@@ -332,6 +339,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
         OnPropertyChanged(NameOf(HasSelection))
+        OnPropertyChanged(NameOf(HasDrawables))
     End Sub
 
     Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
@@ -558,6 +566,7 @@ Partial Public Class MainViewModel
         OnPropertyChanged(NameOf(SelectedDrawable))
         OnPropertyChanged(NameOf(SelectedDrawables))
         OnPropertyChanged(NameOf(HasMultipleSelected))
+        OnPropertyChanged(NameOf(HasDrawables))
         OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 

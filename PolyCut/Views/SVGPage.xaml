@@ -154,7 +154,7 @@
             <rc:ZoomBorder.ContextMenu>
                 <ContextMenu>
 
-                    <MenuItem>
+                    <MenuItem IsTabStop="False">
                         <MenuItem.Template>
                             <ControlTemplate TargetType="MenuItem">
                                 <ContentPresenter Content="{TemplateBinding Header}" />
@@ -162,14 +162,14 @@
                         </MenuItem.Template>
 
                         <MenuItem.Header>
-                            <StackPanel Margin="10 5" Orientation="Horizontal">
+                            <StackPanel Margin="10 5" HorizontalAlignment="Center" Orientation="Horizontal">
                                 <StackPanel.Resources>
                                     <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent" />
                                 </StackPanel.Resources>
 
                                 <ui:Button x:Name="ContextCutButton"
                                            Width="50"
-                                           Appearance="Transparent" BorderThickness="0"
+                                           Appearance="Transparent" BorderThickness="0" Click="ContextCutButton_Click"
                                            Command="{Binding MainVM.CutSelectionCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="Cut20" />
@@ -197,6 +197,19 @@
                                     </StackPanel>
                                 </ui:Button>
 
+                                <Separator Margin="0 0 5 0" />
+
+                                <ui:Button x:Name="ContextSelectAllButton"
+                                           Width="50"
+                                           Padding="0 5"
+                                           Appearance="Transparent" BorderThickness="0" Click="ContextSelectAllButton_Click"
+                                           IsEnabled="{Binding MainVM.HasDrawables}">
+                                    <StackPanel>
+                                        <ui:SymbolIcon Symbol="CopySelect20" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="11" Text="Select All" />
+                                    </StackPanel>
+                                </ui:Button>
+
                             </StackPanel>
                         </MenuItem.Header>
                     </MenuItem>
@@ -205,7 +218,7 @@
 
                     <!--  selection-dependent entries (hidden when nothing is selected)  -->
 
-                    <MenuItem x:Name="StyleMenuItem">
+                    <MenuItem x:Name="StyleMenuItem" IsTabStop="False">
                         <MenuItem.Template>
                             <ControlTemplate TargetType="MenuItem">
                                 <ContentPresenter Content="{TemplateBinding Header}" />
@@ -214,7 +227,7 @@
 
                         <MenuItem.Header>
 
-                            <Grid Margin="10 10 10 5">
+                            <Grid Margin="10 10 10 0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
@@ -239,28 +252,286 @@
                     </MenuItem>
 
                     <Separator />
-                    
+
+                    <MenuItem x:Name="ZoomMenuItem">
+                        <MenuItem.Template>
+                            <ControlTemplate TargetType="MenuItem">
+                                <ContentPresenter Content="{TemplateBinding Header}" />
+                            </ControlTemplate>
+                        </MenuItem.Template>
+                        <MenuItem.Header>
+
+                            <Border Grid.ColumnSpan="2"
+                                    Margin="5"
+                                    Background="{StaticResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="4">
+                                <StackPanel Margin="5" HorizontalAlignment="Center" Orientation="Horizontal">
+                                    <Button x:Name="MenuReduceZoomButton"
+                                            Height="40"
+                                            Background="Transparent" BorderThickness="0" Click="MenuReduceZoomButton_Click">
+                                        <ui:SymbolIcon Symbol="ZoomOut20" />
+                                    </Button>
+                                    <Button x:Name="MenuZoomTo100Percent"
+                                            Width="80" Height="40"
+                                            VerticalAlignment="Center"
+                                            Background="Transparent" BorderThickness="0" Click="MenuZoomTo100Percent_Click">
+                                        <TextBlock Margin="0 -2 0 0" Text="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.Scale, Converter={local:ZoomBorderScaleToPercentConverter}}" />
+                                    </Button>
+                                    <Button x:Name="MenuIncreaseZoomButton"
+                                            Height="40"
+                                            Background="Transparent" BorderThickness="0" Click="MenuIncreaseZoomButton_Click">
+                                        <ui:SymbolIcon Symbol="ZoomIn20" />
+                                    </Button>
+
+                                    <Separator Margin="5 2" />
+
+                                    <Button x:Name="MenuResetZoomButton"
+                                            Height="40"
+                                            Background="Transparent" BorderThickness="0" Click="MenuResetZoomButton_Click">
+                                        <ui:SymbolIcon Symbol="ZoomFit20" />
+                                    </Button>
+                                </StackPanel>
+
+
+                            </Border>
+
+
+
+
+
+                        </MenuItem.Header>
+                    </MenuItem>
+
+                    <ui:MenuItem x:Name="ArrangeMenuItem" Header=" Arrange" Icon="{ui:SymbolIcon Symbol=Archive16}">
+
+                        <MenuItem Focusable="False" IsTabStop="False">
+
+                            <MenuItem.Template>
+                                <ControlTemplate TargetType="{x:Type MenuItem}">
+                                    <ContentPresenter Content="{TemplateBinding Header}" />
+                                </ControlTemplate>
+                            </MenuItem.Template>
+
+                            <MenuItem.Header>
+
+                                <StackPanel Margin="5 2" Orientation="Horizontal">
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.MoveSelectedItemsCanvasUpCommand}">
+                                        <StackPanel>
+
+                                            <Grid Width="25" Height="25">
+
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="-2" Y="-2" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="White" BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="2" Y="2" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+                                            </Grid>
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="10" Text="Bring Forward" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.MoveSelectedItemsCanvasToTopCommand}">
+                                        <StackPanel>
+
+                                            <Grid Width="25" Height="25">
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="-3" Y="-3" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="0" Y="0" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="White" BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="3" Y="3" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="10" Text="Bring To Front" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.MoveSelectedItemsCanvasDownCommand}">
+                                        <StackPanel>
+
+                                            <Grid Width="25" Height="25">
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="White" BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="-2" Y="-2" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="2" Y="2" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="10" Text="Send Backwards" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.MoveSelectedItemsCanvasToBottomCommand}">
+                                        <StackPanel>
+
+                                            <Grid Width="25" Height="25">
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="White" BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="-3" Y="-3" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="0" Y="0" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+
+                                                <Border Width="11" Height="11"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        Background="{DynamicResource ContextMenuBackground}"
+                                                        BorderBrush="White" BorderThickness="1" CornerRadius="2">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform X="3" Y="3" />
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="10" Text="Send To Back" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+
+                                </StackPanel>
+
+                            </MenuItem.Header>
+
+                        </MenuItem>
+
+
+
+                    </ui:MenuItem>
+
                     <ui:MenuItem x:Name="CombineMenuItem" Header="Combine">
-                        <ui:MenuItem Command="{Binding MainVM.UnionShapesCommand}" Header="Union">
-                            <ui:MenuItem.Icon>
-                                <ui:SymbolIcon Filled="True" Symbol="ShapeUnion20" />
-                            </ui:MenuItem.Icon>
-                        </ui:MenuItem>
-                        <ui:MenuItem Command="{Binding MainVM.IntersectShapesCommand}" Header="Intersect">
-                            <ui:MenuItem.Icon>
-                                <ui:SymbolIcon Filled="True" Symbol="ShapeIntersect20" />
-                            </ui:MenuItem.Icon>
-                        </ui:MenuItem>
-                        <ui:MenuItem Command="{Binding MainVM.SubtractShapesCommand}" Header="Subtract">
-                            <ui:MenuItem.Icon>
-                                <ui:SymbolIcon Filled="True" Symbol="ShapeSubtract20" />
-                            </ui:MenuItem.Icon>
-                        </ui:MenuItem>
-                        <ui:MenuItem Command="{Binding MainVM.XorShapesCommand}" Header="Exclude">
-                            <ui:MenuItem.Icon>
-                                <ui:SymbolIcon Filled="True" Symbol="ShapeExclude20" />
-                            </ui:MenuItem.Icon>
-                        </ui:MenuItem>
+
+                        <MenuItem Focusable="False" IsTabStop="False">
+
+                            <MenuItem.Template>
+                                <ControlTemplate TargetType="{x:Type MenuItem}">
+                                    <ContentPresenter Content="{TemplateBinding Header}" />
+                                </ControlTemplate>
+                            </MenuItem.Template>
+
+                            <MenuItem.Header>
+
+                                <StackPanel Margin="5 2" Orientation="Horizontal">
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.UnionShapesCommand}">
+                                        <StackPanel>
+
+                                            <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeUnion20" />
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="12" Text="Union" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.IntersectShapesCommand}">
+                                        <StackPanel>
+
+                                            <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeIntersect20" />
+
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="12" Text="Intersect" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.SubtractShapesCommand}">
+                                        <StackPanel>
+
+                                            <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeSubtract20" />
+
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="12" Text="Subtract" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <ui:Button Width="70"
+                                               Appearance="Transparent" BorderThickness="0"
+                                               Command="{Binding MainVM.XorShapesCommand}">
+                                        <StackPanel>
+
+                                            <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeExclude20" />
+
+                                            <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
+                                                       FontSize="12" Text="Exclude" TextAlignment="Center" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ui:Button>
+
+
+                                </StackPanel>
+
+                            </MenuItem.Header>
+
+                        </MenuItem>
+
+
+
                     </ui:MenuItem>
 
                 </ContextMenu>

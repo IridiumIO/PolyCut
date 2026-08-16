@@ -256,10 +256,13 @@ Class SVGPage
 
     Private Sub UpdateCanvasContextMenuState()
         Dim hasSelection = MainViewModel.HasSelection
+        Dim hasMultiSelection = MainViewModel.HasMultipleSelected
 
-        CombineMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+        CombineMenuItem.Visibility = If(hasMultiSelection, Visibility.Visible, Visibility.Collapsed)
         StyleMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+        ArrangeMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
         CanvasContextMenuSeparator.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
+        ZoomMenuItem.Visibility = If(hasSelection, Visibility.Collapsed, Visibility.Visible)
 
         ContextCutButton.IsEnabled = hasSelection
         ContextCopyButton.IsEnabled = hasSelection
@@ -309,4 +312,29 @@ Class SVGPage
         Return result.Where(Function(x) x IsNot Nothing).Distinct().ToList()
     End Function
 
+    Private Sub MenuReduceZoomButton_Click(sender As Object, e As RoutedEventArgs)
+        zoomPanControl.ZoomByLinear(-0.2)
+    End Sub
+
+    Private Sub MenuResetZoomButton_Click(sender As Object, e As RoutedEventArgs)
+        zoomPanControl.Reset()
+    End Sub
+
+    Private Sub MenuIncreaseZoomButton_Click(sender As Object, e As RoutedEventArgs)
+        zoomPanControl.ZoomByLinear(0.2)
+    End Sub
+
+    Private Sub MenuZoomTo100Percent_Click(sender As Object, e As RoutedEventArgs)
+        zoomPanControl.ZoomByLinear(2.0 - zoomPanControl.Scale)
+    End Sub
+
+    Private Sub ContextSelectAllButton_Click(sender As Object, e As RoutedEventArgs)
+        MainViewModel.SelectAllCommand.Execute(Nothing)
+        UpdateCanvasContextMenuState()
+    End Sub
+
+    Private Sub ContextCutButton_Click(sender As Object, e As RoutedEventArgs)
+        'close the context menu first to avoid issues with the clipboard
+        zoomPanControl.ContextMenu.IsOpen = False
+    End Sub
 End Class

@@ -101,7 +101,7 @@
                                             Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="Draw Speed" Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
+                                            LabelText="{Binding MainVM.Configuration.SelectedToolMode, StringFormat={} {0} Speed}" Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
                                             Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <local:LabeledSliderControl.ToolTip>
                         <TextBlock TextAlignment="Left" TextWrapping="Wrap">
@@ -120,7 +120,7 @@
                     </Grid.ColumnDefinitions>
 
 
-                    <local:LabeledNumberBoxControl LabelText="Draw"
+                    <local:LabeledNumberBoxControl LabelText="{Binding MainVM.Configuration.SelectedToolMode}"
                                                    Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                    TextBoxWidth="95" UnitText="mm" />
 

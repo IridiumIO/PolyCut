@@ -1,16 +1,13 @@
-<p align="center"><img src="https://github.com/user-attachments/assets/7fcc4750-2f59-46ef-8b85-1d2f5fee2b0a" width="450"></p>
-
-
+<p align="center"><img align="center" src="PolyCut/Resources/banner_dark.svg" height="220" /></p>
 <p align="center">
     <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/IridiumIO/Polycut/total?style=for-the-badge&logo=github"> <a href="https://github.com/IridiumIO/PolyCut/releases"></img>
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/IridiumIO/Polycut?style=for-the-badge"> <a href="https://github.com/IridiumIO/PolyCut/releases"></img>
-
   </br> 
 </p>
 
 <p align="center"><b>Turn your 3D Printer into a vinyl cutter, pen plotter, foil machine or engraving tool. </br>If you've already got a 3D Printer, you shouldn't need to buy a separate Cricut machine.</b></p> 
 
-<p align="center">Convert SVG artwork into optimized 2D GCode with drag-knife compensation, drawing fills, multi-pass engraving and more.  Polycut also directly supports uploading to a networked 3D Printer via Moonraker/Klipper. 
+<p align="center">Convert artwork into optimized 2D GCode with drag-knife compensation, drawing fills, multi-pass engraving and more.  Polycut also directly supports uploading to a networked 3D Printer via Moonraker/Klipper. 
 </p> 
 
 &nbsp;
@@ -34,7 +31,7 @@ Download the latest version from Github Releases.
 <img alt="Static Badge" src="https://img.shields.io/badge/DOWNLOAD-steelblue?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
 </p>
 
-The application itself is portable (no installation required!) however configuration data is saved in `%LocalAppData%/IridiumIO/PolyCut`
+The application itself is portable (no installation required!). Configuration data is saved in `%LocalAppData%/IridiumIO/PolyCut` by default, but placing the application in any folder called `PolyCut` will make it use that for it's config data, allowing it to be truly portable
 
 
 # Features
@@ -42,11 +39,14 @@ The application itself is portable (no installation required!) however configura
 ### Drawing Canvas:
 - Import arrange and scale multiple SVGs
     - SVG groups, layers and clipped geometries are preserved.
+- Raster Importer and Vectoriser
+    - Import regular PNG/JPG/BMP files and trace them easily into vector art for plotting/cutting, thanks to the VTracer library. 
 - Basic editing tools
     - Copy/Cut/Paste
     - Boolean operations (Union, Subtract, Intersect, Exclude)
     - Mirror/Flip, Move, Rotate, Resize
-    - Editing Stroke and Fill colours
+    - Stroke and Fill colour editing.
+    - Layer reordering
  - Draw basic shapes directly (line, ellipse, rectangle, path) as well as text.
  - Save and reload projects, or export the canvas back to SVG for use elsewhere
 
@@ -56,7 +56,7 @@ The application itself is portable (no installation required!) however configura
 
 ### Tool Modes:
 - **Cutting** - Optimised drag knife toolpaths with configurable swivel offsets and blade orientation tracking for crisp corners and tearing prevention.
-- **Drawing** - Outline drawing +/- Hatch, Crosshatch, Spiral, Triangular, Diamond and Radial fill patterns
+- **Drawing** - Outline drawing +/- Hatch, Crosshatch, Spiral, Triangular, Diamond, Radial and Contour fill patterns
 - **Multipass** - Repeat passes with configurable Z step-down
 - **Foiling, Engraving, Embossing and Etching** — Configurable using the above tool modes
 
@@ -71,10 +71,6 @@ The application itself is portable (no installation required!) however configura
 - GCode previews show estimated time and total toolpath length (Metric only. Sorry Americans)
 - Export GCode or upload directly to Moonraker/Klipper with optional auto-start after upload, and a built-in Klipper web interface. 
 
-### Toolpath Generators:
-There are two generators currently included with Polycut; `Polycut.Core` and `GCodePlot`
-- **Polycut.Core**: Custom generator with advanced optimisations and path ordering, advanced fill generation, SVG text and clipping support, and significantly faster processing.
-- **GCodePlot**: Created by @arpruss, augmented with a few tweaks by myself. Initially this was the superior processor, but now remains for those who simply prefer it :) 
 
 &nbsp;
 

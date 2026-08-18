@@ -30,7 +30,6 @@ Partial Public Class MainViewModel
     <ObservableProperty> Private _IsWindows As Boolean = Not WineDetection.IsRunningUnderWine
 
     ' State / configuration
-    <ObservableProperty> Private _UsingGCodePlot As Boolean
     <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
     <ObservableProperty> Private _Printer As Printer
     <ObservableProperty> Private _Configuration As ProcessorConfiguration

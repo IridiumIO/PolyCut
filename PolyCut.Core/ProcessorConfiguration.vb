@@ -47,20 +47,12 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     <ObservableProperty> Private _DrawingConfig As New DrawingConfiguration
     <ObservableProperty> Private _ExportConfig As New ExportConfiguration
 
-
-    <NotifyPropertyChangedFor(NameOf(OptimisationTimeout))>
     <ObservableProperty> Private _OptimisedToolPath As Boolean = True
 
     <ObservableProperty> Private _ExtractOneColour As Boolean = False
     <ObservableProperty> Private _ExtractionColor As String = ""
 
-    ''' Currently only supported by GCodePlot
-    <ObservableProperty> Private _InsideOutCuttingOrder As Boolean = False
-    Public ReadOnly Property OptimisationTimeout As Integer
-        Get
-            Return If(OptimisedToolPath, 60, 0)
-        End Get
-    End Property
+
     Public ReadOnly Property Area As String
         Get
             Return $"""0,0,{WorkAreaWidth},{WorkAreaHeight}"""

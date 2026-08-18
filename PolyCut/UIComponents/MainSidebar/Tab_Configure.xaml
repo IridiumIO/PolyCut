@@ -186,7 +186,7 @@
                                 <CheckBox x:Name="extractSingleColor"
                                           Grid.Row="2"
                                           Margin="-10 0 0 0"
-                                          Content="Extract one colour"
+                                          Content="Extract one colour" Height="35"
                                           IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
                                     <CheckBox.ToolTip>
                                         <TextBlock TextAlignment="Left" TextWrapping="Wrap">
@@ -246,23 +246,6 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledControl Margin="0 5 0 0"
-                                                  IsEnabled="{Binding MainVM.UsingGCodePlot}"
-                                                  LabelText="Cutting order" ToolTipService.ShowOnDisabled="True">
-                                <local:LabeledControl.ValueContent>
-                                    <ComboBox Width="120" HorizontalAlignment="Right" SelectedIndex="{Binding MainVM.Configuration.InsideOutCuttingOrder}">
-                                        <ComboBoxItem Content="Outer First" />
-                                        <ComboBoxItem Content="Inner First" />
-                                    </ComboBox>
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        For each object, whether outer features or inner features are cut first.<LineBreak /><LineBreak />
-                                        For GCodePlot Processor only</TextBlock>
-                                </local:LabeledControl.ToolTip>
-                            </local:LabeledControl>
-
-
 
                         </StackPanel>
                     </ui:CardExpander>
@@ -283,17 +266,6 @@
                         </ui:CardExpander.Header>
 
                         <StackPanel Margin="15 0 15 0" FlowDirection="LeftToRight">
-
-                            <local:LabeledNumberBoxControl IsEnabled="{Binding MainVM.UsingGCodePlot}"
-                                                           LabelText="Drawing Angle"
-                                                           Text="{Binding MainVM.Configuration.DrawingConfig.DrawingDirection, Converter={StaticResource NullableIntConverter}}"
-                                                           TextBoxWidth="120" UnitText="°">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Specifies the preferred drawing direction for shape outlines.<LineBreak /><LineBreak />
-                                        0° represents East, with positive values rotating counterclockwise.</TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
 
 
                             <CheckBox x:Name="optimiseDrawingPaths"
@@ -324,8 +296,7 @@
                             <CheckBox x:Name="keepOutlines"
                                       Margin="0 5 0 0"
                                       Content="Keep Outlines"
-                                      IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}"
-                                      IsEnabled="{Binding MainVM.UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}">
+                                      IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}">
                                 <CheckBox.ToolTip>
                                     <TextBlock TextAlignment="Left" TextWrapping="Wrap">
                                         Whether shape outlines should be drawn, or ignored.<LineBreak /><LineBreak />
@@ -419,7 +390,6 @@
                             <CheckBox Margin="0 5 0 0"
                                       Content="Draw Outlines Before Fill"
                                       IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}"
-                                      IsEnabled="{Binding MainVM.UsingGCodePlot, Converter={StaticResource InverseBoolConverter}}"
                                       ToolTipService.ShowOnDisabled="True">
                                 <CheckBox.ToolTip>
                                     <TextBlock TextAlignment="Left" TextWrapping="Wrap">

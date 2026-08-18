@@ -33,14 +33,6 @@
                       IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
                       Unchecked="AddToStartMenuCheckBox_Unchecked" />
 
-            <!--<Separator Margin="0 10" />
-            <Label Margin="0 0 0 10" Content="GCode Generator" FontWeight="SemiBold" />
-            <ComboBox MinWidth="300" HorizontalAlignment="Left" SelectedIndex="{Binding MainVM.UsingGCodePlot, Mode=TwoWay}">
-                <ComboBoxItem Content="Polycut.Core" />
-                <ComboBoxItem Content="GCodePlot" />
-            </ComboBox>-->
-
-
             <Separator Margin="0 10" />
             <Label Content="Grid Settings" FontWeight="SemiBold" />
             <Grid HorizontalAlignment="Stretch">

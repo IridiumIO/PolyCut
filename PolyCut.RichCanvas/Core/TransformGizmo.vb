@@ -392,10 +392,17 @@ Public Class TransformGizmo
                 Dim pc = TryCast(_canvas, PolyCanvas)
                 If pc IsNot Nothing Then
                     Dim below = GeometryHitTestHelper.HitTestTopmost(pc.ChildrenCollection, canvasPos)
-                    If below IsNot Nothing AndAlso Not _selectionManager.SelectedItems.Contains(below) Then
-                        _selectionManager.SelectItem(below, False)
-                        e.Handled = True
-                        Return
+                    If below IsNot Nothing Then
+                        Dim isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
+                        If isShiftPressed Then
+                            _selectionManager.ToggleItem(below)
+                            e.Handled = True
+                            Return
+                        ElseIf Not _selectionManager.SelectedItems.Contains(below) Then
+                            _selectionManager.SelectItem(below, False)
+                            e.Handled = True
+                            Return
+                        End If
                     End If
                 End If
                 StartMove(canvasPos)

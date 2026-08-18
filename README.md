@@ -31,7 +31,7 @@ Download the latest version from Github Releases.
 <img alt="Static Badge" src="https://img.shields.io/badge/DOWNLOAD-steelblue?style=for-the-badge&logo=github&link=https%3A%2F%2Fgithub.com%2FIridiumIO%2FPolyCut%2Freleases">
 </p>
 
-The application itself is portable (no installation required!) however configuration data is saved in `%LocalAppData%/IridiumIO/PolyCut`
+The application itself is portable (no installation required!). Configuration data is saved in `%LocalAppData%/IridiumIO/PolyCut` by default, but placing the application in any folder called `PolyCut` will make it use that for it's config data, allowing it to be truly portable
 
 
 # Features

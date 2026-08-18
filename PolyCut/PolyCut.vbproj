@@ -23,12 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\235mm Cutting Mat.json" />
-    <None Remove="Resources\235mm Cutting Mat.svg" />
     <None Remove="Resources\banner_dark.svg" />
-    <None Remove="Resources\banner_light.svg" />
-    <None Remove="Resources\CuttingMat.Dark.svg" />
-    <None Remove="Resources\CuttingMat.svg" />
     <None Remove="Resources\gcodeplot.exe" />
     <None Remove="Resources\logo.ico" />
     <None Remove="Resources\logo.svg" />
@@ -36,14 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\235mm Cutting Mat.json" />
-    <EmbeddedResource Include="Resources\235mm Cutting Mat.svg" />
-    <EmbeddedResource Include="Resources\CuttingMat.Dark.svg" />
-    <EmbeddedResource Include="Resources\CuttingMat.svg" />
     <EmbeddedResource Include="Resources\gcodeplot.exe" />
     <EmbeddedResource Include="Resources\vtracer.exe" />
     <Resource Include="Resources\banner_dark.svg" />
-    <Resource Include="Resources\banner_light.svg" />
     <Resource Include="Resources\logo.ico" />
     <Resource Include="Resources\logo.svg" />
   </ItemGroup>
@@ -68,14 +58,12 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="NuGet.Versioning" Version="7.9.0" />
     <PackageReference Include="SharpVectors.Wpf" Version="1.8.5" />
-    <PackageReference Include="spicermicer.ZoomBorder" Version="1.0.0" />
     <PackageReference Include="Svg" Version="3.4.6" />
     <PackageReference Include="ValueConverters" Version="3.0.26" />
     <PackageReference Include="WPF-UI" Version="4.3.0">
       <GeneratePathProperty>True</GeneratePathProperty>
     </PackageReference>
     <PackageReference Include="WPF-UI.DependencyInjection" Version="4.2.0" />
-    <PackageReference Include="WPF.JoshSmith.Controls.DragCanvas" Version="2.0.1" />
   </ItemGroup>
 
   <ItemGroup>

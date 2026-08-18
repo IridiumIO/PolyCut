@@ -30,9 +30,8 @@ Public Class SettingsBase : Implements ISettingsService
     End Function
 
     Public Async Function InitialiseSettings(Of T As {ISaveable, New})(appName As String, Subfolder As String) As Task Implements ISettingsService.InitialiseSettings
-        Dim DataFolder = IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", appName)
 
-        SettingsFolder = New IO.DirectoryInfo(IO.Path.Combine(DataFolder, Subfolder))
+        SettingsFolder = New IO.DirectoryInfo(IO.Path.Combine(SettingsHandler.DataFolder.FullName, Subfolder))
 
         If Not SettingsFolder.Exists Then SettingsFolder.Create()
 

@@ -22,18 +22,24 @@ Public Class SettingsHandler : Inherits ObservableObject
 
     Public Shared Property DataFolder As IO.DirectoryInfo = New IO.DirectoryInfo(IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IridiumIO", "PolyCut"))
 
-    Public Shared Property SettingsJSONFile As IO.FileInfo = New IO.FileInfo(IO.Path.Combine(DataFolder.FullName, "settings.json"))
+    Public Shared Property SettingsJSONFile As IO.FileInfo
 
     Public Shared Property ConfigurationSettings As ConfigurationsSettings = New ConfigurationsSettings
     Public Shared Property PrinterSettings As PrinterSettings = New PrinterSettings
     Public Shared Property UISettings As UISettings = New UISettings
 
-    Shared Async Function InitialiseSettings() As Task
+    Shared Async Function InitialiseSettings(truePortable As Boolean) As Task
+
+        If truePortable Then DataFolder = New IO.DirectoryInfo(IO.Path.Combine(IO.Path.GetDirectoryName(AppContext.BaseDirectory), ".PolyCutData"))
+
 
         If Not DataFolder.Exists Then DataFolder.Create()
         Await PrinterSettings.InitialiseSettings(Of Printer)("PolyCut", $"{NameOf(Printer)}s")
         Await ConfigurationSettings.InitialiseSettings(Of ProcessorConfiguration)("PolyCut", $"{NameOf(ProcessorConfiguration)}s")
         Await UISettings.InitialiseSettings(Of UIConfiguration)("PolyCut", $"UIConfiguration")
+
+        SettingsJSONFile = New IO.FileInfo(IO.Path.Combine(DataFolder.FullName, "settings.json"))
+
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
 
         GenerateEV()

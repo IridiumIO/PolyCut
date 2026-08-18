@@ -36,7 +36,13 @@ Public Class ApplicationHostService
     Private Async Function HandleActivationAsync() As Task
         Await Task.CompletedTask
 
-        Await SettingsHandler.InitialiseSettings
+        Dim currentDir = AppContext.BaseDirectory
+        If New IO.DirectoryInfo(currentDir).Name.ToLower = "polycut" Then
+            Await SettingsHandler.InitialiseSettings(True)
+        Else
+            Await SettingsHandler.InitialiseSettings(False)
+        End If
+
 
         If Not Application.Current.Windows.OfType(Of MainWindow)().Any() Then
             Dim navigationWindow = _serviceProvider.GetRequiredService(Of MainWindow)()

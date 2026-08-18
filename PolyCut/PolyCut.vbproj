@@ -24,14 +24,12 @@
 
   <ItemGroup>
     <None Remove="Resources\banner_dark.svg" />
-    <None Remove="Resources\gcodeplot.exe" />
     <None Remove="Resources\logo.ico" />
     <None Remove="Resources\logo.svg" />
     <None Remove="Resources\vtracer.exe" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\gcodeplot.exe" />
     <EmbeddedResource Include="Resources\vtracer.exe" />
     <Resource Include="Resources\banner_dark.svg" />
     <Resource Include="Resources\logo.ico" />

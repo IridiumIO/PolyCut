@@ -687,9 +687,9 @@ Partial Public Class MainViewModel
 
         Configuration.SoftwareVersion = SettingsHandler.Version
 
-        Dim generator As IGenerator = If(UsingGCodePlot,
-            New GCodePlotGenerator(Configuration, Printer, GenerateSVGText),
-            New PolyCutGenerator(Configuration, Printer, DrawableCollection.Where(Function(d) Not d.IsHidden).ToList(), PolyCanvas.ActiveInstance))
+        Dim generator As IGenerator = New PolyCutGenerator(Configuration, Printer, DrawableCollection.
+                                                           Where(Function(d) Not d.IsHidden).
+                                                           ToList(), PolyCanvas.ActiveInstance)
 
         Dim retcode = Await generator.GenerateGcodeAsync
 
@@ -748,28 +748,6 @@ Partial Public Class MainViewModel
         End If
     End Sub
 
-
-    Function GenerateSVGText() As String
-        Dim outDoc As New Svg.SvgDocument With {
-            .Width = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedWidth),
-            .Height = New SvgUnit(Svg.SvgUnitType.Millimeter, Printer.BedHeight),
-            .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)
-        }
-
-        For Each drawableL In DrawableCollection.Where(Function(d) Not d.IsHidden)
-            Dim finalElement = drawableL?.GetTransformedSVGElement
-
-            If finalElement?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight) Then
-                outDoc.Children.Add(finalElement)
-            ElseIf TypeOf (drawableL) Is DrawablePath Then
-                If drawableL?.IsWithinBounds(Printer.BedWidth, Printer.BedHeight, PolyCanvas.ActiveInstance) Then
-                    outDoc.Children.Add(finalElement)
-                End If
-            End If
-        Next
-
-        Return SVGImportService.SVGDocumentToString(outDoc)
-    End Function
 
     ' -----------------
     ' Boolean / Geometry operations

@@ -172,7 +172,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
     End Sub
 
 
-    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim tb As TextBox = CType(DrawableElement, TextBox)
 
         ' Ensure layout is ready; otherwise rects are often empty/invalid
@@ -203,10 +203,10 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         .Text = tb.Text,
         .FontFamily = tb.FontFamily.Source,
         .FontSize = tb.FontSize,
-        .FontWeight = SvgFontWeight.Normal,
+        .FontWeight = If(tb.FontWeight = FontWeights.Bold, SvgFontWeight.Bold, SvgFontWeight.Normal),
         .Fill = If(fillServer, SvgPaintServer.None),
         .TextAnchor = SvgTextAnchor.Start,
-        .FontStyle = SvgFontStyle.Normal,
+        .FontStyle = If(tb.FontStyle = FontStyles.Italic, SvgFontStyle.Italic, SvgFontStyle.Normal),
         .LengthAdjust = SvgTextLengthAdjust.Spacing,
         .Stroke = SvgPaintServer.None
     }

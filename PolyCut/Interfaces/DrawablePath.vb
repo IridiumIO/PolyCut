@@ -12,7 +12,7 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
         Name = VisualName
     End Sub
 
-    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim ln = CType(DrawableElement, Path)
 
         Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(ln.Data.ToString())

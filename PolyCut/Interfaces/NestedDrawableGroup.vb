@@ -196,7 +196,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
 
 
-    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim g As New SvgGroup()
         Return g
     End Function

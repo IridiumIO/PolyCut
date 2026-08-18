@@ -13,7 +13,7 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
         Name = VisualName
     End Sub
 
-    Public Overloads Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
 
         Dim rt = CType(DrawableElement, Rectangle)
 

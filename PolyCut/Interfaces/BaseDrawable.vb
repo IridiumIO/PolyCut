@@ -105,7 +105,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
         Return SvgExportHelper.BakeToRoot(copy, DrawableElement, stretchAsWrapper:=BakeStretchAsWrapper)
     End Function
 
-    Public Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
+    Public Overridable Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Throw New NotImplementedException()
     End Function
 

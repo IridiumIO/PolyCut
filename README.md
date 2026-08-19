@@ -85,7 +85,7 @@ If you have an Ender 3 S1 or other printer that can take [this hotswap mount](ht
 Otherwise, you'll find vinyl cutters on Printables/Thingiverse. I *strongly* recommend using one that has a spring in it, because a 3D printer bed is nowhere near level enough for the accuracy needed to consistently cut through vinyl. A spring will allow a bit of flexibility and pressure to keep the blade in contact with the cutting mat. 
 
 ### (Optional) Tutorial on setting up Klipper to quickly swap between 3D printing and non-printing modes 
-[Klipper Setup.md](https://github.com/IridiumIO/PolyCut/blob/master/Klipper%20Setup.md#klipper-setup)
+[Klipper Setup.md](Data/Klipper%20Setup.md)
 
 
 &nbsp;

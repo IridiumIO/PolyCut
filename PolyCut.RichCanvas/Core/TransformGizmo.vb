@@ -311,37 +311,23 @@ Public Class TransformGizmo
 
 
     Private Function GetSelectionRotation() As Double
+
         If _selectionManager.Count <> 1 Then Return 0
 
         Dim item = _selectionManager.SelectedItems.FirstOrDefault()
-        If item?.DrawableElement IsNot Nothing Then
-            Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
-            If wrapper IsNot Nothing Then
-                Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-                If rotateTransform IsNot Nothing Then
-                    Return rotateTransform.Angle
-                End If
-            End If
-        End If
+        Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
+        Return TransformAction.GetRotationAngle(wrapper)
 
-        Return 0
     End Function
 
     Private Function GetCurrentRotationAngle() As Double
         ' Get the current rotation angle of the first selected item during rotation
-        If _selectionManager.Count > 0 Then
-            Dim item = _selectionManager.SelectedItems.FirstOrDefault()
-            If item?.DrawableElement IsNot Nothing Then
-                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
-                If wrapper IsNot Nothing Then
-                    Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-                    If rotateTransform IsNot Nothing Then
-                        Return rotateTransform.Angle
-                    End If
-                End If
-            End If
-        End If
-        Return 0
+        If _selectionManager.Count <= 0 Then Return 0
+
+        Dim item = _selectionManager.SelectedItems.FirstOrDefault()
+        Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
+        Return TransformAction.GetRotationAngle(wrapper)
+
     End Function
 
     Private Function GetCurrentDimensions() As (Width As Double, Height As Double)?

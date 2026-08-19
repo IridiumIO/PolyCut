@@ -326,11 +326,17 @@ Public Class ZoomBorder
         HandleMouseDown(e, isPreview:=True)
     End Sub
 
+    Private _middleMouseDownPosStart As Point
+
     Private Sub HandleMouseDown(e As MouseButtonEventArgs, isPreview As Boolean)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
         If DrawingManager.TextEditor.HandleTextMouseDown(CanvasMode, e) Then Return
+
+        If e.ChangedButton = MouseButton.Middle Then
+            _middleMouseDownPosStart = e.GetPosition(Me)
+        End If
 
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
             Dim _polyCanvas = GetPolyCanvas()
@@ -377,11 +383,19 @@ Public Class ZoomBorder
             Return
         End If
 
+        If e.ChangedButton = MouseButton.Middle AndAlso DistanceTo(e.GetPosition(Me), _middleMouseDownPosStart) < 3 Then
+            Reset()
+        End If
+
 
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then : MoveUp()
-        ElseIf GetAction(e.ChangedButton) = ZoomBorderMouseAction.Reset Then : Reset()
-        End If
+            ElseIf GetAction(e.ChangedButton) = ZoomBorderMouseAction.Reset Then : Reset()
+            End If
     End Sub
+
+    Private Function DistanceTo(p1 As Point, p2 As Point) As Double
+        Return Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2))
+    End Function
 
     Private Sub ZoomBorder_MouseWheel(ByVal sender As Object, ByVal e As MouseWheelEventArgs)
         ZoomByWheel(e.Delta)

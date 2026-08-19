@@ -440,6 +440,13 @@ Public Class TransformGizmo
         Dim bounds = _selectionManager?.GetUnrotatedBounds()
         If bounds.HasValue Then
             Dim rect = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
+
+            Dim rotationAngle = GetSelectionRotation()
+            If Math.Abs(rotationAngle) > 0.01 Then
+                Dim centerPt = New Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2)
+                p = InverseRotatePoint(p, centerPt, rotationAngle)
+            End If
+
             rect.Inflate(5, 5)
             If rect.Contains(p) Then Return True
         End If

@@ -318,7 +318,7 @@ Partial Public Class MainViewModel
 
     <RelayCommand>
     Private Sub SelectAll()
-        DrawableCollection.ForEach(Sub(d) PolyCanvas.AddToSelection(d))
+        DrawableCollection.Where(Function(f) TypeOf (f) IsNot DrawableGroup).ForEach(Sub(d) PolyCanvas.AddToSelection(d))
     End Sub
 
 

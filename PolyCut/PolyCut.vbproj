@@ -25,7 +25,6 @@
   <ItemGroup>
     <None Remove="Resources\banner_dark.svg" />
     <None Remove="Resources\logo.ico" />
-    <None Remove="Resources\logo.svg" />
     <None Remove="Resources\vtracer.exe" />
   </ItemGroup>
 
@@ -33,7 +32,6 @@
     <EmbeddedResource Include="Resources\vtracer.exe" />
     <Resource Include="Resources\banner_dark.svg" />
     <Resource Include="Resources\logo.ico" />
-    <Resource Include="Resources\logo.svg" />
   </ItemGroup>
 
   <ItemGroup>

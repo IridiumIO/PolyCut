@@ -213,7 +213,7 @@ Public Class TransformGizmo
         Dim dpi = VisualTreeHelper.GetDpi(Me).PixelsPerDip
 
         ' Map canvas-space selection bounds into this overlay's 1:1 screen space
-        Dim rect = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
+        Dim rect = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
         Dim rotationAngle = GetSelectionRotation()
         Dim hasRotation = Math.Abs(rotationAngle) > 0.01
 
@@ -439,7 +439,7 @@ Public Class TransformGizmo
     Private Function IsPointOverGizmoContent(p As Point) As Boolean
         Dim bounds = _selectionManager?.GetUnrotatedBounds()
         If bounds.HasValue Then
-            Dim rect = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
+            Dim rect = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
 
             Dim rotationAngle = GetSelectionRotation()
             If Math.Abs(rotationAngle) > 0.01 Then
@@ -476,7 +476,7 @@ Public Class TransformGizmo
 
     Private Sub HandleDoubleClick(pos As Point, bounds As Rect)
         ' pos is in gizmo (screen) space; map the canvas-space bounds into it.
-        Dim hitBounds = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds)
+        Dim hitBounds = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds)
         hitBounds.Inflate(5, 5)
 
         If hitBounds.Contains(pos) AndAlso _selectionManager.Count = 1 Then
@@ -653,7 +653,7 @@ Public Class TransformGizmo
         If Not bounds.HasValue Then Return Nothing
 
         ' pos is in gizmo (1:1 screen) space - map the canvas-space bounds into it.
-        Dim mapped = TransformMath.TransformBounds(GetCanvasToGizmoMatrix(), bounds.Value)
+        Dim mapped = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
 
         ' ----- inverse rotate mouse into gizmo space -----
         Dim rotationAngle = GetSelectionRotation()

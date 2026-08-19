@@ -16,22 +16,6 @@ Public Module TransformMath
         Return New Matrix(p1.X - p0.X, p1.Y - p0.Y, p2.X - p0.X, p2.Y - p0.Y, p0.X, p0.Y)
     End Function
 
-    'Get AABB of rect after matrix transform
-    Public Function TransformBounds(m As Matrix, r As Rect) As Rect
-        If r.IsEmpty Then Return Rect.Empty
-
-        Dim topLeft = m.Transform(New Point(r.Left, r.Top))
-        Dim topRight = m.Transform(New Point(r.Right, r.Top))
-        Dim bottomLeft = m.Transform(New Point(r.Left, r.Bottom))
-        Dim bottomRight = m.Transform(New Point(r.Right, r.Bottom))
-
-        Dim minX = Math.Min(topLeft.X, Math.Min(topRight.X, Math.Min(bottomLeft.X, bottomRight.X)))
-        Dim minY = Math.Min(topLeft.Y, Math.Min(topRight.Y, Math.Min(bottomLeft.Y, bottomRight.Y)))
-        Dim maxX = Math.Max(topLeft.X, Math.Max(topRight.X, Math.Max(bottomLeft.X, bottomRight.X)))
-        Dim maxY = Math.Max(topLeft.Y, Math.Max(topRight.Y, Math.Max(bottomLeft.Y, bottomRight.Y)))
-
-        Return New Rect(minX, minY, maxX - minX, maxY - minY)
-    End Function
 
     'Accumulated matrix from an element to a visual ancestor. TODO handle the guard (no idea why it was throwing, can't see vsual issues)
     Public Function GetAccumulatedMatrix(element As FrameworkElement, relativeTo As UIElement) As Matrix

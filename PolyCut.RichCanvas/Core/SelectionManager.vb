@@ -178,7 +178,7 @@ Public Class SelectionManager
         If m.IsIdentity Then Return New Rect(left, top, width, height)
 
 
-        Return TransformMath.TransformBounds(m, New Rect(0, 0, width, height))
+        Return New MatrixTransform(m).TransformBounds(New Rect(0, 0, width, height))
     End Function
 
     Private Sub InvalidateBounds()

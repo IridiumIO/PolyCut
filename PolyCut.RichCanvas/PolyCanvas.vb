@@ -542,9 +542,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         Dim wrapper As ContentControl = CType(sender, ContentControl)
         Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
 
-        If TransformGizmo.HandleTextBoxSizeChanged(wrapper, e) Then
-            Return
-        End If
+        If TransformAction.HandleTextBoxSizeChanged(wrapper, e) Then Return
 
         Dim originalDimensions = MetadataHelper.GetOriginalDimensions(wrapper)
         Dim originalEndPoint = MetadataHelper.GetOriginalEndPoint(wrapper)

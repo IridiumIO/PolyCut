@@ -186,13 +186,13 @@ Public Class ZoomBorder
 
     Public ReadOnly Property TranslateTransform As TranslateTransform
         Get
-            Return Child.RenderTransform.CastAs(Of TransformGroup).Children.First(Function(tr) TypeOf tr Is TranslateTransform).CastAs(Of TranslateTransform)
+            Return TryCast(Child.RenderTransform, TransformGroup).Children.First(Function(tr) TypeOf tr Is TranslateTransform)
         End Get
     End Property
 
     Public ReadOnly Property ScaleTransform As ScaleTransform
         Get
-            Return Child.RenderTransform.CastAs(Of TransformGroup).Children.First(Function(tr) TypeOf tr Is ScaleTransform).CastAs(Of ScaleTransform)
+            Return TryCast(Child.RenderTransform, TransformGroup).Children.First(Function(tr) TypeOf tr Is ScaleTransform)
         End Get
     End Property
 
@@ -486,20 +486,3 @@ Public Class ZoomBorder
     End Function
 
 End Class
-
-Module ExtensionMethods
-    <Extension()>
-    Public Function CastAs(Of T)(obj As Object) As T
-        If TypeOf obj Is T Then
-            Return DirectCast(obj, T)
-        Else
-            Return Nothing
-        End If
-    End Function
-
-    <Extension()>
-    Public Function TryCastAs(Of T As Class)(obj As Object) As T
-        Return TryCast(obj, T)
-    End Function
-
-End Module

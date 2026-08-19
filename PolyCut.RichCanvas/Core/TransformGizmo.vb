@@ -970,9 +970,6 @@ Public Class TransformGizmo
         Next
     End Sub
 
-    Public Shared Function HandleTextBoxSizeChanged(wrapper As ContentControl, e As SizeChangedEventArgs) As Boolean
-        Return TransformAction.HandleTextBoxSizeChanged(wrapper, e)
-    End Function
 
 End Class
 

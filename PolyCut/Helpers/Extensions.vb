@@ -38,13 +38,6 @@ Public Module Extensions
 
         Return b.X >= 0 AndAlso b.Y >= 0 AndAlso (b.Right <= x) AndAlso (b.Bottom <= y)
 
-        'If cxLeft >= 0 AndAlso cxTop >= 0 AndAlso svgElement.Bounds.Width + cxLeft < x AndAlso svgElement.Bounds.Height + cxTop < y Then
-        'Return True
-        'End If
-
-        Return False
-
-
     End Function
 
     <Extension()>

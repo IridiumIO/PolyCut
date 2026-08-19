@@ -409,39 +409,28 @@ Public Class ZoomBorder
         Dim zoomFactor As Double = delta * ScaleAmount
         Dim targetScale As Double = Scale + (zoomFactor * Scale)
 
-        ' Constrain the new scale within the allowed range
-        targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
-
         ' Early return if zooming out too much
         If delta <= 0 AndAlso (ScaleTransform.ScaleX < ScaleMin OrElse ScaleTransform.ScaleY < ScaleMin) Then Return
 
-        Dim relative As Point = Mouse.GetPosition(Child)
-        ' Calculate the absolute positions based on the current scale
-        Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
-        Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
-
-
-        ' Apply the new scale
-        Scale = targetScale
-
-        ' Adjust the translation based on the new scale
-        TranslateTransform.X = absoluteX - (relative.X * Scale)
-        TranslateTransform.Y = absoluteY - (relative.Y * Scale)
+        ZoomToPoint(targetScale)
     End Sub
 
     Public Sub ZoomByLinear(delta As Double)
         If Child Is Nothing Then Return
-        Dim targetScale As Double = Scale + delta
-        ' Constrain the new scale within the allowed range
+        ZoomToPoint(Scale + delta)
+    End Sub
+
+    Private Sub ZoomToPoint(targetScale As Double)
+        If Child Is Nothing Then Return
+
         targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
+
         Dim relative As Point = Mouse.GetPosition(Child)
-        ' Calculate the absolute positions based on the current scale
         Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
         Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
-        ' Apply the new scale
+
         Scale = targetScale
 
-        ' Adjust the translation based on the new scale
         TranslateTransform.X = absoluteX - (relative.X * Scale)
         TranslateTransform.Y = absoluteY - (relative.Y * Scale)
     End Sub

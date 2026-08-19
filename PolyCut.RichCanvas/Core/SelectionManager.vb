@@ -150,7 +150,7 @@ Public Class SelectionManager
             If drawable?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
-                    Dim itemBounds = GetTransformedBounds(wrapper)
+                    Dim itemBounds = TransformMath.GetWorldBounds(wrapper)
 
                     minX = Math.Min(minX, itemBounds.Left)
                     minY = Math.Min(minY, itemBounds.Top)
@@ -165,21 +165,6 @@ Public Class SelectionManager
         Return New Rect(minX, minY, maxX - minX, maxY - minY)
     End Function
 
-    Private Function GetTransformedBounds(wrapper As ContentControl) As Rect
-        Dim left = Canvas.GetLeft(wrapper)
-        Dim top = Canvas.GetTop(wrapper)
-        Dim width = wrapper.ActualWidth
-        Dim height = wrapper.ActualHeight
-
-        ' Accumulate wrapper -> canvas via the visual tree and gets the AABB.
-        Dim parentCanvas = TryCast(wrapper.Parent, UIElement)
-        Dim m = TransformMath.GetAccumulatedMatrix(wrapper, parentCanvas)
-
-        If m.IsIdentity Then Return New Rect(left, top, width, height)
-
-
-        Return New MatrixTransform(m).TransformBounds(New Rect(0, 0, width, height))
-    End Function
 
     Private Sub InvalidateBounds()
         _boundsInvalid = True

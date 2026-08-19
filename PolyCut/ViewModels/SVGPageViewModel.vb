@@ -148,21 +148,24 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         Dim minY As Double = Double.MaxValue
         Dim maxX As Double = Double.MinValue
         Dim maxY As Double = Double.MinValue
+        Dim found As Boolean = False
 
         For Each selected In selectedItems
             If selected?.DrawableElement Is Nothing Then Continue For
             Dim wrapper = TryCast(selected.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
 
-            Dim rotatedCorners = TransformMath.RotatedCornersOf(wrapper)
-            For Each corner In rotatedCorners
-                minX = Math.Min(minX, corner.X)
-                minY = Math.Min(minY, corner.Y)
-                maxX = Math.Max(maxX, corner.X)
-                maxY = Math.Max(maxY, corner.Y)
-            Next
+            Dim b = TransformMath.GetWorldBounds(wrapper)
+            If b.IsEmpty Then Continue For
+
+            minX = Math.Min(minX, b.Left)
+            minY = Math.Min(minY, b.Top)
+            maxX = Math.Max(maxX, b.Right)
+            maxY = Math.Max(maxY, b.Bottom)
+            found = True
         Next
 
+        If Not found Then Return New Point(0, 0)
         Return New Point((minX + maxX) / 2, (minY + maxY) / 2)
     End Function
 

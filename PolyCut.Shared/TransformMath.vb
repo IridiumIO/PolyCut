@@ -59,47 +59,29 @@ Public Module TransformMath
         Dim rotatedX = cosA * (fxNew - newPivotX) - sinA * (fyNew - newPivotY)
         Dim rotatedY = sinA * (fxNew - newPivotX) + cosA * (fyNew - newPivotY)
 
-        Return (fixedWorldX - newPivotX - rotatedX,
-            fixedWorldY - newPivotY - rotatedY)
+        Return (fixedWorldX - newPivotX - rotatedX, fixedWorldY - newPivotY - rotatedY)
     End Function
 
 
-
-    Public Function RotatedCornersOf(wrapper As ContentControl) As List(Of Point)
-        Dim result As New List(Of Point)
-        If wrapper Is Nothing Then Return result
+    ' Axis-aligned bounds of a wrapper in its parent (canvas) coordinate space.
+    Public Function GetWorldBounds(wrapper As ContentControl) As Rect
+        If wrapper Is Nothing Then Return Rect.Empty
 
         Dim left = Canvas.GetLeft(wrapper)
         Dim top = Canvas.GetTop(wrapper)
+        If Double.IsNaN(left) Then left = 0
+        If Double.IsNaN(top) Then top = 0
+
         Dim width = wrapper.ActualWidth
         Dim height = wrapper.ActualHeight
+        If width <= 0 OrElse height <= 0 Then Return New Rect(left, top, width, height)
 
-        Dim rotationAngle As Double = 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            rotationAngle = rotateTransform.Angle * Math.PI / 180.0
-        End If
+        Dim parentCanvas = TryCast(wrapper.Parent, UIElement)
+        Dim m = GetAccumulatedMatrix(wrapper, parentCanvas)
 
-        Dim transformOrigin = wrapper.RenderTransformOrigin
-        Dim pivotX = left + width * transformOrigin.X
-        Dim pivotY = top + height * transformOrigin.Y
+        If m.IsIdentity Then Return New Rect(left, top, width, height)
 
-        Dim corners() As Point = {
-            New Point(left, top),
-            New Point(left + width, top),
-            New Point(left + width, top + height),
-            New Point(left, top + height)
-        }
-
-        For Each corner In corners
-            Dim dx = corner.X - pivotX
-            Dim dy = corner.Y - pivotY
-            Dim rotatedX = pivotX + (dx * Math.Cos(rotationAngle) - dy * Math.Sin(rotationAngle))
-            Dim rotatedY = pivotY + (dx * Math.Sin(rotationAngle) + dy * Math.Cos(rotationAngle))
-            result.Add(New Point(rotatedX, rotatedY))
-        Next
-
-        Return result
+        Return New MatrixTransform(m).TransformBounds(New Rect(0, 0, width, height))
     End Function
 
 End Module

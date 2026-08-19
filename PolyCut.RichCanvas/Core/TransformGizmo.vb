@@ -105,16 +105,7 @@ Public Class TransformGizmo
 
     Private Function GetCanvasToGizmoMatrix() As Matrix
         If _canvas Is Nothing Then Return Matrix.Identity
-        Try
-            ' TransformToVisual requires both elements to be connected to the visual tree.
-            If PresentationSource.FromVisual(_canvas) IsNot Nothing AndAlso PresentationSource.FromVisual(Me) IsNot Nothing Then
-                Dim gt = _canvas.TransformToVisual(Me)
-                Dim tr = TryCast(gt, Transform)
-                If tr IsNot Nothing Then Return tr.Value
-            End If
-        Catch
-        End Try
-        Return Matrix.Identity
+        Return TransformMath.GetAccumulatedMatrix(_canvas, Me)
     End Function
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)

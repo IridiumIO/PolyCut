@@ -161,7 +161,6 @@ Public Class ColorPickerControl
     Private Async Sub EyedropperButton_Click(sender As Object, e As RoutedEventArgs)
         Dim before As Brush = CloneBrush(TryCast(CurrentColor, Brush))
         RaiseEvent PopupOpening(Me, EventArgs.Empty)
-        Debug.WriteLine("Eyedropper started")
         If _eyedropper Is Nothing Then
             _eyedropper = New Eyedropper(Window.GetWindow(Me))
         End If
@@ -171,7 +170,6 @@ Public Class ColorPickerControl
         If Not picked.HasValue Then
             If before IsNot Nothing Then SetCurrentValue(CurrentColorProperty, before)
             UpdateHexFromColor()
-            Debug.WriteLine("Eyedropper cancelled")
             Return
         End If
 

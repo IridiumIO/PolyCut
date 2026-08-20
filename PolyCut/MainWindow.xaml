@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                 xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
                  xmlns:local="clr-namespace:PolyCut"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
@@ -92,47 +93,44 @@
                             </Menu.Resources>
 
                             <ui:MenuItem x:Name="dlsk"
-                                         local:BackdropSampler.IntervalMs="5000"
+                                         loc:L.Value="_File" local:BackdropSampler.IntervalMs="5000"
                                          local:BackdropSampler.IsEnabled="{Binding IsWindows}"
                                          local:BackdropSampler.TintColor="#08FFFFFF"
-                                         Background="{StaticResource ApplicationBackgroundBrush}"
-                                         Header="_File">
+                                         Background="{StaticResource ApplicationBackgroundBrush}">
                                 <MenuItem.Resources>
                                     <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
                                 </MenuItem.Resources>
 
-                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + N" Command="{Binding NewProjectCommand}" Header="_New" />
+                                <ui:MenuItem loc:L.Context="New Project" loc:L.Value="_New" local:MenuItemHelper.Footer="Ctrl + N"
+                                             Command="{Binding NewProjectCommand}" />
                                 <Separator />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" Header="_Import SVG/Image..." />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" Header="_Load Project" />
+                                <MenuItem loc:L.Value="_Import SVG/Image..." local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" />
+                                <MenuItem loc:L.Value="_Load Project" local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" />
                                 <Separator />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" Header="_Save" />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" Header="S_ave As..." />
-                                <MenuItem local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" Header="_Export As SVG..." />
+                                <MenuItem loc:L.Value="_Save" local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" />
+                                <MenuItem loc:L.Value="S_ave As..." local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" />
+                                <MenuItem loc:L.Value="_Export As SVG..." local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" />
                             </ui:MenuItem>
 
-                            <ui:MenuItem Header="_Edit">
+                            <ui:MenuItem loc:L.Value="_Edit">
                                 <ui:MenuItem.Resources>
                                     <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
                                 </ui:MenuItem.Resources>
-                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + X"
+                                <ui:MenuItem loc:L.Value="Cut" local:MenuItemHelper.Footer="Ctrl + X"
                                              Command="{Binding CutSelectionCommand}"
-                                             Header="Cut"
                                              Icon="{ui:SymbolIcon Symbol=Cut20}" />
 
-                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + C"
+                                <ui:MenuItem loc:L.Value="Copy" local:MenuItemHelper.Footer="Ctrl + C"
                                              Command="{Binding CopySelectionCommand}"
-                                             Header="Copy"
                                              Icon="{ui:SymbolIcon Copy20}" />
 
-                                <ui:MenuItem local:MenuItemHelper.Footer="Ctrl + V"
+                                <ui:MenuItem loc:L.Value="_Paste" local:MenuItemHelper.Footer="Ctrl + V"
                                              Command="{Binding PasteClipboardCommand}"
-                                             Header="_Paste"
                                              Icon="{ui:SymbolIcon Symbol=ClipboardPaste20}" />
                             </ui:MenuItem>
 
 
-                            <ui:MenuItem Header="_View">
+                            <ui:MenuItem loc:L.Value="_View">
                                 <ui:MenuItem.Resources>
                                     <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
                                 </ui:MenuItem.Resources>
@@ -171,7 +169,7 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
                                     </ToggleButton>
-                                    <Label Margin="10 4 10 0" Content="Show Grid" />
+                                    <Label Margin="10 4 10 0" loc:L.Value="Show Grid" />
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal">
@@ -209,7 +207,7 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
                                     </ToggleButton>
-                                    <Label Margin="10 4 10 0" Content="Show Printer Working Area" />
+                                    <Label Margin="10 4 10 0" loc:L.Value="Show Printer Working Area" />
                                 </StackPanel>
 
 
@@ -242,7 +240,7 @@
                            TransitionDuration="250" UseLayoutRounding="True">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Margin="15 2"
-                                       Content="Home" NavigationCacheMode="Required"
+                                       loc:L.Context="Home Tab" loc:L.Value="Home" NavigationCacheMode="Required"
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:SVGPage}">
                     <ui:NavigationViewItem.Icon>
@@ -250,7 +248,7 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="15 2"
-                                       Content="Preview" NavigationCacheMode="Required"
+                                       loc:L.Context="Preview Tab" loc:L.Value="Preview" NavigationCacheMode="Required"
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:PreviewPage}">
                     <ui:NavigationViewItem.Icon>
@@ -258,7 +256,7 @@
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="15 2"
-                                       Content="Export" NavigationCacheMode="Required"
+                                       loc:L.Context="Export Tab" loc:L.Value="Export" NavigationCacheMode="Required"
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:ExportPage}">
                     <ui:NavigationViewItem.Icon>
@@ -267,7 +265,7 @@
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem x:Name="MonitorPage_NavigationButton"
                                        Margin="15 2"
-                                       Content="Monitor" NavigationCacheMode="Required"
+                                       loc:L.Context="Monitor Tab" loc:L.Value="Monitor" NavigationCacheMode="Required"
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:MonitorPage}">
                     <ui:NavigationViewItem.Icon>
@@ -279,7 +277,7 @@
             <ui:NavigationView.FooterMenuItems>
 
                 <ui:NavigationViewItem x:Name="GenerateGCodeButton">
-                    <ui:Button Command="{Binding GenerateGCodeCommand}" Content="Generate GCode" />
+                    <ui:Button loc:L.Value="Generate GCode" Command="{Binding GenerateGCodeCommand}" />
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="-5 0 15 1"
                                        NavigationCacheMode="Required"
@@ -320,7 +318,7 @@
         <KeyBinding Command="{Binding BrowseSVGCommand}" Gesture="Ctrl+I" />
         <KeyBinding Command="{Binding SelectAllCommand}" Gesture="Ctrl+A" />
         <KeyBinding Command="{Binding GenerateGCodeCommand}" Gesture="F5" />
-        
+
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasUpCommand}" Gesture="Ctrl+OemCloseBrackets" />
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasDownCommand}" Gesture="Ctrl+OemOpenBrackets" />
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasToTopCommand}" Gesture="Ctrl+Shift+OemCloseBrackets" />

@@ -1,0 +1,13 @@
+﻿schema = 1
+
+[locales."de-DE"]
+version = 1
+file = "de-DE.toml"
+
+[locales."fr-FR"]
+version = 1
+file = "fr-FR.toml"
+
+[locales."ja-JP"]
+version = 1
+file = "ja-JP.toml"

@@ -1,0 +1,351 @@
+# PolyCut Localisation
+# @version 1
+
+# ===================
+# Translations
+
+"A printer with the name '{0}' already exists. Do you want to overwrite it?" = "「{0}」という名前のプリンターは既に存在します。上書きしますか？"
+"Adaptive Sampling" = "適応サンプリング"
+"Adaptive Sampling Sensitivity" = "適応サンプリング感度"
+"Adaptive Sampling Window" = "適応サンプリング範囲"
+"Add Printer" = "プリンターを追加"
+"Added Preset" = "プリセットを追加しました"
+"Alignment" = "配置"
+"Allow Travel in Outlines" = "輪郭内の移動を許可"
+"An unknown error occurred" = "不明なエラーが発生しました"
+"Arrange" = "配置"
+"Automatically Begin Printing" = "印刷を自動開始"
+"Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used." = "パレットを最大 N 色まで自動的に減色します。制限しない場合は 0、使用する色数を制限する場合は値を指定します。"
+"Bed Dimensions" = "ベッド寸法"
+"Blade Settings" = "ブレード設定"
+"Boolean operation failed." = "ブール演算に失敗しました。"
+"Cancel Preview" = "プレビューをキャンセル"
+"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "開いたパス（線）にはブール演算を実行できません。すべての形状を閉じる必要があります。"
+"Cannot perform boolean operations on open paths. All shapes must be closed." = "開いたパスにはブール演算を実行できません。すべての形状を閉じる必要があります。"
+"Click to view release notes and download" = "クリックしてリリースノートを表示し、ダウンロード"
+"Close" = "閉じる"
+"Combine" = "結合"
+"Combine Shapes" = "形状を結合"
+"Copy" = "コピー"
+"Creating a new project will clear the current workspace. Continue?" = "新しいプロジェクトを作成すると、現在のワークスペースが消去されます。続行しますか？"
+"Cursor Colour" = "カーソル色"
+"Curve simplification tolerance in pixels (try 0.5-2.5). Higher values simplify more aggressively at the cost of precision." = "曲線簡略化の許容誤差（ピクセル、0.5～2.5 を推奨）。値を大きくするとより強く簡略化されますが、精度は低下します。"
+"Curve-fitting Precision" = "曲線フィッティング精度"
+"Cut" = "切断"
+"Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "階層型 Watershed アルゴリズムのカットレベル（0～255）。値を高くすると領域階層をより細かく分割し、内容の細部に沿う小さな領域が多く生成されます。値を低くすると領域が統合され、より少数の大きな領域になります。"
+"Darkest shading spacing" = "最暗部のシェーディング間隔"
+"Delete" = "削除"
+"Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "検出されたパッチのうち、このピクセル数未満のものを破棄します（0～128）。値を大きくするとトレース後に残る小さな点やノイズを除去しやすくなり、値を小さくすると細部を保持できます。"
+"Draw Outlines Before Fill" = "塗りつぶし前に輪郭を描画"
+"Drawing Group is already empty" = "描画グループは既に空です"
+"Drawing Line Colour" = "描画線の色"
+"Drawing Settings" = "描画設定"
+"Enter Printer Name" = "プリンター名を入力"
+"Enter URL or IP Address" = "URL または IP アドレスを入力"
+"Enter hex color (e.g., #FFFF0000 or #FF0000)" = "16 進カラーを入力（例: #FFFF0000 または #FF0000）"
+"Error" = "エラー"
+"Error Saving File" = "ファイル保存エラー"
+"Error uploading to Moonraker" = "Moonraker へのアップロード中にエラーが発生しました"
+"Extract one colour" = "1 色を抽出"
+"Failed to load language: {0}" = "言語の読み込みに失敗しました: {0}"
+"Failed to load project" = "プロジェクトの読み込みに失敗しました"
+"Failed to save project" = "プロジェクトの保存に失敗しました"
+"File Saved" = "ファイルを保存しました"
+"File name: " = "ファイル名: "
+"Fill" = "塗りつぶし"
+"Fill Style" = "塗りつぶしスタイル"
+"Finish Import" = "インポートを完了"
+"Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "白黒モードで使用する固定輝度しきい値（0～255）。この値より暗いピクセルは前景（黒）になり、この値以上のピクセルは背景（白）になります。適応サンプリングが有効な場合は無視されます。"
+"GCode" = "GCode"
+"Generate GCode" = "GCode を生成"
+"Global Settings" = "全般設定"
+"Grid Settings" = "グリッド設定"
+"Gridline Colour" = "グリッド線の色"
+"Import as SVG" = "SVG としてインポート"
+"Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." = "太さを増やしても実際の GCode のストローク幅には影響しません。ただし、0 に設定するとストロークは無効になります。"
+"Inset (Bottom)" = "内側余白（下）"
+"Inset (Left)" = "内側余白（左）"
+"Inset (Right)" = "内側余白（右）"
+"Inset (Top)" = "内側余白（上）"
+"Keep Outlines" = "輪郭を保持"
+"Language Load Error" = "言語読み込みエラー"
+"Lightest shading spacing" = "最明部のシェーディング間隔"
+"Load Project" = "プロジェクトを読み込む"
+"Loading a project will clear the current workspace. Continue?" = "プロジェクトを読み込むと、現在のワークスペースが消去されます。続行しますか？"
+"Maximum Colours (0 = Unlimited)" = "最大色数（0 = 無制限）"
+"Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "隣接するグラデーションレイヤー間に必要な最小色差（0～255）。値を高くすると似た色調が統合され、より少数で均一な色帯になります。値を低くすると、より多くの異なるレイヤーを使って滑らかなグラデーションを保持します。"
+"New Project" = "新しいプロジェクト"
+"No" = "いいえ"
+"No intersection found. The selected shapes do not overlap." = "交差部分が見つかりません。選択した形状は重なっていません。"
+"No paths on canvas" = "キャンバス上にパスがありません"
+"Number of Passes" = "パス回数"
+"Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." = "パス座標を書き出す際の小数点以下の桁数。精度を高くすると形状の正確さを保てますが処理時間が長くなります。精度を低くすると高速になりますが、形状が粗くなる場合があります。"
+"Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." = "RGB 各チャンネルで保持する有効ビット数（1～8）。精度を高くすると微妙な色差とより多くの異なるクラスタを保持できます。精度を低くすると似た色が統合され、より単純でポスタライズされたパレットになります。"
+"Optimise Drawing Paths" = "描画パスを最適化"
+"Overcut" = "オーバーカット"
+"Overwrite Printer?" = "プリンターを上書きしますか？"
+"Path Precision" = "パス精度"
+"Path Simplification" = "パス簡略化"
+"Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "ピクセルを前景と判定するために必要な、局所平均輝度からの低下率（既定 15%）。感度を高くすると微妙なコントラスト変化を検出しやすくなり、低くすると境界検出により強い局所コントラストが必要になります。"
+"Preview Page Settings" = "プレビューページ設定"
+"Printer Configuration" = "プリンター設定"
+"Printer Name:" = "プリンター名:"
+"Printer name is empty" = "プリンター名が空です"
+"Printer not saved. Name already exists." = "プリンターは保存されませんでした。同じ名前が既に存在します。"
+"Printer: " = "プリンター: "
+"Processing Settings" = "処理設定"
+"Project Loaded" = "プロジェクトを読み込みました"
+"Project Saved" = "プロジェクトを保存しました"
+"Properties" = "プロパティ"
+"Region Detection" = "領域検出"
+"Region Detection Settings" = "領域検出設定"
+"Rotation" = "回転"
+"SVG Exported" = "SVG をエクスポートしました"
+"S_ave As..." = "名前を付けて保_存..."
+"Save GCode" = "GCode を保存"
+"Saved Preset" = "プリセットを保存しました"
+"Saved to: {0}" = "保存先: {0}"
+"Scaling may not be correct" = "スケーリングが正しくない可能性があります"
+"Select at least 2 shapes to combine" = "結合するには少なくとも 2 つの形状を選択してください"
+"Send Preview" = "プレビューを送信"
+"Send to 3D Printer" = "3D プリンターへ送信"
+"Sends just the bounding box to the printer for preview, which runs in the travel height." = "プレビュー用に外接矩形のみをプリンターへ送信し、移動高さで実行します。"
+"Sent to Printer" = "プリンターへ送信しました"
+"Shading Settings" = "シェーディング設定"
+"Shading Threshold" = "シェーディングしきい値"
+"Shading angle" = "シェーディング角度"
+"Show Grid" = "グリッドを表示"
+"Show Printer Working Area" = "プリンターの作業領域を表示"
+"Show Travel Moves" = "移動動作を表示"
+"Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes." = "適応しきい値を計算するときにサンプリングする局所近傍の大きさ（ピクセル、0 = 自動）。大きい範囲では広い領域を平均化して滑らかな結果になり、小さい範囲では局所的な照明変化により正確に反応します。"
+"Spacing" = "間隔"
+"Speckle Filtering" = "微小ノイズ除去"
+"Stacking" = "積み重ね"
+"Start Menu Shortcut" = "スタートメニューのショートカット"
+"Stroke" = "ストローク"
+"Stroke Thickness" = "ストロークの太さ"
+"Style" = "スタイル"
+"Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "差分演算の結果が空のジオメトリになりました。形状が重なっていないか、結果が完全に差し引かれた可能性があります。"
+"Sucessfully uploaded {0} to Moonraker" = "{0} を Moonraker に正常にアップロードしました"
+"The host could not be found" = "ホストが見つかりませんでした"
+"Threshold" = "しきい値"
+"Tool Config" = "ツール設定"
+"Tool Diameter" = "ツール直径"
+"Toolhead Offset" = "ツールヘッドオフセット"
+"Tracing Mode" = "トレースモード"
+"Transform" = "変形"
+"Travel Line Colour" = "移動線の色"
+"Travel Speed" = "移動速度"
+"UI Language" = "UI 言語"
+"Union operation resulted in an empty geometry. This should not happen." = "和集合演算の結果が空のジオメトリになりました。これは通常発生しません。"
+"Unknown SVG Unit Type: " = "不明な SVG 単位タイプ: "
+"Update Available ▸ Version {0}" = "更新があります ▸ バージョン {0}"
+"Update Preview" = "プレビューを更新"
+"Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "単一の固定しきい値ではなく適応しきい値処理を使用します。画像全体ではなく局所的にしきい値を再計算するため、照明ムラのあるスキャン画像や写真に適しています。"
+"Working Area" = "作業領域"
+"Workspace cleared" = "ワークスペースを消去しました"
+"XOR operation resulted in an empty geometry. The shapes may be identical." = "XOR 演算の結果が空のジオメトリになりました。形状が同一である可能性があります。"
+"Yes" = "はい"
+"Z Height" = "Z 高さ"
+"Z Offset Per Pass" = "パスごとの Z オフセット"
+"_Edit" = "編_集"
+"_Export As SVG..." = "SVG としてエクスポー_ト..."
+"_File" = "ファイル(_F)"
+"_Import SVG/Image..." = "SVG/画像をインポー_ト..."
+"_Load Project" = "プロジェクトを読_み込む"
+"_Paste" = "貼り付け(_P)"
+"_Save" = "保_存"
+"_View" = "表_示"
+"version" = "バージョン"
+
+[context."3D Printer Host Type and address"]
+"Host Address" = "ホストアドレス"
+"Host Type" = "ホストタイプ"
+
+[context."3D Printer/Machine"]
+"Printer" = "プリンター"
+
+[context."Allow Travel in Outlines Tooltip"]
+"Allows the pen to travel through shape outlines without lifting the pen up to start the next line." = "次の線を開始する前にペンを持ち上げることなく、形状の輪郭を横切って移動できるようにします。"
+"Requires \"Optimise Drawing Paths\" to be enabled. Can massively improve overall speed" = "「描画パスを最適化」を有効にする必要があります。全体の速度を大幅に向上できる場合があります"
+
+[context."Arrange objects on canvas"]
+"Bring Forward" = "1 つ前面へ"
+"Bring To Front" = "最前面へ"
+"Send Backwards" = "1 つ背面へ"
+"Send To Back" = "最背面へ"
+
+[context."Bitmap to SVG Keyboard Controls Guide"]
+"Alt Key" = "Alt キー"
+"Controls" = "操作"
+"Ctrl + Click" = "Ctrl + クリック"
+"Ctrl + Hover" = "Ctrl + ホバー"
+"Ctrl + Shift + Click" = "Ctrl + Shift + クリック"
+"Enables/Disables ALL regions that match the colour of the region under the cursor" = "カーソル下の領域と同じ色のすべての領域を有効/無効にします"
+"Enables/Disables the shape region under the cursor, dictating whether it will be included in the import" = "カーソル下の形状領域を有効/無効にし、インポートに含めるかどうかを指定します"
+"Highlights the shape region under the cursor" = "カーソル下の形状領域を強調表示します"
+"Note: You may need to reduce the 'Maximum Colours' setting if not all expected regions are enabled/disabled" = "注: 想定したすべての領域を有効/無効にできない場合は、「最大色数」の設定を減らす必要がある場合があります"
+"Shows an overlay of the original image" = "元画像をオーバーレイ表示します"
+
+[context."Boolean Operations"]
+"Exclude" = "除外"
+"Intersect" = "交差"
+"Subtract" = "差分"
+"Union" = "和集合"
+
+[context."Clipboard Actions"]
+"Copy" = "コピー"
+"Cut" = "切断"
+"Paste" = "貼り付け"
+"Select All" = "すべて選択"
+
+[context."Curve-fitting Precision Tooltip"]
+"Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time." = "曲線は GCode へ変換するときに直線の集合として近似されます。この値は、曲線を構成する各セグメントの実質的な最小長を設定します。値を小さくすると精度が上がりますが、処理時間は大幅に増加します。"
+
+[context."Custom GCode Entries"]
+"Custom GCode" = "カスタム GCode"
+"End GCode" = "終了 GCode"
+"End GCode used when sending the bounding box preview to Klipper" = "外接矩形プレビューを Klipper に送信するときに使用する終了 GCode"
+"Preview End GCode (?)" = "プレビュー終了 GCode (?)"
+"Preview Start GCode (?)" = "プレビュー開始 GCode (?)"
+"Start GCode" = "開始 GCode"
+"Start GCode used when sending the bounding box preview to Klipper" = "外接矩形プレビューを Klipper に送信するときに使用する開始 GCode"
+
+[context."Cut/Draw tool work"]
+"Work" = "作業"
+"Work Speed" = "作業速度"
+
+[context."Darkest Shading Spacing Tooltip"]
+"How far apart drawn lines should be when shading the darkest parts of the image." = "画像の最も暗い部分をシェーディングするときの描画線の間隔。"
+
+[context."Drawing/shape elements"]
+"Elements" = "要素"
+
+[context."Export Tab"]
+"Export" = "エクスポート"
+
+[context."Extract One Colour Tooltip"]
+"Processes only objects with the specified colour, and ignores all others." = "指定した色のオブジェクトだけを処理し、それ以外はすべて無視します。"
+
+[context."Fill Style Tooltip"]
+"The method used to fill shapes" = "形状の塗りつぶし方法"
+
+[context."Font Styling"]
+"Font" = "フォント"
+"Size (pt)" = "サイズ (pt)"
+
+[context."Grid Settings"]
+"Canvas Color" = "キャンバス色"
+
+[context."Home Tab"]
+"Home" = "ホーム"
+
+[context."Keep Outlines Tooltip"]
+"Disable this if you want to shade in an area without the area being outlined." = "輪郭を描かずに領域をシェーディングしたい場合は無効にします。"
+"Whether shape outlines should be drawn, or ignored." = "形状の輪郭を描画するか無視するかを指定します。"
+
+[context."Lightest Shading Spacing Tooltip"]
+"How far apart drawn lines should be when shading the lightest parts of the image." = "画像の最も明るい部分をシェーディングするときの描画線の間隔。"
+
+[context."Monitor Tab"]
+"Monitor" = "モニター"
+
+[context."New Project"]
+"_New" = "新_規"
+
+[context."Number of Passes Tooltip"]
+"How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times." = "ツールが同じ領域を通過する回数。複数回のパスを使用すると、より深く切断したり濃く描画したり、同じパスを複数回なぞることで品質を向上させたりできます。"
+
+[context."Optimise Drawing Paths Tooltip"]
+"Optimises the order in which lines are drawn to minimise travel time." = "移動時間を最小限にするよう、線を描く順序を最適化します。"
+"Particularly useful for ordering lines when filling shapes." = "特に形状を塗りつぶす際の線順序の最適化に有効です。"
+
+[context."Outlines Before Fill Tooltip"]
+"Draws the outlines of shapes before filling them in." = "形状を塗りつぶす前に輪郭を描画します。"
+"Usually you want to draw outlines after filling." = "通常は、塗りつぶし後に輪郭を描画することを推奨します。"
+
+[context."Overcut Tooltip"]
+"Extends cuts by the specified amount to compensate for cutting moves ending slightly too early." = "切断動作がわずかに早く終了することを補正するため、指定量だけ切断を延長します。"
+"Recommended value ~1mm" = "推奨値: 約 1 mm"
+
+[context."Preview Tab"]
+"Preview" = "プレビュー"
+
+[context."Preview toolpath animation"]
+"Preview" = "プレビュー"
+
+[context."Printer Bed"]
+"Bed Dimensions" = "ベッド寸法"
+
+[context."RegionDetection Tooltip"]
+"Black & White - Uses a single threshold to collapse the image into two tones. More useful for scanned paper." = "白黒 - 単一のしきい値を使用して画像を 2 階調にします。スキャンした紙文書に適しています。"
+"Chooses the algorithm used to form regions before tracing." = "トレース前に領域を生成するためのアルゴリズムを選択します。"
+"Colour Cluster - Groups pixels of similar colour together to determine boundaries" = "カラークラスタ - 似た色のピクセルをグループ化して境界を決定します"
+"Default = Colour Clustering" = "既定 = カラークラスタリング"
+"Watershed - uses a hierarchical algorithm to form content-adaptive regions that closely follow object shape." = "Watershed - 階層型アルゴリズムを使用し、オブジェクト形状に密接に沿う内容適応型の領域を生成します。"
+
+[context."SVG Path /Shape Details"]
+"Exclusions" = "除外"
+"Nodes" = "ノード"
+"Shapes" = "形状"
+
+[context."Shading Angle Tooltip"]
+"0° represents East, with positive values rotating counterclockwise." = "0° は東を表し、正の値では反時計回りに回転します。"
+"Which Direction to draw when shading objects." = "オブジェクトをシェーディングするときの描画方向。"
+
+[context."Shading Threshold Tooltip"]
+"How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." = "シェーディング対象とするオブジェクトの明るさ。0 = すべてのオブジェクト、1 = 完全に明るいオブジェクトのみをシェーディングします。"
+"Range = 0 to 1" = "範囲 = 0～1"
+
+[context."Stacking Mode Tooltip"]
+" NOTE: " = " 注意: "
+" Tracing mode = spline." = " トレースモード = スプライン。"
+"Controls how the detected regions are layered on top of one another." = "検出された領域をどのように重ねるかを制御します。"
+"Cutout - " = "カットアウト - "
+"Cutout V2 - " = "カットアウト V2 - "
+"Cutout will cause a ripple/oscillating effect visible along edges. This is a VTracer bug for now. If the ripples are too obvious, correct them with Path Simplification or use the Stacked option instead. " = "カットアウトでは現在、エッジに沿って波打ち/振動のような効果が発生します。これは VTracer の不具合です。波打ちが目立つ場合は「パス簡略化」で補正するか、代わりに「積み重ね」を使用してください。 "
+"Layers each region as a separate overlapping shape, like sheets of coloured paper. Can provide the cleanest edges to shapes, but can require a lot more cleanup effort after import." = "各領域を色紙を重ねるように、独立した重なり合う形状として配置します。形状のエッジを最もきれいにできる場合がありますが、インポート後の修正作業が大幅に増えることがあります。"
+"Produces a true seam-free mosaic, avoiding overlaps or visible seams between regions." = "領域間の重なりや目に見える継ぎ目を避けた、真のシームレスなモザイクを生成します。"
+"Same as Cutout, but with my own attempt at fixing the ripple/oscillating effect in VTracer. Only works with" = "カットアウトと同じですが、VTracer の波打ち/振動を独自に補正する処理を加えています。次の場合のみ使用できます"
+"Stacked - " = "積み重ね - "
+"Stacking (Default = Cutout)" = "積み重ね（既定 = カットアウト）"
+
+[context."Tool Diameter Tooltip"]
+"Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge." = "ほとんどのブレードは直径約 1 mm ですが、刃先が外周の端に位置しているとは限りません。"
+"Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features." = "ツール直径を正しく設定すると、ブレードの回転を補正する旋回動作が追加され、次の移動方向に刃先が揃います。特に非常に小さな形状で効果が目立ちます。"
+"of the swivelling part of the cutting blade." = "切断ブレードの旋回部分の。"
+
+[context."Tool Mode"]
+"Cut" = "切断"
+"Draw" = "描画"
+
+[context."Tool Mode Tooltip"]
+"Settings designed for cutting objects out using a drag-knife." = "ドラッグナイフを使用してオブジェクトを切り抜くための設定です。"
+"Settings designed for drawing using a pen, marker, or even a foil stamping pen." = "ペン、マーカー、または箔押しペンなどで描画するための設定です。"
+
+[context."Tool Speed Tooltip"]
+"Slower is usually better" = "通常は遅い方が良好です"
+"Speed of the toolhead when the tool is down and cutting/drawing." = "ツールが下がって切断/描画しているときのツールヘッド速度。"
+
+[context."TracingMode Tooltip"]
+"Fits edges using smooth curves for organic outlines." = "滑らかな曲線でエッジをフィッティングし、有機的な輪郭を作ります。"
+"Keeps hard, blocky pixel-edge outlines with no curve fitting. Great for pixel art" = "曲線フィッティングを行わず、硬く角ばったピクセルエッジの輪郭を保持します。ピクセルアートに最適です"
+"Pixel - " = "ピクセル - "
+"Polygon - " = "ポリゴン - "
+"Sets the curve-fitting style used to outline each region." = "各領域の輪郭に使用する曲線フィッティング方式を設定します。"
+"Spline - " = "スプライン - "
+"Tracing Mode (Default = Spline)" = "トレースモード（既定 = スプライン）"
+"Uses straight line segments" = "直線セグメントを使用します"
+
+[context."Travel Speed ToolTip"]
+"Speed of the toolhead when the tool is raised and not actively cutting/drawing." = "ツールが上がっていて切断/描画を行っていないときのツールヘッド速度。"
+
+[context."Z Height Tooltip"]
+"How high above the workpiece the toolhead should be positioned when travelling or drawing." = "移動または描画するときに、ワーク表面からどの高さにツールヘッドを配置するかを指定します。"
+"Positive values are offset above the bed surface." = "正の値はベッド表面より上方向のオフセットになります。"
+"This value is affected by your printer's Z-Offset." = "この値はプリンターの Z オフセットの影響を受けます。"
+
+[context."Z Offset Per Pass Tooltip"]
+"For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." = "厚い材料を切断または彫刻する場合、わずかに負の値を設定すると各パスで徐々に深く加工できます。これにより品質が向上し、ブレード破損の可能性を低減できる場合があります。"
+"Positive values move the tool up after each pass, while negative values move the tool down after each pass." = "正の値では各パス後にツールが上がり、負の値では下がります。"
+"The distance in Z that the tool should move after each pass when multiple passes are enabled." = "複数パスが有効な場合に、各パスの後でツールを Z 方向に移動する距離。"

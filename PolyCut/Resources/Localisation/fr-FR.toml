@@ -1,0 +1,351 @@
+# PolyCut Localisation
+# @version 1
+
+# ===================
+# Translations
+
+"A printer with the name '{0}' already exists. Do you want to overwrite it?" = "Une imprimante portant le nom « {0} » existe déjà. Voulez-vous l’écraser ?"
+"Adaptive Sampling" = "Échantillonnage adaptatif"
+"Adaptive Sampling Sensitivity" = "Sensibilité de l’échantillonnage adaptatif"
+"Adaptive Sampling Window" = "Fenêtre d’échantillonnage adaptatif"
+"Add Printer" = "Ajouter une imprimante"
+"Added Preset" = "Préréglage ajouté"
+"Alignment" = "Alignement"
+"Allow Travel in Outlines" = "Autoriser les déplacements dans les contours"
+"An unknown error occurred" = "Une erreur inconnue s’est produite"
+"Arrange" = "Organiser"
+"Automatically Begin Printing" = "Démarrer automatiquement l’impression"
+"Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used." = "Réduit automatiquement la palette à N couleurs au maximum. Définissez 0 pour ne pas limiter le nombre de couleurs, ou choisissez une valeur pour restreindre le nombre de couleurs utilisées."
+"Bed Dimensions" = "Dimensions du plateau"
+"Blade Settings" = "Paramètres de la lame"
+"Boolean operation failed." = "L’opération booléenne a échoué."
+"Cancel Preview" = "Annuler l’aperçu"
+"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
+"Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
+"Click to view release notes and download" = "Cliquer pour afficher les notes de version et télécharger"
+"Close" = "Fermer"
+"Combine" = "Combiner"
+"Combine Shapes" = "Combiner les formes"
+"Copy" = "Copier"
+"Creating a new project will clear the current workspace. Continue?" = "La création d’un nouveau projet effacera l’espace de travail actuel. Continuer ?"
+"Cursor Colour" = "Couleur du curseur"
+"Curve simplification tolerance in pixels (try 0.5-2.5). Higher values simplify more aggressively at the cost of precision." = "Tolérance de simplification des courbes en pixels (essayez 0,5 à 2,5). Des valeurs plus élevées simplifient davantage, au détriment de la précision."
+"Curve-fitting Precision" = "Précision de l’ajustement des courbes"
+"Cut" = "Couper"
+"Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "Niveau de coupe de l’algorithme de watershed hiérarchique, de 0 à 255. Des valeurs élevées découpent la hiérarchie des régions plus finement, produisant davantage de petites régions qui suivent étroitement les détails du contenu ; des valeurs faibles fusionnent les zones en régions moins nombreuses et plus grandes."
+"Darkest shading spacing" = "Espacement des hachures les plus sombres"
+"Delete" = "Supprimer"
+"Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "Ignore les zones détectées plus petites que ce nombre de pixels, de 0 à 128. Augmentez cette valeur pour supprimer les petites taches et le bruit résiduel après vectorisation ; diminuez-la pour préserver les détails fins."
+"Draw Outlines Before Fill" = "Tracer les contours avant le remplissage"
+"Drawing Group is already empty" = "Le groupe de dessin est déjà vide"
+"Drawing Line Colour" = "Couleur des lignes de dessin"
+"Drawing Settings" = "Paramètres de dessin"
+"Enter Printer Name" = "Saisir le nom de l’imprimante"
+"Enter URL or IP Address" = "Saisir l’URL ou l’adresse IP"
+"Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Saisir une couleur hexadécimale (p. ex. #FFFF0000 ou #FF0000)"
+"Error" = "Erreur"
+"Error Saving File" = "Erreur lors de l’enregistrement du fichier"
+"Error uploading to Moonraker" = "Erreur lors de l’envoi vers Moonraker"
+"Extract one colour" = "Extraire une couleur"
+"Failed to load language: {0}" = "Échec du chargement de la langue : {0}"
+"Failed to load project" = "Échec du chargement du projet"
+"Failed to save project" = "Échec de l’enregistrement du projet"
+"File Saved" = "Fichier enregistré"
+"File name: " = "Nom du fichier : "
+"Fill" = "Remplissage"
+"Fill Style" = "Style de remplissage"
+"Finish Import" = "Terminer l’importation"
+"Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Seuil de luminosité fixe (0 à 255) utilisé en mode Noir et blanc. Les pixels plus sombres que cette valeur deviennent le premier plan (noir) ; les pixels égaux ou supérieurs deviennent l’arrière-plan (blanc). Ignoré lorsque l’échantillonnage adaptatif est activé."
+"GCode" = "GCode"
+"Generate GCode" = "Générer le GCode"
+"Global Settings" = "Paramètres généraux"
+"Grid Settings" = "Paramètres de la grille"
+"Gridline Colour" = "Couleur des lignes de la grille"
+"Import as SVG" = "Importer comme SVG"
+"Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." = "Augmenter l’épaisseur n’affecte pas la largeur réelle du trait GCode. En revanche, une valeur nulle désactive le trait."
+"Inset (Bottom)" = "Marge intérieure (bas)"
+"Inset (Left)" = "Marge intérieure (gauche)"
+"Inset (Right)" = "Marge intérieure (droite)"
+"Inset (Top)" = "Marge intérieure (haut)"
+"Keep Outlines" = "Conserver les contours"
+"Language Load Error" = "Erreur de chargement de la langue"
+"Lightest shading spacing" = "Espacement des hachures les plus claires"
+"Load Project" = "Charger un projet"
+"Loading a project will clear the current workspace. Continue?" = "Le chargement d’un projet effacera l’espace de travail actuel. Continuer ?"
+"Maximum Colours (0 = Unlimited)" = "Nombre maximal de couleurs (0 = illimité)"
+"Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Différence minimale de couleur requise entre les couches de dégradé adjacentes, de 0 à 255. Des valeurs élevées fusionnent les teintes similaires en bandes de couleur moins nombreuses et plus uniformes ; des valeurs faibles préservent des dégradés plus lisses avec davantage de couches distinctes."
+"New Project" = "Nouveau projet"
+"No" = "Non"
+"No intersection found. The selected shapes do not overlap." = "Aucune intersection trouvée. Les formes sélectionnées ne se chevauchent pas."
+"No paths on canvas" = "Aucun tracé sur le canevas"
+"Number of Passes" = "Nombre de passes"
+"Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." = "Nombre de décimales utilisées lors de l’écriture des coordonnées des tracés. Une précision élevée préserve la fidélité des formes au prix d’un traitement plus long ; une précision faible est plus rapide mais peut être plus grossière."
+"Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." = "Nombre de bits significatifs conservés par canal RVB, de 1 à 8. Une précision élevée préserve les variations de couleur subtiles et davantage de groupes distincts ; une précision faible fusionne les couleurs similaires pour obtenir une palette plus simple et plus postérisée."
+"Optimise Drawing Paths" = "Optimiser les tracés de dessin"
+"Overcut" = "Surcoupe"
+"Overwrite Printer?" = "Écraser l’imprimante ?"
+"Path Precision" = "Précision des tracés"
+"Path Simplification" = "Simplification des tracés"
+"Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "Pourcentage sous la luminosité moyenne locale qu’un pixel doit atteindre pour être considéré comme premier plan (15 % par défaut). Une sensibilité élevée détecte des variations de contraste plus subtiles ; une sensibilité faible exige un contraste local plus fort avant qu’une limite soit détectée."
+"Preview Page Settings" = "Paramètres de la page d’aperçu"
+"Printer Configuration" = "Configuration de l’imprimante"
+"Printer Name:" = "Nom de l’imprimante :"
+"Printer name is empty" = "Le nom de l’imprimante est vide"
+"Printer not saved. Name already exists." = "Imprimante non enregistrée. Ce nom existe déjà."
+"Printer: " = "Imprimante : "
+"Processing Settings" = "Paramètres de traitement"
+"Project Loaded" = "Projet chargé"
+"Project Saved" = "Projet enregistré"
+"Properties" = "Propriétés"
+"Region Detection" = "Détection des régions"
+"Region Detection Settings" = "Paramètres de détection des régions"
+"Rotation" = "Rotation"
+"SVG Exported" = "SVG exporté"
+"S_ave As..." = "Enregistrer _sous..."
+"Save GCode" = "Enregistrer le GCode"
+"Saved Preset" = "Préréglage enregistré"
+"Saved to: {0}" = "Enregistré dans : {0}"
+"Scaling may not be correct" = "L’échelle peut être incorrecte"
+"Select at least 2 shapes to combine" = "Sélectionnez au moins 2 formes à combiner"
+"Send Preview" = "Envoyer l’aperçu"
+"Send to 3D Printer" = "Envoyer vers l’imprimante 3D"
+"Sends just the bounding box to the printer for preview, which runs in the travel height." = "Envoie uniquement le rectangle englobant à l’imprimante pour l’aperçu, exécuté à la hauteur de déplacement."
+"Sent to Printer" = "Envoyé à l’imprimante"
+"Shading Settings" = "Paramètres d’ombrage"
+"Shading Threshold" = "Seuil d’ombrage"
+"Shading angle" = "Angle d’ombrage"
+"Show Grid" = "Afficher la grille"
+"Show Printer Working Area" = "Afficher la zone de travail de l’imprimante"
+"Show Travel Moves" = "Afficher les déplacements"
+"Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes." = "Taille en pixels du voisinage local échantillonné lors du calcul du seuil adaptatif (0 = auto). Les grandes fenêtres font la moyenne sur une zone plus large pour des résultats plus lisses ; les petites fenêtres réagissent plus précisément aux variations locales d’éclairage."
+"Spacing" = "Espacement"
+"Speckle Filtering" = "Filtrage des petites taches"
+"Stacking" = "Empilement"
+"Start Menu Shortcut" = "Raccourci du menu Démarrer"
+"Stroke" = "Trait"
+"Stroke Thickness" = "Épaisseur du trait"
+"Style" = "Style"
+"Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "La soustraction a produit une géométrie vide. Les formes ne se chevauchent peut-être pas, ou le résultat a été entièrement soustrait."
+"Sucessfully uploaded {0} to Moonraker" = "{0} a été envoyé avec succès vers Moonraker"
+"The host could not be found" = "L’hôte est introuvable"
+"Threshold" = "Seuil"
+"Tool Config" = "Config. outil"
+"Tool Diameter" = "Diamètre de l’outil"
+"Toolhead Offset" = "Décalage de la tête d’outil"
+"Tracing Mode" = "Mode de vectorisation"
+"Transform" = "Transformer"
+"Travel Line Colour" = "Couleur des lignes de déplacement"
+"Travel Speed" = "Vitesse de déplacement"
+"UI Language" = "Langue de l’interface"
+"Union operation resulted in an empty geometry. This should not happen." = "L’union a produit une géométrie vide. Cela ne devrait pas se produire."
+"Unknown SVG Unit Type: " = "Type d’unité SVG inconnu : "
+"Update Available ▸ Version {0}" = "Mise à jour disponible ▸ Version {0}"
+"Update Preview" = "Mettre à jour l’aperçu"
+"Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Utilise un seuillage adaptatif au lieu d’un seuil fixe unique. Idéal pour les scans ou les photos avec un éclairage inégal, car le seuil est recalculé localement dans l’image au lieu d’être appliqué globalement."
+"Working Area" = "Zone de travail"
+"Workspace cleared" = "Espace de travail effacé"
+"XOR operation resulted in an empty geometry. The shapes may be identical." = "L’opération XOR a produit une géométrie vide. Les formes sont peut-être identiques."
+"Yes" = "Oui"
+"Z Height" = "Hauteur Z"
+"Z Offset Per Pass" = "Décalage Z par passe"
+"_Edit" = "É_dition"
+"_Export As SVG..." = "Exporter en _SVG..."
+"_File" = "_Fichier"
+"_Import SVG/Image..." = "_Importer SVG/image..."
+"_Load Project" = "_Charger le projet"
+"_Paste" = "_Coller"
+"_Save" = "_Enregistrer"
+"_View" = "_Affichage"
+"version" = "version"
+
+[context."3D Printer Host Type and address"]
+"Host Address" = "Adresse de l’hôte"
+"Host Type" = "Type d’hôte"
+
+[context."3D Printer/Machine"]
+"Printer" = "Imprimante"
+
+[context."Allow Travel in Outlines Tooltip"]
+"Allows the pen to travel through shape outlines without lifting the pen up to start the next line." = "Permet au stylo de se déplacer à travers les contours des formes sans être relevé avant de commencer la ligne suivante."
+"Requires \"Optimise Drawing Paths\" to be enabled. Can massively improve overall speed" = "Nécessite l’activation de « Optimiser les tracés de dessin ». Peut considérablement améliorer la vitesse globale"
+
+[context."Arrange objects on canvas"]
+"Bring Forward" = "Avancer d’un plan"
+"Bring To Front" = "Mettre au premier plan"
+"Send Backwards" = "Reculer d’un plan"
+"Send To Back" = "Mettre à l’arrière-plan"
+
+[context."Bitmap to SVG Keyboard Controls Guide"]
+"Alt Key" = "Touche Alt"
+"Controls" = "Commandes"
+"Ctrl + Click" = "Ctrl + clic"
+"Ctrl + Hover" = "Ctrl + survol"
+"Ctrl + Shift + Click" = "Ctrl + Maj + clic"
+"Enables/Disables ALL regions that match the colour of the region under the cursor" = "Active/désactive TOUTES les régions dont la couleur correspond à celle de la région sous le curseur"
+"Enables/Disables the shape region under the cursor, dictating whether it will be included in the import" = "Active/désactive la région de forme sous le curseur, déterminant si elle sera incluse dans l’importation"
+"Highlights the shape region under the cursor" = "Met en surbrillance la région de forme sous le curseur"
+"Note: You may need to reduce the 'Maximum Colours' setting if not all expected regions are enabled/disabled" = "Remarque : vous devrez peut-être réduire le paramètre « Nombre maximal de couleurs » si toutes les régions attendues ne sont pas activées/désactivées"
+"Shows an overlay of the original image" = "Affiche une superposition de l’image d’origine"
+
+[context."Boolean Operations"]
+"Exclude" = "Exclure"
+"Intersect" = "Intersection"
+"Subtract" = "Soustraire"
+"Union" = "Union"
+
+[context."Clipboard Actions"]
+"Copy" = "Copier"
+"Cut" = "Couper"
+"Paste" = "Coller"
+"Select All" = "Tout sélectionner"
+
+[context."Curve-fitting Precision Tooltip"]
+"Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time." = "Les lignes courbes sont approximées par des segments droits lors de la conversion en GCode. Ce paramètre définit la plus petite longueur effective de chaque segment de la courbe. Des valeurs plus faibles augmentent la précision, mais accroissent fortement le temps de traitement."
+
+[context."Custom GCode Entries"]
+"Custom GCode" = "GCode personnalisé"
+"End GCode" = "GCode de fin"
+"End GCode used when sending the bounding box preview to Klipper" = "GCode de fin utilisé lors de l’envoi de l’aperçu du rectangle englobant à Klipper"
+"Preview End GCode (?)" = "GCode de fin d’aperçu (?)"
+"Preview Start GCode (?)" = "GCode de début d’aperçu (?)"
+"Start GCode" = "GCode de début"
+"Start GCode used when sending the bounding box preview to Klipper" = "GCode de début utilisé lors de l’envoi de l’aperçu du rectangle englobant à Klipper"
+
+[context."Cut/Draw tool work"]
+"Work" = "Travail"
+"Work Speed" = "Vitesse de travail"
+
+[context."Darkest Shading Spacing Tooltip"]
+"How far apart drawn lines should be when shading the darkest parts of the image." = "Distance entre les lignes tracées pour ombrer les parties les plus sombres de l’image."
+
+[context."Drawing/shape elements"]
+"Elements" = "Éléments"
+
+[context."Export Tab"]
+"Export" = "Exporter"
+
+[context."Extract One Colour Tooltip"]
+"Processes only objects with the specified colour, and ignores all others." = "Traite uniquement les objets de la couleur spécifiée et ignore tous les autres."
+
+[context."Fill Style Tooltip"]
+"The method used to fill shapes" = "Méthode utilisée pour remplir les formes"
+
+[context."Font Styling"]
+"Font" = "Police"
+"Size (pt)" = "Taille (pt)"
+
+[context."Grid Settings"]
+"Canvas Color" = "Couleur du canevas"
+
+[context."Home Tab"]
+"Home" = "Accueil"
+
+[context."Keep Outlines Tooltip"]
+"Disable this if you want to shade in an area without the area being outlined." = "Désactivez cette option si vous souhaitez ombrer une zone sans tracer son contour."
+"Whether shape outlines should be drawn, or ignored." = "Indique si les contours des formes doivent être tracés ou ignorés."
+
+[context."Lightest Shading Spacing Tooltip"]
+"How far apart drawn lines should be when shading the lightest parts of the image." = "Distance entre les lignes tracées pour ombrer les parties les plus claires de l’image."
+
+[context."Monitor Tab"]
+"Monitor" = "Moniteur"
+
+[context."New Project"]
+"_New" = "_Nouveau"
+
+[context."Number of Passes Tooltip"]
+"How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times." = "Nombre de fois que l’outil doit passer sur la même zone. Plusieurs passes permettent de couper/dessiner plus profondément ou plus foncé, ou d’améliorer la qualité en repassant plusieurs fois sur le même tracé."
+
+[context."Optimise Drawing Paths Tooltip"]
+"Optimises the order in which lines are drawn to minimise travel time." = "Optimise l’ordre de traçage des lignes afin de réduire le temps de déplacement."
+"Particularly useful for ordering lines when filling shapes." = "Particulièrement utile pour ordonner les lignes lors du remplissage des formes."
+
+[context."Outlines Before Fill Tooltip"]
+"Draws the outlines of shapes before filling them in." = "Trace les contours des formes avant de les remplir."
+"Usually you want to draw outlines after filling." = "En général, il est préférable de tracer les contours après le remplissage."
+
+[context."Overcut Tooltip"]
+"Extends cuts by the specified amount to compensate for cutting moves ending slightly too early." = "Prolonge les coupes de la valeur indiquée pour compenser les mouvements de coupe qui se terminent légèrement trop tôt."
+"Recommended value ~1mm" = "Valeur recommandée : ~1 mm"
+
+[context."Preview Tab"]
+"Preview" = "Aperçu"
+
+[context."Preview toolpath animation"]
+"Preview" = "Aperçu"
+
+[context."Printer Bed"]
+"Bed Dimensions" = "Dimensions du plateau"
+
+[context."RegionDetection Tooltip"]
+"Black & White - Uses a single threshold to collapse the image into two tones. More useful for scanned paper." = "Noir et blanc - Utilise un seuil unique pour réduire l’image à deux tons. Plus adapté aux documents numérisés."
+"Chooses the algorithm used to form regions before tracing." = "Choisit l’algorithme utilisé pour former les régions avant la vectorisation."
+"Colour Cluster - Groups pixels of similar colour together to determine boundaries" = "Regroupement par couleur - Regroupe les pixels de couleur similaire pour déterminer les limites"
+"Default = Colour Clustering" = "Par défaut = Regroupement par couleur"
+"Watershed - uses a hierarchical algorithm to form content-adaptive regions that closely follow object shape." = "Watershed - utilise un algorithme hiérarchique pour former des régions adaptées au contenu qui suivent étroitement la forme des objets."
+
+[context."SVG Path /Shape Details"]
+"Exclusions" = "Exclusions"
+"Nodes" = "Nœuds"
+"Shapes" = "Formes"
+
+[context."Shading Angle Tooltip"]
+"0° represents East, with positive values rotating counterclockwise." = "0° représente l’est, les valeurs positives tournant dans le sens antihoraire."
+"Which Direction to draw when shading objects." = "Direction de traçage lors de l’ombrage des objets."
+
+[context."Shading Threshold Tooltip"]
+"How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." = "Luminosité minimale d’un objet pour qu’il soit ombré. 0 = ombrer tous les objets, 1 = ombrer uniquement les objets totalement lumineux."
+"Range = 0 to 1" = "Plage = 0 à 1"
+
+[context."Stacking Mode Tooltip"]
+" NOTE: " = " REMARQUE : "
+" Tracing mode = spline." = " Mode de vectorisation = spline."
+"Controls how the detected regions are layered on top of one another." = "Contrôle la manière dont les régions détectées sont superposées."
+"Cutout - " = "Découpe - "
+"Cutout V2 - " = "Découpe V2 - "
+"Cutout will cause a ripple/oscillating effect visible along edges. This is a VTracer bug for now. If the ripples are too obvious, correct them with Path Simplification or use the Stacked option instead. " = "La découpe provoque actuellement un effet d’ondulation/oscillation visible le long des bords. Il s’agit d’un bug de VTracer. Si les ondulations sont trop visibles, corrigez-les avec la simplification des tracés ou utilisez plutôt l’option Empilé. "
+"Layers each region as a separate overlapping shape, like sheets of coloured paper. Can provide the cleanest edges to shapes, but can require a lot more cleanup effort after import." = "Superpose chaque région comme une forme distincte, comme des feuilles de papier coloré. Cela peut produire les bords les plus nets, mais peut nécessiter beaucoup plus de retouches après l’importation."
+"Produces a true seam-free mosaic, avoiding overlaps or visible seams between regions." = "Produit une véritable mosaïque sans raccords, évitant les chevauchements ou les jointures visibles entre les régions."
+"Same as Cutout, but with my own attempt at fixing the ripple/oscillating effect in VTracer. Only works with" = "Identique à Découpe, mais avec ma propre tentative de correction de l’effet d’ondulation/oscillation de VTracer. Fonctionne uniquement avec"
+"Stacked - " = "Empilé - "
+"Stacking (Default = Cutout)" = "Empilement (par défaut = Découpe)"
+
+[context."Tool Diameter Tooltip"]
+"Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge." = "La plupart des lames ont un diamètre d’environ 1 mm, mais leur pointe peut ne pas se trouver exactement au bord."
+"Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features." = "Régler correctement le diamètre de l’outil ajoute une rotation compensatoire de la lame pour l’aligner avec le mouvement suivant. L’effet est surtout visible sur les très petits détails."
+"of the swivelling part of the cutting blade." = "de la partie pivotante de la lame de coupe."
+
+[context."Tool Mode"]
+"Cut" = "Couper"
+"Draw" = "Dessiner"
+
+[context."Tool Mode Tooltip"]
+"Settings designed for cutting objects out using a drag-knife." = "Paramètres conçus pour découper des objets à l’aide d’une lame traînante."
+"Settings designed for drawing using a pen, marker, or even a foil stamping pen." = "Paramètres conçus pour dessiner avec un stylo, un marqueur ou même un stylo de dorure à chaud."
+
+[context."Tool Speed Tooltip"]
+"Slower is usually better" = "Plus lent est généralement préférable"
+"Speed of the toolhead when the tool is down and cutting/drawing." = "Vitesse de la tête d’outil lorsque l’outil est abaissé et coupe/dessine."
+
+[context."TracingMode Tooltip"]
+"Fits edges using smooth curves for organic outlines." = "Ajuste les bords avec des courbes lisses pour les contours organiques."
+"Keeps hard, blocky pixel-edge outlines with no curve fitting. Great for pixel art" = "Conserve des contours durs et pixellisés, sans ajustement de courbe. Idéal pour le pixel art"
+"Pixel - " = "Pixel - "
+"Polygon - " = "Polygone - "
+"Sets the curve-fitting style used to outline each region." = "Définit le style d’ajustement des courbes utilisé pour tracer le contour de chaque région."
+"Spline - " = "Spline - "
+"Tracing Mode (Default = Spline)" = "Mode de vectorisation (par défaut = Spline)"
+"Uses straight line segments" = "Utilise des segments de ligne droite"
+
+[context."Travel Speed ToolTip"]
+"Speed of the toolhead when the tool is raised and not actively cutting/drawing." = "Vitesse de la tête d’outil lorsque l’outil est relevé et ne coupe/dessine pas."
+
+[context."Z Height Tooltip"]
+"How high above the workpiece the toolhead should be positioned when travelling or drawing." = "Hauteur au-dessus de la pièce à laquelle la tête d’outil doit être positionnée lors des déplacements ou du dessin."
+"Positive values are offset above the bed surface." = "Les valeurs positives sont décalées au-dessus de la surface du plateau."
+"This value is affected by your printer's Z-Offset." = "Cette valeur est affectée par le décalage Z de votre imprimante."
+
+[context."Z Offset Per Pass Tooltip"]
+"For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." = "Pour couper ou graver des matériaux plus épais, une valeur légèrement négative peut être utilisée afin de couper progressivement plus profondément à chaque passe, ce qui peut améliorer la qualité et réduire le risque de casse de la lame."
+"Positive values move the tool up after each pass, while negative values move the tool down after each pass." = "Les valeurs positives déplacent l’outil vers le haut après chaque passe, tandis que les valeurs négatives le déplacent vers le bas."
+"The distance in Z that the tool should move after each pass when multiple passes are enabled." = "Distance en Z que l’outil doit parcourir après chaque passe lorsque plusieurs passes sont activées."

@@ -49,6 +49,10 @@ Public Class ApplicationHostService
             AddHandler navigationWindow.Loaded, AddressOf OnNavigationWindowLoaded
             navigationWindow.Show()
         End If
+
+        LocalisationService.LoadLanguage(SettingsHandler.GetUIConfiguration().Language)
+
+
     End Function
 
     Private Sub OnNavigationWindowLoaded(sender As Object, e As RoutedEventArgs)

@@ -42,6 +42,12 @@ Public Class SettingsHandler : Inherits ObservableObject
 
         If Not SettingsJSONFile.Exists Then Await SettingsJSONFile.Create().DisposeAsync()
 
+        Dim languagesFolderPath As String = IO.Path.Combine(SettingsHandler.DataFolder.FullName, "Localisation")
+        If Not IO.Path.Exists(languagesFolderPath) Then
+            IO.Directory.CreateDirectory(languagesFolderPath)
+        End If
+        Await LocalisationService.SynchroniseEmbeddedLanguages()
+
         GenerateEV()
 
     End Function

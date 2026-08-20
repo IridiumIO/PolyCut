@@ -50,9 +50,9 @@ Public Class SnackbarService : Inherits WPF.Ui.SnackbarService
     End Sub
 
     Public Sub GenerateUpdate(newVersion As String, updateURL As String)
-        Dim textBlock = New TextBlock With {.Text = "Click to view release notes and download", .TextDecorations = TextDecorations.Underline}
+        Dim textBlock = New TextBlock With {.Text = "Click to view release notes and download".LT(), .TextDecorations = TextDecorations.Underline}
 
-        Dim title As String = $"Update Available ▸ Version {newVersion}"
+        Dim title As String = "Update Available ▸ Version {0}".LTF(newVersion)
 
         ShowCustom(textBlock, title, ControlAppearance.Dark, timeout:=TimeSpan.FromSeconds(10))
 

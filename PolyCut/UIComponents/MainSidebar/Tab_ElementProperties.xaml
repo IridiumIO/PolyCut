@@ -4,8 +4,8 @@
              xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:local="clr-namespace:PolyCut"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
              xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
@@ -35,7 +35,7 @@
                                      Style="{StaticResource CustomCardExpanderStyle}">
                         <ui:CardExpander.Header>
                             <Grid Margin="10 0" FlowDirection="LeftToRight">
-                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" Text="Transform" />
+                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" loc:L.Value="Transform" />
                             </Grid>
                         </ui:CardExpander.Header>
 
@@ -161,7 +161,7 @@
                                      Style="{StaticResource CustomCardExpanderStyle}">
                         <ui:CardExpander.Header>
                             <Grid Margin="10 0" FlowDirection="LeftToRight">
-                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" Text="Style" />
+                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" loc:L.Value="Style" />
                             </Grid>
                         </ui:CardExpander.Header>
 
@@ -172,12 +172,12 @@
                                                       Margin="0 6 0 0"
                                                       ColorSelected="FillColorPicker_ColorSelected"
                                                       CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
-                                                      LabelText="Fill" PopupOpening="FillColorPicker_PopupOpening" />
+                                                      LabelText="{loc:T Fill}" PopupOpening="FillColorPicker_PopupOpening" />
 
                             <local:ColorPickerControl Margin="0 6 0 0"
                                                       ColorSelected="StrokeColorPicker_ColorSelected"
                                                       CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
-                                                      LabelText="Stroke" PopupOpening="StrokeColorPicker_PopupOpening" />
+                                                      LabelText="{loc:T Stroke}" PopupOpening="StrokeColorPicker_PopupOpening" />
 
                             <Grid Margin="0 6 0 0">
                                 <Grid.ColumnDefinitions>
@@ -185,12 +185,12 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal">
-                                    <Label VerticalAlignment="Center" Content="Stroke Thickness" />
+                                    <Label VerticalAlignment="Center" loc:L.Value="Stroke Thickness" />
                                     <ui:SymbolIcon Margin="2 -3 0 0" Foreground="{StaticResource PaletteAmberBrush}" Symbol="Important20" />
                                     <StackPanel.ToolTip>
                                         <ToolTip MaxWidth="544">
                                             <TextBlock Width="350"
-                                                       Text="Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." TextAlignment="Left" TextWrapping="Wrap" />
+                                                       loc:L.Value="Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." TextAlignment="Left" TextWrapping="Wrap" />
                                         </ToolTip>
 
                                     </StackPanel.ToolTip>
@@ -222,7 +222,7 @@
                         <ui:CardExpander.Header>
                             <Grid Margin="10 0" FlowDirection="LeftToRight">
 
-                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" Text="Combine Shapes" />
+                                <TextBlock Padding="1 2 0 0" VerticalAlignment="Center" loc:L.Value="Combine Shapes" />
 
                             </Grid>
                         </ui:CardExpander.Header>
@@ -235,25 +235,25 @@
                                 <StackPanel Orientation="Horizontal">
                                     <ui:Button Width="60" Margin="5 0 5 0" Command="{Binding MainVM.UnionShapesCommand}">
                                         <ui:Button.ToolTip>
-                                            <TextBlock Text="Union" />
+                                            <TextBlock loc:L.Value="Union" loc:L.Context="Boolean Operations" />
                                         </ui:Button.ToolTip>
                                         <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeUnion20" />
                                     </ui:Button>
                                     <ui:Button Width="60" Margin="5 0 5 0" Command="{Binding MainVM.IntersectShapesCommand}">
                                         <ui:Button.ToolTip>
-                                            <TextBlock Text="Intersect" />
+                                            <TextBlock loc:L.Value="Intersect" loc:L.Context="Boolean Operations" />
                                         </ui:Button.ToolTip>
                                         <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeIntersect20" />
                                     </ui:Button>
                                     <ui:Button Width="60" Margin="5 0 5 0" Command="{Binding MainVM.SubtractShapesCommand}">
                                         <ui:Button.ToolTip>
-                                            <TextBlock Text="Subtract" />
+                                            <TextBlock loc:L.Value="Subtract" loc:L.Context="Boolean Operations" />
                                         </ui:Button.ToolTip>
                                         <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeSubtract20" />
                                     </ui:Button>
                                     <ui:Button Width="60" Margin="5 0 5 0" Command="{Binding MainVM.XorShapesCommand}">
                                         <ui:Button.ToolTip>
-                                            <TextBlock Text="Exclude" />
+                                            <TextBlock loc:L.Value="Exclude" loc:L.Context="Boolean Operations" />
                                         </ui:Button.ToolTip>
                                         <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeExclude20" />
                                     </ui:Button>

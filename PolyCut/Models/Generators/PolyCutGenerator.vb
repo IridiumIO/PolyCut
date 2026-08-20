@@ -18,7 +18,7 @@ Public Class PolyCutGenerator : Implements IGenerator
         Dim processedElements = GeneratePathBasedElements()
 
         If processedElements.Count = 0 Then
-            Return (1, "No paths on canvas")
+            Return (1, "No paths on canvas".LT())
         End If
 
         Dim processedlines As List(Of GeoLine)

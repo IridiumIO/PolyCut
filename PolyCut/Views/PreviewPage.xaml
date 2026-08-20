@@ -4,7 +4,7 @@
       xmlns:beh="clr-namespace:PolyCut"
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:PolyCut"
+      xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
       xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
@@ -152,7 +152,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Label Margin="0 2 0 0" VerticalAlignment="Center" Content="Preview" />
+                <Label Margin="0 2 0 0" VerticalAlignment="Center" loc:L.Value="Preview" loc:L.Context="Preview toolpath animation"/>
                 <RepeatButton x:Name="StepBackPreviewButton"
                               Grid.Column="1"
                               Margin="10 0 0 0"
@@ -246,7 +246,7 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <Label Margin="10 4 10 0" Content="Show Grid" />
+                            <Label Margin="10 4 10 0" loc:L.Value="Show Grid" />
 
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="10 0 0 0" Orientation="Horizontal">
@@ -285,7 +285,7 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <Label Margin="10 4 10 0" Content="Show Travel Moves" />
+                            <Label Margin="10 4 10 0" loc:L.Value="Show Travel Moves" />
 
                         </StackPanel>
 
@@ -308,7 +308,7 @@
                             <TabItem.Header>
                                 <StackPanel Margin="5 0" Orientation="Horizontal">
                                     <ui:SymbolIcon Margin="0 0 6 0" Symbol="Document20" />
-                                    <TextBlock Text="GCode" />
+                                    <TextBlock loc:L.Value="GCode" />
 
                                 </StackPanel>
                             </TabItem.Header>
@@ -413,7 +413,7 @@
                             <TabItem.Header>
                                 <StackPanel Margin="5 0" Orientation="Horizontal">
                                     <ui:SymbolIcon Margin="0 0 6 0" Symbol="Options20" />
-                                    <TextBlock Text="Tool Config" />
+                                    <TextBlock loc:L.Value="Tool Config" />
 
                                 </StackPanel>
                             </TabItem.Header>

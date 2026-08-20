@@ -16,6 +16,7 @@ Class SettingsPage
         _viewModel = viewmodel
         InitializeComponent()
 
+        UiLanguageComboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.MainVM.UIConfiguration.Language)
 
         If WineDetection.IsRunningUnderWine Then
             AddToStartMenuCheckBox.Visibility = Visibility.Collapsed
@@ -74,5 +75,16 @@ Class SettingsPage
 
         End If
 
+    End Sub
+
+    Private Sub UiLanguageComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+        Dim comboBox As ComboBox = CType(sender, ComboBox)
+        If comboBox.IsDropDownOpen AndAlso UiLanguageComboBox.SelectedItem IsNot Nothing Then
+            Dim selectedLanguage As LanguageItem = CType(UiLanguageComboBox.SelectedItem, LanguageItem)
+            Dim languageCode As String = CStr(selectedLanguage.CultureCode)
+
+            Dim ret = LocalisationService.LoadLanguage(languageCode)
+            If ret Then _viewModel.MainVM.UIConfiguration.Language = languageCode
+        End If
     End Sub
 End Class

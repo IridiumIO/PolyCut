@@ -31,9 +31,9 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         If fsd.ShowDialog() Then
             Dim ret = Await diskexporter.Export(MainVM.GCode, fsd.FileName)
             If ret = 0 Then
-                Application.GetService(Of SnackbarService).GenerateSuccess("File Saved", $"Saved to: {fsd.FileName}")
+                Application.GetService(Of SnackbarService).GenerateSuccess("File Saved".LT(), "Saved to: {0}".LTF(fsd.FileName))
             Else
-                Application.GetService(Of SnackbarService).GenerateError("Error Saving File", $"An unknown error occurred")
+                Application.GetService(Of SnackbarService).GenerateError("Error Saving File".LT(), "An unknown error occurred".LT())
             End If
         End If
 
@@ -60,15 +60,15 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
         Dim sb = Application.GetService(Of SnackbarService)
         Select Case status
             Case 0
-                sb.GenerateSuccess("Sent to Printer", $"Sucessfully uploaded {FilePath} to Moonraker")
+                sb.GenerateSuccess("Sent to Printer".LT(), "Sucessfully uploaded {0} to Moonraker".LTF(FilePath))
             Case 1
-                sb.GenerateError("Error uploading to Moonraker", $"An unknown error occurred")
+                sb.GenerateError("Error uploading to Moonraker".LT(), "An unknown error occurred".LT())
             Case -1
-                sb.GenerateError("Error uploading to Moonraker", $"The host could not be found")
+                sb.GenerateError("Error uploading to Moonraker".LT(), "The host could not be found".LT())
             Case Else
                 Dim codeText = New Http.HttpResponseMessage(status)
                 codeText.ReasonPhrase = If(status = 418, "I'm a teapot (you don't have any GCode to upload)", codeText.ReasonPhrase)
-                sb.GenerateError("Error uploading to Moonraker", $"{status}: {codeText.ReasonPhrase}")
+                sb.GenerateError("Error uploading to Moonraker".LT(), $"{status}: {codeText.ReasonPhrase}")
         End Select
     End Sub
 

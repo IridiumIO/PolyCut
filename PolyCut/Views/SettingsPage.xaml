@@ -1,7 +1,9 @@
 ﻿<Page x:Class="SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:Flags="clr-namespace:FamFamFam.Flags.Wpf;assembly=FamFamFam.Flags.Wpf"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
       xmlns:local="clr-namespace:PolyCut"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
@@ -14,7 +16,11 @@
       d:DesignHeight="700"
       d:DesignWidth="800"
       mc:Ignorable="d">
-    <Page.Resources />
+    <Page.Resources>
+
+        <Flags:CountryIdToFlagImageSourceConverter x:Key="CountryIdToFlagImageSourceConverter" />
+
+    </Page.Resources>
     <Grid>
         <StackPanel>
             <StackPanel Orientation="Horizontal">
@@ -23,26 +29,76 @@
                                  Source="pack://application:,,,/PolyCut;component/Resources/banner_dark.svg" />
                 <TextBlock Margin="14" VerticalAlignment="Bottom"
                            FontSize="20" Foreground="#80FFFFFF">
-                    <Run Text="version" />
+                    <Run loc:L.Value="version" />
                     <Run Text="{x:Static local:SettingsHandler.Version}" />
                 </TextBlock>
             </StackPanel>
-            <CheckBox x:Name="AddToStartMenuCheckBox"
-                      Margin="0 -40 0 -40" HorizontalAlignment="Right" Panel.ZIndex="2"
-                      Checked="AddToStartMenuCheckBox_Checked" Content="Add to Start Menu"
-                      IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
-                      Unchecked="AddToStartMenuCheckBox_Unchecked" />
+
 
             <Separator Margin="0 10" />
-            <Label Content="Grid Settings" FontWeight="SemiBold" />
-            <Grid HorizontalAlignment="Stretch">
+            <Label loc:L.Value="Global Settings" FontWeight="SemiBold" />
+
+            <StackPanel Width="400"
+                        Margin="10 0 0 0" HorizontalAlignment="Left"
+                        Orientation="Horizontal">
+                <Label Width="160" VerticalAlignment="Center" loc:L.Value="UI Language" />
+                <ComboBox x:Name="UiLanguageComboBox"
+                          Margin="0 10 0 10"
+                          ItemsSource="{Binding LanguageItems}"
+                          SelectedIndex="0" SelectionChanged="UiLanguageComboBox_SelectionChanged">
+
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+
+                                <Image Width="20" Source="{Binding ISOCountryCode, Converter={StaticResource CountryIdToFlagImageSourceConverter}}" />
+
+                                <TextBlock x:Name="LanguageText"
+                                           Grid.Column="1"
+                                           Margin="6 0 0 0" VerticalAlignment="Center"
+                                           Text="{Binding LanguageName}" />
+                            </StackPanel>
+
+
+
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+
+                </ComboBox>
+                <ui:Button Margin="10 0 0 0"
+                           Background="Transparent" BorderThickness="0"
+                           Command="{Binding CheckForLanguageUpdatesCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ArrowCircleDown20" />
+                    </StackPanel>
+                    <ui:Button.ToolTip>
+                        <ToolTip loc:L.Value="Reload Languages. Checks online for updated language definitions" />
+                    </ui:Button.ToolTip>
+                </ui:Button>
+            </StackPanel>
+
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <Label Width="160" loc:L.Value="Start Menu Shortcut" />
+
+                <ui:ToggleSwitch x:Name="AddToStartMenuCheckBox"
+                                 Checked="AddToStartMenuCheckBox_Checked"
+                                 IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
+                                 Unchecked="AddToStartMenuCheckBox_Unchecked" />
+            </StackPanel>
+
+
+            <Separator Margin="0 10" />
+
+            <Label loc:L.Value="Grid Settings" FontWeight="SemiBold" />
+            <Grid HorizontalAlignment="Stretch" loc:L.Context="Grid Settings">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" MinWidth="400" MaxWidth="600" />
                     <ColumnDefinition Width="*" />
 
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <local:LabeledNumberBoxControl LabelText="Spacing" Margin="10 0 0 0"
+                    <local:LabeledNumberBoxControl Margin="10 0 0 0"
+                                                   LabelText="{loc:T Spacing}"
                                                    Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                    TextBoxWidth="100" UnitText="mm" />
                     <Grid Margin="10 0 0 0">
@@ -51,11 +107,11 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <local:LabeledNumberBoxControl Margin="0 0 15 0"
-                                                       LabelText="Inset (Left)"
+                                                       LabelText="{loc:T 'Inset (Left)'}"
                                                        Text="{Binding MainVM.UIConfiguration.GridConfig.InsetLeft, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                         <local:LabeledNumberBoxControl Grid.Column="1"
-                                                       LabelText="Inset (Right)"
+                                                       LabelText="{loc:T 'Inset (Right)'}"
                                                        Text="{Binding MainVM.UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
@@ -65,11 +121,11 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <local:LabeledNumberBoxControl Margin="0 0 15 0"
-                                                       LabelText="Inset (Top)"
+                                                       LabelText="{loc:T 'Inset (Top)'}"
                                                        Text="{Binding MainVM.UIConfiguration.GridConfig.InsetTop, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                         <local:LabeledNumberBoxControl Grid.Column="1"
-                                                       LabelText="Inset (Bottom)"
+                                                       LabelText="{loc:T 'Inset (Bottom)'}"
                                                        Text="{Binding MainVM.UIConfiguration.GridConfig.InsetBottom, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
@@ -78,9 +134,9 @@
                                               ColorSelected="ColorPickerControl_ColorSelected"
                                               CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                               Foreground="{DynamicResource CardForeground}"
-                                              LabelText="Gridline Colour" />
+                                              LabelText="{loc:T 'Gridline Colour'}" />
                     <Separator Margin="0 10" />
-                    <Label Margin="0 0 0 10" Content="Canvas Color" FontWeight="SemiBold" />
+                    <Label Margin="0 0 0 10" loc:L.Value="Canvas Color" FontWeight="SemiBold" />
                     <ComboBox x:Name="CanvasColourSelection"
                               MinWidth="300"
                               HorizontalAlignment="Left"
@@ -134,7 +190,7 @@
             </Grid>
 
             <Separator Margin="0 10" />
-            <Label Content="Preview Page Settings" FontWeight="SemiBold"/>
+            <Label loc:L.Value="Preview Page Settings" FontWeight="SemiBold" />
             <StackPanel Width="390" MaxWidth="390"
                         Margin="10 0 0 0" HorizontalAlignment="Left">
                 <local:ColorPickerControl x:Name="PreviewPage_DrawingBrushColorSelector"
@@ -142,20 +198,20 @@
                                           ColorSelected="PreviewPage_DrawingBrushColorSelector_ColorSelected"
                                           CurrentColor="{Binding MainVM.UIConfiguration.PreviewDrawingBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
-                                          LabelText="Drawing Line Colour" />
+                                          LabelText="{loc:T 'Drawing Line Colour'}" />
                 <local:ColorPickerControl x:Name="PreviewPage_TravelBrushColorSelector"
                                           Margin="0 5"
                                           ColorSelected="PreviewPage_TravelBrushColorSelector_ColorSelected"
                                           CurrentColor="{Binding MainVM.UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
-                                          LabelText="Travel Line Colour" />
+                                          LabelText="{loc:T 'Travel Line Colour'}" />
 
                 <local:ColorPickerControl x:Name="PreviewPage_CursorBrushColorSelector"
                                           Margin="0 5"
                                           ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
                                           CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
-                                          LabelText="Cursor Colour" />
+                                          LabelText="{loc:T 'Cursor Colour'}" />
 
             </StackPanel>
 

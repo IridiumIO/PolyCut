@@ -1,6 +1,6 @@
 <UserControl x:Class="ColorPickerControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -85,7 +85,7 @@
                                     KeyDown="HexTextBox_KeyDown" LostFocus="HexTextBox_LostFocus" MaxLength="9"
                                     Text="{Binding HexColor, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <ui:TextBox.ToolTip>
-                                <ToolTip Content="Enter hex color (e.g., #FFFF0000 or #FF0000)" />
+                                <ToolTip loc:L.Value="Enter hex color (e.g., #FFFF0000 or #FF0000)" />
                             </ui:TextBox.ToolTip>
                         </ui:TextBox>
 

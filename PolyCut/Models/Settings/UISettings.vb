@@ -14,6 +14,8 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
     <ImplementsProperty(GetType(ISaveable), NameOf(ISaveable.Name))>
     <ObservableProperty> Private _Name As String = "UIConfiguration"
 
+    <ObservableProperty> Private _Language As String = "en-AU"
+
     <ObservableProperty> Private _ShowGrid As Boolean = True
     <ObservableProperty> Private _ShowWorkArea As Boolean = False
 

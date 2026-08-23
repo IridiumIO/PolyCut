@@ -1,9 +1,12 @@
-﻿Imports Microsoft.Extensions.DependencyInjection
-Imports Microsoft.Extensions.Hosting
-Imports System.Linq
+﻿Imports System.Linq
 Imports System.Threading
 Imports System.Threading.Tasks
 Imports System.Windows
+
+Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Hosting
+
+Imports PolyCut.Localisation
 
 Public Class ApplicationHostService
     Implements IHostedService
@@ -42,6 +45,8 @@ Public Class ApplicationHostService
         Else
             Await SettingsHandler.InitialiseSettings(False)
         End If
+        LocalisationService.LoadLanguage(SettingsHandler.GetUIConfiguration().Language)
+        Await LocalisationService.SynchroniseEmbeddedLanguages()
 
 
         If Not Application.Current.Windows.OfType(Of MainWindow)().Any() Then
@@ -49,8 +54,6 @@ Public Class ApplicationHostService
             AddHandler navigationWindow.Loaded, AddressOf OnNavigationWindowLoaded
             navigationWindow.Show()
         End If
-
-        LocalisationService.LoadLanguage(SettingsHandler.GetUIConfiguration().Language)
 
 
     End Function
@@ -60,7 +63,15 @@ Public Class ApplicationHostService
             Return
         End If
 
+
         Dim navigationWindow = DirectCast(sender, MainWindow)
         navigationWindow.NavigationView.Navigate(GetType(SVGPage))
+
+
+#If DEBUG Then
+        LocalisationScanner.Run()
+#End If
+
+
     End Sub
 End Class

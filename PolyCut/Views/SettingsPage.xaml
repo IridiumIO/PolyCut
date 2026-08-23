@@ -38,10 +38,10 @@
             <Separator Margin="0 10" />
             <Label loc:L.Value="Global Settings" FontWeight="SemiBold" />
 
-            <StackPanel Width="400"
+            <StackPanel Width="500"
                         Margin="10 0 0 0" HorizontalAlignment="Left"
                         Orientation="Horizontal">
-                <Label Width="160" VerticalAlignment="Center" loc:L.Value="UI Language" />
+                <Label Width="180" VerticalAlignment="Center" loc:L.Value="UI Language" />
                 <ComboBox x:Name="UiLanguageComboBox"
                           Margin="0 10 0 10"
                           ItemsSource="{Binding LanguageItems}"
@@ -65,11 +65,11 @@
                     </ComboBox.ItemTemplate>
 
                 </ComboBox>
-                <ui:Button Margin="10 0 0 0"
+                <ui:Button Margin="10 0 0 0" Width="37" Height="37" Padding="0"
                            Background="Transparent" BorderThickness="0"
                            Command="{Binding CheckForLanguageUpdatesCommand}">
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="ArrowCircleDown20" />
+                        <ui:SymbolIcon Symbol="ArrowCircleDown20" FontSize="17" />
                     </StackPanel>
                     <ui:Button.ToolTip>
                         <ToolTip loc:L.Value="Reload Languages. Checks online for updated language definitions" />
@@ -78,9 +78,10 @@
             </StackPanel>
 
             <StackPanel Margin="10" Orientation="Horizontal">
-                <Label Width="160" loc:L.Value="Start Menu Shortcut" />
+                <Label MinWidth="170" loc:L.Value="Start Menu Shortcut" />
 
                 <ui:ToggleSwitch x:Name="AddToStartMenuCheckBox"
+                                 Margin="10 0 0 0"
                                  Checked="AddToStartMenuCheckBox_Checked"
                                  IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
                                  Unchecked="AddToStartMenuCheckBox_Unchecked" />
@@ -90,21 +91,22 @@
             <Separator Margin="0 10" />
 
             <Label loc:L.Value="Grid Settings" FontWeight="SemiBold" />
-            <Grid HorizontalAlignment="Stretch" loc:L.Context="Grid Settings">
+            <Grid HorizontalAlignment="Stretch"
+                  loc:L.Context="Grid Settings" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Visible">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MinWidth="400" MaxWidth="600" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="auto" MinWidth="400" MaxWidth="700" />
+                    <ColumnDefinition  />
 
                 </Grid.ColumnDefinitions>
-                <StackPanel>
+                <StackPanel HorizontalAlignment="Left">
                     <local:LabeledNumberBoxControl Margin="10 0 0 0"
                                                    LabelText="{loc:T Spacing}"
                                                    Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                    TextBoxWidth="100" UnitText="mm" />
-                    <Grid Margin="10 0 0 0">
+                    <Grid Margin="10 0 0 0" Grid.IsSharedSizeScope="True">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition MinWidth="250" SharedSizeGroup="GridSizes" />
+                            <ColumnDefinition MinWidth="250" SharedSizeGroup="GridSizes" />
                         </Grid.ColumnDefinitions>
                         <local:LabeledNumberBoxControl Margin="0 0 15 0"
                                                        LabelText="{loc:T 'Inset (Left)'}"
@@ -150,7 +152,7 @@
 
 
                 <Viewbox Grid.Column="1"
-                         MinWidth="100" MaxWidth="600" MaxHeight="280"
+                         MinWidth="12"  MaxHeight="280"
                          Margin="20 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Top"
                          SnapsToDevicePixels="True" Stretch="Uniform" StretchDirection="Both" UseLayoutRounding="True">
                     <Grid>

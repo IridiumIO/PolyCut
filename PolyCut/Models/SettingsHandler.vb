@@ -46,7 +46,6 @@ Public Class SettingsHandler : Inherits ObservableObject
         If Not IO.Path.Exists(languagesFolderPath) Then
             IO.Directory.CreateDirectory(languagesFolderPath)
         End If
-        Await LocalisationService.SynchroniseEmbeddedLanguages()
 
         GenerateEV()
 

@@ -75,10 +75,6 @@ Partial Public Class Application
 
     Private Shadows Async Sub OnStartup(sender As Object, e As StartupEventArgs)
 
-        '#If DEBUG Then
-        '        LocalisationScanner.Run()
-        '#End If
-
         Await _host.StartAsync()
 
         Dim updateTask = GetService(Of UpdateService)().CheckForUpdate(True)

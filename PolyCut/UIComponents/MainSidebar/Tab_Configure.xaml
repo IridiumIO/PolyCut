@@ -28,13 +28,14 @@
             <StackPanel>
                 <Grid HorizontalAlignment="Center" Grid.IsSharedSizeScope="True">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition SharedSizeGroup="Tools" Width="*" MinWidth="80" />
+                        <ColumnDefinition Width="*" MinWidth="80" SharedSizeGroup="Tools" />
                         <ColumnDefinition Width="15" />
-                        <ColumnDefinition SharedSizeGroup="Tools" Width="*" MinWidth="80"/>
+                        <ColumnDefinition Width="*" MinWidth="80" SharedSizeGroup="Tools" />
                     </Grid.ColumnDefinitions>
-                    <RadioButton x:Name="modeCut" HorizontalAlignment="Stretch"
+                    <RadioButton x:Name="modeCut"
                                  Grid.Column="0"
                                  Height="60"
+                                 HorizontalAlignment="Stretch"
                                  IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
                         <StackPanel>
@@ -58,9 +59,10 @@
 
                     </RadioButton>
 
-                    <RadioButton x:Name="modeDraw"   HorizontalAlignment="Stretch"
+                    <RadioButton x:Name="modeDraw"
                                  Grid.Column="2"
-                                 Height="60" 
+                                 Height="60"
+                                 HorizontalAlignment="Stretch"
                                  d:IsChecked="True"
                                  IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
@@ -110,7 +112,8 @@
                                             Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="{loc:T Work Speed, Context='Cut/Draw tool work'}"
+                                            LabelText="{loc:T Work Speed,
+                                                              Context='Cut/Draw tool work'}"
                                             Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
                                             Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <local:LabeledSliderControl.ToolTip>
@@ -132,12 +135,13 @@
                     </Grid.ColumnDefinitions>
 
 
-                    <local:LabeledNumberBoxControl LabelText="{loc:T Work, Context='Cut/Draw tool work'}"
+                    <local:LabeledNumberBoxControl LabelText="{loc:T Work,
+                                                                     Context='Cut/Draw tool work'}"
                                                    Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                    TextBoxWidth="95" UnitText="mm" />
 
                     <local:LabeledNumberBoxControl Grid.Column="2"
-                                                   LabelText="Travel"
+                                                   LabelText="{loc:T Travel}"
                                                    Text="{Binding MainVM.Configuration.TravelZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                    TextBoxWidth="95" UnitText="mm" />
                     <Grid.ToolTip>

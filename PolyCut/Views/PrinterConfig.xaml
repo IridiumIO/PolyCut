@@ -3,10 +3,10 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-                 xmlns:local="clr-namespace:PolyCut"
+                 xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 Title="Printer Configuration"
+                 Title="{loc:T Printer Configuration}"
                  Width="600"
                  Height="900"
                  d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
@@ -33,10 +33,10 @@
                               d:Visibility="Collapsed" />
             <ui:TitleBar Grid.Row="0" Margin="-20" Panel.ZIndex="121" />
 
-            <Label Grid.Row="0" Margin="0 10" Content="Printer Configuration" />
+            <Label Grid.Row="0" Margin="0 10" loc:L.Value="Printer Configuration" />
 
             <StackPanel Grid.Row="2" Margin="10 0" Orientation="Horizontal">
-                <Label Margin="0 0 20 -3" VerticalAlignment="Center" Content="Printer: " />
+                <Label Margin="0 0 20 -3" VerticalAlignment="Center" loc:L.Value="Printer: " />
                 <ComboBox MinWidth="400"
                           DisplayMemberPath="Name"
                           ItemsSource="{Binding MainVM.Printers}"
@@ -65,17 +65,12 @@
 
                     <StackPanel DockPanel.Dock="Bottom">
 
-                        <Label Grid.Row="0" Content="Input SVG" Visibility="Collapsed" />
-
-                        <Separator Margin="0 10" Visibility="Collapsed" />
-
-
                         <StackPanel Margin="14 0" FlowDirection="LeftToRight">
                             <StackPanel.Background>
                                 <SolidColorBrush Color="Transparent" />
                             </StackPanel.Background>
 
-                            <Label Margin="0 0 0 10" Content="Bed Dimensions" />
+                            <Label Margin="0 0 0 10" loc:L.Value="Bed Dimensions" />
 
                             <Grid Margin="0 0 0 0">
                                 <Grid.ColumnDefinitions>
@@ -114,7 +109,7 @@
 
                             <StackPanel Margin="0 10 0 10" Orientation="Horizontal">
 
-                                <Label Margin="0 4 10 0" Content="Working Area" />
+                                <Label Margin="0 4 10 0" loc:L.Value="Working Area" />
 
                                 <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding MainVM.WorkingAreaVisibility}">
                                     <ToggleButton.Template>
@@ -214,7 +209,7 @@
 
                             <StackPanel Margin="0 10 0 10" Orientation="Horizontal">
 
-                                <Label Margin="0 4 10 0" Content="Toolhead Offset" />
+                                <Label Margin="0 4 10 0" loc:L.Value="Toolhead Offset" />
 
 
                             </StackPanel>
@@ -243,13 +238,13 @@
 
                         <Separator Margin="0 10 0 5" />
                         <ui:CardExpander x:Name="CustomGCode_Section"
-                                         Margin="-0 0"
+                                         Margin="-0 0" loc:L.Context="Custom GCode Entries"
                                          Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
                                          Style="{StaticResource CustomCardExpanderStyle}">
                             <ui:CardExpander.Header>
                                 <Grid Margin="10 0" FlowDirection="LeftToRight">
 
-                                    <TextBlock Padding="1 2 10 0" VerticalAlignment="Center" Text="Custom GCode" />
+                                    <TextBlock Padding="1 2 10 0" VerticalAlignment="Center" loc:L.Value="Custom GCode" />
 
 
 
@@ -258,7 +253,7 @@
 
                             <StackPanel Margin="14 0" FlowDirection="LeftToRight">
 
-                                <Label Margin="0 0 0 0" Content="Start GCode" />
+                                <Label Margin="0 0 0 0" loc:L.Value="Start GCode" />
 
                                 <ui:TextBox x:Name="StartGCodeTextBox"
                                             Height="100"
@@ -267,7 +262,7 @@
                                             Text="{Binding MainVM.Printer.StartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
 
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" Content="End GCode" />
+                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="End GCode" />
 
                                 <ui:TextBox x:Name="EndGCodeTextBox"
                                             Height="100"
@@ -276,9 +271,9 @@
                                             Text="{Binding MainVM.Printer.EndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
 
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" Content="Preview Start GCode (?)">
+                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="Preview Start GCode (?)">
                                     <Label.ToolTip>
-                                        <ToolTip Content="Start GCode used when sending the bounding box preview to Klipper" />
+                                        <ToolTip loc:L.Value="Start GCode used when sending the bounding box preview to Klipper" />
                                     </Label.ToolTip>
                                 </Label>
 
@@ -289,9 +284,9 @@
                                             Text="{Binding MainVM.Printer.PreviewStartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
 
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" Content="Preview End GCode (?)">
+                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="Preview End GCode (?)">
                                     <Label.ToolTip>
-                                        <ToolTip Content="End GCode used when sending the bounding box preview to Klipper" />
+                                        <ToolTip loc:L.Value="End GCode used when sending the bounding box preview to Klipper" />
                                     </Label.ToolTip>
                                 </Label>
 

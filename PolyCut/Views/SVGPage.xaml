@@ -5,7 +5,7 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-      xmlns:local="clr-namespace:PolyCut"
+      xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
       xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
@@ -92,14 +92,14 @@
             </ui:Card.Effect>
             <Grid>
 
-                <StackPanel Orientation="Horizontal">
-                    <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Font" />
+                <StackPanel Orientation="Horizontal" loc:L.Context="Font Styling">
+                    <Label Margin="0 2 10 0" VerticalAlignment="Center" loc:L.Value="Font" />
                     <local:FontPickerComboBox x:Name="OverlayFontPicker"
                                               Width="200"
                                               DropDownClosed="TextStyleControl_DropDownClosed"
                                               SelectedFont="{Binding CanvasFontFamily, Mode=TwoWay}" />
                     <Separator Margin="5 0" />
-                    <Label Margin="0 2 10 0" VerticalAlignment="Center" Content="Size (pt)" />
+                    <Label Margin="0 2 10 0" VerticalAlignment="Center" loc:L.Value="Size (pt)" />
                     <ComboBox x:Name="OverlayFontSizeComboBox"
                               Width="80"
                               Padding="7"
@@ -154,7 +154,7 @@
             <rc:ZoomBorder.ContextMenu>
                 <ContextMenu>
 
-                    <MenuItem IsTabStop="False">
+                    <MenuItem IsTabStop="False" loc:L.Context="Clipboard Actions">
                         <MenuItem.Template>
                             <ControlTemplate TargetType="MenuItem">
                                 <ContentPresenter Content="{TemplateBinding Header}" />
@@ -173,7 +173,7 @@
                                            Command="{Binding MainVM.CutSelectionCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="Cut20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Cut" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Cut" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -183,7 +183,7 @@
                                            Command="{Binding MainVM.CopySelectionCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="Copy20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Copy" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Copy" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -193,7 +193,7 @@
                                            Command="{Binding MainVM.PasteClipboardCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="ClipboardPaste20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" Text="Paste" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Paste" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -206,7 +206,7 @@
                                            IsEnabled="{Binding MainVM.HasDrawables}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="CopySelect20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="11" Text="Select All" />
+                                        <TextBlock Margin="0 5 0 0" FontSize="11" loc:L.Value="Select All" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -237,14 +237,14 @@
                                                           Grid.Row="0"
                                                           ColorSelected="ContextStrokePicker_ColorSelected"
                                                           CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
-                                                          LabelText="Stroke" PopupOpening="ContextStrokePicker_PopupOpening" />
+                                                          LabelText="{loc:T 'Stroke'}" PopupOpening="ContextStrokePicker_PopupOpening" />
 
                                 <local:ColorPickerControl x:Name="ContextFillPicker"
                                                           Grid.Row="1"
                                                           Margin="0 10"
                                                           ColorSelected="ContextFillPicker_ColorSelected"
                                                           CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
-                                                          LabelText="Fill" PopupOpening="ContextFillPicker_PopupOpening" />
+                                                          LabelText="{loc:T 'Fill'}" PopupOpening="ContextFillPicker_PopupOpening" />
 
                             </Grid>
 
@@ -302,7 +302,7 @@
                         </MenuItem.Header>
                     </MenuItem>
 
-                    <ui:MenuItem x:Name="ArrangeMenuItem" Header=" Arrange" Icon="{ui:SymbolIcon Symbol=Archive16}">
+                    <ui:MenuItem x:Name="ArrangeMenuItem" Header="{loc:T 'Arrange'}" Icon="{ui:SymbolIcon Symbol=Archive16}" loc:L.Context="Arrange objects on canvas">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 
@@ -343,7 +343,7 @@
 
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" Text="Bring Forward" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="10" loc:L.Value="Bring Forward" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -381,7 +381,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" Text="Bring To Front" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="10" loc:L.Value="Bring To Front" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -410,7 +410,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" Text="Send Backwards" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="10" loc:L.Value="Send Backwards" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -447,7 +447,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" Text="Send To Back" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="10" loc:L.Value="Send To Back" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -462,7 +462,7 @@
 
                     </ui:MenuItem>
 
-                    <ui:MenuItem x:Name="CombineMenuItem" Header="Combine">
+                    <ui:MenuItem x:Name="CombineMenuItem" Header="{loc:T 'Combine'}" loc:L.Context="Boolean Operations">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 
@@ -483,7 +483,7 @@
 
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeUnion20" />
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" Text="Union" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="12" loc:L.Value="Union" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -495,7 +495,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeIntersect20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" Text="Intersect" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="12" loc:L.Value="Intersect" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -507,7 +507,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeSubtract20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" Text="Subtract" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="12" loc:L.Value="Subtract" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -519,7 +519,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeExclude20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" Text="Exclude" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       FontSize="12" loc:L.Value="Exclude" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -690,7 +690,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <Label Padding="1 2 0 0" VerticalAlignment="Center" Content="Printer" />
+                            <Label Padding="1 2 0 0" VerticalAlignment="Center" loc:L.Context="3D Printer/Machine" loc:L.Value="Printer" />
                             <Grid Grid.Column="2" Margin="10 0 0 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

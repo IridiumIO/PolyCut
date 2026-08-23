@@ -1,3 +1,4 @@
+Imports System.ComponentModel
 Imports System.Windows
 
 Public Class ColorPickerControl
@@ -5,6 +6,9 @@ Public Class ColorPickerControl
 
     Public Sub New()
         InitializeComponent()
+
+        ' Skip runtime-only initialisation in the Visual Studio designer.
+        If DesignerProperties.GetIsInDesignMode(Me) Then Return
 
         Dim mainVM = Application.GetService(Of MainViewModel)()
 

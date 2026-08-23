@@ -4,6 +4,7 @@
              xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
              xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
@@ -22,11 +23,38 @@
         </Grid.RowDefinitions>
 
         <TabControl Margin="0 0 0 0" VerticalAlignment="Stretch" BorderBrush="Transparent">
+             <TabControl.Template>
+        <ControlTemplate TargetType="{x:Type TabControl}">
+            <Grid KeyboardNavigation.TabNavigation="Local">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0"
+                            IsItemsHost="True"
+                            Orientation="Horizontal"
+                            KeyboardNavigation.TabIndex="1"
+                            Panel.ZIndex="1" />
+
+                <Border Grid.Row="1"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    <ContentPresenter ContentSource="SelectedContent"
+                                      Margin="{TemplateBinding Padding}"
+                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                </Border>
+
+            </Grid>
+        </ControlTemplate>
+    </TabControl.Template>
             <TabItem IsSelected="True" Style="{StaticResource CustomTabStyle}">
                 <TabItem.Header>
                     <StackPanel Margin="5 0 5 0" Orientation="Horizontal">
                         <ui:SymbolIcon Symbol="PuzzlePiece24" />
-                        <TextBlock Margin="6 0 0 0" Text="Elements" />
+                        <TextBlock Margin="6 0 0 0" loc:L.Context="Drawing/shape elements" loc:L.Value="Elements" />
                         <!--  Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />  -->
 
                     </StackPanel>
@@ -38,7 +66,7 @@
                 <TabItem.Header>
                     <StackPanel Margin="5 0 5 0" Orientation="Horizontal">
                         <ui:SymbolIcon Margin="0 0 6 0" Symbol="AlignLeft16" />
-                        <TextBlock Text="Properties" />
+                        <TextBlock loc:L.Value="Properties" />
                         <!--  Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TabItem}, Converter={StaticResource BoolToVisibilityConverter}}" />  -->
 
                     </StackPanel>
@@ -61,7 +89,7 @@
                 <TabItem.Header>
                     <StackPanel Margin="5 0" Orientation="Horizontal">
                         <ui:SymbolIcon Margin="0 0 6 0" Symbol="Options20" />
-                        <TextBlock Text="Tool Config" />
+                        <TextBlock loc:L.Value="Tool Config" />
 
                     </StackPanel>
                 </TabItem.Header>

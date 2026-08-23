@@ -4,6 +4,7 @@
              xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
              xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
@@ -25,11 +26,15 @@
                       IsDeferredScrollingEnabled="False" VerticalScrollBarVisibility="Visible">
 
             <StackPanel>
-                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-
-                    <RadioButton x:Name="modeCut"
-                                 Width="80" Height="60"
-                                 Margin="0 0 15 0"
+                <Grid HorizontalAlignment="Center" Grid.IsSharedSizeScope="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition SharedSizeGroup="Tools" Width="*" MinWidth="80" />
+                        <ColumnDefinition Width="15" />
+                        <ColumnDefinition SharedSizeGroup="Tools" Width="*" MinWidth="80"/>
+                    </Grid.ColumnDefinitions>
+                    <RadioButton x:Name="modeCut" HorizontalAlignment="Stretch"
+                                 Grid.Column="0"
+                                 Height="60"
                                  IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
                         <StackPanel>
@@ -43,37 +48,39 @@
 
                             </Canvas>
                             <TextBlock Margin="0 4 0 0" HorizontalAlignment="Center"
-                                       FontWeight="SemiBold" Text="Cut" />
+                                       loc:L.Context="Tool Mode" loc:L.Value="Cut" FontWeight="SemiBold" />
 
                         </StackPanel>
 
                         <RadioButton.ToolTip>
-                            <TextBlock TextWrapping="Wrap">
-                                Settings designed for cutting objects out using a drag-knife.
-                            </TextBlock>
+                            <TextBlock loc:L.Context="Tool Mode Tooltip" loc:L.Value="Settings designed for cutting objects out using a drag-knife." TextWrapping="Wrap" />
                         </RadioButton.ToolTip>
 
                     </RadioButton>
-                    <RadioButton x:Name="modeDraw"
-                                 Width="80" Height="60"
-                                 Margin="0 0 15 0"
+
+                    <RadioButton x:Name="modeDraw"   HorizontalAlignment="Stretch"
+                                 Grid.Column="2"
+                                 Height="60" 
                                  d:IsChecked="True"
                                  IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
                         <StackPanel>
                             <ui:SymbolIcon Margin="0 6 0 0" Symbol="Pen20" />
                             <TextBlock Margin="0 4 0 0" HorizontalAlignment="Center"
-                                       FontWeight="SemiBold" Text="Draw" />
+                                       loc:L.Context="Tool Mode" loc:L.Value="Draw" FontWeight="SemiBold" />
 
                         </StackPanel>
                         <RadioButton.ToolTip>
-                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                Settings designed for drawing using a pen, marker, or even a foil stamping pen.
-                            </TextBlock>
+                            <TextBlock loc:L.Context="Tool Mode Tooltip" loc:L.Value="Settings designed for drawing using a pen, marker, or even a foil stamping pen." TextAlignment="Left" TextWrapping="Wrap" />
                         </RadioButton.ToolTip>
                     </RadioButton>
 
-                    <!--<RadioButton x:Name="modeFoil"
+                </Grid>
+
+
+
+
+                <!--<RadioButton x:Name="modeFoil"
                                  Width="80" Height="60"
                                  d:IsChecked="True"
                                  IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Foil}}"
@@ -93,24 +100,29 @@
                     </RadioButton>-->
 
 
-                </StackPanel>
 
                 <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="Travel Speed" Maximum="100" Minimum="10" TickFrequency="1" ToolTip="Speed of the toolhead when the tool is raised and not actively cutting/drawing."
+                                            LabelText="{loc:T Travel Speed}"
+                                            Maximum="100" Minimum="10" TickFrequency="1"
+                                            ToolTip="{loc:T 'Speed of the toolhead when the tool is raised and not actively cutting/drawing.',
+                                                            Context='Travel Speed ToolTip'}"
                                             UnitText="mm/s"
                                             Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="{Binding MainVM.Configuration.SelectedToolMode, StringFormat={} {0} Speed}" Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
+                                            LabelText="{loc:T Work Speed, Context='Cut/Draw tool work'}"
+                                            Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
                                             Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <local:LabeledSliderControl.ToolTip>
-                        <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                            Speed of the toolhead when the tool is down and cutting/drawing.<LineBreak /><LineBreak />
-                            Slower is usually better</TextBlock>
+                        <TextBlock loc:L.Context="Tool Speed Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                            <Run loc:L.Value="Speed of the toolhead when the tool is down and cutting/drawing." />
+                            <LineBreak /><LineBreak />
+                            <Run loc:L.Value="Slower is usually better" />
+                        </TextBlock>
                     </local:LabeledSliderControl.ToolTip>
                 </local:LabeledSliderControl>
 
-                <Label Margin="0 10 0 0" Content="Z Height" />
+                <Label Margin="0 10 0 0" loc:L.Value="Z Height" />
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -120,7 +132,7 @@
                     </Grid.ColumnDefinitions>
 
 
-                    <local:LabeledNumberBoxControl LabelText="{Binding MainVM.Configuration.SelectedToolMode}"
+                    <local:LabeledNumberBoxControl LabelText="{loc:T Work, Context='Cut/Draw tool work'}"
                                                    Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                    TextBoxWidth="95" UnitText="mm" />
 
@@ -129,10 +141,13 @@
                                                    Text="{Binding MainVM.Configuration.TravelZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                    TextBoxWidth="95" UnitText="mm" />
                     <Grid.ToolTip>
-                        <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                            How high above the workpiece the toolhead should be positioned when travelling or drawing.<LineBreak /><LineBreak />
-                            Positive values are offset above the bed surface.<LineBreak /><LineBreak />
-                            This value is affected by your printer's Z-Offset.</TextBlock>
+                        <TextBlock loc:L.Context="Z Height Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                            <Run loc:L.Value="How high above the workpiece the toolhead should be positioned when travelling or drawing." />
+                            <LineBreak /><LineBreak />
+                            <Run loc:L.Value="Positive values are offset above the bed surface." />
+                            <LineBreak /><LineBreak />
+                            <Run loc:L.Value="This value is affected by your printer's Z-Offset." />
+                        </TextBlock>
                     </Grid.ToolTip>
                 </Grid>
 
@@ -144,37 +159,36 @@
                                      Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
                                      Style="{StaticResource CustomCardExpanderStyle}">
                         <ui:CardExpander.Header>
-                            <Label Margin="10 0" Content="Processing Settings" FlowDirection="LeftToRight" />
+                            <Label Margin="10 0" loc:L.Value="Processing Settings" FlowDirection="LeftToRight" />
 
                         </ui:CardExpander.Header>
 
                         <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
 
-                            <local:LabeledNumberBoxControl LabelText="Curve-fitting Precision"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Curve-fitting Precision}"
                                                            Text="{Binding MainVM.Configuration.Tolerance, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                            TextBoxWidth="120" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time.
-                                    </TextBlock>
+                                    <TextBlock loc:L.Context="Curve-fitting Precision Tooltip" loc:L.Value="Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time." TextAlignment="Left" TextWrapping="Wrap" />
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="Number of Passes" Text="{Binding MainVM.Configuration.Passes, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" TextBoxWidth="120">
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Number of Passes}" Text="{Binding MainVM.Configuration.Passes, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" TextBoxWidth="120">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times.
-                                    </TextBlock>
+                                    <TextBlock loc:L.Context="Number of Passes Tooltip" loc:L.Value="How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times." TextAlignment="Left" TextWrapping="Wrap" />
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
-                            <local:LabeledNumberBoxControl LabelText="Z Offset Per Pass"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Z Offset Per Pass}"
                                                            Text="{Binding MainVM.Configuration.PassHeightDelta, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allownegative}"
                                                            TextBoxWidth="120" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        The distance in Z that the tool should move after each pass when multiple passes are enabled.<LineBreak /><LineBreak />
-                                        Positive values move the tool up after each pass, while negative values move the tool down after each pass.<LineBreak /><LineBreak />
-                                        For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage.</TextBlock>
+                                    <TextBlock loc:L.Context="Z Offset Per Pass Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="The distance in Z that the tool should move after each pass when multiple passes are enabled." />
+                                        <LineBreak /><LineBreak />
+                                        <Run loc:L.Value="Positive values move the tool up after each pass, while negative values move the tool down after each pass." />
+                                        <LineBreak /><LineBreak />
+                                        <Run loc:L.Value="For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." />
+                                    </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
@@ -185,12 +199,13 @@
                                 </Grid.ColumnDefinitions>
                                 <CheckBox x:Name="extractSingleColor"
                                           Grid.Row="2"
+                                          Height="35"
                                           Margin="-10 0 0 0"
-                                          Content="Extract one colour" Height="35"
+                                          loc:L.Value="Extract one colour"
                                           IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
                                     <CheckBox.ToolTip>
-                                        <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                            Processes only objects with the specified colour, and ignores all others.
+                                        <TextBlock loc:L.Context="Extract One Colour Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="Processes only objects with the specified colour, and ignores all others." />
                                         </TextBlock>
                                     </CheckBox.ToolTip>
                                 </CheckBox>
@@ -219,30 +234,37 @@
                                      Style="{StaticResource CustomCardExpanderStyle}"
                                      Visibility="{Binding ElementName=modeCut, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:CardExpander.Header>
-                            <Label Margin="10 0" Content="Blade Settings" FlowDirection="LeftToRight" />
+                            <Label Margin="10 0" loc:L.Value="Blade Settings" FlowDirection="LeftToRight" />
 
                         </ui:CardExpander.Header>
 
                         <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
 
-                            <local:LabeledNumberBoxControl LabelText="Tool Diameter"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Tool Diameter}"
                                                            Text="{Binding MainVM.Configuration.CuttingConfig.ToolDiameter, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                            TextBoxWidth="120" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Diameter of the swivelling part of the cutting blade.<LineBreak />
-                                        Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge.<LineBreak /><LineBreak />
-                                        Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features.</TextBlock>
+                                    <TextBlock loc:L.Context="Tool Diameter Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="of the swivelling part of the cutting blade." />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features." />
+                                    </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="Overcut"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Overcut}"
                                                            Text="{Binding MainVM.Configuration.CuttingConfig.Overcut, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                            TextBoxWidth="120" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.<LineBreak /> <LineBreak />
-                                        Recommended value ~1mm</TextBlock>
+                                    <TextBlock loc:L.Context="Overcut Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Extends cuts by the specified amount to compensate for cutting moves ending slightly too early." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Recommended value ~1mm" />
+                                    </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
@@ -261,7 +283,7 @@
                                      Style="{StaticResource CustomCardExpanderStyle}"
                                      Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:CardExpander.Header>
-                            <Label Margin="10 0" Content="Drawing Settings" FlowDirection="LeftToRight" />
+                            <Label Margin="10 0" loc:L.Value="Drawing Settings" FlowDirection="LeftToRight" />
 
                         </ui:CardExpander.Header>
 
@@ -270,40 +292,48 @@
 
                             <CheckBox x:Name="optimiseDrawingPaths"
                                       Margin="0 5 0 0"
-                                      Content="Optimise Drawing Paths"
+                                      loc:L.Value="Optimise Drawing Paths"
                                       IsChecked="{Binding MainVM.Configuration.OptimisedToolPath, Mode=TwoWay}">
                                 <CheckBox.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Optimises the order in which lines are drawn to minimise travel time.<LineBreak /><LineBreak />
-                                        Particularly useful for ordering lines when filling shapes.</TextBlock>
+                                    <TextBlock loc:L.Context="Optimise Drawing Paths Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Optimises the order in which lines are drawn to minimise travel time." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Particularly useful for ordering lines when filling shapes." />
+                                    </TextBlock>
                                 </CheckBox.ToolTip>
                             </CheckBox>
 
 
                             <CheckBox Margin="0 5 0 0"
-                                      Content="Allow Travel in Outlines"
+                                      loc:L.Value="Allow Travel in Outlines"
                                       IsChecked="{Binding MainVM.Configuration.DrawingConfig.AllowDrawingOverOutlines, Mode=TwoWay}"
                                       IsEnabled="{Binding MainVM.Configuration.OptimisedToolPath}"
                                       ToolTipService.ShowOnDisabled="True">
                                 <CheckBox.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Allows the pen to travel through shape outlines without lifting the pen up to start the next line.<LineBreak /><LineBreak />
-                                        Requires "Optimise Drawing Paths" to be enabled. Can massively improve overall speed</TextBlock>
+                                    <TextBlock loc:L.Context="Allow Travel in Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Allows the pen to travel through shape outlines without lifting the pen up to start the next line." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Requires &quot;Optimise Drawing Paths&quot; to be enabled. Can massively improve overall speed" />
+                                    </TextBlock>
                                 </CheckBox.ToolTip>
                             </CheckBox>
 
 
                             <CheckBox x:Name="keepOutlines"
                                       Margin="0 5 0 0"
-                                      Content="Keep Outlines"
+                                      loc:L.Value="Keep Outlines"
                                       IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}">
                                 <CheckBox.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Whether shape outlines should be drawn, or ignored.<LineBreak /><LineBreak />
-                                        Disable this if you want to shade in an area without the area being outlined.</TextBlock>
+                                    <TextBlock loc:L.Context="Keep Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Whether shape outlines should be drawn, or ignored." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Disable this if you want to shade in an area without the area being outlined." />
+                                    </TextBlock>
                                 </CheckBox.ToolTip>
                             </CheckBox>
-
                             <Separator Margin="0 5 0 0" />
 
 
@@ -315,7 +345,7 @@
                                      Style="{StaticResource CustomCardExpanderStyle}"
                                      Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:CardExpander.Header>
-                            <Label Margin="10 0" Content="Shading Settings" FlowDirection="LeftToRight" />
+                            <Label Margin="10 0" loc:L.Value="Shading Settings" FlowDirection="LeftToRight" />
 
                         </ui:CardExpander.Header>
 
@@ -329,7 +359,7 @@
                             </StackPanel.Resources>
 
 
-                            <local:LabeledControl Margin="0 5" LabelText="Fill Style" ToolTipService.ShowOnDisabled="True">
+                            <local:LabeledControl Margin="0 5" LabelText="{loc:T Fill Style}" ToolTipService.ShowOnDisabled="True">
                                 <local:LabeledControl.ValueContent>
                                     <ComboBox Grid.Row="0" Grid.Column="1"
                                               Width="120"
@@ -338,8 +368,8 @@
                                               SelectedItem="{Binding MainVM.Configuration.DrawingConfig.FillType}" />
                                 </local:LabeledControl.ValueContent>
                                 <local:LabeledControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        The method used to fill shapes
+                                    <TextBlock loc:L.Context="Fill Style Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="The method used to fill shapes" />
                                     </TextBlock>
                                 </local:LabeledControl.ToolTip>
                             </local:LabeledControl>
@@ -347,55 +377,65 @@
 
 
                             <local:LabeledNumberBoxControl x:Name="ShadingThresholdControl"
-                                                           Background="Transparent" LabelText="Shading Threshold" MouseEnter="LabeledNumberBoxControl_MouseEnter" MouseLeave="LabeledNumberBoxControl_MouseLeave"
+                                                           Background="Transparent"
+                                                           LabelText="{loc:T Shading Threshold}"
+                                                           MouseEnter="LabeledNumberBoxControl_MouseEnter" MouseLeave="LabeledNumberBoxControl_MouseLeave"
                                                            Text="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                            TextBoxWidth="120" ToolTipService.ShowOnDisabled="True">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Range = 0 to 1<LineBreak /><LineBreak />
-                                        How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects.</TextBlock>
+                                    <TextBlock loc:L.Context="Shading Threshold Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Range = 0 to 1" />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." />
+                                    </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="Lightest shading spacing"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Lightest shading spacing}"
                                                            Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                            TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        How far apart drawn lines should be when shading the lightest parts of the image.
+                                    <TextBlock loc:L.Context="Lightest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="How far apart drawn lines should be when shading the lightest parts of the image." />
                                     </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="Darkest shading spacing"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Darkest shading spacing}"
                                                            Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                            TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        How far apart drawn lines should be when shading the darkest parts of the image.
+                                    <TextBlock loc:L.Context="Darkest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="How far apart drawn lines should be when shading the darkest parts of the image." />
                                     </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="Shading angle"
+                            <local:LabeledNumberBoxControl LabelText="{loc:T Shading angle}"
                                                            Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                            TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="°">
                                 <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Which Direction to draw when shading objects.<LineBreak /><LineBreak />
-                                        0° represents East, with positive values rotating counterclockwise.</TextBlock>
+                                    <TextBlock loc:L.Context="Shading Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Which Direction to draw when shading objects." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="0° represents East, with positive values rotating counterclockwise." />
+                                    </TextBlock>
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
                             <CheckBox Margin="0 5 0 0"
-                                      Content="Draw Outlines Before Fill"
+                                      loc:L.Value="Draw Outlines Before Fill"
                                       IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}"
                                       ToolTipService.ShowOnDisabled="True">
                                 <CheckBox.ToolTip>
-                                    <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                        Draws the outlines of shapes before filling them in.<LineBreak /><LineBreak />
-                                        Usually you want to draw outlines after filling.<LineBreak /><LineBreak />
-                                        For Polycut.Core Processor only</TextBlock>
+                                    <TextBlock loc:L.Context="Outlines Before Fill Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Draws the outlines of shapes before filling them in." />
+                                        <LineBreak />
+                                        <LineBreak />
+                                        <Run loc:L.Value="Usually you want to draw outlines after filling." />
+                                    </TextBlock>
                                 </CheckBox.ToolTip>
                             </CheckBox>
 

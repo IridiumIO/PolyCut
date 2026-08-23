@@ -347,6 +347,7 @@ Partial Public Class MainViewModel
             Return
         End If
 
+
         If msg?.Items Is Nothing OrElse msg.Items.Count = 0 Then Return
 
         Dim items = msg.Items.
@@ -379,7 +380,7 @@ Partial Public Class MainViewModel
         Printers.Add(newPrinter)
         Printer = newPrinter
         SettingsHandler.WritePrinter(Printer)
-        _snackbarService.GenerateSuccess("Added Preset", Printer.Name)
+        _snackbarService.GenerateSuccess("Added Preset".LT(), Printer.Name)
     End Sub
 
     <RelayCommand>
@@ -387,16 +388,16 @@ Partial Public Class MainViewModel
         Dim nameToSave = If(String.IsNullOrWhiteSpace(newName), Printer?.Name, newName)
 
         If nameToSave Is Nothing Then
-            _snackbarService.GenerateError("Error", "Printer name is empty", 3)
+            _snackbarService.GenerateError("Error".LT(), "Printer name is empty".LT(), 3)
             Return
         End If
 
         Dim existingPrinter = Printers.FirstOrDefault(Function(p) p.Name = nameToSave)
 
         If existingPrinter IsNot Nothing Then
-            Dim result = MessageBox.Show($"A printer with the name '{nameToSave}' already exists. Do you want to overwrite it?", "Overwrite Printer?", MessageBoxButton.YesNo, MessageBoxImage.Exclamation)
+            Dim result = MessageBox.Show("A printer with the name '{0}' already exists. Do you want to overwrite it?".LTF(nameToSave), "Overwrite Printer?".LT(), MessageBoxButton.YesNo, MessageBoxImage.Exclamation)
             If result = MessageBoxResult.No Then
-                _snackbarService.GenerateError("Error", "Printer not saved. Name already exists.", 3)
+                _snackbarService.GenerateError("Error".LT(), "Printer not saved. Name already exists.".LT(), 3)
                 Return
             End If
 
@@ -411,7 +412,7 @@ Partial Public Class MainViewModel
         End If
 
         SettingsHandler.WritePrinter(Printer)
-        _snackbarService.GenerateSuccess("Saved Preset", Printer.Name)
+        _snackbarService.GenerateSuccess("Saved Preset".LT(), Printer.Name)
     End Sub
 
     <RelayCommand>
@@ -607,7 +608,7 @@ Partial Public Class MainViewModel
         If IsDrawingGroup(group) Then
             Dim children = group.GroupChildren.ToList()
             If children.Count = 0 Then
-                _snackbarService.GenerateError("Error", "Drawing Group is already empty", 3)
+                _snackbarService.GenerateError("Error".LT(), "Drawing Group is already empty".LT(), 3)
                 Return
             End If
             PerformRemoveDrawables(children)
@@ -656,7 +657,7 @@ Partial Public Class MainViewModel
             Dim element = drawable.DrawableElement
 
             If TypeOf element Is Line Then
-                Return (False, "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.")
+                Return (False, "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.".LT())
             End If
 
             If TypeOf element Is System.Windows.Shapes.Path Then
@@ -665,7 +666,7 @@ Partial Public Class MainViewModel
                 If pathGeo IsNot Nothing Then
                     For Each figure In pathGeo.Figures
                         If Not figure.IsClosed Then
-                            Return (False, "Cannot perform boolean operations on open paths. All shapes must be closed.")
+                            Return (False, "Cannot perform boolean operations on open paths. All shapes must be closed.".LT())
                         End If
                     Next
                 End If
@@ -693,7 +694,7 @@ Partial Public Class MainViewModel
         Dim retcode = Await generator.GenerateGcodeAsync
 
         If retcode.StatusCode = 1 Then
-            _snackbarService.GenerateError("Error", retcode.Message, 5)
+            _snackbarService.GenerateError("Error".LT(), retcode.Message, 5)
             Return
         End If
 
@@ -743,7 +744,7 @@ Partial Public Class MainViewModel
         }
         If saveDialog.ShowDialog() = True Then
             IO.File.WriteAllText(saveDialog.FileName, svgText)
-            _snackbarService.GenerateSuccess("SVG Exported", Path.GetFileName(saveDialog.FileName))
+            _snackbarService.GenerateSuccess("SVG Exported".LT(), Path.GetFileName(saveDialog.FileName))
         End If
     End Sub
 
@@ -754,13 +755,13 @@ Partial Public Class MainViewModel
     Private Sub BooleanOperation(combineMode As GeometryCombineMode)
         Dim selectedItems = SelectedDrawables.ToList()
         If selectedItems.Count < 2 Then
-            _snackbarService.GenerateError("Error", "Select at least 2 shapes to combine", 3)
+            _snackbarService.GenerateError("Error".LT(), "Select at least 2 shapes to combine".LT(), 3)
             Return
         End If
 
         Dim validation = ValidateShapesForBoolean(selectedItems)
         If Not validation.isValid Then
-            _snackbarService.GenerateError("Error", validation.errorMessage, 4)
+            _snackbarService.GenerateError("Error".LT(), validation.errorMessage, 4)
             Return
         End If
 
@@ -769,7 +770,7 @@ Partial Public Class MainViewModel
         If action.Execute() Then
             _undoRedoService.Push(action)
         Else
-            _snackbarService.GenerateError("Error", GetBooleanErrorMessage(combineMode), 4)
+            _snackbarService.GenerateError("Error".LT(), GetBooleanErrorMessage(combineMode), 4)
         End If
         _suspendTransformMessageHandling = False
     End Sub
@@ -777,15 +778,15 @@ Partial Public Class MainViewModel
     Private Function GetBooleanErrorMessage(mode As GeometryCombineMode) As String
         Select Case mode
             Case GeometryCombineMode.Union
-                Return "Union operation resulted in an empty geometry. This should not happen."
+                Return "Union operation resulted in an empty geometry. This should not happen.".LT()
             Case GeometryCombineMode.Intersect
-                Return "No intersection found. The selected shapes do not overlap."
+                Return "No intersection found. The selected shapes do not overlap.".LT()
             Case GeometryCombineMode.Exclude
-                Return "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted."
+                Return "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted.".LT()
             Case GeometryCombineMode.Xor
-                Return "XOR operation resulted in an empty geometry. The shapes may be identical."
+                Return "XOR operation resulted in an empty geometry. The shapes may be identical.".LT()
             Case Else
-                Return "Boolean operation failed."
+                Return "Boolean operation failed.".LT()
         End Select
     End Function
 
@@ -804,9 +805,9 @@ Partial Public Class MainViewModel
             SaveProjectAs()
         Else
             If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
-                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
+                _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
-                _snackbarService.GenerateError("Error", "Failed to save project", 3)
+                _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
             End If
         End If
     End Sub
@@ -821,9 +822,9 @@ Partial Public Class MainViewModel
         If saveDialog.ShowDialog() = True Then
             CurrentProjectPath = saveDialog.FileName
             If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
-                _snackbarService.GenerateSuccess("Project Saved", IO.Path.GetFileName(CurrentProjectPath))
+                _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
-                _snackbarService.GenerateError("Error", "Failed to save project", 3)
+                _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
             End If
         End If
     End Sub
@@ -833,12 +834,12 @@ Partial Public Class MainViewModel
         ' Warn if unsaved changes
         If DrawableCollection.Count > 1 Then
 
-            Dim nx As New WPF.Ui.Controls.MessageBox With {
-                .Title = "Load Project",
-                .Content = "Loading a project will clear the current workspace. Continue?",
+            Dim nx As New Wpf.Ui.Controls.MessageBox With {
+                .Title = "Load Project".LT(),
+                .Content = "Loading a project will clear the current workspace. Continue?".LT(),
                 .IsPrimaryButtonEnabled = True,
-                .PrimaryButtonText = "Yes",
-                .CloseButtonText = "No",
+                .PrimaryButtonText = "Yes".LT(),
+                .CloseButtonText = "No".LT(),
                 .Owner = Application.Current.MainWindow,
                 .WindowStartupLocation = WindowStartupLocation.CenterOwner}
 
@@ -860,10 +861,10 @@ Partial Public Class MainViewModel
                 _undoRedoService.Clear()
                 _undoRedoService.Push(action)
                 CurrentProjectPath = openDialog.FileName
-                _snackbarService.GenerateSuccess("Project Loaded", IO.Path.GetFileName(CurrentProjectPath))
+                _snackbarService.GenerateSuccess("Project Loaded".LT(), IO.Path.GetFileName(CurrentProjectPath))
                 NotifyCollectionsChanged()
             Else
-                _snackbarService.GenerateError("Error", "Failed to load project", 3)
+                _snackbarService.GenerateError("Error".LT(), "Failed to load project".LT(), 3)
             End If
         End If
     End Sub
@@ -871,12 +872,12 @@ Partial Public Class MainViewModel
     <RelayCommand>
     Private Async Sub NewProject()
         If DrawableCollection.Count > 1 Then
-            Dim nx As New WPF.Ui.Controls.MessageBox With {
-                .Title = "New Project",
-                .Content = "Creating a new project will clear the current workspace. Continue?",
+            Dim nx As New Wpf.Ui.Controls.MessageBox With {
+                .Title = "New Project".LT(),
+                .Content = "Creating a new project will clear the current workspace. Continue?".LT(),
                 .IsPrimaryButtonEnabled = True,
-                .PrimaryButtonText = "Yes",
-                .CloseButtonText = "No",
+                .PrimaryButtonText = "Yes".LT(),
+                .CloseButtonText = "No".LT(),
                 .Owner = Application.Current.MainWindow,
                 .WindowStartupLocation = WindowStartupLocation.CenterOwner}
 
@@ -884,7 +885,7 @@ Partial Public Class MainViewModel
             Dim res = Await nx.ShowDialogAsync()
 
 
-            If res <> WPF.Ui.Controls.MessageBoxResult.Primary Then Return
+            If res <> Wpf.Ui.Controls.MessageBoxResult.Primary Then Return
 
         End If
 
@@ -914,7 +915,7 @@ Partial Public Class MainViewModel
         ImportedGroups.Add(DrawingGroup)
 
         NotifyCollectionsChanged()
-        _snackbarService.GenerateSuccess("New Project", "Workspace cleared")
+        _snackbarService.GenerateSuccess("New Project".LT(), "Workspace cleared".LT())
     End Sub
 
 

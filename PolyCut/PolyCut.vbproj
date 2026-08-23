@@ -24,11 +24,19 @@
 
   <ItemGroup>
     <None Remove="Resources\banner_dark.svg" />
+    <None Remove="Resources\Localisation\de-DE.toml" />
+    <None Remove="Resources\Localisation\en-AU.toml" />
+    <None Remove="Resources\Localisation\fr-FR.toml" />
+    <None Remove="Resources\Localisation\ja-JP.toml" />
     <None Remove="Resources\logo.ico" />
     <None Remove="Resources\vtracer.exe" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Localisation\de-DE.toml" />
+    <EmbeddedResource Include="Resources\Localisation\en-AU.toml" />
+    <EmbeddedResource Include="Resources\Localisation\fr-FR.toml" />
+    <EmbeddedResource Include="Resources\Localisation\ja-JP.toml" />
     <EmbeddedResource Include="Resources\vtracer.exe" />
     <Resource Include="Resources\banner_dark.svg" />
     <Resource Include="Resources\logo.ico" />
@@ -44,10 +52,12 @@
     <Import Include="System.Windows.Media.Imaging" />
     <Import Include="System.Windows.Navigation" />
     <Import Include="System.Windows.Shapes" />
+    <Import Include="PolyCut.Localisation.LocalisationExtensions" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="FamFamFam.Flags.Wpf" Version="1.2.1" />
     <PackageReference Include="IridiumIO.MVVM.VBSourceGenerators" Version="0.6.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
@@ -64,6 +74,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PolyCut.Core\PolyCut.Core.vbproj" />
+    <ProjectReference Include="..\PolyCut.Localisation\PolyCut.Localisation.vbproj" />
     <ProjectReference Include="..\PolyCut.RichCanvas\PolyCut.RichCanvas.vbproj" />
     <ProjectReference Include="..\PolyCut.Shared\PolyCut.Shared.vbproj" />
   </ItemGroup>

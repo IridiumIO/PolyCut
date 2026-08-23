@@ -16,22 +16,6 @@ Public Module TransformMath
         Return New Matrix(p1.X - p0.X, p1.Y - p0.Y, p2.X - p0.X, p2.Y - p0.Y, p0.X, p0.Y)
     End Function
 
-    'Get AABB of rect after matrix transform
-    Public Function TransformBounds(m As Matrix, r As Rect) As Rect
-        If r.IsEmpty Then Return Rect.Empty
-
-        Dim topLeft = m.Transform(New Point(r.Left, r.Top))
-        Dim topRight = m.Transform(New Point(r.Right, r.Top))
-        Dim bottomLeft = m.Transform(New Point(r.Left, r.Bottom))
-        Dim bottomRight = m.Transform(New Point(r.Right, r.Bottom))
-
-        Dim minX = Math.Min(topLeft.X, Math.Min(topRight.X, Math.Min(bottomLeft.X, bottomRight.X)))
-        Dim minY = Math.Min(topLeft.Y, Math.Min(topRight.Y, Math.Min(bottomLeft.Y, bottomRight.Y)))
-        Dim maxX = Math.Max(topLeft.X, Math.Max(topRight.X, Math.Max(bottomLeft.X, bottomRight.X)))
-        Dim maxY = Math.Max(topLeft.Y, Math.Max(topRight.Y, Math.Max(bottomLeft.Y, bottomRight.Y)))
-
-        Return New Rect(minX, minY, maxX - minX, maxY - minY)
-    End Function
 
     'Accumulated matrix from an element to a visual ancestor. TODO handle the guard (no idea why it was throwing, can't see vsual issues)
     Public Function GetAccumulatedMatrix(element As FrameworkElement, relativeTo As UIElement) As Matrix
@@ -75,47 +59,29 @@ Public Module TransformMath
         Dim rotatedX = cosA * (fxNew - newPivotX) - sinA * (fyNew - newPivotY)
         Dim rotatedY = sinA * (fxNew - newPivotX) + cosA * (fyNew - newPivotY)
 
-        Return (fixedWorldX - newPivotX - rotatedX,
-            fixedWorldY - newPivotY - rotatedY)
+        Return (fixedWorldX - newPivotX - rotatedX, fixedWorldY - newPivotY - rotatedY)
     End Function
 
 
-
-    Public Function RotatedCornersOf(wrapper As ContentControl) As List(Of Point)
-        Dim result As New List(Of Point)
-        If wrapper Is Nothing Then Return result
+    ' Axis-aligned bounds of a wrapper in its parent (canvas) coordinate space.
+    Public Function GetWorldBounds(wrapper As ContentControl) As Rect
+        If wrapper Is Nothing Then Return Rect.Empty
 
         Dim left = Canvas.GetLeft(wrapper)
         Dim top = Canvas.GetTop(wrapper)
+        If Double.IsNaN(left) Then left = 0
+        If Double.IsNaN(top) Then top = 0
+
         Dim width = wrapper.ActualWidth
         Dim height = wrapper.ActualHeight
+        If width <= 0 OrElse height <= 0 Then Return New Rect(left, top, width, height)
 
-        Dim rotationAngle As Double = 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            rotationAngle = rotateTransform.Angle * Math.PI / 180.0
-        End If
+        Dim parentCanvas = TryCast(wrapper.Parent, UIElement)
+        Dim m = GetAccumulatedMatrix(wrapper, parentCanvas)
 
-        Dim transformOrigin = wrapper.RenderTransformOrigin
-        Dim pivotX = left + width * transformOrigin.X
-        Dim pivotY = top + height * transformOrigin.Y
+        If m.IsIdentity Then Return New Rect(left, top, width, height)
 
-        Dim corners() As Point = {
-            New Point(left, top),
-            New Point(left + width, top),
-            New Point(left + width, top + height),
-            New Point(left, top + height)
-        }
-
-        For Each corner In corners
-            Dim dx = corner.X - pivotX
-            Dim dy = corner.Y - pivotY
-            Dim rotatedX = pivotX + (dx * Math.Cos(rotationAngle) - dy * Math.Sin(rotationAngle))
-            Dim rotatedY = pivotY + (dx * Math.Sin(rotationAngle) + dy * Math.Cos(rotationAngle))
-            result.Add(New Point(rotatedX, rotatedY))
-        Next
-
-        Return result
+        Return New MatrixTransform(m).TransformBounds(New Rect(0, 0, width, height))
     End Function
 
 End Module

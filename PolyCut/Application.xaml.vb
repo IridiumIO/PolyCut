@@ -1,10 +1,14 @@
-﻿Imports Microsoft.Extensions.Hosting
-Imports Microsoft.Extensions.DependencyInjection
-Imports Microsoft.Extensions.Configuration
-Imports System.IO
+﻿Imports System.IO
 Imports System.Windows.Threading
-Imports WPF.Ui.DependencyInjection
-Imports WPF.Ui
+
+Imports Microsoft.Extensions.Configuration
+Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Hosting
+
+Imports PolyCut.Localisation
+
+Imports Wpf.Ui
+Imports Wpf.Ui.DependencyInjection
 
 Partial Public Class Application
     Private Shared ReadOnly _host As IHost = Host.CreateDefaultBuilder() _
@@ -36,6 +40,7 @@ Partial Public Class Application
                                services.AddSingleton(Of ProjectSerializationService)()
                                services.AddSingleton(Of ClipboardService)()
                                services.AddSingleton(Of VTracerService)()
+                               services.AddSingleton(Of LocalisationService)()
 
                                ' Main window with navigation
                                services.AddNavigationViewPageProvider()
@@ -69,6 +74,11 @@ Partial Public Class Application
     End Function
 
     Private Shadows Async Sub OnStartup(sender As Object, e As StartupEventArgs)
+
+#If DEBUG Then
+        LocalisationScanner.Run()
+#End If
+
         Await _host.StartAsync()
 
         Dim updateTask = GetService(Of UpdateService)().CheckForUpdate(True)

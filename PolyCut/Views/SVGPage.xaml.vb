@@ -112,7 +112,6 @@ Class SVGPage
         ' DON'T steal focus if a TextBox is currently in edit mode
         Dim focusedElement = TryCast(Keyboard.FocusedElement, System.Windows.Controls.TextBox)
         If focusedElement IsNot Nothing AndAlso (focusedElement.IsFocused OrElse focusedElement.IsKeyboardFocusWithin) Then
-            Debug.WriteLine("MainView_MouseDown: TextBox is focused - NOT moving focus")
             Return
         End If
 

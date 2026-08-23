@@ -968,7 +968,7 @@ Public Class SVGImportService : Implements ISvgImportService
             Case Svg.SvgUnitType.User
                 Return 0.264583333333333
             Case Else
-                Application.GetService(Of SnackbarService).GenerateCaution("Unknown SVG Unit Type: " & unitType.ToString, "Scaling may not be correct")
+                Application.GetService(Of SnackbarService).GenerateCaution("Unknown SVG Unit Type: ".LT() & unitType.ToString, "Scaling may not be correct".LT())
                 Return 0.264583333333333
         End Select
     End Function

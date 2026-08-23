@@ -17,6 +17,17 @@ Public Class GeometryHitTestHelper
         Dim wrapper = TryCast(element.Parent, ContentControl)
         If wrapper Is Nothing Then Return Nothing
 
+        Dim geometry = BuildLocalGeometry(element)
+        If geometry Is Nothing Then Return Nothing
+
+        Dim canvas = TryCast(wrapper.Parent, UIElement)
+        If canvas Is Nothing Then Return geometry
+
+        geometry.Transform = New MatrixTransform(TransformMath.GetAccumulatedMatrix(element, canvas))
+        Return geometry
+    End Function
+
+    Private Shared Function BuildLocalGeometry(element As FrameworkElement) As Geometry
         Dim geometry As Geometry = Nothing
 
         If TypeOf element Is Rectangle Then
@@ -44,46 +55,12 @@ Public Class GeometryHitTestHelper
         ElseIf TypeOf element Is TextBox Then
             Dim textBox = CType(element, TextBox)
             If Not String.IsNullOrEmpty(textBox.Text) Then
-
+                'TODO: Fix the need for manual 3,1 offsets
                 geometry = TextGeometryHelper.BuildTextGeometry(textBox, , TextGeometryHelper.GetContentOrigin(textBox, New Point(3, 1)))
             End If
         End If
 
-        If geometry Is Nothing Then Return Nothing
-
-        Dim elementTransformGroup = TryCast(element.RenderTransform, TransformGroup)
-        If elementTransformGroup IsNot Nothing Then
-            Dim elementScale = elementTransformGroup.Children.OfType(Of ScaleTransform)().FirstOrDefault()
-            If elementScale IsNot Nothing Then
-                Dim scaleTransform = New ScaleTransform(elementScale.ScaleX, elementScale.ScaleY,
-                    geometry.Bounds.Width / 2, geometry.Bounds.Height / 2)
-                geometry = Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, scaleTransform)
-            End If
-        End If
-
-        Dim transformGroup As New TransformGroup()
-
-        If Not TypeOf element Is TextBox Then
-            If geometry.Bounds.Width > 0 AndAlso geometry.Bounds.Height > 0 Then
-                Dim scaleX = wrapper.ActualWidth / geometry.Bounds.Width
-                Dim scaleY = wrapper.ActualHeight / geometry.Bounds.Height
-                transformGroup.Children.Add(New ScaleTransform(scaleX, scaleY))
-            End If
-        End If
-
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            transformGroup.Children.Add(New RotateTransform(rotateTransform.Angle,
-                wrapper.ActualWidth / 2, wrapper.ActualHeight / 2))
-        End If
-
-        Dim left = Canvas.GetLeft(wrapper)
-        Dim top = Canvas.GetTop(wrapper)
-        If Not Double.IsNaN(left) AndAlso Not Double.IsNaN(top) Then
-            transformGroup.Children.Add(New TranslateTransform(left, top))
-        End If
-
-        Return Geometry.Combine(geometry, geometry, GeometryCombineMode.Union, transformGroup)
+        Return geometry
     End Function
 
     Private Const STROKE_HIT_PAD As Double = 2.0

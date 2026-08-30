@@ -1,6 +1,8 @@
 ﻿Imports CommunityToolkit.Mvvm.ComponentModel
 Imports CommunityToolkit.Mvvm.Input
 
+Imports LazyTranslate
+
 Partial Public Class SettingsPageViewModel : Inherits ObservableObject
 
     <ObservableProperty> Private _MainVM As MainViewModel
@@ -12,7 +14,7 @@ Partial Public Class SettingsPageViewModel : Inherits ObservableObject
     Sub New(viewmodel As MainViewModel)
         Me.MainVM = viewmodel
         Me._GridConfig = MainVM.UIConfiguration.GridConfig
-        Me.LanguageItems = LocalisationService.GetAllLanguages()
+        Me.LanguageItems = LazyTranslate.GetAvailableLanguages()
 
         AddHandler MainVM.Printer.PropertyChanged, Sub(sender, e)
                                                        If e.PropertyName = NameOf(Printer.BedWidth) OrElse e.PropertyName = NameOf(Printer.BedHeight) Then
@@ -94,7 +96,7 @@ Partial Public Class SettingsPageViewModel : Inherits ObservableObject
     <RelayCommand>
     Public Async Sub CheckForLanguageUpdates()
         If Await LocalisationService.CheckForLanguageUpdate() Then
-            LocalisationService.LoadLanguage(Application.GetService(Of MainViewModel)().UIConfiguration.Language)
+            Await LocalisationService.LoadLanguage(Application.GetService(Of MainViewModel)().UIConfiguration.Language)
         End If
     End Sub
 

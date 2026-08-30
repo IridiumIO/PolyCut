@@ -5,6 +5,7 @@ Imports WPF.Ui.Controls
 Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
+Imports LazyTranslate
 Imports WPF.Ui.Abstractions.Controls
 Class SettingsPage
 
@@ -77,14 +78,15 @@ Class SettingsPage
 
     End Sub
 
-    Private Sub UiLanguageComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
+    Private Async Sub UiLanguageComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
         Dim comboBox As ComboBox = CType(sender, ComboBox)
         If comboBox.IsDropDownOpen AndAlso UiLanguageComboBox.SelectedItem IsNot Nothing Then
             Dim selectedLanguage As LanguageItem = CType(UiLanguageComboBox.SelectedItem, LanguageItem)
             Dim languageCode As String = CStr(selectedLanguage.CultureCode)
 
-            Dim ret = LocalisationService.LoadLanguage(languageCode)
-            If ret Then _viewModel.MainVM.UIConfiguration.Language = languageCode
+            If Not Await LocalisationService.LoadLanguage(languageCode) Then
+                comboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.MainVM.UIConfiguration.Language)
+            End If
         End If
     End Sub
 End Class

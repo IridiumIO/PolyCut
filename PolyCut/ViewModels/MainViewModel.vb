@@ -144,10 +144,10 @@ Partial Public Class MainViewModel
         If _argsService.Args.Length > 0 Then DragSVGs(_argsService.Args)
     End Sub
 
-    <RelayCommand> Public Sub MainViewClosing()
+    <RelayCommand> Public Async Function MainViewClosing() As Task
         SettingsHandler.WriteConfiguration(Configuration)
-        SettingsHandler.WriteUIConfiguration(UIConfiguration)
-    End Sub
+        Await SettingsHandler.WriteUIConfiguration(UIConfiguration)
+    End Function
 
     <RelayCommand> Public Sub CopyGCodeToClipboard()
         If Not String.IsNullOrEmpty(GCode) Then

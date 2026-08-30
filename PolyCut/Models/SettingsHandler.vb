@@ -110,8 +110,8 @@ Public Class SettingsHandler : Inherits ObservableObject
         Return UISettings.GetValue(Of UIConfiguration)(IO.Path.Combine(UISettings.SettingsFolder.FullName, $"UIConfiguration.json"))
     End Function
 
-    Shared Async Sub WriteUIConfiguration(Configuration As UIConfiguration)
+    Shared Async Function WriteUIConfiguration(Configuration As UIConfiguration) As Task
         Await UISettings.SetValue(Configuration.Name, Configuration)
-    End Sub
+    End Function
 
 End Class

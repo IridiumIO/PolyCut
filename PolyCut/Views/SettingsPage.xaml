@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:Flags="clr-namespace:FamFamFam.Flags.Wpf;assembly=FamFamFam.Flags.Wpf"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
+      xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
       xmlns:local="clr-namespace:PolyCut"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
@@ -56,7 +56,7 @@
                                 <TextBlock x:Name="LanguageText"
                                            Grid.Column="1"
                                            Margin="6 0 0 0" VerticalAlignment="Center"
-                                           Text="{Binding LanguageName}" />
+                                           Text="{Binding NativeName}" />
                             </StackPanel>
 
 

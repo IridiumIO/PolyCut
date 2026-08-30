@@ -4,7 +4,7 @@
              xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:loc="clr-namespace:PolyCut.Localisation;assembly=PolyCut.Localisation"
+             xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
              xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"

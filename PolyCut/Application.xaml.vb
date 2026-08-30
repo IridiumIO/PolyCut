@@ -5,8 +5,6 @@ Imports Microsoft.Extensions.Configuration
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
 
-Imports PolyCut.Localisation
-
 Imports Wpf.Ui
 Imports Wpf.Ui.DependencyInjection
 

@@ -5,6 +5,7 @@ Imports WPF.Ui.Controls
 Imports SharpVectors
 Imports System.Windows.Media.Animation
 Imports System.IO
+Imports LazyTranslate
 Imports WPF.Ui.Abstractions.Controls
 Class SettingsPage
 

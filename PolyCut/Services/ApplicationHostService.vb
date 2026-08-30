@@ -6,7 +6,7 @@ Imports System.Windows
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
 
-Imports PolyCut.Localisation
+Imports LazyTranslate
 
 Public Class ApplicationHostService
     Implements IHostedService
@@ -45,8 +45,13 @@ Public Class ApplicationHostService
         Else
             Await SettingsHandler.InitialiseSettings(False)
         End If
-        LocalisationService.LoadLanguage(SettingsHandler.GetUIConfiguration().Language)
-        Await LocalisationService.SynchroniseEmbeddedLanguages()
+        Await LazyTranslate.InitialiseAsync(New LocalisationOptions With {
+            .SourceCulture = "en-AU",
+            .InitialCulture = SettingsHandler.GetUIConfiguration().Language,
+            .CatalogueDirectory = IO.Path.Combine(SettingsHandler.DataFolder.FullName, "Localisation"),
+            .ResourceAssembly = GetType(Application).Assembly,
+            .ApplicationName = "PolyCut"
+        })
 
 
         If Not Application.Current.Windows.OfType(Of MainWindow)().Any() Then
@@ -69,7 +74,7 @@ Public Class ApplicationHostService
 
 
 #If DEBUG Then
-        LocalisationScanner.Run()
+        LazyTranslate.LocalisationCatalogueBuilder.Build(sourceCulture:="en-AU")
 #End If
 
 

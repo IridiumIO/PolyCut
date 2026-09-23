@@ -137,12 +137,12 @@
 
                     <local:LabeledNumberBoxControl LabelText="{loc:T Work,
                                                                      Context='Cut/Draw tool work'}"
-                                                   Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                   Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                    TextBoxWidth="95" UnitText="mm" />
 
                     <local:LabeledNumberBoxControl Grid.Column="2"
                                                    LabelText="{loc:T Travel}"
-                                                   Text="{Binding MainVM.Configuration.TravelZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                   Text="{Binding MainVM.Configuration.TravelZ, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                    TextBoxWidth="95" UnitText="mm" />
                     <Grid.ToolTip>
                         <TextBlock loc:L.Context="Z Height Tooltip" TextAlignment="Left" TextWrapping="Wrap">

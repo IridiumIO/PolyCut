@@ -76,6 +76,62 @@ Public Class SVGImportService : Implements ISvgImportService
         Return m
     End Function
 
+
+    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, ByRef results As List(Of IDrawable), svgDoc As SvgDocument)
+        Dim currentMatrix As Matrix = parentMatrix
+        currentMatrix = ApplySvgTransforms(elem, currentMatrix)
+
+        If TypeOf elem Is SvgGroup Then
+
+            Dim group = DirectCast(elem, SvgGroup)
+            If Not SUPPORT_NESTED_GROUPS_FLAG Then
+                For Each child In group.Children
+                    ProcessElement(child, currentMatrix, results, svgDoc)
+                Next
+                Return
+            End If
+
+            Dim children As New List(Of IDrawable)
+            For Each child In group.Children
+                ProcessElement(child, currentMatrix, children, svgDoc)
+            Next
+
+            If children.Count = 0 Then Return
+            Dim dg As NestedDrawableGroup = NestedDrawableGroup.CreateNestedGroup(children, group.ID)
+            AssignDrawableName(dg, group.ID)
+            results.Add(dg)
+        End If
+
+
+        If TypeOf elem Is SvgPath Then
+            Dim ret = ConvertPath(DirectCast(elem, SvgPath), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgRectangle Then
+            Dim ret = ConvertRectangle(DirectCast(elem, SvgRectangle), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgEllipse Then
+            Dim ret = ConvertEllipse(DirectCast(elem, SvgEllipse), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgCircle Then
+            Dim ret = ConvertCircle(DirectCast(elem, SvgCircle), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgLine Then
+            Dim ret = ConvertLine(DirectCast(elem, SvgLine), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgText Then
+            Dim ret = ConvertText(DirectCast(elem, SvgText), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgPolyline Then
+            Dim ret = ConvertPolyline(DirectCast(elem, SvgPolyline), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        ElseIf TypeOf elem Is SvgPolygon Then
+            Dim ret = ConvertPolygon(DirectCast(elem, SvgPolygon), currentMatrix, svgDoc)
+            If ret IsNot Nothing Then results.Add(ret)
+        End If
+
+    End Sub
+
+
     Private Function CalculateStrokeDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)
         Dim matrixScale As Double = Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12)
         Dim strokeThickness As Double = If(strokeWidth > 0, strokeWidth * matrixScale, 0)
@@ -233,62 +289,6 @@ Public Class SVGImportService : Implements ISvgImportService
         pathGeom.Transform = New MatrixTransform(matrix)
         Return If(tolerance > 0, pathGeom.GetFlattenedPathGeometry(tolerance, ToleranceType.Absolute), pathGeom.GetFlattenedPathGeometry())
     End Function
-
-    Private Sub ProcessElement(elem As SvgElement, parentMatrix As Matrix, ByRef results As List(Of IDrawable), svgDoc As SvgDocument)
-        Dim currentMatrix As Matrix = parentMatrix
-        currentMatrix = ApplySvgTransforms(elem, currentMatrix)
-
-        If TypeOf elem Is SvgGroup Then
-
-            Dim group = DirectCast(elem, SvgGroup)
-            If Not SUPPORT_NESTED_GROUPS_FLAG Then
-                For Each child In group.Children
-                    ProcessElement(child, currentMatrix, results, svgDoc)
-                Next
-                Return
-            End If
-
-            Dim children As New List(Of IDrawable)
-            For Each child In group.Children
-                ProcessElement(child, currentMatrix, children, svgDoc)
-            Next
-
-            If children.Count = 0 Then Return
-
-            ' You need a group drawable type in your project. Many apps already have something like this.
-            Dim dg As NestedDrawableGroup = NestedDrawableGroup.CreateNestedGroup(children, group.ID)
-            AssignDrawableName(dg, group.ID)
-            results.Add(dg)
-        End If
-
-        ' Leaf elements convert exactly like before
-        If TypeOf elem Is SvgPath Then
-            Dim ret = ConvertPath(DirectCast(elem, SvgPath), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgRectangle Then
-            Dim ret = ConvertRectangle(DirectCast(elem, SvgRectangle), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgEllipse Then
-            Dim ret = ConvertEllipse(DirectCast(elem, SvgEllipse), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgCircle Then
-            Dim ret = ConvertCircle(DirectCast(elem, SvgCircle), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgLine Then
-            Dim ret = ConvertLine(DirectCast(elem, SvgLine), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgText Then
-            Dim ret = ConvertText(DirectCast(elem, SvgText), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgPolyline Then
-            Dim ret = ConvertPolyline(DirectCast(elem, SvgPolyline), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        ElseIf TypeOf elem Is SvgPolygon Then
-            Dim ret = ConvertPolygon(DirectCast(elem, SvgPolygon), currentMatrix, svgDoc)
-            If ret IsNot Nothing Then results.Add(ret)
-        End If
-
-    End Sub
 
 
     Private Function GetClipPathGeometry(svgDoc As SvgDocument, clipPathUri As Uri, matrix As Matrix) As Geometry
@@ -471,8 +471,15 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Function GetStrokeWidthOrZero(svg As SvgVisualElement) As Single
         Try
-            If svg Is Nothing OrElse svg.Stroke Is Nothing OrElse svg.StrokeWidth = Nothing Then Return 0.0F
-            Return svg.StrokeWidth.Value
+            If svg Is Nothing OrElse Not TypeOf svg.Stroke Is SvgColourServer Then Return 0.0F
+
+            Dim current As SvgVisualElement = svg
+            While current IsNot Nothing
+                If current.StrokeWidth <> Nothing Then Return current.StrokeWidth.Value
+                current = TryCast(current.Parent, SvgVisualElement)
+            End While
+
+            Return 1.0F
         Catch
             Return 0.0F
         End Try
@@ -572,7 +579,8 @@ Public Class SVGImportService : Implements ISvgImportService
     Private Function ConvertPath(svgPath As SvgPath, matrix As Matrix, svgDoc As SvgDocument) As IDrawable
         Try
 
-            Dim original As SvgPath = svgPath.DeepCopy()
+            ' DeepCopy loses the path's inherited group styles, so it cannot be used here! 
+            Dim originalStrokeWidth As Single = GetStrokeWidthOrZero(svgPath)
 
             svgPath.StrokeWidth = New SvgUnit(0)
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
@@ -602,7 +610,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim idrawable = FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
 
-            idrawable.StrokeThickness = GetStrokeWidthOrZero(original)
+            idrawable.StrokeThickness = originalStrokeWidth
 
             Return idrawable
         Catch ex As Exception

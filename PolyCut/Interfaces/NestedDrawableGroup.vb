@@ -342,7 +342,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Private _stroke As System.Windows.Media.Brush = Brushes.Transparent
     Private _fill As System.Windows.Media.Brush = Brushes.Transparent
-    Private _strokeThickness As Double = 0
+    Private _strokeThickness As Double = Nothing
 
     Public Overrides Property Stroke As System.Windows.Media.Brush Implements IDrawable.Stroke
         Get
@@ -387,8 +387,10 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Public Overrides Property StrokeThickness As Double Implements IDrawable.StrokeThickness
         Get
-
-            Return _strokeThickness
+            ' Groups have no inherent fill; fall back to the first child's
+            If _strokeThickness <> Nothing Then Return _strokeThickness
+            Dim first = GroupChildren.FirstOrDefault(Function(c) c IsNot Nothing)
+            Return If(first IsNot Nothing, first.StrokeThickness, _strokeThickness)
         End Get
         Set(value As Double)
             _strokeThickness = value

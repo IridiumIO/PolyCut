@@ -1,8 +1,20 @@
-Imports PolyCut.Shared
+﻿Imports PolyCut.Shared
 
 
 'TODO: Single source for wrapper creation to avoid split jobs between the canvas project and the main drawables. 
 Public Module DrawableWrapperFactory
+
+    Public Const MaxCachePixels As Double = 8192.0 * 8192.0
+    Public Const MinCacheScale As Double = 0.25
+
+    Public Function CacheScaleFor(zoom As Double, width As Double, height As Double) As Double
+        Dim s As Double = If(Double.IsNaN(zoom) OrElse zoom <= 0, 1.0, zoom)
+        If width > 0 AndAlso height > 0 AndAlso Not Double.IsNaN(width) AndAlso Not Double.IsNaN(height) Then
+            Dim budgetScale As Double = Math.Sqrt(MaxCachePixels / (width * height))
+            If budgetScale < s Then s = budgetScale
+        End If
+        Return Math.Max(MinCacheScale, s)
+    End Function
 
     Public Function CreateWrapper(child As FrameworkElement, parentIDrawable As IDrawable, designerItemStyle As Style) As ContentControl
 
@@ -50,6 +62,12 @@ Public Module DrawableWrapperFactory
         Canvas.SetTop(wrapper, If(Double.IsNaN(Canvas.GetTop(child)), 0, Canvas.GetTop(child)))
 
         If parentIDrawable IsNot Nothing Then MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
+
+        If TypeOf child Is Path OrElse
+           TypeOf child Is Polyline OrElse
+           TypeOf child Is Polygon Then
+            PerformantRasteriser.SetCacheEligible(wrapper, True)
+        End If
 
         Return wrapper
     End Function

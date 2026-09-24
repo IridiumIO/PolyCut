@@ -31,6 +31,8 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
         AddHandler Me.MouseDown, AddressOf PolyCanvas_MouseDown
         AddHandler Me.Loaded, AddressOf PolyCanvas_Loaded
 
+        _rasteriser = New PerformantRasteriser(Me)
+
         ' Set as active instance (last created canvas wins)
         _activeInstance = Me
     End Sub
@@ -189,6 +191,15 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     End Property
 
 
+    Private ReadOnly _rasteriser As PerformantRasteriser
+
+    Friend ReadOnly Property Rasteriser As PerformantRasteriser
+        Get
+            Return _rasteriser
+        End Get
+    End Property
+
+
     Private Shared Sub OnChildrenCollectionChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
         Dim canvas As PolyCanvas = CType(d, PolyCanvas)
         Dim oldCollection As ObservableCollection(Of IDrawable) = CType(e.OldValue, ObservableCollection(Of IDrawable))
@@ -239,6 +250,8 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 Me.Children.Clear()
                 _selectionManager.ClearSelection()
         End Select
+
+        Rasteriser.Invalidate()
     End Sub
 
     Private Sub AddChild(child As FrameworkElement, Optional parentIDrawable As IDrawable = Nothing, Optional insertIndex As Integer = -1)

@@ -65,7 +65,7 @@ Public Class TransformGizmo
     Public Sub New(selectionManager As SelectionManager, canvas As Canvas)
         _selectionManager = selectionManager
         _canvas = canvas
-        _dragLimiter = New InteractionRateLimiter(AddressOf ApplyPendingDrag, System.Windows.Threading.DispatcherPriority.Normal)
+        _dragLimiter = New InteractionRateLimiter(AddressOf ApplyPendingDrag)
 
         Me.IsHitTestVisible = True
         Me.Cursor = Cursors.Arrow
@@ -262,7 +262,7 @@ Public Class TransformGizmo
         ' Display current rotation angle while rotating (single selection only)
         If _activeHandle <> "Rotate" OrElse _selectionManager.Count <> 1 Then Return
 
-        Dim angleText = $"{Math.Round(GetCurrentRotationAngle(), 1):F1}°"
+        Dim angleText = $"{Math.Round(GetCurrentRotationAngle(), 1):F1}Â°"
         Dim ft = _renderCache.GetAngleText(angleText, 14, dpi)
 
         Dim textX = iconCenter.X - ft.Width / 2

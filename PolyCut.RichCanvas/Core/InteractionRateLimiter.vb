@@ -1,41 +1,45 @@
-Imports System.Windows.Threading
+Imports System.Windows.Media
 
 Friend NotInheritable Class InteractionRateLimiter
-    Private ReadOnly _timer As DispatcherTimer
     Private ReadOnly _apply As Action
     Private _pending As Boolean
+    Private _hooked As Boolean
 
-    Public Sub New(apply As Action, priority As DispatcherPriority)
+    Public Sub New(apply As Action)
         _apply = apply
-        _timer = New DispatcherTimer(priority) With {.Interval = TimeSpan.FromMilliseconds(17)}
-        AddHandler _timer.Tick, AddressOf OnTick
     End Sub
 
     Public Sub Request()
-        If _timer.IsEnabled Then
-            _pending = True
-        Else
-            _timer.Start()
-            _apply()
+        _pending = True
+        If Not _hooked Then
+            AddHandler CompositionTarget.Rendering, AddressOf OnRendering
+            _hooked = True
         End If
     End Sub
 
-    Private Sub OnTick(sender As Object, e As EventArgs)
-        If _pending Then
-            _pending = False
-            _apply()
-        Else
-            _timer.Stop()
+    Private Sub OnRendering(sender As Object, e As EventArgs)
+        If Not _pending Then
+            Unhook()
+            Return
         End If
+        _pending = False
+        _apply()
     End Sub
 
     Public Sub Flush()
-        Cancel()
+        Unhook()
+        _pending = False
         _apply()
     End Sub
 
     Public Sub Cancel()
-        _timer.Stop()
+        Unhook()
         _pending = False
+    End Sub
+
+    Private Sub Unhook()
+        If Not _hooked Then Return
+        RemoveHandler CompositionTarget.Rendering, AddressOf OnRendering
+        _hooked = False
     End Sub
 End Class

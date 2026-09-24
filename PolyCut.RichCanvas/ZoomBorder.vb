@@ -129,6 +129,10 @@ Public Class ZoomBorder
             control.ScaleTransform.ScaleY = e.NewValue
             control.RaiseScaleChangedEvent(e.NewValue)
             EventAggregator.Publish(New ScaleChangedMessage(e.NewValue))
+            'Route every scale change through the rasteriser, not just the ones that come through the
+            'interaction limiter: Reset() (context-menu fit) and direct Scale assignments bypass it entirely,
+            'so the cache checks never ran and the culling stayed stale.
+            control.UpdateRasteriser(True)
         End If
 
     End Sub
@@ -176,10 +180,12 @@ Public Class ZoomBorder
     Private origin As Point
     Private start As Point
 
+    Private _rasteriserCache As PerformantRasteriser
+
 
     Public Sub New()
         ClipToBounds = True
-        _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport, System.Windows.Threading.DispatcherPriority.Render)
+        _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport)
         AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown
         AddHandler Me.MouseUp, AddressOf ZoomBorder_MouseUp
@@ -286,6 +292,8 @@ Public Class ZoomBorder
         Scale = targetScale
         TranslateTransform.X = targetX
         TranslateTransform.Y = targetY
+        'Also covers a reset that changes only the translation, where no Scale change fires.
+        UpdateRasteriser(True)
     End Sub
 
     Private Function FindElementByNameInChild(elementName As String) As FrameworkElement
@@ -444,10 +452,13 @@ Public Class ZoomBorder
             _pendingTranslation = Nothing
             Return
         End If
+        Dim applied As Boolean = False
+        Dim zoomed As Boolean = _pendingScale.HasValue
         If _pendingTranslation.HasValue Then
             TranslateTransform.X = _pendingTranslation.Value.X
             TranslateTransform.Y = _pendingTranslation.Value.Y
             EventAggregator.Publish(New TranslationChangedMessage(_pendingTranslation.Value))
+            applied = True
         End If
         If _pendingScale.HasValue Then
             Dim relative = Me.TranslatePoint(_pendingZoomPoint, Child)
@@ -460,9 +471,13 @@ Public Class ZoomBorder
                 start = Mouse.GetPosition(Me)
                 origin = New Point(TranslateTransform.X, TranslateTransform.Y)
             End If
+            applied = True
         End If
         _pendingScale = Nothing
         _pendingTranslation = Nothing
+        If applied Then
+            UpdateRasteriser(zoomed)
+        End If
     End Sub
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
@@ -484,6 +499,7 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
         DrawingManager.TextEditor.AttachTextStyleSource(CanvasTextBox)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
+        UpdateRasteriser(True)
     End Sub
 
     Private Sub ZoomBorder_LostMouseCapture(sender As Object, e As MouseEventArgs)
@@ -494,12 +510,24 @@ Public Class ZoomBorder
     End Sub
 
 
+    Private Function ResolveRasteriser() As PerformantRasteriser
+        If _rasteriserCache IsNot Nothing Then Return _rasteriserCache
+        Dim canvas = GetPolyCanvas()
+        If canvas Is Nothing Then Return Nothing
+        _rasteriserCache = canvas.Rasteriser
+        Return _rasteriserCache
+    End Function
+
+    Private Sub UpdateRasteriser(zoomChanged As Boolean)
+        Dim rasteriser = ResolveRasteriser()
+        If rasteriser Is Nothing Then Return
+        rasteriser.AttachViewport(Me)
+        rasteriser.ViewportChanged(Scale, zoomChanged)
+    End Sub
+
     Private Function GetPolyCanvas() As PolyCanvas
-        ' Try direct name lookup first
         Dim byName As PolyCanvas = TryCast(Me.FindName("mainCanvas"), PolyCanvas)
         If byName IsNot Nothing Then Return byName
-
-        ' If that fails, search visual tre
         If Child Is Nothing Then Return Nothing
         Return FindChildOfType(Of PolyCanvas)(Child)
     End Function

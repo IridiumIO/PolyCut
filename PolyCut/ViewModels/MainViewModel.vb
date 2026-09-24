@@ -278,12 +278,22 @@ Partial Public Class MainViewModel
         RebuildFlatSidebarItems()
     End Sub
 
+    Private Sub OnUIConfigurationChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs)
+        If e.PropertyName = NameOf(UIConfiguration.UseRasterisedRendering) Then ApplyRasterisedRenderingSetting()
+    End Sub
+
+    Private Sub ApplyRasterisedRenderingSetting()
+        PerformantRasteriser.Enabled = UIConfiguration.UseRasterisedRendering
+    End Sub
+
     Private Sub Initialise()
         Printers = SettingsHandler.GetPrinters
 
         Printer = Printers.First
         Configuration = (SettingsHandler.GetConfigurations).First
         UIConfiguration = SettingsHandler.GetUIConfiguration()
+        ApplyRasterisedRenderingSetting()
+        AddHandler UIConfiguration.PropertyChanged, AddressOf OnUIConfigurationChanged
 
         If DrawingGroup Is Nothing Then
             DrawingGroup = New DrawableGroup("Drawing Group")

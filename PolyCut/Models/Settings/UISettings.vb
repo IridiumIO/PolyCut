@@ -1,4 +1,4 @@
-﻿Imports CommunityToolkit.Mvvm.ComponentModel
+Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.Core
 
@@ -33,6 +33,8 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
     <ObservableProperty> Private _AddToStartMenu As Boolean = False
 
     <ObservableProperty> Private _CanvasThemeColour As String = "#16181D"
+
+    <ObservableProperty> Private _UseRasterisedRendering As Boolean = True
 
 End Class
 

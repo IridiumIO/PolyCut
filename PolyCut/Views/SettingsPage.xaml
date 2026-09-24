@@ -1,4 +1,4 @@
-﻿<Page x:Class="SettingsPage"
+<Page x:Class="SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:Flags="clr-namespace:FamFamFam.Flags.Wpf;assembly=FamFamFam.Flags.Wpf"
@@ -85,6 +85,14 @@
                                  Checked="AddToStartMenuCheckBox_Checked"
                                  IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
                                  Unchecked="AddToStartMenuCheckBox_Unchecked" />
+            </StackPanel>
+
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <Label MinWidth="170" loc:L.Value="Rasterised Rendering" />
+
+                <CheckBox Margin="10 0 0 0"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding MainVM.UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
             </StackPanel>
 
 

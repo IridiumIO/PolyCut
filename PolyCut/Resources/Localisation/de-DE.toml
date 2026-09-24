@@ -47,6 +47,7 @@
 "Error" = "Fehler"
 "Error Saving File" = "Fehler beim Speichern der Datei"
 "Error uploading to Moonraker" = "Fehler beim Hochladen zu Moonraker"
+"Experimental Renderer" = "Experimental Renderer" # LOC:TODO
 "Extract one colour" = "Eine Farbe extrahieren"
 "Failed to load language: {0}" = "Sprache konnte nicht geladen werden: {0}"
 "Failed to load project" = "Projekt konnte nicht geladen werden"
@@ -98,7 +99,6 @@
 "Project Loaded" = "Projekt geladen"
 "Project Saved" = "Projekt gespeichert"
 "Properties" = "Eigenschaften"
-"Rasterised Rendering" = "Rasterised Rendering" # LOC:TODO
 "Region Detection" = "Regionserkennung"
 "Region Detection Settings" = "Einstellungen der Regionserkennung"
 "Reload Languages. Checks online for updated language definitions" = "Reload Languages. Checks online for updated language definitions" # LOC:TODO

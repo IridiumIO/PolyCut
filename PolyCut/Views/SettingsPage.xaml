@@ -87,12 +87,13 @@
                                  Unchecked="AddToStartMenuCheckBox_Unchecked" />
             </StackPanel>
 
-            <StackPanel Margin="10" Orientation="Horizontal">
-                <Label MinWidth="170" loc:L.Value="Rasterised Rendering" />
+            <StackPanel Margin="10" Orientation="Horizontal" ToolTip="Uses the experimental rasterised rendering engine. Can significantly improve canvas performance for complex documents at the expense of visual fidelity while zooming/panning.">
+                <Label MinWidth="170" loc:L.Value="Experimental Renderer" VerticalAlignment="Center"/>
 
                 <CheckBox Margin="10 0 0 0"
                           VerticalAlignment="Center"
                           IsChecked="{Binding MainVM.UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
+              
             </StackPanel>
 
 

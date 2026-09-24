@@ -12,8 +12,10 @@ Public NotInheritable Class PerformantRasteriser
     Private Const MinCacheWeight As Integer = 25000
     Private Const CacheWeightHysteresis As Double = 0.7
     Private Const TotalCacheBudgetPixels As Double = 512.0 * 1024.0 * 1024.0
-    Private Const CacheRescaleBatchSize As Integer = 24
-    Private Const ZoomSettleMilliseconds As Double = 120.0
+    Private Const CacheRescaleBatchSize As Integer = 16
+    Private Const RescaleWeightPerTick As Integer = 1000
+
+    Private Const SettleMilliseconds As Double = 120.0
     Private Const FallbackExtent As Double = 1000000000.0
 
     Public Shared ReadOnly CacheEligibleProperty As DependencyProperty = DependencyProperty.RegisterAttached("CacheEligible", GetType(Boolean), GetType(PerformantRasteriser), New PropertyMetadata(False))
@@ -69,11 +71,13 @@ Public NotInheritable Class PerformantRasteriser
         Public UnitScale As Double
         Public Width As Double
         Public Height As Double
+        Public Weight As Integer
     End Structure
 
     Private Structure RescaleEntry
         Public Element As FrameworkElement
         Public Scale As Double
+        Public Weight As Integer
     End Structure
 
     Private ReadOnly _canvas As PolyCanvas
@@ -134,21 +138,36 @@ Public NotInheritable Class PerformantRasteriser
     Public Sub ViewportChanged(zoom As Double, zoomChanged As Boolean)
         _pendingZoom = zoom
         If _viewport Is Nothing Then Return
-        If zoomChanged OrElse Not _hasViewport Then
+
+        CancelRescale()
+
+        If Not CachingApplies(zoom) Then
             StartSettleTimer()
             Return
         End If
-        If Not CachingApplies(_settledZoom) Then Return
+
+        If zoomChanged AndAlso zoom >= _settledZoom Then
+            StartSettleTimer()
+            Return
+        End If
+
         Dim bounds = VisibleCanvasRect()
-        If bounds.IsEmpty Then Return
+        If bounds.IsEmpty Then
+            StartSettleTimer()
+            Return
+        End If
         _viewportRect = bounds
-        Apply(_settledZoom, bounds, False)
+        _hasViewport = True
+
+
+        Apply(zoom, bounds, False)
+        StartSettleTimer()
     End Sub
 
     Private Sub StartSettleTimer()
         If _settleTimer Is Nothing Then
             _settleTimer = New Threading.DispatcherTimer(Threading.DispatcherPriority.Background) With {
-                .Interval = TimeSpan.FromMilliseconds(ZoomSettleMilliseconds)
+                .Interval = TimeSpan.FromMilliseconds(SettleMilliseconds)
             }
             AddHandler _settleTimer.Tick, AddressOf OnSettleTick
         End If
@@ -241,7 +260,7 @@ Public NotInheritable Class PerformantRasteriser
             For Each candidate In container.Children
                 If candidate.HasSlot AndAlso local.IntersectsWith(candidate.Slot) Then
                     _visibleSet.Add(candidate.Element)
-                    _visible.Add(New VisibleEntry With {.Element = candidate.Element, .UnitScale = unitScale, .Width = candidate.Slot.Width, .Height = candidate.Slot.Height})
+                    _visible.Add(New VisibleEntry With {.Element = candidate.Element, .UnitScale = unitScale, .Width = candidate.Slot.Width, .Height = candidate.Slot.Height, .Weight = candidate.Weight})
                     areaSum += candidate.Slot.Width * candidate.Slot.Height * unitArea
                     weightSum += candidate.Weight
                 End If
@@ -271,13 +290,20 @@ Public NotInheritable Class PerformantRasteriser
         For Each entry In _visible
             Dim elementScale As Double = DrawableWrapperFactory.CacheScaleFor(scale * entry.UnitScale, entry.Width, entry.Height)
             If Not updateExistingScale Then
-                ApplyCacheState(entry.Element, True, elementScale, False)
+                If TryCast(entry.Element.CacheMode, BitmapCache) Is Nothing Then
+                    ApplyCacheState(entry.Element, True, elementScale, False)
+                End If
             Else
                 Dim cache = TryCast(entry.Element.CacheMode, BitmapCache)
                 If cache Is Nothing Then
                     ApplyCacheState(entry.Element, True, elementScale, False)
                 ElseIf cache.RenderAtScale <> elementScale Then
-                    _rescaleQueue.Add(New RescaleEntry With {.Element = entry.Element, .Scale = elementScale})
+                    'Zooming out goes to the FRONT of the queue so oversized bitmaps are released before the drain spend time sharpening everything else. Zooming in waits until its turn
+                    If elementScale < cache.RenderAtScale Then
+                        _rescaleQueue.Insert(_rescaleIndex, New RescaleEntry With {.Element = entry.Element, .Scale = elementScale, .Weight = entry.Weight})
+                    Else
+                        _rescaleQueue.Add(New RescaleEntry With {.Element = entry.Element, .Scale = elementScale, .Weight = entry.Weight})
+                    End If
                 End If
             End If
         Next
@@ -307,11 +333,14 @@ Public NotInheritable Class PerformantRasteriser
     End Sub
 
     Private Sub OnRescaleTick(sender As Object, e As EventArgs)
-        Dim budget As Integer = CacheRescaleBatchSize
-        While _rescaleIndex < _rescaleQueue.Count AndAlso budget > 0
+
+        Dim weightBudget As Integer = RescaleWeightPerTick
+        Dim countBudget As Integer = CacheRescaleBatchSize
+        While _rescaleIndex < _rescaleQueue.Count AndAlso weightBudget > 0 AndAlso countBudget > 0
             Dim entry = _rescaleQueue(_rescaleIndex)
             _rescaleIndex += 1
-            budget -= 1
+            weightBudget -= Math.Max(1, entry.Weight)
+            countBudget -= 1
             Dim cache = TryCast(entry.Element.CacheMode, BitmapCache)
             If cache IsNot Nothing AndAlso cache.RenderAtScale <> entry.Scale Then
                 cache.RenderAtScale = entry.Scale

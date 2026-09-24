@@ -17,6 +17,11 @@ End Enum
 Public Class ZoomBorder
     Inherits Border
 
+    Private _pendingScale As Double?
+    Private _pendingZoomPoint As Point
+    Private _pendingTranslation As Point?
+    Private ReadOnly _viewportLimiter As InteractionRateLimiter
+
     Public Shared ReadOnly LeftButtonActionProperty As DependencyProperty = DependencyProperty.Register(NameOf(LeftButtonAction), GetType(ZoomBorderMouseAction), GetType(ZoomBorder), New PropertyMetadata(ZoomBorderMouseAction.Move, Nothing))
 
     Public Property LeftButtonAction As ZoomBorderMouseAction
@@ -174,6 +179,7 @@ Public Class ZoomBorder
 
     Public Sub New()
         ClipToBounds = True
+        _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport, System.Windows.Threading.DispatcherPriority.Render)
         AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown
         AddHandler Me.MouseUp, AddressOf ZoomBorder_MouseUp
@@ -232,6 +238,7 @@ Public Class ZoomBorder
 
     Public Async Sub Reset()
         If Child Is Nothing Then Return
+        _viewportLimiter.Flush()
 
         Me.UpdateLayout()
 
@@ -304,6 +311,7 @@ Public Class ZoomBorder
 
     Private Sub MoveDown(ByVal e As MouseButtonEventArgs)
         If Not PanEnabled OrElse Child Is Nothing Then Return
+        _viewportLimiter.Flush()
         start = e.GetPosition(Me)
         origin = New Point(TranslateTransform.X, TranslateTransform.Y)
         Me.Cursor = Cursors.ScrollAll
@@ -312,6 +320,7 @@ Public Class ZoomBorder
 
     Private Sub MoveUp()
         If Child Is Nothing Then Return
+        _viewportLimiter.Flush()
         Child.ReleaseMouseCapture()
         Me.Cursor = Nothing
     End Sub
@@ -389,8 +398,8 @@ Public Class ZoomBorder
 
 
         If GetAction(e.ChangedButton) = ZoomBorderMouseAction.Move Then : MoveUp()
-            ElseIf GetAction(e.ChangedButton) = ZoomBorderMouseAction.Reset Then : Reset()
-            End If
+        ElseIf GetAction(e.ChangedButton) = ZoomBorderMouseAction.Reset Then : Reset()
+        End If
     End Sub
 
     Private Function DistanceTo(p1 As Point, p2 As Point) As Double
@@ -407,7 +416,8 @@ Public Class ZoomBorder
         If Child Is Nothing Then Return
 
         Dim zoomFactor As Double = delta * ScaleAmount
-        Dim targetScale As Double = Scale + (zoomFactor * Scale)
+        Dim currentScale = If(_pendingScale.HasValue, _pendingScale.Value, Scale)
+        Dim targetScale As Double = currentScale + (zoomFactor * currentScale)
 
         ' Early return if zooming out too much
         If delta <= 0 AndAlso (ScaleTransform.ScaleX < ScaleMin OrElse ScaleTransform.ScaleY < ScaleMin) Then Return
@@ -417,22 +427,42 @@ Public Class ZoomBorder
 
     Public Sub ZoomByLinear(delta As Double)
         If Child Is Nothing Then Return
-        ZoomToPoint(Scale + delta)
+        ZoomToPoint(If(_pendingScale.HasValue, _pendingScale.Value, Scale) + delta)
     End Sub
 
     Private Sub ZoomToPoint(targetScale As Double)
         If Child Is Nothing Then Return
 
-        targetScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
+        _pendingScale = Math.Max(ScaleMin, Math.Min(ScaleMax, targetScale))
+        _pendingZoomPoint = Mouse.GetPosition(Me)
+        _viewportLimiter.Request()
+    End Sub
 
-        Dim relative As Point = Mouse.GetPosition(Child)
-        Dim absoluteX As Double = relative.X * Scale + TranslateTransform.X
-        Dim absoluteY As Double = relative.Y * Scale + TranslateTransform.Y
-
-        Scale = targetScale
-
-        TranslateTransform.X = absoluteX - (relative.X * Scale)
-        TranslateTransform.Y = absoluteY - (relative.Y * Scale)
+    Private Sub ApplyPendingViewport()
+        If Child Is Nothing Then
+            _pendingScale = Nothing
+            _pendingTranslation = Nothing
+            Return
+        End If
+        If _pendingTranslation.HasValue Then
+            TranslateTransform.X = _pendingTranslation.Value.X
+            TranslateTransform.Y = _pendingTranslation.Value.Y
+            EventAggregator.Publish(New TranslationChangedMessage(_pendingTranslation.Value))
+        End If
+        If _pendingScale.HasValue Then
+            Dim relative = Me.TranslatePoint(_pendingZoomPoint, Child)
+            Dim absoluteX = relative.X * Scale + TranslateTransform.X
+            Dim absoluteY = relative.Y * Scale + TranslateTransform.Y
+            Scale = _pendingScale.Value
+            TranslateTransform.X = absoluteX - (relative.X * Scale)
+            TranslateTransform.Y = absoluteY - (relative.Y * Scale)
+            If Child.IsMouseCaptured Then
+                start = Mouse.GetPosition(Me)
+                origin = New Point(TranslateTransform.X, TranslateTransform.Y)
+            End If
+        End If
+        _pendingScale = Nothing
+        _pendingTranslation = Nothing
     End Sub
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
@@ -445,9 +475,9 @@ Public Class ZoomBorder
         End If
 
         If Not ZoomEnabled OrElse Child Is Nothing OrElse Not Child.IsMouseCaptured Then Return
-        TranslateTransform.X = origin.X - (start.X - currentPosition.X)
-        TranslateTransform.Y = origin.Y - (start.Y - currentPosition.Y)
-        EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
+        _pendingTranslation = New Point(origin.X - (start.X - currentPosition.X),
+                                        origin.Y - (start.Y - currentPosition.Y))
+        _viewportLimiter.Request()
     End Sub
 
 
@@ -457,6 +487,7 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_LostMouseCapture(sender As Object, e As MouseEventArgs)
+        _viewportLimiter.Flush()
         If CanvasMode <> CanvasMode.Selection AndAlso DrawingManager.IsDrawing Then
             DrawingManager.CancelDrawing(GetPolyCanvas())
         End If

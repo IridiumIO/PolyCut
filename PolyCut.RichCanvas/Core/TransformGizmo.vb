@@ -25,6 +25,8 @@ Public Class TransformGizmo
     Private _renderHooked As Boolean
     Private _needsRefresh As Boolean
     Private _multiBoundsDirty As Boolean
+    Private _pendingDragPosition As Point?
+    Private ReadOnly _dragLimiter As InteractionRateLimiter
 
     Private Const HANDLE_SIZE As Double = 9
     Private Const ROTATE_HANDLE_SIZE As Double = 42
@@ -63,6 +65,7 @@ Public Class TransformGizmo
     Public Sub New(selectionManager As SelectionManager, canvas As Canvas)
         _selectionManager = selectionManager
         _canvas = canvas
+        _dragLimiter = New InteractionRateLimiter(AddressOf ApplyPendingDrag, System.Windows.Threading.DispatcherPriority.Normal)
 
         Me.IsHitTestVisible = True
         Me.Cursor = Cursors.Arrow
@@ -72,6 +75,7 @@ Public Class TransformGizmo
         AddHandler Me.MouseLeftButtonDown, AddressOf OnMouseDown
         AddHandler Me.MouseMove, AddressOf OnMouseMove
         AddHandler Me.MouseLeftButtonUp, AddressOf OnMouseUp
+        AddHandler Me.LostMouseCapture, AddressOf OnLostMouseCapture
         AddHandler Me.MouseWheel, AddressOf OnMouseWheel
         AddHandler Me.MouseRightButtonDown, AddressOf OnRightButtonDown
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
@@ -478,7 +482,14 @@ Public Class TransformGizmo
 
         If _activeHandle Is Nothing Then Return
 
-        Dim currentPos = e.GetPosition(_canvas)
+        _pendingDragPosition = e.GetPosition(_canvas)
+        _dragLimiter.Request()
+    End Sub
+
+    Private Sub ApplyPendingDrag()
+        If Not _pendingDragPosition.HasValue OrElse _activeHandle Is Nothing Then Return
+        Dim currentPos = _pendingDragPosition.Value
+        _pendingDragPosition = Nothing
 
         If _activeHandle = "Rotate" Then
             PerformRotate(currentPos)
@@ -487,16 +498,20 @@ Public Class TransformGizmo
         Else
             PerformResize(currentPos)
         End If
-
         If _selectionManager.Count > 1 Then
             _multiBoundsDirty = True
-            RequestGizmoRefresh() ' will invalidate bounds once per frame
+            RequestGizmoRefresh()
         End If
-
         InvalidateVisual()
     End Sub
 
     Private Sub OnMouseUp(sender As Object, e As MouseButtonEventArgs)
+        If _activeHandle IsNot Nothing Then
+            _pendingDragPosition = e.GetPosition(_canvas)
+            _dragLimiter.Flush()
+        Else
+            _dragLimiter.Cancel()
+        End If
         Try
             Dim msg As New TransformCompletedMessage()
             For Each kvp In _initialSnapshots
@@ -534,6 +549,11 @@ Public Class TransformGizmo
 
         _selectionManager.InvalidateBoundsCache()
         InvalidateVisual()
+    End Sub
+
+    Private Sub OnLostMouseCapture(sender As Object, e As MouseEventArgs)
+        _dragLimiter.Cancel()
+        _pendingDragPosition = Nothing
     End Sub
 
     Private Function HitTestHandle(pos As Point) As HandleId?

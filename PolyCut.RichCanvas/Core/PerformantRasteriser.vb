@@ -81,6 +81,8 @@ Public NotInheritable Class PerformantRasteriser
 
     Private _containers As List(Of CullContainer)
     Private _containersDirty As Boolean = True
+    Private _structureChanged As Boolean = True
+    Private ReadOnly _weightMemo As New Dictionary(Of Geometry, Integer)
     Private ReadOnly _visibleSet As New HashSet(Of FrameworkElement)
     Private ReadOnly _visible As New List(Of VisibleEntry)
 
@@ -94,8 +96,6 @@ Public NotInheritable Class PerformantRasteriser
     Private _viewportRect As Rect = Rect.Empty
     Private _hasViewport As Boolean
     Private _cachesActive As Boolean
-    Private _lastEngaged As Boolean
-    Private _loggedTotalWeight As Integer = -1
 
 
     Public Sub New(canvas As PolyCanvas)
@@ -112,12 +112,13 @@ Public NotInheritable Class PerformantRasteriser
     End Sub
 
     Public Sub Invalidate()
+        'The rebuild is deferred to the next layout pass rather than run here: after an import the wrappers
+        'have no applied template yet, so walking the tree now would catalogue only the top-level wrappers
+        'and miss every leaf inside a group.
+        _weightMemo.Clear()
+        _structureChanged = True
         _containers = Nothing
-        If _hasViewport Then
-            Apply(_settledZoom, _viewportRect, True)
-        Else
-            Apply(1.0, New Rect(-FallbackExtent, -FallbackExtent, FallbackExtent * 2, FallbackExtent * 2), True)
-        End If
+        _containersDirty = True
     End Sub
 
     Public Sub CancelRescale()
@@ -176,7 +177,16 @@ Public NotInheritable Class PerformantRasteriser
     End Sub
 
     Private Sub OnCanvasLayoutUpdated(sender As Object, e As EventArgs)
+
+        If Not _structureChanged Then Return
+        _structureChanged = False
+        _containers = Nothing
         _containersDirty = True
+        If _hasViewport Then
+            Apply(_settledZoom, _viewportRect, True)
+        Else
+            Apply(1.0, New Rect(-FallbackExtent, -FallbackExtent, FallbackExtent * 2, FallbackExtent * 2), True)
+        End If
     End Sub
 
     Private Function VisibleCanvasRect() As Rect
@@ -241,7 +251,6 @@ Public NotInheritable Class PerformantRasteriser
         'Hysteresis: need a higher bar to switch on than to stay on so panning doesn't cook the raster toggle at the edges.
         Dim required As Integer = If(_cachesActive, CInt(MinCacheWeight * CacheWeightHysteresis), MinCacheWeight)
         Dim engage As Boolean = weightSum >= required
-        If _lastEngaged <> engage Then _lastEngaged = engage
 
         If Not engage Then
             CancelRescale()
@@ -351,8 +360,6 @@ Public NotInheritable Class PerformantRasteriser
             Next
         Next
 
-        If total <> _loggedTotalWeight Then _loggedTotalWeight = total
-
     End Sub
 
     Private Function CollectContainers(node As DependencyObject, into As List(Of CullContainer)) As Boolean
@@ -380,7 +387,7 @@ Public NotInheritable Class PerformantRasteriser
         Return subtreeCached
     End Function
 
-    Private Shared Function WeightOf(wrapper As FrameworkElement) As Integer
+    Private Function WeightOf(wrapper As FrameworkElement) As Integer
         Dim content = TryCast(TryCast(wrapper, ContentControl)?.Content, Shape)
         If content Is Nothing Then Return 1
 
@@ -392,8 +399,19 @@ Public NotInheritable Class PerformantRasteriser
 
         Dim path = TryCast(content, Path)
         If path IsNot Nothing Then
-            Dim geometry = TryCast(path.Data, PathGeometry)
-            If geometry IsNot Nothing Then Return GeometryWeight(geometry)
+            Dim geometry = path.Data
+            If geometry IsNot Nothing Then
+
+                Dim weight As Integer
+                If _weightMemo.TryGetValue(geometry, weight) Then Return weight
+
+                Dim pathGeometry = TryCast(geometry, PathGeometry)
+                If pathGeometry IsNot Nothing Then
+                    weight = GeometryWeight(pathGeometry)
+                    _weightMemo(geometry) = weight
+                    Return weight
+                End If
+            End If
         End If
 
         Return 1

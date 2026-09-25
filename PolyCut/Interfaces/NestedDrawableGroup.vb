@@ -58,22 +58,27 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         Dim wrappers As New List(Of (drawable As IDrawable, wrapper As ContentControl))
 
-        For Each d In items
-            Dim fe = d.DrawableElement
-            Dim w = DrawableWrapperFactory.CreateWrapper(fe, d, style)
-            If w Is Nothing Then Continue For
+        grp.BeginBulkChildUpdate()
+        Try
+            For Each d In items
+                Dim fe = d.DrawableElement
+                Dim w = DrawableWrapperFactory.CreateWrapper(fe, d, style)
+                If w Is Nothing Then Continue For
 
-            Dim left = GetLeftSafe(fe)
-            Dim top = GetTopSafe(fe)
+                Dim left = GetLeftSafe(fe)
+                Dim top = GetTopSafe(fe)
 
-            Canvas.SetLeft(w, left)
-            Canvas.SetTop(w, top)
+                Canvas.SetLeft(w, left)
+                Canvas.SetTop(w, top)
 
-            w.IsHitTestVisible = False
+                w.IsHitTestVisible = False
 
-            wrappers.Add((d, w))
-            grp.AddChild(d)
-        Next
+                wrappers.Add((d, w))
+                grp.AddChild(d)
+            Next
+        Finally
+            grp.EndBulkChildUpdate()
+        End Try
 
         Dim bounds As Rect = GetBoundsFromWrappers(wrappers.Select(Function(x) x.wrapper))
 
@@ -108,6 +113,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
 
     Private Sub OnGroupChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+        If _suspendChildNotifications Then Return
+
         RebuildDisplayChildren()
 
         For Each child In GroupChildren
@@ -128,6 +135,20 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Case NameOf(Stroke)
                 OnPropertyChanged(NameOf(Stroke))
         End Select
+    End Sub
+
+    Private _suspendChildNotifications As Boolean
+
+    'Adding children one at a time rebuilt the display list and rewired every handler on every add, so building
+    'a group of n children cost O(n^2). Import is the only bulk caller, so it suppresses and rebuilds once.
+    Friend Sub BeginBulkChildUpdate()
+        _suspendChildNotifications = True
+    End Sub
+
+    Friend Sub EndBulkChildUpdate()
+        If Not _suspendChildNotifications Then Return
+        _suspendChildNotifications = False
+        OnGroupChildrenChanged(GroupChildren, Nothing)
     End Sub
 
     Private Iterator Function EnumerateLeafChildren() As IEnumerable(Of IDrawable)

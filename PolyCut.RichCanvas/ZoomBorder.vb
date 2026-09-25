@@ -181,6 +181,7 @@ Public Class ZoomBorder
     Private start As Point
 
     Private _rasteriserCache As PerformantRasteriser
+    Private ReadOnly _frameMeter As New FrameMeter()
 
 
     Public Sub New()
@@ -476,6 +477,7 @@ Public Class ZoomBorder
         _pendingScale = Nothing
         _pendingTranslation = Nothing
         If applied Then
+            _frameMeter.Pulse()
             UpdateRasteriser(zoomed)
         End If
     End Sub
@@ -499,6 +501,7 @@ Public Class ZoomBorder
     Private Sub ZoomBorder_Loaded(ByVal sender As Object, ByVal e As RoutedEventArgs)
         DrawingManager.TextEditor.AttachTextStyleSource(CanvasTextBox)
         EventAggregator.Publish(New ScaleChangedMessage(Scale))
+        _frameMeter.Start()
         UpdateRasteriser(True)
     End Sub
 

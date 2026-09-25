@@ -2,7 +2,7 @@
 
 Public NotInheritable Class PerformantRasteriser
 
-    Private Const ViewportPadFraction As Double = 0.25
+    Private Const ViewportPadFraction As Double = 0.35
     Private Const CacheSuperSample As Double = 2.0
 
     'Stupid ceiling for sanity fallback to vector rendering for pixel peepers
@@ -10,6 +10,8 @@ Public NotInheritable Class PerformantRasteriser
 
     'Caching is only worth its bitmap cost once the geometry actually on screen is expensive to re-process. Check SEGMENTS not total shapes
     Private Const MinCacheWeight As Integer = 25000
+
+    Private Const MaxCacheCount As Integer = 3000
     Private Const CacheWeightHysteresis As Double = 0.7
     Private Const TotalCacheBudgetPixels As Double = 512.0 * 1024.0 * 1024.0
     Private Const CacheRescaleBatchSize As Integer = 16
@@ -66,7 +68,7 @@ Public NotInheritable Class PerformantRasteriser
         End Sub
     End Class
 
-    Private Structure VisibleEntry
+    Private Structure CacheUnit
         Public Element As FrameworkElement
         Public UnitScale As Double
         Public Width As Double
@@ -87,8 +89,8 @@ Public NotInheritable Class PerformantRasteriser
     Private _containersDirty As Boolean = True
     Private _structureChanged As Boolean = True
     Private ReadOnly _weightMemo As New Dictionary(Of Geometry, Integer)
-    Private ReadOnly _visibleSet As New HashSet(Of FrameworkElement)
-    Private ReadOnly _visible As New List(Of VisibleEntry)
+    Private ReadOnly _caching As New HashSet(Of FrameworkElement)
+    Private ReadOnly _units As New List(Of CacheUnit)
 
     Private ReadOnly _rescaleQueue As New List(Of RescaleEntry)
     Private _rescaleIndex As Integer
@@ -247,31 +249,25 @@ Public NotInheritable Class PerformantRasteriser
         Dim padY As Double = visibleRect.Height * ViewportPadFraction
         Dim padded As New Rect(visibleRect.X - padX, visibleRect.Y - padY, visibleRect.Width + padX * 2, visibleRect.Height + padY * 2)
 
-        _visibleSet.Clear()
-        _visible.Clear()
-
-        Dim areaSum As Double = 0
         Dim weightSum As Integer = 0
-        For Each container In _containers
-            Dim local As Rect
-            Dim unitScale As Double = 1.0
-            If Not TryContainerLocalRect(container, padded, local, unitScale) Then Continue For
-            Dim unitArea As Double = unitScale * unitScale * dpiArea
-            For Each candidate In container.Children
-                If candidate.HasSlot AndAlso local.IntersectsWith(candidate.Slot) Then
-                    _visibleSet.Add(candidate.Element)
-                    _visible.Add(New VisibleEntry With {.Element = candidate.Element, .UnitScale = unitScale, .Width = candidate.Slot.Width, .Height = candidate.Slot.Height, .Weight = candidate.Weight})
-                    areaSum += candidate.Slot.Width * candidate.Slot.Height * unitArea
-                    weightSum += candidate.Weight
-                End If
-            Next
-        Next
+        Dim leafCount As Integer = CountVisibleLeaves(padded, weightSum)
 
         'Hysteresis: need a higher bar to switch on than to stay on so panning doesn't cook the raster toggle at the edges.
         Dim required As Integer = If(_cachesActive, CInt(MinCacheWeight * CacheWeightHysteresis), MinCacheWeight)
-        Dim engage As Boolean = weightSum >= required
+        If weightSum < required Then
+            CancelRescale()
+            If _cachesActive Then ClearCaches()
+            Return
+        End If
 
-        If Not engage Then
+        Dim areaSum As Double
+        If leafCount <= MaxCacheCount Then
+            areaSum = BuildLeafUnits(padded, dpiArea)
+        Else
+            areaSum = BuildContainerUnits(padded, dpiArea)
+        End If
+
+        If _units.Count = 0 OrElse _units.Count > MaxCacheCount Then
             CancelRescale()
             If _cachesActive Then ClearCaches()
             Return
@@ -287,16 +283,16 @@ Public NotInheritable Class PerformantRasteriser
         'Never re-derive the scale while panning: it changes every frame, so each one would invalidate every raster.
         If updateExistingScale Then CancelRescale()
 
-        For Each entry In _visible
+        For Each entry In _units
             Dim elementScale As Double = DrawableWrapperFactory.CacheScaleFor(scale * entry.UnitScale, entry.Width, entry.Height)
             If Not updateExistingScale Then
                 If TryCast(entry.Element.CacheMode, BitmapCache) Is Nothing Then
-                    ApplyCacheState(entry.Element, True, elementScale, False)
+                    AttachCache(entry.Element, elementScale)
                 End If
             Else
                 Dim cache = TryCast(entry.Element.CacheMode, BitmapCache)
                 If cache Is Nothing Then
-                    ApplyCacheState(entry.Element, True, elementScale, False)
+                    AttachCache(entry.Element, elementScale)
                 ElseIf cache.RenderAtScale <> elementScale Then
                     'Zooming out goes to the FRONT of the queue so oversized bitmaps are released before the drain spend time sharpening everything else. Zooming in waits until its turn
                     If elementScale < cache.RenderAtScale Then
@@ -310,23 +306,98 @@ Public NotInheritable Class PerformantRasteriser
 
         If updateExistingScale AndAlso _rescaleQueue.Count > 0 Then StartRescaleDrain()
 
+        ReleaseUncachedUnits()
+
+        _cachesActive = True
+    End Sub
+
+    'Need to do this nonsense because otherwise we can overload the renderer with thousands of tiny bitmaps: 
+    'https://github.com/dotnet/wpf/issues/3067
+    Private Function CountVisibleLeaves(padded As Rect, ByRef weightSum As Integer) As Integer
+        weightSum = 0
+        Dim count As Integer = 0
         For Each container In _containers
+            Dim local As Rect
+            Dim unitScale As Double = 1.0
+            If Not TryContainerLocalRect(container, padded, local, unitScale) Then Continue For
             For Each candidate In container.Children
-                Dim element = candidate.Element
-                If Not _visibleSet.Contains(element) AndAlso element.CacheMode IsNot Nothing Then
-                    ApplyCacheState(element, False, 1.0, False)
+                If candidate.HasSlot AndAlso local.IntersectsWith(candidate.Slot) Then
+                    count += 1
+                    weightSum += candidate.Weight
                 End If
             Next
         Next
+        Return count
+    End Function
 
-        _cachesActive = _visible.Count > 0
+    Private Function BuildLeafUnits(padded As Rect, dpiArea As Double) As Double
+        _units.Clear()
+        _caching.Clear()
+        Dim areaSum As Double = 0
+        For Each container In _containers
+            Dim local As Rect
+            Dim unitScale As Double = 1.0
+            If Not TryContainerLocalRect(container, padded, local, unitScale) Then Continue For
+            Dim unitArea As Double = unitScale * unitScale * dpiArea
+            For Each candidate In container.Children
+                If candidate.HasSlot AndAlso local.IntersectsWith(candidate.Slot) Then
+                    _caching.Add(candidate.Element)
+                    _units.Add(New CacheUnit With {.Element = candidate.Element, .UnitScale = unitScale, .Width = candidate.Slot.Width, .Height = candidate.Slot.Height, .Weight = candidate.Weight})
+                    areaSum += candidate.Slot.Width * candidate.Slot.Height * unitArea
+                End If
+            Next
+        Next
+        Return areaSum
+    End Function
+
+    Private Function BuildContainerUnits(padded As Rect, dpiArea As Double) As Double
+        _units.Clear()
+        _caching.Clear()
+        Dim areaSum As Double = 0
+        For Each container In _containers
+            Dim local As Rect
+            Dim unitScale As Double = 1.0
+            If Not TryContainerLocalRect(container, padded, local, unitScale) Then Continue For
+
+            Dim element = container.Container
+            Dim w As Double = element.ActualWidth
+            Dim h As Double = element.ActualHeight
+            If Double.IsNaN(w) OrElse Double.IsNaN(h) OrElse w <= 0 OrElse h <= 0 Then Continue For
+
+            Dim weight As Integer = 0
+            Dim used As Boolean = False
+            For Each candidate In container.Children
+                If candidate.HasSlot AndAlso local.IntersectsWith(candidate.Slot) Then
+                    weight += candidate.Weight
+                    used = True
+                End If
+            Next
+            If Not used Then Continue For
+
+            _caching.Add(element)
+            _units.Add(New CacheUnit With {.Element = element, .UnitScale = unitScale, .Width = w, .Height = h, .Weight = weight})
+            areaSum += w * h * unitScale * unitScale * dpiArea
+        Next
+        Return areaSum
+    End Function
+
+    Private Sub ReleaseUncachedUnits()
+        For Each container In _containers
+            If container.Container.CacheMode IsNot Nothing AndAlso Not _caching.Contains(container.Container) Then
+                container.Container.CacheMode = Nothing
+            End If
+            For Each candidate In container.Children
+                Dim element = candidate.Element
+                If element.CacheMode IsNot Nothing AndAlso Not _caching.Contains(element) Then
+                    element.CacheMode = Nothing
+                End If
+            Next
+        Next
     End Sub
 
     Private Sub StartRescaleDrain()
         If _rescaleTimer Is Nothing Then
-            _rescaleTimer = New Threading.DispatcherTimer(Threading.DispatcherPriority.Background) With {
-                .Interval = TimeSpan.FromMilliseconds(1)
-            }
+            _rescaleTimer = New Threading.DispatcherTimer(Threading.DispatcherPriority.Background) With {.Interval = TimeSpan.FromMilliseconds(1)}
             AddHandler _rescaleTimer.Tick, AddressOf OnRescaleTick
         End If
         If Not _rescaleTimer.IsEnabled Then _rescaleTimer.Start()
@@ -367,6 +438,7 @@ Public NotInheritable Class PerformantRasteriser
         EnsureContainers()
         If _containers Is Nothing Then Return
         For Each container In _containers
+            container.Container.CacheMode = Nothing
             For Each candidate In container.Children
                 If candidate.Element.CacheMode IsNot Nothing Then candidate.Element.CacheMode = Nothing
             Next
@@ -485,19 +557,11 @@ Public NotInheritable Class PerformantRasteriser
         Return New Rect(left, top, w, h)
     End Function
 
-    Private Shared Sub ApplyCacheState(element As FrameworkElement, wantCache As Boolean, elementScale As Double, updateExistingScale As Boolean)
-        Dim cache = TryCast(element.CacheMode, BitmapCache)
-        If Not wantCache Then
-            If cache IsNot Nothing Then element.CacheMode = Nothing
-            Return
-        End If
-        Dim isNew As Boolean = cache Is Nothing
-        If isNew Then
-            cache = New BitmapCache() With {.EnableClearType = False, .SnapsToDevicePixels = False}
-            element.CacheMode = cache
-        End If
-        If isNew OrElse updateExistingScale Then
-            If cache.RenderAtScale <> elementScale Then cache.RenderAtScale = elementScale
-        End If
+    Private Shared Sub AttachCache(element As FrameworkElement, elementScale As Double)
+        element.CacheMode = New BitmapCache() With {
+            .EnableClearType = False,
+            .SnapsToDevicePixels = False,
+            .RenderAtScale = elementScale
+        }
     End Sub
 End Class

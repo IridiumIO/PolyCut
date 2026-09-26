@@ -48,11 +48,8 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim vbW As Double = svgDoc.ViewBox.Width
             Dim vbH As Double = svgDoc.ViewBox.Height
 
-            Dim sx As Double = docWidthMM / vbW
-            Dim sy As Double = docHeightMM / vbH
-
             ' SVG default preserveAspectRatio: xMidYMid meet (uniform scale)
-            Dim s As Double = Math.Min(sx, sy)
+            Dim s As Double = DocumentScale(svgDoc)
 
             ' size of the scaled viewBox in mm
             Dim scaledW As Double = vbW * s
@@ -133,7 +130,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
 
     Private Function CalculateStrokeDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)
-        Dim matrixScale As Double = Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12)
+        Dim matrixScale As Double = StrokeScale(matrix)
         Dim strokeThickness As Double = If(strokeWidth > 0, strokeWidth * matrixScale, 0)
         Return (bounds.Width + strokeThickness, bounds.Height + strokeThickness, strokeThickness / 2.0, strokeThickness)
     End Function
@@ -469,13 +466,43 @@ Public Class SVGImportService : Implements ISvgImportService
     End Function
 
 
+    Private Shared Function DocumentScale(svgDoc As SvgDocument) As Double
+        If svgDoc Is Nothing Then Return 1.0
+
+        Dim docWidthMM As Double = ConvertToMM(svgDoc.Width.Value, svgDoc.Width.Type)
+
+        If svgDoc.ViewBox.Width > 0 AndAlso svgDoc.ViewBox.Height > 0 Then
+            Dim docHeightMM As Double = ConvertToMM(svgDoc.Height.Value, svgDoc.Height.Type)
+            If docWidthMM > 0 AndAlso docHeightMM > 0 Then
+                Return Math.Min(docWidthMM / svgDoc.ViewBox.Width, docHeightMM / svgDoc.ViewBox.Height)
+            End If
+        End If
+
+        Return ConvertSVGScaleToMM(svgDoc.Width.Type)
+    End Function
+
+
+    Private Shared Function ResolveLength(value As Single, unitType As SvgUnitType, mmPerUserUnit As Double) As Double
+        Select Case unitType
+            Case SvgUnitType.Centimeter, SvgUnitType.Millimeter, SvgUnitType.Inch, SvgUnitType.Point, SvgUnitType.Pica
+                If mmPerUserUnit > 0 Then Return ConvertToMM(value, unitType) / mmPerUserUnit
+        End Select
+        Return value
+    End Function
+
+    Private Shared Function StrokeScale(matrix As Matrix) As Double
+        Return Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12)
+    End Function
+
     Private Function GetStrokeWidthOrZero(svg As SvgVisualElement) As Single
         Try
             If svg Is Nothing OrElse Not TypeOf svg.Stroke Is SvgColourServer Then Return 0.0F
 
+            Dim mmPerUserUnit As Double = DocumentScale(svg.OwnerDocument)
+
             Dim current As SvgVisualElement = svg
             While current IsNot Nothing
-                If current.StrokeWidth <> Nothing Then Return current.StrokeWidth.Value
+                If current.StrokeWidth <> Nothing Then Return CSng(ResolveLength(current.StrokeWidth.Value, current.StrokeWidth.Type, mmPerUserUnit))
                 current = TryCast(current.Parent, SvgVisualElement)
             End While
 
@@ -610,7 +637,7 @@ Public Class SVGImportService : Implements ISvgImportService
 
             Dim idrawable = FinaliseDrawableElement(wpfPath, bounds, svgPath, matrix, svgPath.ID)
 
-            idrawable.StrokeThickness = originalStrokeWidth
+            idrawable.StrokeThickness = originalStrokeWidth * StrokeScale(matrix)
 
             Return idrawable
         Catch ex As Exception
@@ -953,7 +980,7 @@ Public Class SVGImportService : Implements ISvgImportService
         End Select
     End Sub
 
-    Private Function ConvertToMM(value As Single, unitType As SvgUnitType) As Double
+    Private Shared Function ConvertToMM(value As Single, unitType As SvgUnitType) As Double
         Return value * ConvertSVGScaleToMM(unitType)
     End Function
 

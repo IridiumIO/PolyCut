@@ -327,6 +327,29 @@ Public Class ZoomBorder
         Child.CaptureMouse()
     End Sub
 
+    Public Sub BeginPan(e As MouseButtonEventArgs)
+        If Not PanEnabled OrElse Child Is Nothing Then Return
+        _viewportLimiter.Flush()
+        start = e.GetPosition(Me)
+        _middleMouseDownPosStart = start
+        origin = New Point(TranslateTransform.X, TranslateTransform.Y)
+        Me.Cursor = Cursors.ScrollAll
+        Child.CaptureMouse()
+    End Sub
+
+    Public Sub UpdatePanFrom(currentPosition As Point)
+        If Not ZoomEnabled OrElse Child Is Nothing OrElse Not Child.IsMouseCaptured Then Return
+        _pendingTranslation = New Point(origin.X - (start.X - currentPosition.X), origin.Y - (start.Y - currentPosition.Y))
+        _viewportLimiter.Request()
+    End Sub
+
+    Public Sub EndPan(e As MouseButtonEventArgs)
+        If e.ChangedButton = MouseButton.Middle AndAlso DistanceTo(e.GetPosition(Me), _middleMouseDownPosStart) < 3 Then
+            Reset()
+        End If
+        MoveUp()
+    End Sub
+
     Private Sub MoveUp()
         If Child Is Nothing Then Return
         _viewportLimiter.Flush()
@@ -492,9 +515,7 @@ Public Class ZoomBorder
         End If
 
         If Not ZoomEnabled OrElse Child Is Nothing OrElse Not Child.IsMouseCaptured Then Return
-        _pendingTranslation = New Point(origin.X - (start.X - currentPosition.X),
-                                        origin.Y - (start.Y - currentPosition.Y))
-        _viewportLimiter.Request()
+        UpdatePanFrom(currentPosition)
     End Sub
 
 

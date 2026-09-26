@@ -25,8 +25,43 @@ Public Class TransformOverlay
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
         AddHandler Me.SizeChanged, AddressOf OnSizeChanged
 
+        AddHandler Me.PreviewMouseDown, AddressOf OnOverlayPreviewMouseDown
+        AddHandler Me.PreviewMouseUp, AddressOf OnOverlayPreviewMouseUp
+
         UpdateGizmo()
     End Sub
+
+    Private Function GetZoomBorder() As ZoomBorder
+        Dim current As DependencyObject = _contentCanvas
+        While current IsNot Nothing
+            Dim zb = TryCast(current, ZoomBorder)
+            If zb IsNot Nothing Then Return zb
+            current = VisualTreeHelper.GetParent(current)
+        End While
+        Return Nothing
+    End Function
+
+    Private Sub OnOverlayPreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
+        If e.ChangedButton <> MouseButton.Middle Then Return
+
+        Dim zb = GetZoomBorder()
+        If zb Is Nothing Then Return
+        zb.BeginPan(e)
+        _panZoomBorder = zb
+        e.Handled = True
+    End Sub
+
+
+    Private Sub OnOverlayPreviewMouseUp(sender As Object, e As MouseButtonEventArgs)
+        If _panZoomBorder Is Nothing OrElse e.ChangedButton <> MouseButton.Middle Then Return
+
+        Dim zb = _panZoomBorder
+        _panZoomBorder = Nothing
+        zb.EndPan(e)
+        e.Handled = True
+    End Sub
+
+    Private _panZoomBorder As ZoomBorder
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
         UpdateGizmo()

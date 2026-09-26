@@ -1,4 +1,4 @@
-Imports System.ComponentModel
+﻿Imports System.ComponentModel
 
 Imports PolyCut.Shared
 
@@ -332,8 +332,8 @@ Public Class TransformGizmo
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
-                    ' Return dimensions in millimeters (ActualWidth/Height are in WPF units, 1 unit = 1mm)
-                    Return (wrapper.ActualWidth, wrapper.ActualHeight)
+                    ' Return dimensions in millimeters (wrapper units, 1 unit = 1mm)
+                    Return TransformMath.GetWrapperSize(wrapper)
                 End If
             End If
         End If
@@ -716,7 +716,7 @@ Public Class TransformGizmo
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
-                    _initialSizes(item) = (wrapper.ActualWidth, wrapper.ActualHeight)
+                    _initialSizes(item) = TransformMath.GetWrapperSize(wrapper)
                     _initialPositions(item) = New Point(Canvas.GetLeft(wrapper), Canvas.GetTop(wrapper))
                 End If
             End If

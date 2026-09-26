@@ -1,4 +1,4 @@
-Imports System.Windows
+﻿Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
 
@@ -63,6 +63,15 @@ Public Module TransformMath
     End Function
 
 
+    Public Function GetWrapperSize(wrapper As FrameworkElement) As (Width As Double, Height As Double)
+        If wrapper Is Nothing Then Return (0.0, 0.0)
+
+        Dim w As Double = If(Double.IsNaN(wrapper.Width), wrapper.ActualWidth, wrapper.Width)
+        Dim h As Double = If(Double.IsNaN(wrapper.Height), wrapper.ActualHeight, wrapper.Height)
+        Return (w, h)
+    End Function
+
+
     ' Axis-aligned bounds of a wrapper in its parent (canvas) coordinate space.
     Public Function GetWorldBounds(wrapper As ContentControl) As Rect
         If wrapper Is Nothing Then Return Rect.Empty
@@ -72,8 +81,9 @@ Public Module TransformMath
         If Double.IsNaN(left) Then left = 0
         If Double.IsNaN(top) Then top = 0
 
-        Dim width = wrapper.ActualWidth
-        Dim height = wrapper.ActualHeight
+        Dim size = GetWrapperSize(wrapper)
+        Dim width = size.Width
+        Dim height = size.Height
         If width <= 0 OrElse height <= 0 Then Return New Rect(left, top, width, height)
 
         Dim parentCanvas = TryCast(wrapper.Parent, UIElement)

@@ -114,7 +114,8 @@ Public Class GeometryHitTestHelper
                 Dim top = Canvas.GetTop(wrapper)
                 If Double.IsNaN(left) Then left = 0
                 If Double.IsNaN(top) Then top = 0
-                If Not New Rect(left, top, wrapper.ActualWidth, wrapper.ActualHeight).Contains(point) Then Continue For
+                Dim size = TransformMath.GetWrapperSize(wrapper)
+                If Not New Rect(left, top, size.Width, size.Height).Contains(point) Then Continue For
             End If
 
             If ContainsPoint(d, point) Then Return d

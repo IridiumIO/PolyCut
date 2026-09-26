@@ -1,4 +1,4 @@
-Imports System.Collections.ObjectModel
+﻿Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 
 Imports PolyCut.Shared
@@ -129,7 +129,8 @@ Public Class SelectionManager
                 If wrapper IsNot Nothing Then
                     Dim left = Canvas.GetLeft(wrapper)
                     Dim top = Canvas.GetTop(wrapper)
-                    Return New Rect(left, top, wrapper.ActualWidth, wrapper.ActualHeight)
+                    Dim size = TransformMath.GetWrapperSize(wrapper)
+                    Return New Rect(left, top, size.Width, size.Height)
                 End If
             End If
         End If

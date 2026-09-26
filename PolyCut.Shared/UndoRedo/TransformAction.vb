@@ -77,9 +77,10 @@ Public Class TransformAction
 
         wrapper.RenderTransform = New RotateTransform(initialRotation + angle)
 
+        Dim size = TransformMath.GetWrapperSize(wrapper)
         Dim initialItemCenter = New Point(
-            initialPosition.X + wrapper.ActualWidth * wrapper.RenderTransformOrigin.X,
-            initialPosition.Y + wrapper.ActualHeight * wrapper.RenderTransformOrigin.Y)
+            initialPosition.X + size.Width * wrapper.RenderTransformOrigin.X,
+            initialPosition.Y + size.Height * wrapper.RenderTransformOrigin.Y)
 
         Dim offsetFromCenter = Point.Subtract(initialItemCenter, centerPoint)
         Dim angleRad = angle * Math.PI / 180
@@ -91,8 +92,8 @@ Public Class TransformAction
             offsetFromCenter.X * sinA + offsetFromCenter.Y * cosA)
 
         Dim newItemCenter = Point.Add(centerPoint, CType(rotatedOffset, Vector))
-        Canvas.SetLeft(wrapper, newItemCenter.X - wrapper.ActualWidth * wrapper.RenderTransformOrigin.X)
-        Canvas.SetTop(wrapper, newItemCenter.Y - wrapper.ActualHeight * wrapper.RenderTransformOrigin.Y)
+        Canvas.SetLeft(wrapper, newItemCenter.X - size.Width * wrapper.RenderTransformOrigin.X)
+        Canvas.SetTop(wrapper, newItemCenter.Y - size.Height * wrapper.RenderTransformOrigin.Y)
     End Sub
 
 
@@ -118,6 +119,7 @@ Public Class TransformAction
         Dim localDeltaY = deltaX * sinA + deltaY * cosA
 
         Dim transformOrigin = wrapper.RenderTransformOrigin
+        Dim startSize = TransformMath.GetWrapperSize(wrapper)
         Dim deltaVertical As Double = 0
         Dim deltaHorizontal As Double = 0
         Dim verticalAlignment As VerticalAlignment = VerticalAlignment.Center
@@ -126,36 +128,36 @@ Public Class TransformAction
         Select Case handleName
             Case "Top"
                 verticalAlignment = VerticalAlignment.Top
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
+                deltaVertical = Math.Min(localDeltaY, startSize.Height - wrapper.MinHeight)
             Case "Bottom"
                 verticalAlignment = VerticalAlignment.Bottom
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
+                deltaVertical = Math.Min(-localDeltaY, startSize.Height - wrapper.MinHeight)
             Case "Left"
                 horizontalAlignment = HorizontalAlignment.Left
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaHorizontal = Math.Min(localDeltaX, startSize.Width - wrapper.MinWidth)
             Case "Right"
                 horizontalAlignment = HorizontalAlignment.Right
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaHorizontal = Math.Min(-localDeltaX, startSize.Width - wrapper.MinWidth)
             Case "TopLeft"
                 verticalAlignment = VerticalAlignment.Top
                 horizontalAlignment = HorizontalAlignment.Left
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaVertical = Math.Min(localDeltaY, startSize.Height - wrapper.MinHeight)
+                deltaHorizontal = Math.Min(localDeltaX, startSize.Width - wrapper.MinWidth)
             Case "TopRight"
                 verticalAlignment = VerticalAlignment.Top
                 horizontalAlignment = HorizontalAlignment.Right
-                deltaVertical = Math.Min(localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaVertical = Math.Min(localDeltaY, startSize.Height - wrapper.MinHeight)
+                deltaHorizontal = Math.Min(-localDeltaX, startSize.Width - wrapper.MinWidth)
             Case "BottomLeft"
                 verticalAlignment = VerticalAlignment.Bottom
                 horizontalAlignment = HorizontalAlignment.Left
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaVertical = Math.Min(-localDeltaY, startSize.Height - wrapper.MinHeight)
+                deltaHorizontal = Math.Min(localDeltaX, startSize.Width - wrapper.MinWidth)
             Case "BottomRight"
                 verticalAlignment = VerticalAlignment.Bottom
                 horizontalAlignment = HorizontalAlignment.Right
-                deltaVertical = Math.Min(-localDeltaY, wrapper.ActualHeight - wrapper.MinHeight)
-                deltaHorizontal = Math.Min(-localDeltaX, wrapper.ActualWidth - wrapper.MinWidth)
+                deltaVertical = Math.Min(-localDeltaY, startSize.Height - wrapper.MinHeight)
+                deltaHorizontal = Math.Min(-localDeltaX, startSize.Width - wrapper.MinWidth)
         End Select
 
         ' For corners, maintain aspect ratio
@@ -163,17 +165,17 @@ Public Class TransformAction
                        (horizontalAlignment = HorizontalAlignment.Left OrElse horizontalAlignment = HorizontalAlignment.Right)
 
         If isCorner Then
-            Dim aspectRatio = wrapper.ActualWidth / wrapper.ActualHeight
+            Dim aspectRatio = startSize.Width / startSize.Height
             wrapper.Width = wrapper.Height * aspectRatio
-            deltaVertical = Math.Min(deltaVertical, wrapper.ActualHeight - wrapper.MinHeight)
-            deltaHorizontal = Math.Min(deltaVertical * aspectRatio, wrapper.ActualWidth - wrapper.MinWidth)
+            deltaVertical = Math.Min(deltaVertical, startSize.Height - wrapper.MinHeight)
+            deltaHorizontal = Math.Min(deltaVertical * aspectRatio, startSize.Width - wrapper.MinWidth)
         End If
 
         Dim currentTop = Canvas.GetTop(wrapper)
         Dim currentLeft = Canvas.GetLeft(wrapper)
 
-        Dim newWidth = wrapper.ActualWidth - deltaHorizontal
-        Dim newHeight = wrapper.ActualHeight - deltaVertical
+        Dim newWidth = startSize.Width - deltaHorizontal
+        Dim newHeight = startSize.Height - deltaVertical
 
 
         Dim moveTop = (verticalAlignment = VerticalAlignment.Top)
@@ -183,7 +185,7 @@ Public Class TransformAction
                                If(moveTop, 1.0, 0.0))
 
         Dim placement = TransformMath.ComputeResizePlacement(
-            currentLeft, currentTop, wrapper.ActualWidth, wrapper.ActualHeight,
+            currentLeft, currentTop, startSize.Width, startSize.Height,
             angle, transformOrigin, newWidth, newHeight, anchor)
 
         wrapper.Height -= deltaVertical
@@ -283,8 +285,9 @@ Public Class TransformAction
         ' Mirror position
         Dim currentLeft = Canvas.GetLeft(wrapper)
         Dim currentTop = Canvas.GetTop(wrapper)
-        Dim objCenterX = currentLeft + wrapper.ActualWidth * transformOrigin.X
-        Dim objCenterY = currentTop + wrapper.ActualHeight * transformOrigin.Y
+        Dim size = TransformMath.GetWrapperSize(wrapper)
+        Dim objCenterX = currentLeft + size.Width * transformOrigin.X
+        Dim objCenterY = currentTop + size.Height * transformOrigin.Y
 
         Dim offsetX = objCenterX - selectionCenter.X
         Dim offsetY = objCenterY - selectionCenter.Y
@@ -294,8 +297,8 @@ Public Class TransformAction
 
         Dim newCenterX = selectionCenter.X + offsetX
         Dim newCenterY = selectionCenter.Y + offsetY
-        Canvas.SetLeft(wrapper, newCenterX - wrapper.ActualWidth * transformOrigin.X)
-        Canvas.SetTop(wrapper, newCenterY - wrapper.ActualHeight * transformOrigin.Y)
+        Canvas.SetLeft(wrapper, newCenterX - size.Width * transformOrigin.X)
+        Canvas.SetTop(wrapper, newCenterY - size.Height * transformOrigin.Y)
 
         ' Mirror rotation
         Dim newRotation = CalculateMirroredRotation(currentRotation, mirrorX, mirrorY)

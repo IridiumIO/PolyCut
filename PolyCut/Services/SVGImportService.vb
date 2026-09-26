@@ -1,4 +1,4 @@
-﻿
+
 
 Imports System.IO
 Imports System.Runtime.CompilerServices
@@ -19,6 +19,8 @@ Public Class SVGImportService : Implements ISvgImportService
     Private Const FLATTENING_TOLERANCE As Double = 0.05
 
     Private Const SUPPORT_NESTED_GROUPS_FLAG As Boolean = True
+
+    Private Const DEGENERATE_EXTENT As Double = 0.0001
 
     Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromFile
         Dim doc = SvgDocument.Open(path)
@@ -498,6 +500,8 @@ Public Class SVGImportService : Implements ISvgImportService
         Try
             If svg Is Nothing OrElse Not TypeOf svg.Stroke Is SvgColourServer Then Return 0.0F
 
+            If svg.Stroke.ToString() = "none" Then Return 0.0F
+
             Dim mmPerUserUnit As Double = DocumentScale(svg.OwnerDocument)
 
             Dim current As SvgVisualElement = svg
@@ -565,6 +569,7 @@ Public Class SVGImportService : Implements ISvgImportService
                             Case SvgStrokeLineJoin.Miter : pen.LineJoin = PenLineJoin.Miter
                             Case SvgStrokeLineJoin.Round : pen.LineJoin = PenLineJoin.Round
                             Case SvgStrokeLineJoin.Bevel : pen.LineJoin = PenLineJoin.Bevel
+                            Case Else : pen.LineJoin = PenLineJoin.Bevel
                         End Select
                     Catch
                         ' keep default pen styling
@@ -629,6 +634,20 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim t As Matrix = Matrix.Identity
             t.Translate(-bounds.X, -bounds.Y)
             Dim normalized As PathGeometry = TransformPathGeometryPreserveOpenClosed(transformed, t)
+
+            Dim strokeWorld As Double = originalStrokeWidth * StrokeScale(matrix)
+            Dim padX As Double = If(originalStrokeWidth > 0 AndAlso bounds.Width < DEGENERATE_EXTENT, strokeWorld, 0)
+            Dim padY As Double = If(originalStrokeWidth > 0 AndAlso bounds.Height < DEGENERATE_EXTENT, strokeWorld, 0)
+            If padX > 0 OrElse padY > 0 Then
+                Dim track As New PathFigure With {
+                    .StartPoint = New Point(-padX / 2, -padY / 2),
+                    .IsClosed = False,
+                    .IsFilled = False
+                }
+                track.Segments.Add(New LineSegment(New Point(bounds.Width + padX / 2, bounds.Height + padY / 2), False))
+                normalized.Figures.Add(track)
+                bounds = New Rect(bounds.X - padX / 2, bounds.Y - padY / 2, bounds.Width + padX, bounds.Height + padY)
+            End If
 
             Dim wpfPath As New Shapes.Path With {
                 .Data = normalized,
@@ -975,8 +994,10 @@ Public Class SVGImportService : Implements ISvgImportService
                 shape.StrokeLineJoin = PenLineJoin.Round
             Case SvgStrokeLineJoin.Bevel
                 shape.StrokeLineJoin = PenLineJoin.Bevel
-            Case Else
+            Case SvgStrokeLineJoin.Miter
                 shape.StrokeLineJoin = PenLineJoin.Miter
+            Case Else
+                shape.StrokeLineJoin = PenLineJoin.Bevel
         End Select
     End Sub
 

@@ -84,16 +84,16 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         ' Localize wrappers into group-local space and insert into INNER canvas (not DrawableElement)
         grp.InnerCanvas.Children.Clear()
+        Dim localised As New List(Of ContentControl)
         For Each pair In wrappers
             Dim w = pair.wrapper
-            Dim wLeft = GetLeftSafe(w)
-            Dim wTop = GetTopSafe(w)
 
-            Canvas.SetLeft(w, wLeft - bounds.Left)
-            Canvas.SetTop(w, wTop - bounds.Top)
+            Canvas.SetLeft(w, GetLeftSafe(w) - bounds.Left)
+            Canvas.SetTop(w, GetTopSafe(w) - bounds.Top)
 
-            grp.InnerCanvas.Children.Add(w)
+            localised.Add(w)
         Next
+        AddPartitionedWrappers(grp.InnerCanvas, localised)
 
         ' IMPORTANT: set the "native" size of the inner canvas so the Viewbox has a base size to scale from
         grp.InnerCanvas.Width = bounds.Width
@@ -288,6 +288,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Canvas.SetTop(vbe, bounds.Top)
 
         ' Create child wrappers and place them in LOCAL space
+        Dim rebuilt As New List(Of ContentControl)
         For Each child In GroupChildren
             If child?.DrawableElement Is Nothing Then Continue For
 
@@ -304,10 +305,94 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Canvas.SetTop(wrapper, top - bounds.Top)
 
             wrapper.IsHitTestVisible = False
-            inner.Children.Add(wrapper)
+            rebuilt.Add(wrapper)
 
             ' Keep model links consistent
             child.ParentGroup = Me
+        Next
+        AddPartitionedWrappers(inner, rebuilt)
+    End Sub
+
+
+    'Arbitrary ranges but seem to work well enough. 
+    Private Const MinLeavesPerCell As Integer = 32
+    Private Const MaxCellsPerGroup As Integer = 256
+
+    Private NotInheritable Class WrapperCell
+        Public ReadOnly Bounds As Rect
+        Public ReadOnly Children As List(Of ContentControl)
+
+        Public Sub New(bounds As Rect, children As List(Of ContentControl))
+            Me.Bounds = bounds
+            Me.Children = children
+        End Sub
+    End Class
+
+    'Split at the median on the longer axis so every cell holds a similar number of leaves, which lets dense regions end up with small cells and sparse regions stay large.
+    Private Shared Sub BuildCells(items As List(Of ContentControl), into As List(Of WrapperCell), depth As Integer, perCell As Integer)
+        If items Is Nothing OrElse items.Count = 0 Then Return
+
+        Dim bounds As Rect = CellBounds(items)
+        If items.Count <= perCell OrElse depth >= 12 OrElse bounds.Width <= 0 OrElse bounds.Height <= 0 Then
+            into.Add(New WrapperCell(bounds, items))
+            Return
+        End If
+
+        Dim vertical As Boolean = bounds.Width >= bounds.Height
+        Dim ordered = items.OrderBy(Function(c) If(vertical, GetLeftSafe(c), GetTopSafe(c))).ToList()
+        Dim half As Integer = ordered.Count \ 2
+        If half <= 0 Then
+            into.Add(New WrapperCell(bounds, items))
+            Return
+        End If
+
+        BuildCells(ordered.Take(half).ToList(), into, depth + 1, perCell)
+        BuildCells(ordered.Skip(half).ToList(), into, depth + 1, perCell)
+    End Sub
+
+    Private Shared Function LeavesPerCell(total As Integer) As Integer
+        Return Math.Max(MinLeavesPerCell, CInt(Math.Ceiling(total / CDbl(MaxCellsPerGroup))))
+    End Function
+
+    Private Shared Function CellBounds(items As List(Of ContentControl)) As Rect
+        Dim minX = Double.MaxValue, minY = Double.MaxValue
+        Dim maxX = Double.MinValue, maxY = Double.MinValue
+
+        For Each w In items
+            Dim l = GetLeftSafe(w)
+            Dim t = GetTopSafe(w)
+            minX = Math.Min(minX, l)
+            minY = Math.Min(minY, t)
+            maxX = Math.Max(maxX, l + GetWidthSafe(w))
+            maxY = Math.Max(maxY, t + GetHeightSafe(w))
+        Next
+
+        If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
+        Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
+    End Function
+
+    'One canvas per cell, holding its leaves at cell-local offsets.
+    'Absolute positions are unchanged, so (hopefully) it still fully uses the ancestor for  resolution of hit/transform gcode export still work.
+    Private Shared Sub AddPartitionedWrappers(target As Canvas, wrappers As List(Of ContentControl))
+        Dim cells As New List(Of WrapperCell)
+        BuildCells(wrappers, cells, 0, LeavesPerCell(wrappers.Count))
+
+        For Each cell In cells
+            Dim host As New Canvas With {
+                .ClipToBounds = False,
+                .Width = Math.Max(1.0, cell.Bounds.Width),
+                .Height = Math.Max(1.0, cell.Bounds.Height)
+            }
+            Canvas.SetLeft(host, cell.Bounds.Left)
+            Canvas.SetTop(host, cell.Bounds.Top)
+
+            For Each w In cell.Children
+                Canvas.SetLeft(w, GetLeftSafe(w) - cell.Bounds.Left)
+                Canvas.SetTop(w, GetTopSafe(w) - cell.Bounds.Top)
+                host.Children.Add(w)
+            Next
+
+            target.Children.Add(host)
         Next
     End Sub
 

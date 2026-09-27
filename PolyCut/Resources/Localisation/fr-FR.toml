@@ -23,6 +23,7 @@
 "Cancel Preview" = "Annuler l’aperçu"
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
+"Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "Cliquer pour afficher les notes de version et télécharger"
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas" # LOC:TODO
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas" # LOC:TODO
@@ -50,7 +51,7 @@
 "Error Saving File" = "Erreur lors de l’enregistrement du fichier"
 "Error uploading to Moonraker" = "Erreur lors de l’envoi vers Moonraker"
 "Experimental Renderer" = "Experimental Renderer" # LOC:TODO
-"Extract one colour" = "Extraire une couleur"
+"Extract One Colour" = "Extraire une couleur" # LOC:CASE-CHANGED | LOC:TODO
 "Failed to load language: {0}" = "Échec du chargement de la langue : {0}"
 "Failed to load project" = "Échec du chargement du projet"
 "Failed to save project" = "Échec de l’enregistrement du projet"
@@ -258,7 +259,7 @@
 "How far apart drawn lines should be when shading the lightest parts of the image." = "Distance entre les lignes tracées pour ombrer les parties les plus claires de l’image."
 
 [context."Merge Angle Tooltip"]
-"Angle (in degrees) between two lines, below which we merge them into a single straight line. " = "Angle (in degrees) between two lines, below which we merge them into a single straight line. " # LOC:TODO
+"Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." # LOC:TODO
 "Default = 0.1" = "Default = 0.1" # LOC:TODO
 
 [context."Monitor Tab"]

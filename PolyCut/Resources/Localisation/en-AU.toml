@@ -23,6 +23,7 @@
 "Cancel Preview" = "Cancel Preview"
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Cannot perform boolean operations on open paths (Lines). All shapes must be closed."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Cannot perform boolean operations on open paths. All shapes must be closed."
+"Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments."
 "Click to view release notes and download" = "Click to view release notes and download"
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas"
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas"
@@ -50,7 +51,7 @@
 "Error Saving File" = "Error Saving File"
 "Error uploading to Moonraker" = "Error uploading to Moonraker"
 "Experimental Renderer" = "Experimental Renderer"
-"Extract one colour" = "Extract one colour"
+"Extract One Colour" = "Extract One Colour"
 "Failed to load language: {0}" = "Failed to load language: {0}"
 "Failed to load project" = "Failed to load project"
 "Failed to save project" = "Failed to save project"
@@ -258,7 +259,7 @@
 "How far apart drawn lines should be when shading the lightest parts of the image." = "How far apart drawn lines should be when shading the lightest parts of the image."
 
 [context."Merge Angle Tooltip"]
-"Angle (in degrees) between two lines, below which we merge them into a single straight line. " = "Angle (in degrees) between two lines, below which we merge them into a single straight line. "
+"Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing."
 "Default = 0.1" = "Default = 0.1"
 
 [context."Monitor Tab"]

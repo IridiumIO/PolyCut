@@ -65,11 +65,12 @@
                     </ComboBox.ItemTemplate>
 
                 </ComboBox>
-                <ui:Button Margin="10 0 0 0" Width="37" Height="37" Padding="0"
+                <ui:Button Width="37" Height="37"
+                           Margin="10 0 0 0" Padding="0"
                            Background="Transparent" BorderThickness="0"
                            Command="{Binding CheckForLanguageUpdatesCommand}">
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="ArrowCircleDown20" FontSize="17" />
+                        <ui:SymbolIcon FontSize="17" Symbol="ArrowCircleDown20" />
                     </StackPanel>
                     <ui:Button.ToolTip>
                         <ToolTip loc:L.Value="Reload Languages. Checks online for updated language definitions" />
@@ -88,12 +89,10 @@
             </StackPanel>
 
             <StackPanel Margin="10" Orientation="Horizontal" ToolTip="Uses the experimental rasterised rendering engine. Can significantly improve canvas performance for complex documents at the expense of visual fidelity while zooming/panning.">
-                <Label MinWidth="170" loc:L.Value="Experimental Renderer" VerticalAlignment="Center"/>
+                <Label MinWidth="170" VerticalAlignment="Center" loc:L.Value="Experimental Renderer" />
 
-                <CheckBox Margin="10 0 0 0"
-                          VerticalAlignment="Center"
-                          IsChecked="{Binding MainVM.UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
-              
+                <ui:ToggleSwitch Margin="10 0 0 0" IsChecked="{Binding MainVM.UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
+
             </StackPanel>
 
 
@@ -104,7 +103,7 @@
                   loc:L.Context="Grid Settings" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Visible">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto" MinWidth="400" MaxWidth="700" />
-                    <ColumnDefinition  />
+                    <ColumnDefinition />
 
                 </Grid.ColumnDefinitions>
                 <StackPanel HorizontalAlignment="Left">
@@ -161,7 +160,7 @@
 
 
                 <Viewbox Grid.Column="1"
-                         MinWidth="12"  MaxHeight="280"
+                         MinWidth="12" MaxHeight="280"
                          Margin="20 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Top"
                          SnapsToDevicePixels="True" Stretch="Uniform" StretchDirection="Both" UseLayoutRounding="True">
                     <Grid>

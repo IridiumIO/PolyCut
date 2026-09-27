@@ -23,6 +23,7 @@
 "Cancel Preview" = "プレビューをキャンセル"
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "開いたパス（線）にはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "開いたパスにはブール演算を実行できません。すべての形状を閉じる必要があります。"
+"Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "クリックしてリリースノートを表示し、ダウンロード"
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas" # LOC:TODO
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas" # LOC:TODO
@@ -50,7 +51,7 @@
 "Error Saving File" = "ファイル保存エラー"
 "Error uploading to Moonraker" = "Moonraker へのアップロード中にエラーが発生しました"
 "Experimental Renderer" = "Experimental Renderer" # LOC:TODO
-"Extract one colour" = "1 色を抽出"
+"Extract One Colour" = "1 色を抽出" # LOC:CASE-CHANGED | LOC:TODO
 "Failed to load language: {0}" = "言語の読み込みに失敗しました: {0}"
 "Failed to load project" = "プロジェクトの読み込みに失敗しました"
 "Failed to save project" = "プロジェクトの保存に失敗しました"
@@ -258,7 +259,7 @@
 "How far apart drawn lines should be when shading the lightest parts of the image." = "画像の最も明るい部分をシェーディングするときの描画線の間隔。"
 
 [context."Merge Angle Tooltip"]
-"Angle (in degrees) between two lines, below which we merge them into a single straight line. " = "Angle (in degrees) between two lines, below which we merge them into a single straight line. " # LOC:TODO
+"Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." # LOC:TODO
 "Default = 0.1" = "Default = 0.1" # LOC:TODO
 
 [context."Monitor Tab"]

@@ -224,31 +224,30 @@
 
 
 
+                            <local:LabeledControl Height="36" Margin="0 12 0 0" LabelText="{loc:T 'Extract One Colour'}">
+                                <local:LabeledControl.ToolTip>
+                                    <TextBlock loc:L.Context="Extract One Colour Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                        <Run loc:L.Value="Processes only objects with the specified colour, and ignores all others." />
+                                    </TextBlock>
+                                </local:LabeledControl.ToolTip>
+                                <local:LabeledControl.ValueContent>
 
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <CheckBox x:Name="extractSingleColor"
-                                          Grid.Row="2"
-                                          Height="35"
-                                          Margin="-10 0 0 0"
-                                          loc:L.Value="Extract one colour"
-                                          IsChecked="{Binding MainVM.Configuration.ExtractOneColour, Mode=TwoWay}">
-                                    <CheckBox.ToolTip>
-                                        <TextBlock loc:L.Context="Extract One Colour Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="Processes only objects with the specified colour, and ignores all others." />
-                                        </TextBlock>
-                                    </CheckBox.ToolTip>
-                                </CheckBox>
-                                <local:ColorPickerControl Grid.Column="1"
-                                                          Margin="0 0 0 0"
-                                                          ColorSelected="ColorPickerControl_ColorSelected"
-                                                          CurrentColor="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
-                                                          LabelText=""
-                                                          Visibility="{Binding ElementName=extractSingleColor, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            </Grid>
+                                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                        <local:ColorPickerControl Grid.Column="1"
+                                                                  Margin="0 0 22 0"
+                                                                  ColorSelected="ColorPickerControl_ColorSelected"
+                                                                  CurrentColor="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                                                  LabelText=""
+                                                                  Visibility="{Binding MainVM.Configuration.ExtractOneColour, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.ExtractOneColour}" />
+                                    </StackPanel>
+
+                                </local:LabeledControl.ValueContent>
+                            </local:LabeledControl>
+
+
+
+
 
 
                         </StackPanel>
@@ -323,50 +322,55 @@
                         <StackPanel Margin="15 0 15 0" FlowDirection="LeftToRight">
 
 
-                            <CheckBox x:Name="optimiseDrawingPaths"
-                                      Margin="0 5 0 0"
-                                      loc:L.Value="Optimise Drawing Paths"
-                                      IsChecked="{Binding MainVM.Configuration.OptimisedToolPath, Mode=TwoWay}">
-                                <CheckBox.ToolTip>
+                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Optimise Drawing Paths'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.OptimisedToolPath, Mode=TwoWay}" />
+                                </local:LabeledControl.ValueContent>
+                                <local:LabeledControl.ToolTip>
                                     <TextBlock loc:L.Context="Optimise Drawing Paths Tooltip" TextAlignment="Left" TextWrapping="Wrap">
                                         <Run loc:L.Value="Optimises the order in which lines are drawn to minimise travel time." />
                                         <LineBreak />
                                         <LineBreak />
                                         <Run loc:L.Value="Particularly useful for ordering lines when filling shapes." />
                                     </TextBlock>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
+                                </local:LabeledControl.ToolTip>
+                            </local:LabeledControl>
 
 
-                            <CheckBox Margin="0 5 0 0"
-                                      loc:L.Value="Allow Travel in Outlines"
-                                      IsChecked="{Binding MainVM.Configuration.DrawingConfig.AllowDrawingOverOutlines, Mode=TwoWay}"
-                                      IsEnabled="{Binding MainVM.Configuration.OptimisedToolPath}"
-                                      ToolTipService.ShowOnDisabled="True">
-                                <CheckBox.ToolTip>
+
+                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Allow Travel in Outlines'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right"
+                                                     IsChecked="{Binding MainVM.Configuration.DrawingConfig.AllowDrawingOverOutlines, Mode=TwoWay}"
+                                                     IsEnabled="{Binding MainVM.Configuration.OptimisedToolPath}"
+                                                     ToolTipService.ShowOnDisabled="True" />
+                                </local:LabeledControl.ValueContent>
+                                <local:LabeledControl.ToolTip>
                                     <TextBlock loc:L.Context="Allow Travel in Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
                                         <Run loc:L.Value="Allows the pen to travel through shape outlines without lifting the pen up to start the next line." />
                                         <LineBreak />
                                         <LineBreak />
                                         <Run loc:L.Value="Requires &quot;Optimise Drawing Paths&quot; to be enabled. Can massively improve overall speed" />
                                     </TextBlock>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
+                                </local:LabeledControl.ToolTip>
+                            </local:LabeledControl>
 
-
-                            <CheckBox x:Name="keepOutlines"
-                                      Margin="0 5 0 0"
-                                      loc:L.Value="Keep Outlines"
-                                      IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}">
-                                <CheckBox.ToolTip>
+                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Keep Outlines'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}" />
+                                </local:LabeledControl.ValueContent>
+                                <local:LabeledControl.ToolTip>
                                     <TextBlock loc:L.Context="Keep Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
                                         <Run loc:L.Value="Whether shape outlines should be drawn, or ignored." />
                                         <LineBreak />
                                         <LineBreak />
                                         <Run loc:L.Value="Disable this if you want to shade in an area without the area being outlined." />
                                     </TextBlock>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
+                                </local:LabeledControl.ToolTip>
+
+                            </local:LabeledControl>
+
+
                             <Separator Margin="0 5 0 0" />
 
 
@@ -458,19 +462,23 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
-                            <CheckBox Margin="0 5 0 0"
-                                      loc:L.Value="Draw Outlines Before Fill"
-                                      IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}"
-                                      ToolTipService.ShowOnDisabled="True">
-                                <CheckBox.ToolTip>
+
+                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Draw Outlines Before Fill'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}" />
+                                </local:LabeledControl.ValueContent>
+                                <local:LabeledControl.ToolTip>
                                     <TextBlock loc:L.Context="Outlines Before Fill Tooltip" TextAlignment="Left" TextWrapping="Wrap">
                                         <Run loc:L.Value="Draws the outlines of shapes before filling them in." />
                                         <LineBreak />
                                         <LineBreak />
                                         <Run loc:L.Value="Usually you want to draw outlines after filling." />
                                     </TextBlock>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
+                                </local:LabeledControl.ToolTip>
+
+                            </local:LabeledControl>
+
+
 
                         </StackPanel>
                     </ui:CardExpander>

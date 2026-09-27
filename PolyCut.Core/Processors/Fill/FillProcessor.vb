@@ -47,7 +47,7 @@ Public Class FillProcessor : Implements IProcessor
 
         ' Respect per-element SVG fill presence when deciding to generate fills.
         If Not ShouldGenerateFill(fillTag) Then Return lines
-        If Not IsShapeClosed(lines) OrElse cfg.DrawingConfig.FillType = FillType.None Then Return lines
+        If cfg.DrawingConfig.FillType = FillType.None OrElse Not element.IsFilled OrElse Not IsShapeClosed(lines) Then Return lines
 
         Dim spacingNullable As Double? = ComputeSpacingFromTag(fillTag, cfg)
         If Not spacingNullable.HasValue Then Return lines

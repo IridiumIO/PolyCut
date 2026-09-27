@@ -29,7 +29,7 @@ Public Class GeometryExtractor
             Dim strokeColor = If(drawable.Stroke IsNot Nothing, TryCast(drawable.Stroke, SolidColorBrush)?.Color, Nothing)
             'only want to extract this if its stroke or fill matches the extraction color
             If Not String.Equals(fillColor, cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase) AndAlso
-               Not (strokeColor.HasValue AndAlso String.Equals($"#{strokeColor.Value.R:X2}{strokeColor.Value.G:X2}{strokeColor.Value.B:X2}", cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase)) Then
+               Not (strokeColor.HasValue AndAlso String.Equals($"#FF{strokeColor.Value.R:X2}{strokeColor.Value.G:X2}{strokeColor.Value.B:X2}", cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase)) Then
                 Return New List(Of IPathBasedElement)
             End If
 

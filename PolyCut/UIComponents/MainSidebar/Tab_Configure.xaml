@@ -196,6 +196,35 @@
                                 </local:LabeledNumberBoxControl.ToolTip>
                             </local:LabeledNumberBoxControl>
 
+                            <local:LabeledControl Margin="0 12 0 0" LabelText="{loc:T 'Simplify Toolpaths'}" ToolTip="{loc:T 'Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments.'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.SimplifyToolPaths}" />
+                                </local:LabeledControl.ValueContent>
+                            </local:LabeledControl>
+
+                            <Grid ColumnDefinitions="25, *" Visibility="{Binding MainVM.Configuration.SimplifyToolPaths, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                                <TextBlock Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                           Text="∟" />
+
+                                <local:LabeledNumberBoxControl Grid.Column="1"
+                                                               Margin="0 0 0 0"
+                                                               LabelText="{loc:T Merge Angle}"
+                                                               Text="{Binding MainVM.Configuration.SimplifyMergeAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                               TextBoxWidth="120" UnitText="°">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock loc:L.Context="Merge Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." />
+                                            <LineBreak /><LineBreak />
+                                            <Run loc:L.Value="Default = 0.1" />
+                                        </TextBlock>
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
+                            </Grid>
+
+
+
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto" />

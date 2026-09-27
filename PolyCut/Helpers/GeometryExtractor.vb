@@ -63,24 +63,28 @@ Public Class GeometryExtractor
         ' 5. Flatten again after transform
         transformed = transformed.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
 
+        Dim wasClipped As Boolean = False
+
         ' now build lines from transformed
         Dim isFilled = IsFillEnabled(drawable)
 
         Dim figures = PolyCut.Core.BuildLinesFromGeometry(transformed, cfg.Tolerance)
 
-        'trim trash
-        If Keyboard.IsKeyDown(Key.LeftCtrl) Then
-            figures = CleanupFigures(figures, cfg.Tolerance)
+        If cfg.ClipToBounds Then
+            figures = ClipFiguresToWorkArea(figures, cfg.WorkAreaWidth, cfg.WorkAreaHeight)
+            wasClipped = True
         End If
+
+        'trim trash
+
+        If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle)
+
 
         figures = NormalizeFiguresForCut(figures, cfg.Tolerance, isFilled)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)
 
-        Dim b = figures.ComputeBounds()
-
-        Dim skipBoundsCheck = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
-
-        If Not skipBoundsCheck AndAlso Not IsFullyOnCanvas(b, cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
+        ' Nothing to check once clipped: the clip rectangle already guarantees containment
+        If Not wasClipped AndAlso Not cfg.SkipBoundsCheck AndAlso Not IsFullyOnCanvas(figures.ComputeBounds(), cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
             Return New List(Of IPathBasedElement)
         End If
 
@@ -93,6 +97,85 @@ Public Class GeometryExtractor
         pathElement.Config = cfg
 
         Return New List(Of IPathBasedElement) From {pathElement}
+    End Function
+
+    Private Shared Function ClipFiguresToWorkArea(figures As List(Of List(Of GeoLine)), w As Double, h As Double) As List(Of List(Of GeoLine))
+        Dim output As New List(Of List(Of GeoLine))
+        If figures Is Nothing OrElse w <= 0 OrElse h <= 0 Then Return output
+
+        Dim edges = {
+            (kind:=0, value:=0.0, min:=True),
+            (kind:=0, value:=w, min:=False),
+            (kind:=1, value:=0.0, min:=True),
+            (kind:=1, value:=h, min:=False)
+        }
+
+        For Each fig In figures
+            If fig Is Nothing OrElse fig.Count = 0 Then Continue For
+
+            Dim pts As New List(Of Point)(fig.Count + 1)
+
+            fig.ForEach(Sub(ln) pts.Add(New Point(ln.X1, ln.Y1)))
+
+            pts.Add(New Point(fig(fig.Count - 1).X2, fig(fig.Count - 1).Y2))
+
+            Dim closed As Boolean = pts(0) = pts(pts.Count - 1)
+            For Each e In edges
+                pts = ClipHalfPlane(pts, e.kind, e.value, e.min)
+                If pts.Count = 0 Then Exit For
+            Next
+
+            If pts.Count >= 2 AndAlso closed AndAlso pts(0) <> pts(pts.Count - 1) Then pts.Add(pts(0))
+            If pts.Count < 2 Then Continue For
+
+            Dim clipped As New List(Of GeoLine)(pts.Count - 1)
+            For i = 0 To pts.Count - 2
+                clipped.Add(New GeoLine(CSng(pts(i).X), CSng(pts(i).Y), CSng(pts(i + 1).X), CSng(pts(i + 1).Y)))
+            Next
+
+            If clipped.Count > 0 Then output.Add(clipped)
+        Next
+
+        Return output
+    End Function
+
+    Private Shared Function InsideHalfPlane(p As Point, kind As Integer, value As Double, min As Boolean) As Boolean
+        Dim v As Double = If(kind = 0, p.X, p.Y)
+        Return If(min, v >= value, v <= value)
+    End Function
+
+    Private Shared Function CrossBoundary(a As Point, b As Point, kind As Integer, value As Double) As Point
+        If kind = 0 Then
+            Dim t As Double = (value - a.X) / (b.X - a.X)
+            Return New Point(value, a.Y + t * (b.Y - a.Y))
+        Else
+            Dim t As Double = (value - a.Y) / (b.Y - a.Y)
+            Return New Point(a.X + t * (b.X - a.X), value)
+        End If
+    End Function
+
+    Private Shared Function ClipHalfPlane(pts As List(Of Point), kind As Integer, value As Double, min As Boolean) As List(Of Point)
+        Dim result As New List(Of Point)
+        If pts.Count = 0 Then Return result
+
+        Dim prev As Point = pts(pts.Count - 1)
+        Dim prevIn As Boolean = InsideHalfPlane(prev, kind, value, min)
+
+        For Each cur In pts
+            Dim curIn As Boolean = InsideHalfPlane(cur, kind, value, min)
+
+            If curIn Then
+                If Not prevIn Then result.Add(CrossBoundary(prev, cur, kind, value))
+                result.Add(cur)
+            ElseIf prevIn Then
+                result.Add(CrossBoundary(prev, cur, kind, value))
+            End If
+
+            prev = cur
+            prevIn = curIn
+        Next
+
+        Return result
     End Function
 
     Private Shared Function GetGeometryFromElement(element As FrameworkElement) As Geometry
@@ -264,19 +347,13 @@ Public Class GeometryExtractor
     End Function
 
 
-    Private Shared Function IsOnCanvas(bounds As Rect, canvasW As Double, canvasH As Double) As Boolean
-        If bounds.IsEmpty Then Return False
-        Dim canvasRect As New Rect(0, 0, canvasW, canvasH)
-        Return canvasRect.IntersectsWith(bounds) ' policy 1: any part visible
-    End Function
-
     Private Shared Function IsFullyOnCanvas(bounds As Rect, canvasW As Double, canvasH As Double) As Boolean
         If bounds.IsEmpty Then Return False
         Dim canvasRect As New Rect(0, 0, canvasW, canvasH)
         Return canvasRect.Contains(bounds) ' policy 2: fully inside
     End Function
 
-    Private Shared Function CleanupFigures(figures As List(Of List(Of GeoLine)), tolerance As Double) As List(Of List(Of GeoLine))
+    Private Shared Function CleanupFigures(figures As List(Of List(Of GeoLine)), tolerance As Double, mergeAngle As Double) As List(Of List(Of GeoLine))
         Dim output As New List(Of List(Of GeoLine))
         If figures Is Nothing Then Return output
 
@@ -285,9 +362,10 @@ Public Class GeometryExtractor
         Dim eps2 As Double = eps * eps
 
         ' Angle tolerance for collinearity merging (in radians).
-        Dim sinTol As Double = 0.0001
+        Dim rad = Math.PI * mergeAngle / 180.0
 
-        If Keyboard.IsKeyDown(Key.LeftShift) Then sinTol *= 100
+        Dim sinTol As Double = rad
+
 
         For Each fig In figures
             If fig Is Nothing OrElse fig.Count = 0 Then Continue For

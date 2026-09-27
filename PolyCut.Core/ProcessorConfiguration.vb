@@ -51,7 +51,10 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
 
     <ObservableProperty> Private _ExtractOneColour As Boolean = False
     <ObservableProperty> Private _ExtractionColor As String = ""
-
+    <ObservableProperty> Private _SkipBoundsCheck As Boolean = False
+    <ObservableProperty> Private _ClipToBounds As Boolean = False
+    <ObservableProperty> Private _SimplifyToolPaths As Boolean = True
+    <ObservableProperty> Private _SimplifyMergeAngle As Double = 0.1
 
     Public ReadOnly Property Area As String
         Get

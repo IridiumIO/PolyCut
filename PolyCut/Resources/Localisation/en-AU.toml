@@ -24,6 +24,8 @@
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Cannot perform boolean operations on open paths (Lines). All shapes must be closed."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Cannot perform boolean operations on open paths. All shapes must be closed."
 "Click to view release notes and download" = "Click to view release notes and download"
+"Clip Geometry to Canvas" = "Clip Geometry to Canvas"
+"Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas"
 "Close" = "Close"
 "Combine" = "Combine"
 "Combine Shapes" = "Combine Shapes"
@@ -63,6 +65,8 @@
 "Global Settings" = "Global Settings"
 "Grid Settings" = "Grid Settings"
 "Gridline Colour" = "Gridline Colour"
+"Ignore Canvas Bounds" = "Ignore Canvas Bounds"
+"Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!"
 "Import as SVG" = "Import as SVG"
 "Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." = "Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke."
 "Inset (Bottom)" = "Inset (Bottom)"
@@ -75,6 +79,7 @@
 "Load Project" = "Load Project"
 "Loading a project will clear the current workspace. Continue?" = "Loading a project will clear the current workspace. Continue?"
 "Maximum Colours (0 = Unlimited)" = "Maximum Colours (0 = Unlimited)"
+"Merge Angle" = "Merge Angle"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers."
 "New Project" = "New Project"
 "No" = "No"
@@ -120,6 +125,7 @@
 "Show Grid" = "Show Grid"
 "Show Printer Working Area" = "Show Printer Working Area"
 "Show Travel Moves" = "Show Travel Moves"
+"Simplify Toolpaths" = "Simplify Toolpaths"
 "Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes." = "Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes."
 "Spacing" = "Spacing"
 "Speckle Filtering" = "Speckle Filtering"
@@ -250,6 +256,10 @@
 
 [context."Lightest Shading Spacing Tooltip"]
 "How far apart drawn lines should be when shading the lightest parts of the image." = "How far apart drawn lines should be when shading the lightest parts of the image."
+
+[context."Merge Angle Tooltip"]
+"Angle (in degrees) between two lines, below which we merge them into a single straight line. " = "Angle (in degrees) between two lines, below which we merge them into a single straight line. "
+"Default = 0.1" = "Default = 0.1"
 
 [context."Monitor Tab"]
 "Monitor" = "Monitor"

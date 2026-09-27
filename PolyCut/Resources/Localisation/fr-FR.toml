@@ -24,6 +24,8 @@
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
 "Click to view release notes and download" = "Cliquer pour afficher les notes de version et télécharger"
+"Clip Geometry to Canvas" = "Clip Geometry to Canvas" # LOC:TODO
+"Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas" # LOC:TODO
 "Close" = "Fermer"
 "Combine" = "Combiner"
 "Combine Shapes" = "Combiner les formes"
@@ -63,6 +65,8 @@
 "Global Settings" = "Paramètres généraux"
 "Grid Settings" = "Paramètres de la grille"
 "Gridline Colour" = "Couleur des lignes de la grille"
+"Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
+"Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "Importer comme SVG"
 "Increasing the thickness will not affect the actual Gcode stroke width. However, setting it to zero will disable the stroke." = "Augmenter l’épaisseur n’affecte pas la largeur réelle du trait GCode. En revanche, une valeur nulle désactive le trait."
 "Inset (Bottom)" = "Marge intérieure (bas)"
@@ -75,6 +79,7 @@
 "Load Project" = "Charger un projet"
 "Loading a project will clear the current workspace. Continue?" = "Le chargement d’un projet effacera l’espace de travail actuel. Continuer ?"
 "Maximum Colours (0 = Unlimited)" = "Nombre maximal de couleurs (0 = illimité)"
+"Merge Angle" = "Merge Angle" # LOC:TODO
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Différence minimale de couleur requise entre les couches de dégradé adjacentes, de 0 à 255. Des valeurs élevées fusionnent les teintes similaires en bandes de couleur moins nombreuses et plus uniformes ; des valeurs faibles préservent des dégradés plus lisses avec davantage de couches distinctes."
 "New Project" = "Nouveau projet"
 "No" = "Non"
@@ -120,6 +125,7 @@
 "Show Grid" = "Afficher la grille"
 "Show Printer Working Area" = "Afficher la zone de travail de l’imprimante"
 "Show Travel Moves" = "Afficher les déplacements"
+"Simplify Toolpaths" = "Simplify Toolpaths" # LOC:TODO
 "Size in pixels of the local neighbourhood sampled when computing the adaptive threshold (0 = auto). Larger windows average over a bigger area for smoother results; smaller windows react more precisely to local lighting changes." = "Taille en pixels du voisinage local échantillonné lors du calcul du seuil adaptatif (0 = auto). Les grandes fenêtres font la moyenne sur une zone plus large pour des résultats plus lisses ; les petites fenêtres réagissent plus précisément aux variations locales d’éclairage."
 "Spacing" = "Espacement"
 "Speckle Filtering" = "Filtrage des petites taches"
@@ -250,6 +256,10 @@
 
 [context."Lightest Shading Spacing Tooltip"]
 "How far apart drawn lines should be when shading the lightest parts of the image." = "Distance entre les lignes tracées pour ombrer les parties les plus claires de l’image."
+
+[context."Merge Angle Tooltip"]
+"Angle (in degrees) between two lines, below which we merge them into a single straight line. " = "Angle (in degrees) between two lines, below which we merge them into a single straight line. " # LOC:TODO
+"Default = 0.1" = "Default = 0.1" # LOC:TODO
 
 [context."Monitor Tab"]
 "Monitor" = "Moniteur"

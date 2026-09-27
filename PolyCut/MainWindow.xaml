@@ -277,7 +277,23 @@
             <ui:NavigationView.FooterMenuItems>
 
                 <ui:NavigationViewItem x:Name="GenerateGCodeButton">
-                    <ui:Button loc:L.Value="Generate GCode" Command="{Binding GenerateGCodeCommand}" />
+                    <ui:SplitButton loc:L.Value="Generate GCode" Command="{Binding GenerateGCodeCommand}">
+                        <ui:SplitButton.Flyout>
+
+                            <ContextMenu>
+                                <MenuItem loc:L.Value="Clip Geometry to Canvas" IsCheckable="True"
+                                          IsChecked="{Binding Configuration.ClipToBounds}"
+                                          StaysOpenOnClick="True"
+                                          ToolTip="{loc:T 'Clips the geometry to the bounds of the canvas'}" />
+                                <MenuItem loc:L.Value="Ignore Canvas Bounds" IsCheckable="True"
+                                          IsChecked="{Binding Configuration.SkipBoundsCheck}"
+                                          StaysOpenOnClick="True"
+                                          ToolTip="{loc:T 'Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!'}" />
+
+                            </ContextMenu>
+
+                        </ui:SplitButton.Flyout>
+                    </ui:SplitButton>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="-5 0 15 1"
                                        NavigationCacheMode="Required"

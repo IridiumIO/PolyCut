@@ -6,6 +6,8 @@ Imports System.Windows
 Imports Microsoft.Extensions.DependencyInjection
 Imports Microsoft.Extensions.Hosting
 
+Imports LazyTranslate
+
 Public Class ApplicationHostService
     Implements IHostedService
 

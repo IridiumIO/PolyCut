@@ -166,26 +166,26 @@
                                 <Label Padding="1 2 0 0" VerticalAlignment="Center" Content="X" />
                                 <ui:TextBox Grid.Column="1"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            Text="{Binding MainVM.Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" />
+                                            Text="{Binding MainVM.Printer.WorkingOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}" />
                                 <Label Grid.Row="0" Grid.Column="3"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
                                        Content="Y" />
                                 <ui:TextBox Grid.Row="0" Grid.Column="4"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            Text="{Binding MainVM.Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" />
+                                            Text="{Binding MainVM.Printer.WorkingOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}" />
 
                                 <Label Grid.Row="2"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
                                        Content="W" />
                                 <ui:TextBox Grid.Row="2" Grid.Column="1"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            Text="{Binding MainVM.Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" />
+                                            Text="{Binding MainVM.Printer.WorkingWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}" />
                                 <Label Grid.Row="2" Grid.Column="3"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
                                        Content="H" />
                                 <ui:TextBox Grid.Row="2" Grid.Column="4"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            Text="{Binding MainVM.Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" />
+                                            Text="{Binding MainVM.Printer.WorkingHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}" />
 
                                 <Label Grid.Column="1"
                                        Padding="1 2 10 0" HorizontalAlignment="Right" VerticalAlignment="Center"

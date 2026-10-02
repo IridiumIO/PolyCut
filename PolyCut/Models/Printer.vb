@@ -18,16 +18,6 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
     <NotifyPropertyChangedFor(NameOf(BedRect))>
     <ObservableProperty> Private _BedHeight As Decimal = 235
 
-    Private Sub OnBedWidthChanged(oldValue As Decimal, newValue As Decimal)
-        WorkingOffsetX = If(WorkingOffsetX < newValue, WorkingOffsetX, 0)
-        WorkingWidth = If(WorkingWidth < newValue - WorkingOffsetX, WorkingWidth, newValue - WorkingOffsetX)
-    End Sub
-
-    Private Sub OnBedHeightChanged(oldValue As Decimal, newValue As Decimal)
-        WorkingOffsetY = If(WorkingOffsetY < newValue, WorkingOffsetY, 0)
-        WorkingHeight = If(WorkingHeight < newValue - WorkingOffsetY, WorkingHeight, newValue - WorkingOffsetY)
-    End Sub
-
     Private _WorkingOffsetX As Decimal = 0
     Private _WorkingOffsetY As Decimal = 0
     Private _WorkingWidth As Decimal = 235
@@ -38,9 +28,8 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             Return _WorkingOffsetX
         End Get
         Set(value As Decimal)
-            SetProperty(_WorkingOffsetX, If(value <= BedWidth, value, _WorkingOffsetX), NameOf(WorkingOffsetX))
+            SetProperty(_WorkingOffsetX, value, NameOf(WorkingOffsetX))
             OnPropertyChanged(NameOf(WorkingRect))
-            WorkingWidth = If(WorkingWidth <= BedWidth - WorkingOffsetX, WorkingWidth, BedWidth - WorkingOffsetX)
         End Set
     End Property
 
@@ -49,9 +38,8 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             Return _WorkingOffsetY
         End Get
         Set(value As Decimal)
-            SetProperty(_WorkingOffsetY, If(value <= BedHeight, value, _WorkingOffsetY), NameOf(WorkingOffsetY))
+            SetProperty(_WorkingOffsetY, value, NameOf(WorkingOffsetY))
             OnPropertyChanged(NameOf(WorkingRect))
-            WorkingHeight = If(WorkingHeight <= BedHeight - WorkingOffsetY, WorkingHeight, BedWidth - WorkingOffsetY)
         End Set
     End Property
 
@@ -60,7 +48,7 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             Return _WorkingWidth
         End Get
         Set(value As Decimal)
-            SetProperty(_WorkingWidth, If(value <= BedWidth - WorkingOffsetX, value, BedWidth - WorkingOffsetX), NameOf(WorkingWidth))
+            SetProperty(_WorkingWidth, value, NameOf(WorkingWidth))
             OnPropertyChanged(NameOf(WorkingRect))
         End Set
     End Property
@@ -70,10 +58,17 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             Return _WorkingHeight
         End Get
         Set(value As Decimal)
-            SetProperty(_WorkingHeight, If(value <= BedHeight - WorkingOffsetY, value, BedHeight - WorkingOffsetY), NameOf(WorkingHeight))
+            SetProperty(_WorkingHeight, value, NameOf(WorkingHeight))
             OnPropertyChanged(NameOf(WorkingRect))
         End Set
     End Property
+
+    Public Sub ClampWorkingArea()
+        WorkingOffsetX = Math.Min(Math.Max(WorkingOffsetX, 0), BedWidth)
+        WorkingOffsetY = Math.Min(Math.Max(WorkingOffsetY, 0), BedHeight)
+        WorkingWidth = Math.Min(Math.Max(WorkingWidth, 0), BedWidth - WorkingOffsetX)
+        WorkingHeight = Math.Min(Math.Max(WorkingHeight, 0), BedHeight - WorkingOffsetY)
+    End Sub
 
     Public ReadOnly Property BedRect As Rect
         Get

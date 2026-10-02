@@ -91,6 +91,7 @@ Public Class SettingsHandler : Inherits ObservableObject
         Return GetCollection(Of Printer)(PrinterSettings)
     End Function
     Shared Async Sub WritePrinter(printer As Printer)
+        printer.ClampWorkingArea()
         Await PrinterSettings.SetValue(printer.Name, printer)
     End Sub
 

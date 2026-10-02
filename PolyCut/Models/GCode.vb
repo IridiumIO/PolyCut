@@ -61,13 +61,16 @@ Public Class GCodeGeometry : Inherits ObservableObject
         Dim lastY As Double = 0
         Dim firstLineDrawn As Boolean = False
 
+        Dim toolOffsetX = Application.GetService(Of MainViewModel).Configuration.ToolOffsetX
+        Dim toolOffsetY = Application.GetService(Of MainViewModel).Configuration.ToolOffsetY
+
         For i = 0 To GCode.Count - 1
             Dim cmd = GCode(i)
             If cmd.Mode <> "G" OrElse (cmd.Code <> 0 AndAlso cmd.Code <> 1) Then Continue For
             If cmd.X Is Nothing OrElse cmd.Y Is Nothing Then Continue For
 
-            Dim x = cmd.X.Value - Application.GetService(Of MainViewModel).Configuration.ToolOffsetX
-            Dim y = cmd.Y.Value - Application.GetService(Of MainViewModel).Configuration.ToolOffsetY
+            Dim x = cmd.X.Value - toolOffsetX
+            Dim y = cmd.Y.Value - toolOffsetY
             Dim isRapid = cmd.Code = 0
 
             If Not firstLineDrawn Then

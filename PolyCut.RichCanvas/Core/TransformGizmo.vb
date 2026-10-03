@@ -65,7 +65,7 @@ Public Class TransformGizmo
     Public Sub New(selectionManager As SelectionManager, canvas As Canvas)
         _selectionManager = selectionManager
         _canvas = canvas
-        _dragLimiter = New InteractionRateLimiter(AddressOf ApplyPendingDrag)
+        _dragLimiter = New InteractionRateLimiter(AddressOf ApplyPendingDrag, Me)
 
         Me.IsHitTestVisible = True
         Me.Cursor = Cursors.Arrow

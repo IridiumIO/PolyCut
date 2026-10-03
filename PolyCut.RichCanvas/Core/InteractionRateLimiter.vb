@@ -1,20 +1,23 @@
+﻿Imports System.Windows
 Imports System.Windows.Media
 
 Friend NotInheritable Class InteractionRateLimiter
     Private ReadOnly _apply As Action
+    Private ReadOnly _wake As UIElement
     Private _pending As Boolean
     Private _hooked As Boolean
 
-    Public Sub New(apply As Action)
+    Public Sub New(apply As Action, wake As UIElement)
         _apply = apply
+        _wake = wake
     End Sub
 
     Public Sub Request()
         _pending = True
-        If Not _hooked Then
-            AddHandler CompositionTarget.Rendering, AddressOf OnRendering
-            _hooked = True
-        End If
+        If _hooked Then Return
+        AddHandler CompositionTarget.Rendering, AddressOf OnRendering
+        _hooked = True
+        If _wake IsNot Nothing Then _wake.InvalidateVisual()
     End Sub
 
     Private Sub OnRendering(sender As Object, e As EventArgs)

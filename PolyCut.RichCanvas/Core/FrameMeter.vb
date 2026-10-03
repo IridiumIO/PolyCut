@@ -11,7 +11,7 @@ Friend NotInheritable Class FrameMeter
     Private ReadOnly _clock As Stopwatch = Stopwatch.StartNew()
     Private _timer As DispatcherTimer
     Private _hooked As Boolean
-    Private _lastFrameMs As Long = -1
+    Private _lastFrameMs As Double = -1
     Private _frameSum As Double
     Private _frameCount As Integer
     Private _frameMax As Double
@@ -36,12 +36,14 @@ Friend NotInheritable Class FrameMeter
     End Sub
 
     Private Sub OnFrame(sender As Object, e As EventArgs)
-        Dim now = _clock.ElapsedMilliseconds
+        Dim now = _clock.Elapsed.TotalMilliseconds
         If _lastFrameMs >= 0 Then
             Dim delta = now - _lastFrameMs
-            _frameSum += delta
-            _frameCount += 1
-            If delta > _frameMax Then _frameMax = delta
+            If delta > 0 Then
+                _frameSum += delta
+                _frameCount += 1
+                If delta > _frameMax Then _frameMax = delta
+            End If
         End If
         _lastFrameMs = now
     End Sub

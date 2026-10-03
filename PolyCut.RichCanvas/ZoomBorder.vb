@@ -186,7 +186,7 @@ Public Class ZoomBorder
 
     Public Sub New()
         ClipToBounds = True
-        _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport)
+        _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport, Me)
         AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown
         AddHandler Me.MouseUp, AddressOf ZoomBorder_MouseUp

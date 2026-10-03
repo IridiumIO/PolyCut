@@ -19,9 +19,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Me.ViewModel = viewmodel
         DataContext = viewmodel
         InitializeComponent()
-        zoomPanControl.Scale = 2
-        zoomPanControl.TranslateTransform.X = -viewmodel.Printer.BedWidth / 2
-        zoomPanControl.TranslateTransform.Y = -viewmodel.Printer.BedHeight / 2
+
         InitializeDrawingVisual()
 
         UpdateGCodeDocument()
@@ -38,21 +36,27 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             DrawToolPaths()
         End If
 
-        AddHandler viewmodel.UIConfiguration.PropertyChanged, Sub(s, e)
-                                                                  If e.PropertyName = NameOf(UIConfiguration.PreviewDrawingBrush) Then
-                                                                      _RenderPen = CreatePenWithBrush(_RenderPen, viewmodel.UIConfiguration.PreviewDrawingBrush)
-                                                                      cancellationTokenSource.Cancel()
-                                                                      viewmodel.GCodePaths.Clear()
-                                                                      DrawToolPaths()
-                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewTravelBrush) Then
-                                                                      _TravelPen = CreatePenWithBrush(_TravelPen, viewmodel.UIConfiguration.PreviewTravelBrush)
-                                                                      cancellationTokenSource.Cancel()
-                                                                      viewmodel.GCodePaths.Clear()
-                                                                      DrawToolPaths()
-                                                                  ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewCursorBrush) Then
-                                                                      _CursorPen = CreatePenWithBrush(_CursorPen, viewmodel.UIConfiguration.PreviewCursorBrush)
-                                                                  End If
-                                                              End Sub
+        AddHandler viewmodel.UIConfiguration.PropertyChanged, AddressOf UIConfigChangedHandler
+    End Sub
+
+    Sub OnLoaded() Handles Me.Loaded
+        zoomPanControl.Reset()
+    End Sub
+
+    Private Sub UIConfigChangedHandler(sender As Object, e As PropertyChangedEventArgs)
+        If e.PropertyName = NameOf(UIConfiguration.PreviewDrawingBrush) Then
+            _RenderPen = CreatePenWithBrush(_RenderPen, ViewModel.UIConfiguration.PreviewDrawingBrush)
+            cancellationTokenSource.Cancel()
+            ViewModel.GCodePaths.Clear()
+            DrawToolPaths()
+        ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewTravelBrush) Then
+            _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
+            cancellationTokenSource.Cancel()
+            ViewModel.GCodePaths.Clear()
+            DrawToolPaths()
+        ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewCursorBrush) Then
+            _CursorPen = CreatePenWithBrush(_CursorPen, ViewModel.UIConfiguration.PreviewCursorBrush)
+        End If
     End Sub
 
     Function CreatePenWithBrush(basePen As Pen, brushHex As String) As Pen

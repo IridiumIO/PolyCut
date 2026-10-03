@@ -72,21 +72,30 @@ Partial Public Module Extensions
     <Extension>
     Public Function ReorderFiguresGreedy(figures As IEnumerable(Of List(Of GeoLine))) As List(Of List(Of GeoLine))
 
-        If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of List(Of GeoLine))()
+        If figures Is Nothing Then Return New List(Of List(Of GeoLine))()
 
         Dim remaining As New List(Of List(Of GeoLine))(figures)
-        Dim orderedFigures As New List(Of List(Of GeoLine))
+        Dim count As Integer = remaining.Count
+        If count = 0 Then Return New List(Of List(Of GeoLine))()
+
+        Dim centres(count - 1) As Point
+        For i = 0 To count - 1
+            centres(i) = remaining(i).RepresentativeCenterPoint
+        Next
+
+        Dim visited(count - 1) As Boolean
+        Dim orderedFigures As New List(Of List(Of GeoLine))(count)
 
         Dim currentPoint As New System.Windows.Point(0, 0)
 
-        While remaining.Count > 0
+        For taken As Integer = 1 To count
             Dim bestIdx As Integer = -1
             Dim bestDistSq As Double = Double.MaxValue
 
-            For i = 0 To remaining.Count - 1
-                Dim rep = remaining(i).RepresentativeCenterPoint
-                Dim dx = rep.X - currentPoint.X
-                Dim dy = rep.Y - currentPoint.Y
+            For i = 0 To count - 1
+                If visited(i) Then Continue For
+                Dim dx = centres(i).X - currentPoint.X
+                Dim dy = centres(i).Y - currentPoint.Y
                 Dim distSq = dx * dx + dy * dy
                 If distSq < bestDistSq Then
                     bestDistSq = distSq
@@ -94,18 +103,12 @@ Partial Public Module Extensions
                 End If
             Next
 
-            If bestIdx = -1 Then
-                orderedFigures.AddRange(remaining)
-                Exit While
-            End If
+            If bestIdx = -1 Then Exit For
 
-            Dim chosen = remaining(bestIdx)
-            orderedFigures.Add(chosen)
-            remaining.RemoveAt(bestIdx)
-
-            ' update currentPoint to the representative of chosen group (keeps continuity for greedy selection)
-            currentPoint = chosen.RepresentativeCenterPoint
-        End While
+            visited(bestIdx) = True
+            orderedFigures.Add(remaining(bestIdx))
+            currentPoint = centres(bestIdx)
+        Next
 
         Return orderedFigures
     End Function
@@ -114,22 +117,30 @@ Partial Public Module Extensions
     <Extension>
     Public Function ReorderFiguresGreedy(figures As IEnumerable(Of IPathBasedElement)) As List(Of IPathBasedElement)
 
-        If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)()
+        If figures Is Nothing Then Return New List(Of IPathBasedElement)()
 
         Dim remaining As New List(Of IPathBasedElement)(figures)
-        Dim orderedFigures As New List(Of IPathBasedElement)
+        Dim count As Integer = remaining.Count
+        If count = 0 Then Return New List(Of IPathBasedElement)()
+
+        Dim centres(count - 1) As Point
+        For i = 0 To count - 1
+            centres(i) = remaining(i).FlattenedLines.RepresentativeCenterPoint
+        Next
+
+        Dim visited(count - 1) As Boolean
+        Dim orderedFigures As New List(Of IPathBasedElement)(count)
 
         Dim currentPoint As New System.Windows.Point(0, 0)
 
-        While remaining.Count > 0
+        For taken As Integer = 1 To count
             Dim bestIdx As Integer = -1
             Dim bestDistSq As Double = Double.MaxValue
 
-            For i = 0 To remaining.Count - 1
-                ' Use FlattenedLines to calculate representative center point
-                Dim rep = remaining(i).FlattenedLines.RepresentativeCenterPoint
-                Dim dx = rep.X - currentPoint.X
-                Dim dy = rep.Y - currentPoint.Y
+            For i = 0 To count - 1
+                If visited(i) Then Continue For
+                Dim dx = centres(i).X - currentPoint.X
+                Dim dy = centres(i).Y - currentPoint.Y
                 Dim distSq = dx * dx + dy * dy
                 If distSq < bestDistSq Then
                     bestDistSq = distSq
@@ -137,18 +148,12 @@ Partial Public Module Extensions
                 End If
             Next
 
-            If bestIdx = -1 Then
-                orderedFigures.AddRange(remaining)
-                Exit While
-            End If
+            If bestIdx = -1 Then Exit For
 
-            Dim chosen = remaining(bestIdx)
-            orderedFigures.Add(chosen)
-            remaining.RemoveAt(bestIdx)
-
-            ' update currentPoint to the representative of chosen group
-            currentPoint = chosen.FlattenedLines.RepresentativeCenterPoint
-        End While
+            visited(bestIdx) = True
+            orderedFigures.Add(remaining(bestIdx))
+            currentPoint = centres(bestIdx)
+        Next
 
         Return orderedFigures
     End Function

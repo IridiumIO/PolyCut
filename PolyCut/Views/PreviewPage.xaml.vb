@@ -326,6 +326,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         visualHost.CacheMode = Nothing
         visualHost.ClearVisuals()
         travelMoveVisuals.Clear()
+        _folded.Clear()
         _lineVisuals = Nothing
         DrawToolPaths()
     End Sub
@@ -408,6 +409,12 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private _lineVisuals As List(Of DrawingVisual)
     Private _currentIndex As Integer = 0 ' NEXT line to start drawing
 
+    'Playback collapses each completed group of 64 lines into one geometry, so a long playback does not accumulate one
+    'visual per line. Stepping back reopens the group, so a step is never more than a single line.
+    Private Const PlaybackChunk As Integer = 64
+    Private ReadOnly _folded As New Dictionary(Of Integer, List(Of DrawingVisual))()
+    Private _nextFold As Integer = 0
+
     Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
         visualHost.CacheMode = Nothing
         visualHost.ClearVisuals()
@@ -423,12 +430,16 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
         _lineVisuals = Enumerable.Repeat(Of DrawingVisual)(Nothing, paths.Count).ToList()
         _currentIndex = 0
+        _folded.Clear()
+        _nextFold = 0
 
         Dim accumulatedDelay As Single = 0
         Dim stopwatch As New Stopwatch()
 
         While _currentIndex < paths.Count
             If cToken.IsCancellationRequested Then Return 1
+
+        FoldCompletedChunks(paths)
 
             ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
             ' --------- PAUSE GATE BEFORE STARTING THE LINE ----------
@@ -440,7 +451,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                     For n As Integer = 1 To backCount
                         If _currentIndex <= 0 Then Exit For
                         _currentIndex -= 1
-                        RemoveLineVisual(_currentIndex)
+                        RemoveLineVisualOrUnfold(_currentIndex, paths)
 
                         Dim ln2 = paths(_currentIndex)
                         UpdateCursor(New Point(ln2.X1, ln2.Y1))
@@ -522,7 +533,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
                         For n As Integer = 1 To backCount2
                             If _currentIndex <= 0 Then Exit For
                             _currentIndex -= 1
-                            RemoveLineVisual(_currentIndex)
+                            RemoveLineVisualOrUnfold(_currentIndex, paths)
 
                             Dim ln2 = paths(_currentIndex)
                             UpdateCursor(New Point(ln2.X1, ln2.Y1))
@@ -636,6 +647,107 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         Using dc = _cursorVisual.RenderOpen()
             ' draw nothing
         End Using
+    End Sub
+
+    Private Sub FoldCompletedChunks(paths As IReadOnlyList(Of GCodeLine))
+        While (_nextFold + 1) * PlaybackChunk <= _currentIndex
+            If Not _folded.ContainsKey(_nextFold) Then FoldChunk(_nextFold, paths)
+            _nextFold += 1
+        End While
+    End Sub
+
+    Private Sub FoldChunk(chunk As Integer, paths As IReadOnlyList(Of GCodeLine))
+        Dim fromIndex As Integer = chunk * PlaybackChunk
+        Dim toIndex As Integer = Math.Min(fromIndex + PlaybackChunk, paths.Count) - 1
+        If fromIndex > toIndex Then Return
+
+        Dim cut As New StreamGeometry()
+        Dim anyCut As Boolean = False
+        Using ctx = cut.Open()
+            AppendRun(ctx, paths, fromIndex, toIndex, False, anyCut)
+        End Using
+        cut.Freeze()
+
+        Dim travel As New StreamGeometry()
+        Dim anyTravel As Boolean = False
+        Using ctx = travel.Open()
+            AppendRun(ctx, paths, fromIndex, toIndex, True, anyTravel)
+        End Using
+        travel.Freeze()
+
+        Dim visuals As New List(Of DrawingVisual)()
+
+        If anyCut Then
+            Dim v As New DrawingVisual()
+            Using dc = v.RenderOpen()
+                dc.DrawGeometry(Nothing, _RenderPen, cut)
+            End Using
+            visualHost.AddVisual(v)
+            visuals.Add(v)
+        End If
+
+        If anyTravel Then
+            Dim v As New DrawingVisual()
+            Using dc = v.RenderOpen()
+                dc.DrawGeometry(Nothing, _TravelPen, travel)
+            End Using
+            If Not TravelMovesVisibilityToggle.IsChecked Then v.Opacity = 0
+            visualHost.AddVisual(v)
+            travelMoveVisuals.Add(v)
+            visuals.Add(v)
+        End If
+
+        For i = fromIndex To toIndex
+            Dim v = _lineVisuals(i)
+            If v IsNot Nothing Then
+                visualHost.RemoveVisual(v)
+                travelMoveVisuals.Remove(v)
+                _lineVisuals(i) = Nothing
+            End If
+        Next
+
+        _folded(chunk) = visuals
+    End Sub
+
+    Private Sub UnfoldChunk(chunk As Integer, paths As IReadOnlyList(Of GCodeLine), keepUpTo As Integer)
+        Dim visuals As List(Of DrawingVisual) = Nothing
+        If Not _folded.TryGetValue(chunk, visuals) Then Return
+
+        For Each v In visuals
+            visualHost.RemoveVisual(v)
+            travelMoveVisuals.Remove(v)
+        Next
+        _folded.Remove(chunk)
+        _nextFold = Math.Min(_nextFold, chunk)
+
+        Dim fromIndex As Integer = chunk * PlaybackChunk
+        Dim toIndex As Integer = Math.Min(keepUpTo, Math.Min(fromIndex + PlaybackChunk, paths.Count)) - 1
+
+        For i = fromIndex To toIndex
+            Dim line = paths(i)
+            Dim v As New DrawingVisual()
+            Using dc = v.RenderOpen()
+                dc.DrawLine(If(line.IsRapidMove, _TravelPen, _RenderPen), New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
+            End Using
+            If line.IsRapidMove Then
+                travelMoveVisuals.Add(v)
+                If Not TravelMovesVisibilityToggle.IsChecked Then v.Opacity = 0
+            End If
+            visualHost.AddVisual(v)
+            _lineVisuals(i) = v
+        Next
+    End Sub
+
+    'Hides line i again, reopening its group first if it was collapsed, so a step back is never a whole group.
+    Private Sub RemoveLineVisualOrUnfold(i As Integer, paths As IReadOnlyList(Of GCodeLine))
+        If _lineVisuals Is Nothing OrElse i < 0 OrElse i >= _lineVisuals.Count Then Return
+
+        Dim chunk As Integer = i \ PlaybackChunk
+        If _folded.ContainsKey(chunk) Then
+            UnfoldChunk(chunk, paths, i)
+        Else
+            RemoveLineVisual(i)
+        End If
     End Sub
 
     Private Sub RemoveLineVisual(i As Integer)

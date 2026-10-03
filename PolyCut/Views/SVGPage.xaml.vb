@@ -19,15 +19,15 @@ Class SVGPage
 
     Private _subscribedPrinter As Printer
 
+    Private _hasLoaded As Boolean = False
+
     Sub New(viewmodel As SVGPageViewModel)
         Me.SVGPageViewModel = viewmodel
         Me.MainViewModel = viewmodel.MainVM
         Me.DataContext = viewmodel
 
         InitializeComponent()
-        zoomPanControl.Scale = 2
-        zoomPanControl.TranslateTransform.X = -MainViewModel.Printer.BedWidth / 2
-        zoomPanControl.TranslateTransform.Y = -MainViewModel.Printer.BedHeight / 2
+
         AddHandler MainViewModel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
 
 
@@ -41,6 +41,11 @@ Class SVGPage
         AddHandler zoomPanControl.ContextMenu.Opened, AddressOf OnCanvasContextMenuOpened
         AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnSelectionCountChanged
 
+    End Sub
+
+    Sub OnLoaded() Handles Me.Loaded
+        If Not _hasLoaded Then zoomPanControl.Reset(skipAnimation:=True)
+        _hasLoaded = True
     End Sub
 
     Private Sub OnSelectionCountChanged(sender As Object, e As EventArgs)

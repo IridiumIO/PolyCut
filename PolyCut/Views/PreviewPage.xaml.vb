@@ -14,6 +14,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Private _subscribedPrinter As Printer
 
+    Private _hasLoaded As Boolean = False
+
     Sub New(viewmodel As MainViewModel)
 
         Me.ViewModel = viewmodel
@@ -40,7 +42,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
     Sub OnLoaded() Handles Me.Loaded
-        zoomPanControl.Reset()
+        If Not _hasLoaded Then zoomPanControl.Reset(skipAnimation:=True)
+        _hasLoaded = True
     End Sub
 
     Private Sub UIConfigChangedHandler(sender As Object, e As PropertyChangedEventArgs)

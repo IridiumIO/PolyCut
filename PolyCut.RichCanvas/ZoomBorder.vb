@@ -243,7 +243,7 @@ Public Class ZoomBorder
         End Select
     End Function
 
-    Public Async Sub Reset()
+    Public Async Sub Reset(Optional skipAnimation As Boolean = False)
         If Child Is Nothing Then Return
         _viewportLimiter.Flush()
 
@@ -277,18 +277,22 @@ Public Class ZoomBorder
         TranslateTransform.X = x0
         TranslateTransform.Y = y0
 
-        Const durationMs As Integer = 200
-        Const frames As Integer = 28
-        Dim delayMs = Math.Max(1, durationMs \ frames)
+        If Not skipAnimation Then
+            Const durationMs As Integer = 200
+            Const frames As Integer = 28
+            Dim delayMs = Math.Max(1, durationMs \ frames)
 
-        For i As Integer = 1 To frames
-            Dim t = i / CDbl(frames)
-            t = t * t * (3 - 2 * t) ' smoothstep easing
-            Scale = s0 + ((targetScale - s0) * t)
-            TranslateTransform.X = x0 + ((targetX - x0) * t)
-            TranslateTransform.Y = y0 + ((targetY - y0) * t)
-            Await Task.Delay(delayMs)
-        Next
+            For i As Integer = 1 To frames
+                Dim t = i / CDbl(frames)
+                t = t * t * (3 - 2 * t) ' smoothstep easing
+                Scale = s0 + ((targetScale - s0) * t)
+                TranslateTransform.X = x0 + ((targetX - x0) * t)
+                TranslateTransform.Y = y0 + ((targetY - y0) * t)
+                Await Task.Delay(delayMs)
+            Next
+
+        End If
+
 
         Scale = targetScale
         TranslateTransform.X = targetX

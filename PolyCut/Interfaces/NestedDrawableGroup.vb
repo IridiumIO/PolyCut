@@ -1,4 +1,4 @@
-﻿Imports System.Collections.ObjectModel
+Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.ComponentModel
 
@@ -54,39 +54,47 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         If items Is Nothing OrElse items.Count = 0 Then Return grp
 
-        Dim style As Style = TryCast(Application.Current?.TryFindResource("DesignerItemStyle"), Style)
+        Dim style As Style = TryCast(Application.Current?.TryFindResource("GroupChildItemStyle"), Style)
+        Dim groupChildPathStyle As Style = TryCast(Application.Current?.TryFindResource("GroupChildPathStyle"), Style)
 
-        Dim wrappers As New List(Of (drawable As IDrawable, wrapper As ContentControl))
+        Dim wrappers As New List(Of (drawable As IDrawable, element As FrameworkElement))
 
         grp.BeginBulkChildUpdate()
         Try
             For Each d In items
                 Dim fe = d.DrawableElement
-                Dim w = DrawableWrapperFactory.CreateWrapper(fe, d, style)
-                If w Is Nothing Then Continue For
+                Dim element As FrameworkElement
 
-                Dim left = GetLeftSafe(fe)
-                Dim top = GetTopSafe(fe)
+                If TypeOf fe Is Shapes.Path Then
+                    Dim p = DirectCast(fe, Shapes.Path)
+                    'Stretch stays a local value: ConvertPath assigns Stretch=None locally, which a Style setter cannot override.
+                    p.Stretch = Media.Stretch.Fill
+                    p.Style = groupChildPathStyle
+                    PerformantRasteriser.SetCacheEligible(p, True)
+                    element = p
+                Else
+                    element = DrawableWrapperFactory.CreateWrapper(fe, d, style)
+                    If element Is Nothing Then Continue For
 
-                Canvas.SetLeft(w, left)
-                Canvas.SetTop(w, top)
+                    Canvas.SetLeft(element, GetLeftSafe(fe))
+                    Canvas.SetTop(element, GetTopSafe(fe))
+                    element.IsHitTestVisible = False
+                End If
 
-                w.IsHitTestVisible = False
-
-                wrappers.Add((d, w))
+                wrappers.Add((d, element))
                 grp.AddChild(d)
             Next
         Finally
             grp.EndBulkChildUpdate()
         End Try
 
-        Dim bounds As Rect = GetBoundsFromWrappers(wrappers.Select(Function(x) x.wrapper))
+        Dim bounds As Rect = GetBoundsFromWrappers(wrappers.Select(Function(x) x.element))
 
         ' Localize wrappers into group-local space and insert into INNER canvas (not DrawableElement)
         grp.InnerCanvas.Children.Clear()
-        Dim localised As New List(Of ContentControl)
+        Dim localised As New List(Of FrameworkElement)
         For Each pair In wrappers
-            Dim w = pair.wrapper
+            Dim w = pair.element
 
             Canvas.SetLeft(w, GetLeftSafe(w) - bounds.Left)
             Canvas.SetTop(w, GetTopSafe(w) - bounds.Top)
@@ -288,7 +296,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Canvas.SetTop(vbe, bounds.Top)
 
         ' Create child wrappers and place them in LOCAL space
-        Dim rebuilt As New List(Of ContentControl)
+        Dim rebuilt As New List(Of FrameworkElement)
         For Each child In GroupChildren
             If child?.DrawableElement Is Nothing Then Continue For
 
@@ -320,16 +328,16 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     Private NotInheritable Class WrapperCell
         Public ReadOnly Bounds As Rect
-        Public ReadOnly Children As List(Of ContentControl)
+        Public ReadOnly Children As List(Of FrameworkElement)
 
-        Public Sub New(bounds As Rect, children As List(Of ContentControl))
+        Public Sub New(bounds As Rect, children As List(Of FrameworkElement))
             Me.Bounds = bounds
             Me.Children = children
         End Sub
     End Class
 
     'Split at the median on the longer axis so every cell holds a similar number of leaves, which lets dense regions end up with small cells and sparse regions stay large.
-    Private Shared Sub BuildCells(items As List(Of ContentControl), into As List(Of WrapperCell), depth As Integer, perCell As Integer)
+    Private Shared Sub BuildCells(items As List(Of FrameworkElement), into As List(Of WrapperCell), depth As Integer, perCell As Integer)
         If items Is Nothing OrElse items.Count = 0 Then Return
 
         Dim bounds As Rect = CellBounds(items)
@@ -354,7 +362,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Return Math.Max(MinLeavesPerCell, CInt(Math.Ceiling(total / CDbl(MaxCellsPerGroup))))
     End Function
 
-    Private Shared Function CellBounds(items As List(Of ContentControl)) As Rect
+    Private Shared Function CellBounds(items As List(Of FrameworkElement)) As Rect
         Dim minX = Double.MaxValue, minY = Double.MaxValue
         Dim maxX = Double.MinValue, maxY = Double.MinValue
 
@@ -373,7 +381,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     'One canvas per cell, holding its leaves at cell-local offsets.
     'Absolute positions are unchanged, so (hopefully) it still fully uses the ancestor for  resolution of hit/transform gcode export still work.
-    Private Shared Sub AddPartitionedWrappers(target As Canvas, wrappers As List(Of ContentControl))
+    Private Shared Sub AddPartitionedWrappers(target As Canvas, wrappers As List(Of FrameworkElement))
         Dim cells As New List(Of WrapperCell)
         BuildCells(wrappers, cells, 0, LeavesPerCell(wrappers.Count))
 
@@ -424,7 +432,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
     End Function
 
-    Private Shared Function GetBoundsFromWrappers(wrappers As IEnumerable(Of ContentControl)) As Rect
+    Private Shared Function GetBoundsFromWrappers(wrappers As IEnumerable(Of FrameworkElement)) As Rect
         Dim minX = Double.MaxValue, minY = Double.MaxValue
         Dim maxX = Double.MinValue, maxY = Double.MinValue
 

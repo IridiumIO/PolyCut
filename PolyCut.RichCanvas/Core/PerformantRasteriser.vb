@@ -1,4 +1,4 @@
-﻿Imports System.Windows.Media
+Imports System.Windows.Media
 
 Public NotInheritable Class PerformantRasteriser
 
@@ -491,7 +491,8 @@ Public NotInheritable Class PerformantRasteriser
     End Function
 
     Private Function WeightOf(wrapper As FrameworkElement) As Integer
-        Dim content = TryCast(TryCast(wrapper, ContentControl)?.Content, Shape)
+        Dim content = TryCast(wrapper, Shape)
+        If content Is Nothing Then content = TryCast(TryCast(wrapper, ContentControl)?.Content, Shape)
         If content Is Nothing Then Return 1
 
         Dim polyline = TryCast(content, Polyline)

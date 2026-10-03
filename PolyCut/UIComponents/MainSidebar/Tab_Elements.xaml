@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Tab_Elements"
+<UserControl x:Class="Tab_Elements"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -21,16 +21,20 @@
         <Separator Grid.Row="0" Margin="5" />
 
 
-        <ScrollViewer Grid.Row="3"
-                      Margin="-14 0 -14 0" Padding="5 0 25 0"
-                      CanContentScroll="True" VerticalScrollBarVisibility="Visible">
 
-            <ui:ListView x:Name="FilesList"
-                         VerticalAlignment="Top"
+            <ui:ListView x:Name="FilesList" Grid.Row="3"
+                         ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Visible"
+                         VirtualizingStackPanel.IsVirtualizing="True"
+                         VirtualizingStackPanel.VirtualizationMode="Recycling"
                          FocusVisualStyle="{x:Null}"
                          ItemsSource="{Binding MainVM.FlatSidebarItems}"
                          SelectionChanged="ListView_SelectionChanged" SelectionMode="Extended">
-
+                <ui:ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ui:ListView.ItemsPanel>
                 <ui:ListView.Resources>
                     <!--  Default / fallback (Group / unknown)  -->
 
@@ -306,7 +310,6 @@
                 </ui:ListView.ItemTemplate>
             </ui:ListView>
 
-        </ScrollViewer>
         <Separator Grid.Row="4" Margin="5" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
         <Grid Grid.Row="5" Margin="10 0 10 -10" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">

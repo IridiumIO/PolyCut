@@ -28,8 +28,10 @@ Public Class FillProcessor : Implements IProcessor
             Return New List(Of GeoLine)
         End If
 
+        Dim workElements = If(cfg.OptimisedToolPath, elements.ReorderFiguresGreedy(), elements)
+
         Dim results As New List(Of GeoLine)
-        For Each element In elements
+        For Each element In workElements
             results.AddRange(ProcessElement(element, cfg))
         Next
 

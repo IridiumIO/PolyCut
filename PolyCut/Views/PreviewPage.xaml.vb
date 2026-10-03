@@ -101,20 +101,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     End Sub
 
-    Private gcodeListCancellation As CancellationTokenSource = Nothing
-
-    Private Async Sub UpdateGCodeDocument()
-
-        If gcodeListCancellation IsNot Nothing Then
-            Try
-                gcodeListCancellation.Cancel()
-            Catch
-            End Try
-            gcodeListCancellation.Dispose()
-        End If
-        gcodeListCancellation = New CancellationTokenSource()
-        Dim cToken = gcodeListCancellation.Token
-
+    Private Sub UpdateGCodeDocument()
         Dim text = If(ViewModel?.GCode?.ToString(), "")
         If String.IsNullOrWhiteSpace(text) Then
             GCodeListView.ItemsSource = Nothing
@@ -122,102 +109,20 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         End If
 
 
-        Dim lines = text.Replace(vbCr, "").Split(New String() {vbLf}, StringSplitOptions.None)
+        Dim lines = text.Replace(vbCr, "").Split({vbLf}, StringSplitOptions.None)
 
 
-        Dim tokenized As List(Of InlineBuilder.LineTokens) = Nothing
-        Try
-            tokenized = Await Task.Run(Function()
-                                           Return TokenizeLinesForList(lines, cToken)
-                                       End Function, cToken)
-        Catch ex As OperationCanceledException
-            Return
-        End Try
 
+        Dim rows(lines.Length - 1) As LazyGCodeLine
+        For i = 0 To lines.Length - 1
+            rows(i) = New LazyGCodeLine(lines(i))
+        Next
 
-        If cToken.IsCancellationRequested Then Return
-        GCodeListView.ItemsSource = tokenized
+        GCodeListView.ItemsSource = rows
     End Sub
 
 
-    Private Shared ReadOnly LocalTokenizerRegex As New Regex(
-     "(?ix)
-            (?<Comment>        ;.*$ )
-          | (?<ParenComment>   \(.*?\) )
-          | (?<KlipperExpr>    \[[^\]]+\] )
-          | (?<KlipperParam>   \b[A-Z_][A-Z0-9_]*=[^\s]+ )
-          | (?<GCode>          \b[GM]\d+(?:\.\d+)?\b )
-          | (?<Axis>           \b[XYZ][+-]?\d+(?:\.\d+)?\b )
-          | (?<Feed>           \b[FSE][+-]?\d+(?:\.\d+)?\b )
-          | (?<Macro>          \b[A-Z_]{2,}[A-Z0-9_]*\b )
-          | (?<Number>         [+-]?\d+(?:\.\d+)? )
-        ",
-        RegexOptions.Compiled)
 
-    Private Function TokenizeLinesForList(lines As String(), cToken As CancellationToken) As List(Of InlineBuilder.LineTokens)
-        Dim out As New List(Of InlineBuilder.LineTokens)(lines.Length)
-
-        If cToken.IsCancellationRequested Then Return out
-
-        For Each line As String In lines
-            cToken.ThrowIfCancellationRequested()
-
-            Dim trimmed = If(line, "").Trim()
-            If String.Equals(trimmed, ";######################################", StringComparison.Ordinal) Then
-                Dim hr As New InlineBuilder.LineTokens With {.IsHorizontalRule = True}
-                out.Add(hr)
-                Continue For
-            End If
-
-            Dim lt As New InlineBuilder.LineTokens()
-            Dim matches = LocalTokenizerRegex.Matches(line)
-            Dim last = 0
-
-            For Each m As Match In matches
-                If m.Index > last Then
-                    lt.Tokens.Add(New InlineBuilder.TokenDto(0, line.Substring(last, m.Index - last)))
-                End If
-
-                If m.Groups("Comment").Success Then
-                    lt.Tokens.Add(New InlineBuilder.TokenDto(1, m.Value))
-                    last = line.Length
-                    Exit For
-                End If
-
-                Dim ttype As Integer = 0
-                If m.Groups("ParenComment").Success Then
-                    ttype = 2
-                ElseIf m.Groups("KlipperExpr").Success Then
-                    ttype = 3
-                ElseIf m.Groups("KlipperParam").Success Then
-                    ttype = 4
-                ElseIf m.Groups("GCode").Success Then
-                    ttype = 5
-                ElseIf m.Groups("Axis").Success Then
-                    ttype = 6
-                ElseIf m.Groups("Feed").Success Then
-                    ttype = 7
-                ElseIf m.Groups("Macro").Success Then
-                    ttype = 8
-                ElseIf m.Groups("Number").Success Then
-                    ttype = 9
-                Else
-                    ttype = 0
-                End If
-
-                lt.Tokens.Add(New InlineBuilder.TokenDto(ttype, m.Value))
-                last = m.Index + m.Length
-            Next
-
-            If last < line.Length Then
-                lt.Tokens.Add(New InlineBuilder.TokenDto(0, line.Substring(last)))
-            End If
-
-            out.Add(lt)
-        Next
-
-        Return out
-    End Function
 
 
 
@@ -228,12 +133,12 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private Sub TogglePlayPauseSymbol()
         If _IsPlaying Then
             If _IsPaused Then
-                PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Play16
+                PlayPreviewIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.Play16
             Else
-                PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Pause16
+                PlayPreviewIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.Pause16
             End If
         Else
-            PlayPreviewIcon.Symbol = WPF.Ui.Controls.SymbolRegular.Play16
+            PlayPreviewIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.Play16
         End If
     End Sub
 
@@ -282,9 +187,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         _IsPlaying = False
         _IsPaused = False
         _pauseTcs = Nothing
-        visualHost.ClearVisuals()
-        travelMoveVisuals.Clear()
-        DrawToolPaths()
+        ShowStillToolpath()
         cancellationTokenSource = New CancellationTokenSource
     End Sub
 
@@ -326,6 +229,107 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     }
 
 
+
+    Private Const DefaultChunkMoves As Integer = 64
+
+    Private Shared Sub AppendRun(ctx As StreamGeometryContext, paths As IReadOnlyList(Of GCodeLine), fromIndex As Integer, toIndex As Integer, travel As Boolean, ByRef any As Boolean)
+
+        Dim started As Boolean = False
+        Dim lastX As Single = 0
+        Dim lastY As Single = 0
+
+        For i = fromIndex To toIndex
+            Dim ln = paths(i)
+
+            If ln.IsRapidMove <> travel Then
+                started = False
+                Continue For
+            End If
+
+            If Not started OrElse ln.X1 <> lastX OrElse ln.Y1 <> lastY Then
+                ctx.BeginFigure(New Point(ln.X1, ln.Y1), False, False)
+                started = True
+                any = True
+            End If
+
+            ctx.LineTo(New Point(ln.X2, ln.Y2), True, False)
+            lastX = ln.X2
+            lastY = ln.Y2
+        Next
+    End Sub
+
+    Private Sub DrawChunkedStatic(paths As IReadOnlyList(Of GCodeLine))
+
+        Dim chunkSize As Integer = DefaultChunkMoves
+        Dim first As Integer = 0
+
+        While first < paths.Count
+
+            Dim lastIndex As Integer = Math.Min(first + chunkSize, paths.Count) - 1
+
+            Dim cut As New StreamGeometry()
+            Dim anyCut As Boolean = False
+            Using ctx = cut.Open()
+                AppendRun(ctx, paths, first, lastIndex, False, anyCut)
+            End Using
+            cut.Freeze()
+
+            If anyCut Then
+                Dim cutVisual As New DrawingVisual()
+                Using dc = cutVisual.RenderOpen()
+                    dc.DrawGeometry(Nothing, _RenderPen, cut)
+                End Using
+                visualHost.AddVisual(cutVisual)
+            End If
+
+            Dim travel As New StreamGeometry()
+            Dim anyTravel As Boolean = False
+            Using ctx = travel.Open()
+                AppendRun(ctx, paths, first, lastIndex, True, anyTravel)
+            End Using
+            travel.Freeze()
+
+            If anyTravel Then
+                Dim travelVisual As New DrawingVisual()
+                Using dc = travelVisual.RenderOpen()
+                    dc.DrawGeometry(Nothing, _TravelPen, travel)
+                End Using
+                ' Set initial visibility based on the toggle state
+                If Not TravelMovesVisibilityToggle.IsChecked Then travelVisual.Opacity = 0
+                visualHost.AddVisual(travelVisual)
+                travelMoveVisuals.Add(travelVisual)
+            End If
+
+            first = lastIndex + 1
+        End While
+    End Sub
+
+
+
+    Private Const CacheLineThreshold As Integer = 40000
+    Private Const CacheScale As Double = 40.0
+
+    Private Sub ApplyToolpathCache()
+        Dim geo = ViewModel?.GCodeGeometry
+        If geo Is Nothing OrElse geo.Paths.Count < CacheLineThreshold Then
+            visualHost.CacheMode = Nothing
+            Return
+        End If
+
+        If Not TypeOf visualHost.CacheMode Is BitmapCache Then
+            visualHost.CacheMode = New BitmapCache() With {.RenderAtScale = CacheScale}
+        End If
+    End Sub
+
+
+    Private Sub ShowStillToolpath()
+        visualHost.CacheMode = Nothing
+        visualHost.ClearVisuals()
+        travelMoveVisuals.Clear()
+        _lineVisuals = Nothing
+        DrawToolPaths()
+    End Sub
+
     Private Function DrawToolPaths()
 
         ' Clear existing visuals in the VisualHost
@@ -334,39 +338,22 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         travelMoveVisuals.Clear()
 
         ' Compile the GCode into paths
-        If ViewModel.GCodeGeometry Is Nothing Then Return 1
+        If ViewModel.GCodeGeometry Is Nothing Then
+            visualHost.CacheMode = Nothing
+            Return 1
+        End If
         Dim gc = ViewModel.GCodeGeometry
 
-        For Each line In gc.Paths
-            ' Create a new DrawingVisual for the line
-            Dim lineVisual As New DrawingVisual()
-            Using dc As DrawingContext = lineVisual.RenderOpen()
+        DrawChunkedStatic(gc.Paths)
 
-                If line.IsRapidMove Then
-                    dc.DrawLine(_TravelPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
-                Else
-                    dc.DrawLine(_RenderPen, New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
-                End If
+        ApplyToolpathCache()
 
-            End Using
-
-            ' Add the visual to the VisualHost
-            visualHost.AddVisual(lineVisual)
-
-            ' Handle travel lines
-            If line.IsRapidMove Then
-                ' Add to travel move visuals
-                travelMoveVisuals.Add(lineVisual)
-
-                ' Set initial visibility based on the toggle state
-                If Not TravelMovesVisibilityToggle.IsChecked Then
-                    lineVisual.Opacity = 0 ' Hide the travel line
-                End If
-            End If
-        Next
+        Debug.WriteLine(visualHost.ChildrenCount() & " visuals drawn.")
 
         Return 0
     End Function
+
+
 
 
 
@@ -422,6 +409,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
     Private _currentIndex As Integer = 0 ' NEXT line to start drawing
 
     Private Async Function PreviewToolpaths(cToken As CancellationToken) As Task(Of Integer)
+        visualHost.CacheMode = Nothing
         visualHost.ClearVisuals()
         visualHostCursor.ClearVisuals()
         travelMoveVisuals.Clear()
@@ -614,6 +602,8 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
 
         End While
+
+        ShowStillToolpath()
 
         Return 0
 

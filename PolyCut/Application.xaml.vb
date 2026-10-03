@@ -75,6 +75,7 @@ Partial Public Class Application
 
         Await _host.StartAsync()
 
+
         Dim updateTask = GetService(Of UpdateService)().CheckForUpdate(True)
         Await Task.WhenAll(updateTask)
 

@@ -59,7 +59,12 @@ Public Class SelectionManager
         _notificationBatchDepth -= 1
         If _notificationBatchDepth = 0 AndAlso _hasDeferredNotification Then
             _hasDeferredNotification = False
-            RaiseEvent SelectionChanged(Me, EventArgs.Empty)
+
+            If ModelBatch.Active Then
+                ModelBatch.OnEndOnce("SelectionChanged", AddressOf NotifySelectionChanged)
+            Else
+                RaiseEvent SelectionChanged(Me, EventArgs.Empty)
+            End If
         End If
     End Sub
 

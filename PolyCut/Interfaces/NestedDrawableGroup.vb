@@ -18,6 +18,10 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
     ' Flattened view for UI (all leaf drawables under this group, including nested groups)
     Public ReadOnly Property DisplayChildren As New ObservableCollection(Of IDrawable)
+
+    Private Shared ReadOnly _bulkTouchedNestedGroups As New HashSet(Of NestedDrawableGroup)()
+    Private Shared ReadOnly _pendingStyleNotifications As New List(Of (Group As NestedDrawableGroup, Name As String))()
+    Private Shared ReadOnly _pendingStyleKeys As New HashSet(Of (NestedDrawableGroup, String))()
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
     Private ReadOnly _innerCanvas As New Canvas With {.ClipToBounds = False}
@@ -123,6 +127,22 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
     Private Sub OnGroupChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
         If _suspendChildNotifications Then Return
 
+        If ModelBatch.Active Then
+            If _bulkTouchedNestedGroups.Add(Me) Then ModelBatch.OnEndOnce("NestedGroupChildren", AddressOf RebuildTouchedNestedGroups)
+            Return
+        End If
+
+        RebuildChildren()
+    End Sub
+
+    Private Shared Sub RebuildTouchedNestedGroups()
+        For Each g In _bulkTouchedNestedGroups
+            g.RebuildChildren()
+        Next
+        _bulkTouchedNestedGroups.Clear()
+    End Sub
+
+    Private Sub RebuildChildren()
         RebuildDisplayChildren()
 
         For Each child In GroupChildren
@@ -133,16 +153,41 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Dim npc = TryCast(child, INotifyPropertyChanged)
             If npc IsNot Nothing Then AddHandler npc.PropertyChanged, AddressOf OnChildPropertyChanged
         Next
-
     End Sub
 
     Private Sub OnChildPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
         Select Case e.PropertyName
             Case NameOf(Fill)
-                OnPropertyChanged(NameOf(Fill))
+                RaiseStyleChanged(NameOf(Fill))
             Case NameOf(Stroke)
-                OnPropertyChanged(NameOf(Stroke))
+                RaiseStyleChanged(NameOf(Stroke))
         End Select
+    End Sub
+
+    Private Sub RaiseStyleChanged(propertyName As String)
+        If Not ModelBatch.Active Then
+            OnPropertyChanged(propertyName)
+            Return
+        End If
+
+        If _pendingStyleKeys.Add((Me, propertyName)) Then
+            _pendingStyleNotifications.Add((Me, propertyName))
+            ModelBatch.OnEndOnce("NestedGroupStyleNotifications", AddressOf FlushStyleNotifications)
+        End If
+    End Sub
+
+    Friend Sub RaiseStyleChangedNow(propertyName As String)
+        OnPropertyChanged(propertyName)
+    End Sub
+
+    Private Shared Sub FlushStyleNotifications()
+        Dim pending = _pendingStyleNotifications.ToList()
+        _pendingStyleNotifications.Clear()
+        _pendingStyleKeys.Clear()
+
+        For Each entry In pending
+            entry.Group.RaiseStyleChangedNow(entry.Name)
+        Next
     End Sub
 
     Private _suspendChildNotifications As Boolean

@@ -11,6 +11,8 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
     Private ReadOnly _indexInGroup As Integer
     Private ReadOnly _transformSnapshot As TransformAction.Snapshot
 
+    Private Shared ReadOnly _restoredForSelection As New List(Of IDrawable)
+
     Public Sub New(manager As IDrawableManager, drawable As IDrawable)
         _manager = manager
         _drawable = drawable
@@ -88,16 +90,37 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
                     TransformAction.ApplySnapshot(snapshot, _drawable)
                 Catch
                 End Try
-
-                'Undoing a delete has to put the item back in the selection, otherwise what came back is invisible to the user:
-                'the gizmo, the property panel and the next delete would all act on nothing.
-
-                'Keep these try/catch blocks seapearte for now until properly testing style and selection restore
-                Try
-                    PolyCanvas.ApplySelection({_drawable}, Nothing, False)
-                Catch
-                End Try
             End Sub)
+
+        QueueSelectionRestore(_drawable)
+    End Sub
+
+    'Queue reselection for performance
+    Private Sub QueueSelectionRestore(drawable As IDrawable)
+        If drawable Is Nothing Then Return
+
+        If Not ModelBatch.Active Then
+            Try
+                PolyCanvas.ApplySelection({drawable}, Nothing, False)
+            Catch
+            End Try
+            Return
+        End If
+
+        _restoredForSelection.Add(drawable)
+        ModelBatch.OnEndOnce("RemoveDrawable.RestoreSelection", AddressOf FlushRestoredSelection)
+    End Sub
+
+    Private Shared Sub FlushRestoredSelection()
+        If _restoredForSelection.Count = 0 Then Return
+
+        Dim restored = _restoredForSelection.ToList()
+        _restoredForSelection.Clear()
+
+        Try
+            PolyCanvas.ApplySelection(restored, Nothing, False)
+        Catch
+        End Try
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo

@@ -14,7 +14,7 @@ Imports PolyCut.Shared
 
 Imports Svg
 
-Imports WPF.Ui
+Imports Wpf.Ui
 Partial Public Class MainViewModel : Inherits ObservableObject
 
     ' Services
@@ -123,7 +123,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' Convenience / computed properties
     Public ReadOnly Property SelectedDrawable As IDrawable
         Get
-            Return PolyCanvas.SelectedItems?.FirstOrDefault()
+            Return If(PolyCanvas.SelectedItems, Enumerable.Empty(Of IDrawable)())?.FirstOrDefault()
         End Get
     End Property
 
@@ -135,7 +135,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     Public ReadOnly Property SelectedDrawables As IEnumerable(Of IDrawable)
         Get
-            Return DrawableCollection.Where(Function(d) d.IsSelected)
+            Return If(PolyCanvas.SelectedItems, Enumerable.Empty(Of IDrawable)())
         End Get
     End Property
 

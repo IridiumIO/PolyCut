@@ -1,4 +1,4 @@
-﻿Imports System.ComponentModel
+Imports System.ComponentModel
 Imports System.Data.SqlTypes
 Imports System.Xml
 Imports WPF.Ui.Controls
@@ -132,11 +132,7 @@ Class SVGPage
 
         If SVGPageViewModel.CanvasToolMode <> CanvasMode.Selection Then
             PolyCanvas.ClearSelection()
-            For Each child In MainViewModel.DrawableCollection
-                If TypeOf child.DrawableElement.Parent Is ContentControl Then
-                    child.IsSelected = False
-                End If
-            Next
+            PolyCanvas.ApplySelection(Nothing, MainViewModel.DrawableCollection)
         End If
     End Sub
 
@@ -145,10 +141,7 @@ Class SVGPage
 
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
-        For Each child In MainViewModel.DrawableCollection
-            child.IsSelected = False
-
-        Next
+        PolyCanvas.ApplySelection(Nothing, MainViewModel.DrawableCollection)
         mainCanvas.RaiseEvent(New MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) With {
             .RoutedEvent = Mouse.MouseDownEvent,
             .Source = mainCanvas

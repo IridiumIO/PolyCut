@@ -1,4 +1,4 @@
-﻿Imports PolyCut.RichCanvas
+Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Public Class Tab_Elements
@@ -39,6 +39,8 @@ Public Class Tab_Elements
         Next
     End Function
 
+    Private _syncingFromCanvas As Boolean
+
     Private Sub ListView_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
 
         Dim mainViewModel = TryCast(DataContext, SVGPageViewModel)?.MainVM
@@ -54,33 +56,38 @@ Public Class Tab_Elements
 
             If isProgrammaticRebuild Then
                 ' Once the rebuild settles, restore the sidebar highlight from the canvas.
-                Me.Dispatcher.BeginInvoke(Sub() SyncListViewSelection(PolyCanvas.SelectedItems))
+                Me.Dispatcher.BeginInvoke(Sub()
+                                               _syncingFromCanvas = True
+                                               Try
+                                                   SyncListViewSelection(PolyCanvas.SelectedItems)
+                                               Finally
+                                                   _syncingFromCanvas = False
+                                               End Try
+                                           End Sub)
                 Return
             End If
         End If
 
+        'A canvas-originated selection must not be echoed back: the round trip re-enters this handler once per row
+        'and, with SyncSelectionStates walking the whole collection each time, makes a bulk select quadratic.
+        If _syncingFromCanvas OrElse PolyCanvas.IsBatchingSelectionChanges Then Return
+
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
         Dim isCtrlPressed As Boolean = Keyboard.IsKeyDown(Key.LeftCtrl) OrElse Keyboard.IsKeyDown(Key.RightCtrl)
 
-        If Not isShiftPressed AndAlso Not isCtrlPressed Then
-            PolyCanvas.ClearSelection()
-        End If
-
+        Dim added As New List(Of IDrawable)
         For Each item In e.AddedItems
-            Dim vm = TryCast(item, SidebarItemVM)
-            Dim drawable = vm?.Item
-            If drawable IsNot Nothing AndAlso Not TypeOf drawable Is DrawableGroup Then
-                PolyCanvas.AddToSelection(drawable)
-            End If
+            Dim d = TryCast(item, SidebarItemVM)?.Item
+            If d IsNot Nothing AndAlso Not TypeOf d Is DrawableGroup Then added.Add(d)
         Next
 
+        Dim removed As New List(Of IDrawable)
         For Each item In e.RemovedItems
-            Dim vm = TryCast(item, SidebarItemVM)
-            Dim drawable = vm?.Item
-            If drawable IsNot Nothing AndAlso Not TypeOf drawable Is DrawableGroup Then
-                PolyCanvas.RemoveFromSelection(drawable)
-            End If
+            Dim d = TryCast(item, SidebarItemVM)?.Item
+            If d IsNot Nothing AndAlso Not TypeOf d Is DrawableGroup Then removed.Add(d)
         Next
+
+        PolyCanvas.ApplySelection(added, removed, Not isShiftPressed AndAlso Not isCtrlPressed)
 
         If mainViewModel IsNot Nothing Then
             SelectionHelper.SyncSelectionStates(mainViewModel.DrawableCollection)

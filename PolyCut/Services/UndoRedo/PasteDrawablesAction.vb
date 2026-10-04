@@ -1,4 +1,4 @@
-﻿Imports PolyCut.RichCanvas
+Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Public Class PasteDrawablesAction : Implements IUndoableAction
@@ -260,6 +260,8 @@ Friend NotInheritable Class ProjectApplyHelper
 
 
 
+        Dim toSelect As New List(Of IDrawable)
+
         ' Groups
         For Each gd In pd.Groups
             Dim grp As IDrawable = Nothing
@@ -271,8 +273,7 @@ Friend NotInheritable Class ProjectApplyHelper
 
             wrapper.Visibility = If(gd.IsHidden, Visibility.Collapsed, Visibility.Visible)
             If grp.ParentGroup Is Nothing OrElse TypeOf (grp.ParentGroup) Is DrawableGroup Then
-                PolyCanvas.AddToSelection(grp)
-                grp.IsSelected = True
+                toSelect.Add(grp)
             End If
             ApplyWrapperState(wrapper,
                                 New WrapperState With {
@@ -299,8 +300,7 @@ Friend NotInheritable Class ProjectApplyHelper
             Dim wrapper = TryCast(d.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
             If d.ParentGroup Is Nothing OrElse TypeOf (d.ParentGroup) Is DrawableGroup Then
-                PolyCanvas.AddToSelection(d)
-                d.IsSelected = True
+                toSelect.Add(d)
             End If
             ApplyWrapperState(wrapper,
                               New WrapperState With {
@@ -313,6 +313,7 @@ Friend NotInheritable Class ProjectApplyHelper
                               })
 
         Next
+        PolyCanvas.ApplySelection(toSelect)
 
         Debug.WriteLine(Application.GetService(Of MainViewModel).SelectedDrawables.Count)
 

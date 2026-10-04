@@ -505,14 +505,33 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         _selectionManager.DeselectItem(drawable)
     End Sub
 
-    Public Sub InstanceToggleSelection(drawable As IDrawable)
-        _selectionManager.ToggleItem(drawable)
-    End Sub
 
     ' Static methods for backwards compatibility
     Public Shared Sub ClearSelection()
         _activeInstance?.InstanceClearSelection()
     End Sub
+
+    Public Shared Sub ApplySelection(itemsToSelect As IEnumerable(Of IDrawable), Optional itemsToDeselect As IEnumerable(Of IDrawable) = Nothing, Optional clearExisting As Boolean = False)
+        _activeInstance?.InstanceApplySelection(itemsToSelect, itemsToDeselect, clearExisting)
+    End Sub
+
+    Friend Sub InstanceApplySelection(itemsToSelect As IEnumerable(Of IDrawable), itemsToDeselect As IEnumerable(Of IDrawable), clearExisting As Boolean)
+        _selectionManager?.ApplySelection(itemsToSelect, itemsToDeselect, clearExisting)
+    End Sub
+
+
+    Public Shared ReadOnly Property IsBatchingSelectionChanges As Boolean
+        Get
+            Return _activeInstance IsNot Nothing AndAlso _activeInstance.InstanceIsBatchingSelectionNotifications
+        End Get
+    End Property
+
+
+    Friend ReadOnly Property InstanceIsBatchingSelectionNotifications As Boolean
+        Get
+            Return _selectionManager IsNot Nothing AndAlso _selectionManager.IsBatchingNotifications
+        End Get
+    End Property
 
     Public Shared Sub AddToSelection(drawable As IDrawable)
         _activeInstance?.InstanceAddToSelection(drawable)
@@ -522,9 +541,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         _activeInstance?.InstanceRemoveFromSelection(drawable)
     End Sub
 
-    Public Shared Sub ToggleSelection(drawable As IDrawable)
-        _activeInstance?.InstanceToggleSelection(drawable)
-    End Sub
 
     Public Event InstanceSelectionCountChanged As EventHandler
 

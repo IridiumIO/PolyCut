@@ -1,4 +1,4 @@
-﻿Imports System.Collections.ObjectModel
+Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.IO
 Imports System.Net.WebRequestMethods
@@ -328,7 +328,7 @@ Partial Public Class MainViewModel
 
     <RelayCommand>
     Private Sub SelectAll()
-        DrawableCollection.Where(Function(f) TypeOf (f) IsNot DrawableGroup).ForEach(Sub(d) PolyCanvas.AddToSelection(d))
+        PolyCanvas.ApplySelection(DrawableCollection.Where(Function(f) TypeOf f IsNot DrawableGroup))
     End Sub
 
 

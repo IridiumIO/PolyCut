@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Linq
 
 Imports CommunityToolkit.Mvvm.ComponentModel
@@ -23,9 +23,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             OnPropertyChanged(NameOf(CanvasToolMode))
             OnPropertyChanged(NameOf(CanvasToolModeIsText))
             If value <> CanvasMode.Selection Then
-                For Each child In MainVM.DrawableCollection
-                    child.IsSelected = False
-                Next
+                PolyCanvas.ApplySelection(Nothing, MainVM.DrawableCollection)
                 MainVM.NotifyCollectionsChanged()
             End If
         End Set

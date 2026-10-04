@@ -68,8 +68,6 @@ Public Class Tab_Elements
             End If
         End If
 
-        'A canvas-originated selection must not be echoed back: the round trip re-enters this handler once per row
-        'and, with SyncSelectionStates walking the whole collection each time, makes a bulk select quadratic.
         If _syncingFromCanvas OrElse PolyCanvas.IsBatchingSelectionChanges Then Return
 
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
@@ -128,9 +126,4 @@ Public Class Tab_Elements
     End Sub
 
 End Class
-
-
-
-
-
 

@@ -47,12 +47,10 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         Next
 
         ' Remove from collection
-        For Each item In _addedToCollection
-            Try
-                _manager.RemoveDrawableFromCollection(item)
-            Catch
-            End Try
-        Next
+        Try
+            mainVM.RemoveDrawablesFromCollection(_addedToCollection)
+        Catch
+        End Try
 
         ' Remove from ImportedGroups
         For Each g In _addedImportedGroups
@@ -130,32 +128,20 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
 
 
         ' ---- populate _addedToCollection ----
-        For Each g In _built.Groups
+
+        Dim toAdd As New List(Of IDrawable)
+        For Each g In ProjectSerializationService.CanvasItemsInDocumentOrder(_projectData, _built)
             If g Is Nothing Then Continue For
-            If TypeOf g Is NestedDrawableGroup AndAlso Not HasNestedAncestor(g) Then
 
-                Do While PastedNameExistsInDrawableCollection(g.Name)
-                    g.Name = GetIncrementedName(g.Name)
-                Loop
+            Do While PastedNameExistsInDrawableCollection(g.Name)
+                g.Name = GetIncrementedName(g.Name)
+            Loop
 
-
-                _manager.AddDrawableToCollection(g, -1)
-                _addedToCollection.Add(g)
-            End If
+            toAdd.Add(g)
+            _addedToCollection.Add(g)
         Next
 
-        For Each d In _built.Drawables
-            If d Is Nothing Then Continue For
-            If Not HasNestedAncestor(d) Then
-
-                Do While PastedNameExistsInDrawableCollection(d.Name)
-                    d.Name = GetIncrementedName(d.Name)
-                Loop
-
-                _manager.AddDrawableToCollection(d, -1)
-                _addedToCollection.Add(d)
-            End If
-        Next
+        mainVM.AddDrawablesToCollection(toAdd)
 
         ' ---- populate _attachedToDrawingGroup ----
         If mainVM.DrawingGroup IsNot Nothing Then
@@ -215,11 +201,7 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         Next
 
         ' Canvas collection items
-        For Each item In _addedToCollection
-            If Not _manager.DrawableCollection.Contains(item) Then
-                _manager.AddDrawableToCollection(item, -1)
-            End If
-        Next
+        mainVM.AddDrawablesToCollection(_addedToCollection)
 
         ' DrawingGroup attachments
         If mainVM.DrawingGroup IsNot Nothing Then
@@ -247,18 +229,12 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         mainVM.NotifyCollectionsChanged()
     End Sub
 
-
-
-
-
 End Class
 
 Friend NotInheritable Class ProjectApplyHelper
 
     Public Shared Sub ApplyWrapperStateForPaste(pd As ProjectData, built As RuntimeProjectModel)
         If pd Is Nothing OrElse built Is Nothing Then Return
-
-
 
         Dim toSelect As New List(Of IDrawable)
 
@@ -267,6 +243,8 @@ Friend NotInheritable Class ProjectApplyHelper
             Dim grp As IDrawable = Nothing
             If Not built.GroupById.TryGetValue(gd.Id, grp) Then Continue For
             If grp?.DrawableElement Is Nothing Then Continue For
+
+            If grp.HasNestedAncestor() Then Continue For
 
             Dim wrapper = TryCast(grp.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
@@ -288,7 +266,6 @@ Friend NotInheritable Class ProjectApplyHelper
                                 },
                                 applyScaleToContent:=True)
 
-
         Next
 
         ' Drawables
@@ -296,6 +273,8 @@ Friend NotInheritable Class ProjectApplyHelper
             Dim d As IDrawable = Nothing
             If Not built.DrawableById.TryGetValue(dd.Id, d) Then Continue For
             If d?.DrawableElement Is Nothing Then Continue For
+
+            If d.HasNestedAncestor() Then Continue For
 
             Dim wrapper = TryCast(d.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
@@ -316,11 +295,6 @@ Friend NotInheritable Class ProjectApplyHelper
         PolyCanvas.ApplySelection(toSelect)
 
         Debug.WriteLine(Application.GetService(Of MainViewModel).SelectedDrawables.Count)
-
-
-
-
-
 
     End Sub
 

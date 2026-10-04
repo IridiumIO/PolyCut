@@ -43,14 +43,28 @@ Partial Public Class MainViewModel
     <ObservableProperty>
     <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ImplementsProperty(GetType(IDrawableManager), NameOf(IDrawableManager.DrawableCollection))>
-    Private _DrawableCollection As ObservableCollection(Of IDrawable) = New ObservableCollection(Of IDrawable)
+    Private _DrawableCollection As ObservableCollection(Of IDrawable) = New CodingNinja.Wpf.ObjectModel.WpfObservableRangeCollection(Of IDrawable)
 
     <NotifyPropertyChangedFor(NameOf(FlatSidebarItems))>
     <ObservableProperty> Private _ImportedGroups As New ObservableCollection(Of DrawableGroup)
 
     <ObservableProperty>
     Private _FlatSidebarItems As New ObservableCollection(Of SidebarItemVM)
+    Private _sidebarRebuildQueued As Boolean
+
     Private Sub RebuildFlatSidebarItems()
+        Dim d = Application.Current?.Dispatcher
+        If d Is Nothing OrElse Not d.CheckAccess() Then
+            RebuildFlatSidebarItemsNow()
+            Return
+        End If
+        If _sidebarRebuildQueued Then Return
+        _sidebarRebuildQueued = True
+        d.BeginInvoke(New Action(AddressOf RebuildFlatSidebarItemsNow), Threading.DispatcherPriority.Background)
+    End Sub
+
+    Private Sub RebuildFlatSidebarItemsNow()
+        _sidebarRebuildQueued = False
         FlatSidebarItems.Clear()
 
         For i = ImportedGroups.Count - 1 To 0 Step -1
@@ -519,6 +533,63 @@ Partial Public Class MainViewModel
     ' -----------------
     ' Drawable collection management (IDrawableManager)
     ' -----------------
+
+    Private _deferDrawableRemovalDepth As Integer = 0
+
+    Friend ReadOnly Property IsDrawableRemovalDeferred As Boolean
+        Get
+            Return _deferDrawableRemovalDepth > 0
+        End Get
+    End Property
+
+    Friend Sub BeginDeferredDrawableRemoval()
+        _deferDrawableRemovalDepth += 1
+    End Sub
+
+    Friend Sub EndDeferredDrawableRemoval()
+        If _deferDrawableRemovalDepth = 0 Then Return
+        _deferDrawableRemovalDepth -= 1
+    End Sub
+
+    Public Sub AddDrawablesToCollection(drawables As IEnumerable(Of IDrawable))
+        If drawables Is Nothing Then Return
+
+        Dim batch As New List(Of IDrawable)
+        Dim seen As New HashSet(Of IDrawable)
+        For Each d In drawables
+            If d IsNot Nothing AndAlso seen.Add(d) AndAlso Not DrawableCollection.Contains(d) Then batch.Add(d)
+        Next
+        If batch.Count = 0 Then Return
+
+        Dim range = TryCast(_DrawableCollection, CodingNinja.Wpf.ObjectModel.WpfObservableRangeCollection(Of IDrawable))
+        If range IsNot Nothing Then
+            range.AddRange(batch)
+        Else
+            For Each d In batch
+                DrawableCollection.Add(d)
+            Next
+        End If
+    End Sub
+
+    Public Sub RemoveDrawablesFromCollection(drawables As IEnumerable(Of IDrawable))
+        If drawables Is Nothing Then Return
+
+        Dim batch As New List(Of IDrawable)
+        Dim seen As New HashSet(Of IDrawable)
+        For Each d In drawables
+            If d IsNot Nothing AndAlso seen.Add(d) AndAlso DrawableCollection.Contains(d) Then batch.Add(d)
+        Next
+        If batch.Count = 0 Then Return
+
+        Dim range = TryCast(_DrawableCollection, CodingNinja.Wpf.ObjectModel.WpfObservableRangeCollection(Of IDrawable))
+        If range IsNot Nothing Then
+            range.RemoveRange(batch)
+        Else
+            For Each d In batch
+                DrawableCollection.Remove(d)
+            Next
+        End If
+    End Sub
     Public Sub AddDrawableToCollection(drawable As IDrawable, index As Integer) Implements IDrawableManager.AddDrawableToCollection
         If drawable Is Nothing Then Return
         If DrawableCollection.Contains(drawable) Then Return
@@ -569,8 +640,13 @@ Partial Public Class MainViewModel
         End If
     End Sub
 
-
     Friend Sub NotifyCollectionsChanged()
+
+        If ModelBatch.Active Then
+            ModelBatch.OnEndOnce("NotifyCollectionsChanged", AddressOf NotifyCollectionsChanged)
+            Return
+        End If
+
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(DrawableCollection))
         OnPropertyChanged(NameOf(SelectedDrawable))
@@ -594,10 +670,27 @@ Partial Public Class MainViewModel
 
         _suspendTransformMessageHandling = True
 
-        For Each drawable In drawables
-            Dim action As New RemoveDrawableAction(Me, drawable)
-            If action.Execute() Then actions.Add(action)
-        Next
+        Dim removed As New List(Of IDrawable)
+
+        Dim batch = ModelBatch.Begin()
+        BeginDeferredDrawableRemoval()
+        Try
+            For Each drawable In drawables
+                Dim action As New RemoveDrawableAction(Me, drawable)
+                If action.Execute() Then
+                    actions.Add(action)
+                    removed.Add(drawable)
+                End If
+            Next
+        Finally
+            EndDeferredDrawableRemoval()
+            batch.Dispose()
+        End Try
+
+        If removed.Count > 0 Then
+            RemoveDrawablesFromCollection(removed)
+            NotifyCollectionsChanged()
+        End If
 
         For Each grp In parentGroups.Where(Function(g) Not IsDrawingGroup(g) AndAlso Not g.GroupChildren.Any())
             Dim removeGroupAction As New RemoveGroupAction(Me, grp)
@@ -856,8 +949,7 @@ Partial Public Class MainViewModel
 
             Dim res = Await nx.ShowDialogAsync()
 
-
-            If res <> WPF.Ui.Controls.MessageBoxResult.Primary Then Return
+            If res <> Wpf.Ui.Controls.MessageBoxResult.Primary Then Return
         End If
 
         Dim openDialog As New Microsoft.Win32.OpenFileDialog With {

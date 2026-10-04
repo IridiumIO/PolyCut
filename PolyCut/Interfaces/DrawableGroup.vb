@@ -1,4 +1,4 @@
-﻿Imports System.Collections.ObjectModel
+Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 
 Imports PolyCut.[Shared]
@@ -6,6 +6,8 @@ Imports PolyCut.[Shared]
 Public Class DrawableGroup : Inherits BaseDrawable
 
     Public Property GroupChildren As New ObservableCollection(Of IDrawable)
+
+    Private Shared ReadOnly _bulkTouchedGroups As New HashSet(Of DrawableGroup)
 
     ' Flattened view for UI (all leaf drawables under this group, including nested groups)
     Public ReadOnly Property DisplayChildren As New ObservableCollection(Of IDrawable)
@@ -158,7 +160,19 @@ Public Class DrawableGroup : Inherits BaseDrawable
     End Function
 
     Private Sub OnGroupChildrenChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+
+        If ModelBatch.Active Then
+            If _bulkTouchedGroups.Add(Me) Then ModelBatch.OnEndOnce("GroupDisplayChildren", AddressOf RebuildTouchedGroups)
+            Return
+        End If
         RebuildDisplayChildren()
+    End Sub
+
+    Private Shared Sub RebuildTouchedGroups()
+        For Each g In _bulkTouchedGroups
+            g.RebuildDisplayChildren()
+        Next
+        _bulkTouchedGroups.Clear()
     End Sub
 
     Public Sub RebuildDisplayChildren()

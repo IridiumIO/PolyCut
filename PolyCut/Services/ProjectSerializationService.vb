@@ -151,6 +151,46 @@ Public Class ProjectSerializationService
         }
     End Function
 
+    Public Shared Function CanvasItemsInDocumentOrder(projectData As ProjectData, built As RuntimeProjectModel) As List(Of IDrawable)
+        Dim result As New List(Of IDrawable)()
+        If projectData Is Nothing OrElse built Is Nothing Then Return result
+
+        Dim groupDataById = projectData.Groups.ToDictionary(Function(g) g.Id)
+        For Each root In projectData.Groups.Where(Function(g) Not g.ParentGroupId.HasValue)
+            CollectCanvasItems(root, groupDataById, built, result)
+        Next
+
+        Return result
+    End Function
+
+    Private Shared Sub CollectCanvasItems(groupData As GroupData, groupDataById As Dictionary(Of Guid, GroupData), built As RuntimeProjectModel, result As List(Of IDrawable))
+        Dim group As IDrawable = Nothing
+        If groupData Is Nothing OrElse Not built.GroupById.TryGetValue(groupData.Id, group) Then Return
+
+        For Each childId In groupData.ChildIds
+            Dim childGroup As IDrawable = Nothing
+            If built.GroupById.TryGetValue(childId, childGroup) Then
+                Dim nested = TryCast(childGroup, NestedDrawableGroup)
+                If nested IsNot Nothing Then
+
+                    result.Add(nested)
+                Else
+
+                    Dim childData As GroupData = Nothing
+                    If groupDataById.TryGetValue(childId, childData) Then
+                        CollectCanvasItems(childData, groupDataById, built, result)
+                    End If
+                End If
+                Continue For
+            End If
+
+            Dim leaf As IDrawable = Nothing
+            If built.DrawableById.TryGetValue(childId, leaf) AndAlso Not leaf.HasNestedAncestor() Then
+                result.Add(leaf)
+            End If
+        Next
+    End Sub
+
     Private Shared Function GetNestedDepth(g As NestedDrawableGroup) As Integer
         Dim depth As Integer = 0
         Dim p = TryCast(g.ParentGroup, NestedDrawableGroup)
@@ -306,8 +346,6 @@ Public Class ProjectSerializationService
     End Function
 
 
-
-
     Private Shared Sub AddAncestors(item As IDrawable,
                                groups As HashSet(Of IDrawable),
                                drawingGroup As DrawableGroup)
@@ -334,24 +372,50 @@ Friend NotInheritable Class DrawableCodec
 
         Dim element = drawable.DrawableElement
         Dim wrapper = TryCast(element.Parent, ContentControl)
-        If wrapper Is Nothing Then Return Nothing
-
-        'Transform state: Left/Top + Width/Height on the wrapper, rotation on the wrapper, scale on the child element.
-        Dim state = TransformState.FromWrapper(wrapper)
 
         Dim data As New DrawableData With {
             .Id = id,
             .Name = drawable.Name,
-            .Left = state.Translation.X,
-            .Top = state.Translation.Y,
-            .Width = state.Width,
-            .Height = state.Height,
-            .RotationAngle = state.Rotation,
-            .ScaleX = state.Scale.X,
-            .ScaleY = state.Scale.Y,
-            .IsHidden = drawable.IsHidden,
-            .ZIndex = Panel.GetZIndex(wrapper)
+            .IsHidden = drawable.IsHidden
         }
+
+        If wrapper IsNot Nothing Then
+
+            Dim state = TransformState.FromWrapper(wrapper)
+            data.Left = state.Translation.X
+            data.Top = state.Translation.Y
+            data.Width = state.Width
+            data.Height = state.Height
+            data.RotationAngle = state.Rotation
+            data.ScaleX = state.Scale.X
+            data.ScaleY = state.Scale.Y
+            data.ZIndex = Panel.GetZIndex(wrapper)
+        Else
+
+            Dim localLeft As Double = CanvasUtil.GetLeftSafe(element)
+            Dim localTop As Double = CanvasUtil.GetTopSafe(element)
+
+            Dim parentNested = TryCast(drawable.ParentGroup, NestedDrawableGroup)
+            If parentNested IsNot Nothing AndAlso parentNested.InnerCanvas IsNot Nothing Then
+                Try
+                    Dim origin = element.TransformToVisual(parentNested.InnerCanvas).Transform(New Point(0, 0))
+                    localLeft = origin.X
+                    localTop = origin.Y
+                Catch
+                End Try
+            End If
+
+            data.Left = localLeft
+            data.Top = localTop
+            data.Width = CanvasUtil.GetWidthSafe(element)
+            data.Height = CanvasUtil.GetHeightSafe(element)
+
+            Dim rotate = TryCast(element.RenderTransform, RotateTransform)
+            data.RotationAngle = If(rotate IsNot Nothing, rotate.Angle, 0)
+            data.ScaleX = 1
+            data.ScaleY = 1
+            data.ZIndex = Panel.GetZIndex(element)
+        End If
 
         If Double.IsNaN(data.Left) Then data.Left = 0
         If Double.IsNaN(data.Top) Then data.Top = 0
@@ -506,8 +570,5 @@ Friend NotInheritable Class DrawableCodec
 
         Return element
     End Function
-
-
-
 
 End Class

@@ -44,6 +44,8 @@ Public Class UndoRedoService
     End Sub
 
     Public Sub Undo()
+        Dim batch = ModelBatch.Begin()
+        Try
         If _undoStack.Count = 0 Then Return
 
         Dim act = _undoStack.Pop()
@@ -57,9 +59,14 @@ Public Class UndoRedoService
         _redoStack.Push(act)
         RaiseEvent CanUndoChanged(Me, EventArgs.Empty)
         RaiseEvent CanRedoChanged(Me, EventArgs.Empty)
+        Finally
+        batch.Dispose()
+        End Try
     End Sub
 
     Public Sub Redo()
+        Dim batch = ModelBatch.Begin()
+        Try
         If _redoStack.Count = 0 Then Return
 
         Dim act = _redoStack.Pop()
@@ -73,6 +80,9 @@ Public Class UndoRedoService
         _undoStack.Push(act)
         RaiseEvent CanUndoChanged(Me, EventArgs.Empty)
         RaiseEvent CanRedoChanged(Me, EventArgs.Empty)
+        Finally
+        batch.Dispose()
+        End Try
     End Sub
 
     Public Sub Clear()

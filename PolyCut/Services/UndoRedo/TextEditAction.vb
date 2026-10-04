@@ -8,6 +8,7 @@ Public Class TextEditAction : Implements IUndoableAction
     Private ReadOnly _oldChars As TextCharacteristics
     Private ReadOnly _newText As String
     Private ReadOnly _newChars As TextCharacteristics
+    Private ReadOnly _wrapperBefore As TransformAction.Snapshot
 
     Public Sub New(textBox As System.Windows.Controls.TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
         _textBox = textBox
@@ -15,6 +16,8 @@ Public Class TextEditAction : Implements IUndoableAction
         _oldChars = oldChars
         _newText = newText
         _newChars = newChars
+
+        _wrapperBefore = TransformAction.MakeSnapshotFromWrapper(TryCast(textBox?.Parent, System.Windows.Controls.ContentControl))
     End Sub
 
     Public ReadOnly Property Description As String Implements IUndoableAction.Description
@@ -35,6 +38,8 @@ Public Class TextEditAction : Implements IUndoableAction
     Public Sub Undo() Implements IUndoableAction.Undo
         If _textBox Is Nothing Then Return
         Apply(_oldText, _oldChars)
+
+        TransformAction.ApplySnapshotToWrapper(_wrapperBefore, TryCast(_textBox.Parent, System.Windows.Controls.ContentControl))
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo

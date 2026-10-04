@@ -14,7 +14,7 @@ Namespace Services.UndoRedo
         Private ReadOnly _projectService As ProjectSerializationService
         Private ReadOnly _filePath As String
         Private _projectData As ProjectData
-        Private _previousState As ProjectSnapshot
+        Private _previousProjectData As ProjectData
 
         Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, filePath As String)
             _manager = manager
@@ -30,7 +30,7 @@ Namespace Services.UndoRedo
 
         Public Function Execute() As Boolean Implements IUndoableAction.Execute
 
-            _previousState = ProjectSnapshot.Capture(_manager)
+            _previousProjectData = CaptureCurrentProject()
 
             _projectData = _projectService.LoadProject(_filePath)
             If _projectData Is Nothing Then Return False
@@ -40,11 +40,24 @@ Namespace Services.UndoRedo
         End Function
 
         Public Sub Undo() Implements IUndoableAction.Undo
-            If _previousState Is Nothing Then Return
+            If _previousProjectData Is Nothing Then Return
 
             ClearCurrentProject()
-            _previousState.Restore(_manager, _projectService)
+            RestoreProjectState(_previousProjectData)
         End Sub
+
+        Private Function CaptureCurrentProject() As ProjectData
+            Dim mainVM = TryCast(_manager, MainViewModel)
+
+            Dim groups As IEnumerable(Of IDrawable) = Enumerable.Empty(Of IDrawable)()
+            Dim config As Core.ProcessorConfiguration = Nothing
+            If mainVM IsNot Nothing Then
+                groups = mainVM.ImportedGroups
+                config = mainVM.Configuration
+            End If
+
+            Return _projectService.CreateProjectData(_manager.DrawableCollection, groups, config)
+        End Function
 
         Public Sub Redo() Implements IUndoableAction.Redo
             If _projectData Is Nothing Then Return
@@ -62,9 +75,13 @@ Namespace Services.UndoRedo
 
             ' Clear all drawables
             Dim drawablesToRemove = _manager.DrawableCollection.ToList()
-            For Each drawable In drawablesToRemove
-                _manager.RemoveDrawableFromCollection(drawable)
-            Next
+            If mainVM IsNot Nothing Then
+                mainVM.RemoveDrawablesFromCollection(drawablesToRemove)
+            Else
+                For Each drawable In drawablesToRemove
+                    _manager.RemoveDrawableFromCollection(drawable)
+                Next
+            End If
 
             ' Clear imported groups
             If mainVM IsNot Nothing Then
@@ -79,7 +96,6 @@ Namespace Services.UndoRedo
                 Dim built As RuntimeProjectModel = _projectService.BuildRuntimeModel(projectData, designerStyle)
 
                 Dim allGroups As List(Of IDrawable) = built.Groups
-                Dim allDrawables As List(Of IDrawable) = built.Drawables
 
                 ' Populate VM group list (top-level groups only)
                 If mainVM IsNot Nothing Then
@@ -111,17 +127,22 @@ Namespace Services.UndoRedo
                     End If
                 End If
 
-                For Each g In allGroups
-                    If TypeOf g Is NestedDrawableGroup AndAlso Not HasNestedAncestor(g) Then
-                        _manager.AddDrawableToCollection(g, -1)
-                    End If
-                Next
+                Dim toAdd As List(Of IDrawable) = ProjectSerializationService.CanvasItemsInDocumentOrder(projectData, built)
 
-                For Each d In allDrawables
-                    If Not HasNestedAncestor(d) Then
+                If mainVM IsNot Nothing Then
+                    mainVM.AddDrawablesToCollection(toAdd)
+                Else
+                    For Each d In toAdd
                         _manager.AddDrawableToCollection(d, -1)
+                    Next
+                End If
+
+                If mainVM IsNot Nothing AndAlso mainVM.DrawingGroup IsNot Nothing Then
+                    If mainVM.DrawableCollection.Contains(mainVM.DrawingGroup) Then
+                        mainVM.DrawableCollection.Remove(mainVM.DrawingGroup)
                     End If
-                Next
+                    mainVM.AddDrawableToCollection(mainVM.DrawingGroup, 0)
+                End If
 
                 If projectData.Configuration IsNot Nothing Then
                     mainVM.Configuration = Text.Json.JsonSerializer.Deserialize(Of PolyCut.Core.ProcessorConfiguration)(projectData.Configuration)
@@ -144,53 +165,6 @@ Namespace Services.UndoRedo
             End Try
         End Function
 
-
-
-    End Class
-
-
-    Public Class ProjectSnapshot
-        Public Property DrawableSnapshots As List(Of (Id As Guid, Data As DrawableData))
-        Public Property GroupSnapshots As List(Of GroupData)
-        Public Property ConfigurationSnapshot As Core.ProcessorConfiguration
-
-        Public Shared Function Capture(manager As IDrawableManager) As ProjectSnapshot
-            Dim snapshot As New ProjectSnapshot With {
-                .DrawableSnapshots = New List(Of (Guid, DrawableData)),
-                .GroupSnapshots = New List(Of GroupData),
-                .ConfigurationSnapshot = Nothing
-            }
-
-            ' Capture all current drawables
-            Dim projectService As New ProjectSerializationService()
-            Dim drawableIdMap As New Dictionary(Of IDrawable, Guid)
-
-            For Each drawable In manager.DrawableCollection
-                Dim id = Guid.NewGuid()
-                drawableIdMap(drawable) = id
-
-                snapshot.DrawableSnapshots.Add((id, Nothing))
-            Next
-            snapshot.ConfigurationSnapshot = TryCast(manager, MainViewModel)?.Configuration
-
-            Return snapshot
-        End Function
-
-        Public Sub Restore(manager As IDrawableManager, projectService As ProjectSerializationService)
-
-            If ConfigurationSnapshot IsNot Nothing Then
-                Dim mainVM = TryCast(manager, MainViewModel)
-                If mainVM IsNot Nothing Then
-                    mainVM.Configuration = ConfigurationSnapshot
-                End If
-            End If
-
-            For Each snap In DrawableSnapshots
-                If snap.Data IsNot Nothing Then
-                    Dim element = DrawableCodec.DeserializeDrawable(snap.Data)
-                End If
-            Next
-        End Sub
     End Class
 
 End Namespace

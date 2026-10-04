@@ -220,6 +220,21 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
     Private Sub OnCollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs)
+
+        ApplyCollectionChange(e)
+        RequestInvalidate()
+    End Sub
+
+    Private Sub RequestInvalidate()
+        If ModelBatch.Active Then
+            ModelBatch.OnEndOnce("CanvasInvalidate", AddressOf Rasteriser.Invalidate)
+            Return
+        End If
+
+        Rasteriser.Invalidate()
+    End Sub
+
+    Private Sub ApplyCollectionChange(e As NotifyCollectionChangedEventArgs)
         Select Case e.Action
             Case NotifyCollectionChangedAction.Add
                 Dim startIndex As Integer = e.NewStartingIndex
@@ -231,13 +246,13 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                     InsertDrawableVisual(newItem, insertIndex)
                 Next
             Case NotifyCollectionChangedAction.Remove
+                Dim removed As New List(Of IDrawable)
                 For Each oldItem As IDrawable In e.OldItems
                     RemoveChild(oldItem)
-                    ' If removed item was selected, remove from selection
-                    If oldItem.IsSelected Then
-                        _selectionManager.DeselectItem(oldItem)
-                    End If
+                    If oldItem.IsSelected Then removed.Add(oldItem)
                 Next
+
+                If removed.Count > 0 Then _selectionManager.ApplySelection(Nothing, removed)
             Case NotifyCollectionChangedAction.Move
                 Dim oldIndex As Integer = e.OldStartingIndex
                 Dim newIndex As Integer = e.NewStartingIndex
@@ -251,8 +266,8 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 _selectionManager.ClearSelection()
         End Select
 
-        Rasteriser.Invalidate()
     End Sub
+
 
     Private Sub AddChild(child As FrameworkElement, Optional parentIDrawable As IDrawable = Nothing, Optional insertIndex As Integer = -1)
         If TypeOf child Is ContentControl Then

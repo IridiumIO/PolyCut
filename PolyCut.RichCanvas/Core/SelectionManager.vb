@@ -50,9 +50,6 @@ Public Class SelectionManager
         End Get
     End Property
 
-    'Batches selection notifications: every mutation inside the block raises CollectionChanged, but SelectionChanged
-    'is raised once on the outermost EndNotificationBatch. Without this each item costs a transform-overlay update plus a
-    'selection-bounds recomputation, which is quadratic across a bulk select.
     Private Sub BeginNotificationBatch()
         _notificationBatchDepth += 1
     End Sub
@@ -66,9 +63,6 @@ Public Class SelectionManager
         End If
     End Sub
 
-
-    'The single place selection is mutated. Runs inside one notification batch, keeps _selectedItems and _selectedSet in
-    'step, sets the model flag itself, and is idempotent: items already in the requested state raise nothing.
     Public Sub ApplySelection(itemsToSelect As IEnumerable(Of IDrawable), Optional itemsToDeselect As IEnumerable(Of IDrawable) = Nothing, Optional clearExisting As Boolean = False)
         BeginNotificationBatch()
         Try
@@ -79,8 +73,7 @@ Public Class SelectionManager
                     If item Is Nothing Then Continue For
                     _selectedItems.Remove(item)
                     _selectedSet.Remove(item)
-                    'Clear the flag even when the item was not tracked: a direct IsSelected write can leave the model
-                    'flag set while the manager knows nothing about the item.
+
                     If item.IsSelected Then item.IsSelected = False
                 Next
             End If
@@ -121,8 +114,6 @@ Public Class SelectionManager
             ApplySelection({item})
         End If
     End Sub
-
-
 
 
     Public Sub ClearSelection()
@@ -200,7 +191,6 @@ Public Class SelectionManager
         Return New Rect(minX, minY, maxX - minX, maxY - minY)
     End Function
 
-
     Private Sub InvalidateBounds()
         _boundsInvalid = True
     End Sub
@@ -215,6 +205,16 @@ Public Class SelectionManager
             _hasDeferredNotification = True
             Return
         End If
+
+        If ModelBatch.Active Then
+            ModelBatch.OnEndOnce("SelectionChanged", AddressOf NotifySelectionChanged)
+            Return
+        End If
+
+        RaiseEvent SelectionChanged(Me, EventArgs.Empty)
+    End Sub
+
+    Private Sub NotifySelectionChanged()
         RaiseEvent SelectionChanged(Me, EventArgs.Empty)
     End Sub
 

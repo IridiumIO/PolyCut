@@ -1,4 +1,4 @@
-﻿Imports System.Windows
+Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
 
@@ -11,6 +11,8 @@ Public Class TransformAction
         Public Property Width As Double
         Public Property Height As Double
         Public Property RenderTransform As Transform
+
+        Public Property ZIndex As Integer
     End Class
 
     Private ReadOnly _items As New List(Of (Target As IDrawable, Before As Snapshot, After As Snapshot))
@@ -31,27 +33,15 @@ Public Class TransformAction
         Return True
     End Function
 
-    Private Sub Apply(snap As Snapshot, target As IDrawable)
-        If snap Is Nothing OrElse target Is Nothing OrElse target.DrawableElement Is Nothing Then Return
-        Dim wrapper = TryCast(target.DrawableElement.Parent, ContentControl)
-        If wrapper Is Nothing Then Return
-
-        Canvas.SetLeft(wrapper, snap.Left)
-        Canvas.SetTop(wrapper, snap.Top)
-        wrapper.Width = snap.Width
-        wrapper.Height = snap.Height
-        wrapper.RenderTransform = snap.RenderTransform
-    End Sub
-
     Public Sub Undo() Implements IUndoableAction.Undo
         For Each t In _items
-            Apply(t.Before, t.Target)
+            ApplySnapshot(t.Before, t.Target)
         Next
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo
         For Each t In _items
-            Apply(t.After, t.Target)
+            ApplySnapshot(t.After, t.Target)
         Next
     End Sub
 
@@ -63,10 +53,34 @@ Public Class TransformAction
             .Top = state.Translation.Y,
             .Width = state.Width,
             .Height = state.Height,
-            .RenderTransform = If(wrapper.RenderTransform, Nothing)
+            .RenderTransform = If(wrapper.RenderTransform, Nothing),
+            .ZIndex = Panel.GetZIndex(wrapper)
         }
     End Function
 
+    Public Shared Function MakeSnapshotFromDrawable(drawable As IDrawable) As Snapshot
+        Return MakeSnapshotFromWrapper(GetWrapper(drawable))
+    End Function
+
+    Public Shared Sub ApplySnapshot(snapshot As Snapshot, drawable As IDrawable)
+        ApplySnapshotToWrapper(snapshot, GetWrapper(drawable))
+    End Sub
+
+    Public Shared Sub ApplySnapshotToWrapper(snapshot As Snapshot, wrapper As ContentControl)
+        If snapshot Is Nothing OrElse wrapper Is Nothing Then Return
+
+        Canvas.SetLeft(wrapper, snapshot.Left)
+        Canvas.SetTop(wrapper, snapshot.Top)
+        If Not Double.IsNaN(snapshot.Width) AndAlso snapshot.Width > 0 Then wrapper.Width = snapshot.Width
+        If Not Double.IsNaN(snapshot.Height) AndAlso snapshot.Height > 0 Then wrapper.Height = snapshot.Height
+        wrapper.RenderTransform = snapshot.RenderTransform
+        Panel.SetZIndex(wrapper, snapshot.ZIndex)
+    End Sub
+
+    Public Shared Function GetWrapper(drawable As IDrawable) As ContentControl
+        If drawable?.DrawableElement Is Nothing Then Return Nothing
+        Return TryCast(drawable.DrawableElement.Parent, ContentControl)
+    End Function
 
     ' ====================
     ' Transform Operations
@@ -96,13 +110,11 @@ Public Class TransformAction
         Canvas.SetTop(wrapper, newItemCenter.Y - size.Height * wrapper.RenderTransformOrigin.Y)
     End Sub
 
-
     Public Shared Sub ApplyMove(wrapper As ContentControl, deltaX As Double, deltaY As Double)
         If wrapper Is Nothing Then Return
         Canvas.SetLeft(wrapper, Canvas.GetLeft(wrapper) + deltaX)
         Canvas.SetTop(wrapper, Canvas.GetTop(wrapper) + deltaY)
     End Sub
-
 
     Public Shared Sub ApplyResizeSingle(wrapper As ContentControl, handleName As String, deltaX As Double, deltaY As Double)
         If wrapper Is Nothing Then Return
@@ -110,7 +122,6 @@ Public Class TransformAction
         Dim angle As Double = 0
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
         If rotateTransform IsNot Nothing Then angle = rotateTransform.Angle
-
 
         Dim angleRad = angle * Math.PI / 180.0
         Dim cosA = Math.Cos(-angleRad)
@@ -177,7 +188,6 @@ Public Class TransformAction
         Dim newWidth = startSize.Width - deltaHorizontal
         Dim newHeight = startSize.Height - deltaVertical
 
-
         Dim moveTop = (verticalAlignment = VerticalAlignment.Top)
         Dim moveLeft = (horizontalAlignment = HorizontalAlignment.Left)
 
@@ -194,7 +204,6 @@ Public Class TransformAction
         Canvas.SetTop(wrapper, placement.Top)
         Canvas.SetLeft(wrapper, placement.Left)
     End Sub
-
 
     Public Shared Sub ApplyResizeMulti(wrapper As ContentControl, scaleX As Double, scaleY As Double, anchorX As Double, anchorY As Double, initialSize As (Width As Double, Height As Double), initialPosition As Point, initialRotation As Double)
         If wrapper Is Nothing Then Return
@@ -214,7 +223,6 @@ Public Class TransformAction
         End If
     End Sub
 
-
     Public Shared Sub SetSizeAndPosition(wrapper As ContentControl, width As Double, height As Double, Optional left As Double? = Nothing, Optional top As Double? = Nothing)
         If wrapper Is Nothing Then Return
 
@@ -223,7 +231,6 @@ Public Class TransformAction
         If left.HasValue Then Canvas.SetLeft(wrapper, left.Value)
         If top.HasValue Then Canvas.SetTop(wrapper, top.Value)
     End Sub
-
 
     Public Shared Function HandleTextBoxSizeChanged(wrapper As ContentControl, e As SizeChangedEventArgs) As Boolean
         Dim textBox = TryCast(wrapper.Content, TextBox)
@@ -275,7 +282,6 @@ Public Class TransformAction
     ' Mirror Operations
     ' ====================
 
-
     Public Shared Sub ApplyMirror(wrapper As ContentControl, selectionCenter As Point, mirrorX As Boolean, mirrorY As Boolean)
         If wrapper Is Nothing Then Return
 
@@ -312,10 +318,6 @@ Public Class TransformAction
         wrapper.UpdateLayout()
     End Sub
 
-
-
-
-
     Public Shared Function CalculateMirroredRotation(currentRotation As Double, mirrorX As Boolean, mirrorY As Boolean) As Double
         Dim newRotation As Double = currentRotation
 
@@ -336,13 +338,11 @@ Public Class TransformAction
         Return newRotation
     End Function
 
-
     Public Shared Function GetRotationAngle(wrapper As ContentControl) As Double
         If wrapper Is Nothing Then Return 0
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
         Return If(rotateTransform IsNot Nothing, rotateTransform.Angle, 0)
     End Function
-
 
     Public Shared Sub ApplyScaleTransform(element As FrameworkElement, mirrorX As Boolean, mirrorY As Boolean)
         If element Is Nothing Then Return
@@ -367,6 +367,5 @@ Public Class TransformAction
         If mirrorX Then scale.ScaleX *= -1
         If mirrorY Then scale.ScaleY *= -1
     End Sub
-
 
 End Class

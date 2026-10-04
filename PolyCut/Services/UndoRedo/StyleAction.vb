@@ -12,9 +12,9 @@ Public Class StyleAction
     Private ReadOnly _previousFillOverrides As System.Collections.Generic.IDictionary(Of IDrawable, System.Windows.Media.Brush)
     Private ReadOnly _previousStrokeOverrides As System.Collections.Generic.IDictionary(Of IDrawable, System.Windows.Media.Brush)
 
-    Private _previous As New List(Of (IDrawable, System.Windows.Media.Brush, System.Windows.Media.Brush, Double))
+    Private _previous As New List(Of StyleRecord)()
 
-    Public Sub New(manager As IDrawableManager, targets As IEnumerable(Of IDrawable), newFill As System.Windows.Media.Brush, newStroke As System.Windows.Media.Brush, Optional newStrokeThickness As Nullable(Of Double) = Nothing, Optional previousThicknessOverrides As System.Collections.Generic.IDictionary(Of IDrawable, Double) = Nothing, Optional previousFillOverrides As System.Collections.Generic.IDictionary(Of IDrawable, System.Windows.Media.Brush) = Nothing, Optional previousStrokeOverrides As System.Collections.Generic.IDictionary(Of IDrawable, System.Windows.Media.Brush) = Nothing)
+    Public Sub New(manager As IDrawableManager, targets As IEnumerable(Of IDrawable), newFill As Media.Brush, newStroke As System.Windows.Media.Brush, Optional newStrokeThickness As Nullable(Of Double) = Nothing, Optional previousThicknessOverrides As IDictionary(Of IDrawable, Double) = Nothing, Optional previousFillOverrides As IDictionary(Of IDrawable, Media.Brush) = Nothing, Optional previousStrokeOverrides As IDictionary(Of IDrawable, Media.Brush) = Nothing)
         _manager = manager
         _targets = ExpandTargets(targets)
         _newFill = newFill
@@ -38,6 +38,7 @@ Public Class StyleAction
         Dim strokeOverrides = ExpandOverrideMap(_previousStrokeOverrides)
         Dim thicknessOverrides = ExpandOverrideMap(_previousThicknessOverrides)
 
+        Dim captured As New List(Of StyleRecord)()
         For Each d In _targets
             Dim prevFill As System.Windows.Media.Brush = Nothing
             Dim prevStroke As System.Windows.Media.Brush = Nothing
@@ -59,16 +60,19 @@ Public Class StyleAction
             Else
                 prevThickness = d.StrokeThickness
             End If
-            _previous.Add((d, prevFill, prevStroke, prevThickness))
 
-            Dim isGroup = TypeOf d Is NestedDrawableGroup
-            Dim applyToThis = Not isGroup ' leaves only
+            captured.Add(CapturePrevious(d, prevFill, prevStroke, prevThickness))
+        Next
 
-            ' Still update group’s own stored properties so UI reflects the change
-            If isGroup Then
-                If _newFill IsNot Nothing Then DirectCast(d, NestedDrawableGroup).Fill = _newFill
-                If _newStroke IsNot Nothing Then DirectCast(d, NestedDrawableGroup).Stroke = _newStroke
-                If _newStrokeThickness.HasValue Then DirectCast(d, NestedDrawableGroup).StrokeThickness = _newStrokeThickness.Value
+        _previous.Clear()
+        _previous.AddRange(captured)
+
+        For Each d In _targets
+            Dim group = TryCast(d, NestedDrawableGroup)
+            If group IsNot Nothing Then
+                If _newFill IsNot Nothing Then group.Fill = _newFill
+                If _newStroke IsNot Nothing Then group.Stroke = _newStroke
+                If _newStrokeThickness.HasValue Then group.StrokeThickness = _newStrokeThickness.Value
             Else
                 If _newFill IsNot Nothing Then d.Fill = _newFill
                 If _newStroke IsNot Nothing Then d.Stroke = _newStroke
@@ -81,6 +85,7 @@ Public Class StyleAction
 
         Return True
     End Function
+
 
     Private Shared Function ExpandTargets(targets As IEnumerable(Of IDrawable)) As List(Of IDrawable)
         Dim result As New List(Of IDrawable)()
@@ -105,6 +110,7 @@ Public Class StyleAction
         Return result.Distinct().ToList()
     End Function
 
+
     Private Shared Function ExpandOverrideMap(Of T)(input As IDictionary(Of IDrawable, T)) As IDictionary(Of IDrawable, T)
         If input Is Nothing Then Return Nothing
 
@@ -126,25 +132,70 @@ Public Class StyleAction
         Return expanded
     End Function
 
-    Public Sub Undo() Implements IUndoableAction.Undo
-        ' Restore leaves first, then groups last to avoid group propagation overriding leaf restores
-        For Each t In _previous.Where(Function(x) Not TypeOf x.Item1 Is NestedDrawableGroup)
-            Dim d = t.Item1
-            d.Fill = t.Item2
-            d.Stroke = t.Item3
-            d.StrokeThickness = t.Item4
-        Next
 
-        For Each t In _previous.Where(Function(x) TypeOf x.Item1 Is NestedDrawableGroup)
-            Dim d = DirectCast(t.Item1, NestedDrawableGroup)
-            d.Fill = t.Item2
-            d.Stroke = t.Item3
-            d.StrokeThickness = t.Item4
+    Private Function CapturePrevious(d As IDrawable, prevFill As System.Windows.Media.Brush, prevStroke As System.Windows.Media.Brush, prevThickness As Double) As StyleRecord
+        Dim record As New StyleRecord With {
+            .Drawable = d,
+            .Fill = prevFill,
+            .Stroke = prevStroke,
+            .Thickness = prevThickness
+        }
+
+        Dim group = TryCast(d, NestedDrawableGroup)
+        If group IsNot Nothing Then
+            record.IsGroup = True
+            record.GroupStates = New List(Of (Group As NestedDrawableGroup, State As NestedDrawableGroup.StyleState))()
+            CaptureGroupStates(group, record.GroupStates)
+        End If
+
+        Return record
+    End Function
+
+
+    Private Shared Sub CaptureGroupStates(group As NestedDrawableGroup, states As List(Of (Group As NestedDrawableGroup, State As NestedDrawableGroup.StyleState)))
+        states.Add((group, group.CaptureOwnStyle()))
+
+        For Each child In group.GroupChildren
+            Dim nested = TryCast(child, NestedDrawableGroup)
+            If nested IsNot Nothing Then CaptureGroupStates(nested, states)
+        Next
+    End Sub
+
+
+    Public Sub Undo() Implements IUndoableAction.Undo
+
+        For Each record In _previous
+            RestorePrevious(record)
         Next
 
         Dim mainVM = TryCast(_manager, MainViewModel)
         If mainVM IsNot Nothing Then mainVM.NotifyCollectionsChanged()
     End Sub
+
+
+    Private Sub RestorePrevious(record As StyleRecord)
+        If record Is Nothing OrElse record.Drawable Is Nothing Then Return
+
+        If record.IsGroup AndAlso record.GroupStates IsNot Nothing Then
+            For Each entry In record.GroupStates
+                entry.Group.RestoreOwnStyle(entry.State)
+            Next
+            Return
+        End If
+
+        record.Drawable.Fill = record.Fill
+        record.Drawable.Stroke = record.Stroke
+        record.Drawable.StrokeThickness = record.Thickness
+    End Sub
+
+    Private Class StyleRecord
+        Public Drawable As IDrawable
+        Public IsGroup As Boolean
+        Public Fill As System.Windows.Media.Brush
+        Public Stroke As System.Windows.Media.Brush
+        Public Thickness As Double
+        Public GroupStates As List(Of (Group As NestedDrawableGroup, State As NestedDrawableGroup.StyleState))
+    End Class
 
     Public Sub Redo() Implements IUndoableAction.Redo
         Execute()

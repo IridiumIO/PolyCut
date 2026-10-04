@@ -516,5 +516,31 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         End Set
     End Property
 
+    Public Class StyleState
+        Public Fill As System.Windows.Media.Brush
+        Public Stroke As System.Windows.Media.Brush
+        Public StrokeThickness As Double
+    End Class
+
+    Public Function CaptureOwnStyle() As StyleState
+        Return New StyleState With {
+            .Fill = _fill,
+            .Stroke = _stroke,
+            .StrokeThickness = _strokeThickness
+        }
+    End Function
+
+    Public Sub RestoreOwnStyle(state As StyleState)
+        If state Is Nothing Then Return
+
+        _fill = state.Fill
+        _stroke = state.Stroke
+        _strokeThickness = state.StrokeThickness
+
+        ApplyVisualStyle()
+        OnPropertyChanged(NameOf(Fill))
+        OnPropertyChanged(NameOf(Stroke))
+        OnPropertyChanged(NameOf(StrokeThickness))
+    End Sub
 
 End Class

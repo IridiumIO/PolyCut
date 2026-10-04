@@ -1,6 +1,5 @@
 Imports PolyCut.[Shared]
 Imports PolyCut.RichCanvas
-Imports System.Windows.Controls
 
 Public Class RemoveDrawableAction : Implements IUndoableAction
 
@@ -20,12 +19,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         _indexInGroup = If(_parentGroup IsNot Nothing, _parentGroup.GroupChildren.IndexOf(drawable), -1)
 
         Try
-            Dim wrapper = TryCast(_drawable?.DrawableElement?.Parent, ContentControl)
-            If wrapper IsNot Nothing Then
-                _transformSnapshot = TransformAction.MakeSnapshotFromWrapper(wrapper)
-            Else
-                _transformSnapshot = Nothing
-            End If
+            _transformSnapshot = TransformAction.MakeSnapshotFromDrawable(_drawable)
         Catch
             _transformSnapshot = Nothing
         End Try
@@ -41,11 +35,15 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         If _drawable Is Nothing Then Return False
 
         Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing Then
-            PolyCanvas.RemoveFromSelection(_drawable)
-        End If
 
-        _manager.RemoveDrawableFromCollection(_drawable)
+        Dim deferring As Boolean = mainVM IsNot Nothing AndAlso mainVM.IsDrawableRemovalDeferred
+        If Not deferring Then
+            If mainVM IsNot Nothing Then
+                PolyCanvas.RemoveFromSelection(_drawable)
+            End If
+
+            _manager.RemoveDrawableFromCollection(_drawable)
+        End If
 
         If _parentGroup IsNot Nothing Then
             _parentGroup.RemoveChild(_drawable)
@@ -53,7 +51,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         _manager.ClearDrawableParent(_drawable)
 
-        If mainVM IsNot Nothing Then
+        If mainVM IsNot Nothing AndAlso Not mainVM.IsDrawableRemovalDeferred Then
             mainVM.NotifyCollectionsChanged()
         End If
 
@@ -80,29 +78,23 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
             End If
 
             If Not _manager.DrawableCollection.Contains(_drawable) Then
-                If _indexInCollection >= 0 Then
-                    _manager.AddDrawableToCollection(_drawable, _indexInCollection)
-                Else
-                    _manager.AddDrawableToCollection(_drawable, -1)
-                End If
+                RestoreToCollection()
             End If
         Else
-            _manager.AddDrawableToCollection(_drawable, _indexInCollection)
+            RestoreToCollection()
         End If
+    End Sub
 
-        Try
-            If _transformSnapshot IsNot Nothing Then
-                Dim wrapper = TryCast(_drawable.DrawableElement?.Parent, ContentControl)
-                If wrapper IsNot Nothing Then
-                    Canvas.SetLeft(wrapper, _transformSnapshot.Left)
-                    Canvas.SetTop(wrapper, _transformSnapshot.Top)
-                    If Not Double.IsNaN(_transformSnapshot.Width) AndAlso _transformSnapshot.Width > 0 Then wrapper.Width = _transformSnapshot.Width
-                    If Not Double.IsNaN(_transformSnapshot.Height) AndAlso _transformSnapshot.Height > 0 Then wrapper.Height = _transformSnapshot.Height
-                    wrapper.RenderTransform = _transformSnapshot.RenderTransform
-                End If
-            End If
-        Catch
-        End Try
+
+    Private Sub RestoreToCollection()
+        Dim snapshot = _transformSnapshot
+        ModelBatch.RestoreToCollection(_manager, _drawable, _indexInCollection,
+            Sub()
+                Try
+                    TransformAction.ApplySnapshot(snapshot, _drawable)
+                Catch
+                End Try
+            End Sub)
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo
@@ -110,5 +102,4 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
     End Sub
 
 End Class
-
 

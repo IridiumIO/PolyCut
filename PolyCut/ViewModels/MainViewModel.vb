@@ -961,7 +961,6 @@ Partial Public Class MainViewModel
             Dim action As New LoadProjectAction(Me, _projectService, openDialog.FileName)
             If action.Execute() Then
                 _undoRedoService.Clear()
-                _undoRedoService.Push(action)
                 CurrentProjectPath = openDialog.FileName
                 _snackbarService.GenerateSuccess("Project Loaded".LT(), IO.Path.GetFileName(CurrentProjectPath))
                 NotifyCollectionsChanged()

@@ -1,3 +1,4 @@
+﻿Option Strict On
 Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
@@ -12,7 +13,7 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
     Private _addedToCollection As New List(Of IDrawable)
     Private _addedImportedGroups As New List(Of IDrawable)
     Private _attachedToDrawingGroup As New List(Of IDrawable)
-    Private _reattachedToExistingImportRoot As New List(Of (Host As DrawableGroup, Child As IDrawable))
+    Private _reattachedToExistingImportRoot As New List(Of (Host As IDrawable, Child As IDrawable))
 
     Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, projectData As ProjectData, designerStyle As Style)
         _manager = manager
@@ -26,13 +27,9 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
 
 
     Public Sub Undo() Implements IUndoableAction.Undo
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM Is Nothing Then Return
-
         For Each t In _reattachedToExistingImportRoot
             Try
-                t.Host.RemoveChild(t.Child)
-                t.Child.ParentGroup = Nothing
+                _manager.RemoveChildFromGroup(t.Host, t.Child)
             Catch
             End Try
         Next
@@ -40,41 +37,34 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         ' Detach from DrawingGroup first
         For Each d In _attachedToDrawingGroup
             Try
-                mainVM.DrawingGroup?.RemoveChild(d)
-                d.ParentGroup = Nothing
+                _manager.RemoveChildFromGroup(_manager.DrawingGroup, d)
             Catch
             End Try
         Next
 
         ' Remove from collection
         Try
-            mainVM.RemoveDrawablesFromCollection(_addedToCollection)
+            _manager.RemoveDrawablesFromCollection(_addedToCollection)
         Catch
         End Try
 
         ' Remove from ImportedGroups
         For Each g In _addedImportedGroups
             Try
-                If mainVM.ImportedGroups.Contains(g) Then
-                    mainVM.ImportedGroups.Remove(g)
-                End If
+                _manager.RemoveImportRoot(g)
             Catch
             End Try
         Next
 
-        mainVM.NotifyCollectionsChanged()
+        _manager.NotifyChanged()
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM Is Nothing Then Return
-        ApplyInstances(mainVM)
+        ApplyInstances()
     End Sub
 
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _projectData Is Nothing Then Return False
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM Is Nothing Then Return False
 
         PolyCanvas.ClearSelection()
 
@@ -82,8 +72,8 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         If _built Is Nothing Then Return False
 
         ' ---- compute existingByName + _reattachedToExistingImportRoot ----
-        Dim existingByName As New Dictionary(Of String, DrawableGroup)(StringComparer.OrdinalIgnoreCase)
-        For Each g In mainVM.ImportedGroups.OfType(Of DrawableGroup)()
+        Dim existingByName As New Dictionary(Of String, IDrawable)(StringComparer.OrdinalIgnoreCase)
+        For Each g In _manager.ImportRoots
             If Not String.IsNullOrWhiteSpace(g.Name) Then existingByName(g.Name) = g
         Next
 
@@ -95,32 +85,31 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
 
             ' Non-DrawableGroup roots: always just add to ImportedGroups
             If dg Is Nothing Then
-                If Not mainVM.ImportedGroups.Contains(g) Then
-                    mainVM.ImportedGroups.Add(g)
+                If Not _manager.ContainsImportRoot(g) Then
+                    _manager.AddImportRoot(g)
                     _addedImportedGroups.Add(g)
                 End If
                 Continue For
             End If
 
             ' DrawableGroup roots: apply special exclusions
-            If String.Equals(dg.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase) Then Continue For
+            If _manager.IsDrawingGroup(dg) Then Continue For
 
-            Dim existing As DrawableGroup = Nothing
+            Dim existing As IDrawable = Nothing
 
             ' If it matches an existing import root, reattach children and don't add dg as a new imported group
             If existingByName.TryGetValue(dg.Name, existing) Then
                 For Each ch In ProjectGraph.GetGroupChildren(dg)?.Where(Function(c) c IsNot Nothing).ToList()
                     If ch Is Nothing Then Continue For
-                    existing.AddChild(ch)
-                    ch.ParentGroup = existing
+                    _manager.AddChildToGroup(existing, ch)
                     _reattachedToExistingImportRoot.Add((existing, ch))
                 Next
                 Continue For
             End If
 
             ' Otherwise it's a new imported root group
-            If Not mainVM.ImportedGroups.Contains(dg) Then
-                mainVM.ImportedGroups.Add(dg)
+            If Not _manager.ContainsImportRoot(dg) Then
+                _manager.AddImportRoot(dg)
                 _addedImportedGroups.Add(dg)
             End If
 
@@ -141,23 +130,20 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
             _addedToCollection.Add(g)
         Next
 
-        mainVM.AddDrawablesToCollection(toAdd)
+        _manager.AddDrawablesToCollection(toAdd)
 
         ' ---- populate _attachedToDrawingGroup ----
-        If mainVM.DrawingGroup IsNot Nothing Then
+        If _manager.DrawingGroup IsNot Nothing Then
             For Each d In _built.Drawables
                 If d Is Nothing Then Continue For
                 If d.ParentGroup IsNot Nothing Then Continue For
-                mainVM.DrawingGroup.AddChild(d)
-                d.ParentGroup = mainVM.DrawingGroup
+                _manager.AddChildToGroup(_manager.DrawingGroup, d)
                 _attachedToDrawingGroup.Add(d)
             Next
         End If
 
         ' ---- Apply wrapper state + notify (same path as Redo) ----
-        Application.Current.Dispatcher.Invoke(
-        Sub() ApplyInstances(mainVM),
-        Threading.DispatcherPriority.Normal)
+        Application.Current.Dispatcher.Invoke(Sub() ApplyInstances(), Threading.DispatcherPriority.Normal)
 
         Return True
     End Function
@@ -192,41 +178,39 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
     End Function
 
 
-    Private Sub ApplyInstances(mainVM As MainViewModel)
+    Private Sub ApplyInstances()
         ' Imported root groups
         For Each g In _addedImportedGroups
-            If Not mainVM.ImportedGroups.Contains(g) Then
-                mainVM.ImportedGroups.Add(g)
+            If Not _manager.ContainsImportRoot(g) Then
+                _manager.AddImportRoot(g)
             End If
         Next
 
         ' Canvas collection items
-        mainVM.AddDrawablesToCollection(_addedToCollection)
+        _manager.AddDrawablesToCollection(_addedToCollection)
 
         ' DrawingGroup attachments
-        If mainVM.DrawingGroup IsNot Nothing Then
+        If _manager.DrawingGroup IsNot Nothing Then
             For Each d In _attachedToDrawingGroup
-                If Not mainVM.DrawingGroup.GroupChildren.Contains(d) Then
-                    mainVM.DrawingGroup.AddChild(d)
+                If Not _manager.ContainsChild(_manager.DrawingGroup, d) Then
+                    _manager.AddChildToGroup(_manager.DrawingGroup, d)
                 End If
-                d.ParentGroup = mainVM.DrawingGroup
             Next
         End If
 
         ' Reuse existing imported roots: child reattachments
         For Each t In _reattachedToExistingImportRoot
             Try
-                If Not t.Host.GroupChildren.Contains(t.Child) Then
-                    t.Host.AddChild(t.Child)
+                If Not _manager.ContainsChild(t.Host, t.Child) Then
+                    _manager.AddChildToGroup(t.Host, t.Child)
                 End If
-                t.Child.ParentGroup = t.Host
             Catch
             End Try
         Next
 
         ' Apply wrapper state + notify (keep deterministic; no BeginInvoke here)
         ProjectApplyHelper.ApplyWrapperStateForPaste(_projectData, _built)
-        mainVM.NotifyCollectionsChanged()
+        _manager.NotifyChanged()
     End Sub
 
 End Class
@@ -292,9 +276,7 @@ Friend NotInheritable Class ProjectApplyHelper
                               })
 
         Next
-        PolyCanvas.ApplySelection(toSelect)
-
-        Debug.WriteLine(Application.GetService(Of MainViewModel).SelectedDrawables.Count)
+        PolyCanvas.ApplySelection(toSelect, Nothing, True)
 
     End Sub
 

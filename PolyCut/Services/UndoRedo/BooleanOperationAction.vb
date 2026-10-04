@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.[Shared]
 Imports PolyCut.RichCanvas
 
@@ -35,9 +36,6 @@ Public Class BooleanOperationAction : Implements IUndoableAction
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _selectedItems.Count < 2 Then Return False
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM Is Nothing Then Return False
-
         Dim geometries As New List(Of Geometry)
         For Each drawable In _selectedItems
             Dim geometry = GeometryHitTestHelper.GetTransformedGeometry(drawable)
@@ -67,12 +65,13 @@ Public Class BooleanOperationAction : Implements IUndoableAction
 
         Dim parentGroups As New HashSet(Of DrawableGroup)()
         For Each drawable In _selectedItems
-            Dim pg = mainVM.GetParentGroup(drawable)
+            Dim pg As DrawableGroup = TryCast(_manager.ParentGroupOf(drawable), DrawableGroup)
             If pg IsNot Nothing Then parentGroups.Add(pg)
         Next
 
-        Dim insertionGroup = mainVM.GetTopLevelGroup(mainVM.GetParentGroup(_selectedItems(0)))
-        If insertionGroup Is Nothing Then insertionGroup = mainVM.DrawingGroup
+        'love a cursed lookup chain
+        Dim insertionGroup As DrawableGroup = TryCast(_manager.TopLevelGroupOf(_manager.ParentGroupOf(_selectedItems(0))), DrawableGroup)
+        If insertionGroup Is Nothing Then insertionGroup = TryCast(_manager.DrawingGroup, DrawableGroup)
 
         Dim actions As New List(Of IUndoableAction)()
 
@@ -88,8 +87,8 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         Next
 
         For Each grp In parentGroups
-            If grp Is mainVM.DrawingGroup Then Continue For
-            If Not grp.GroupChildren.Any() AndAlso Not mainVM.IsAncestorOf(grp, insertionGroup) Then
+            If _manager.IsDrawingGroup(grp) Then Continue For
+            If Not grp.GroupChildren.Any() AndAlso Not _manager.IsAncestorOf(grp, insertionGroup) Then
                 Dim removeGroupAction As New RemoveGroupAction(_manager, grp)
                 If removeGroupAction.Execute() Then
                     actions.Add(removeGroupAction)

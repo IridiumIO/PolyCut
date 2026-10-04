@@ -1,4 +1,4 @@
-
+﻿
 Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.ComponentModel
@@ -264,6 +264,15 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             Case NotifyCollectionChangedAction.Reset
                 Me.Children.Clear()
                 _selectionManager.ClearSelection()
+
+                ' AddRange/RemoveRange raise Reset, so the visuals have to be rebuilt from the collection:
+                ' clearing alone leaves the model (and the sidebar) correct while the canvas draws nothing.
+                Dim source = ChildrenCollection
+                If source IsNot Nothing Then
+                    For i As Integer = 0 To source.Count - 1
+                        InsertDrawableVisual(source(i), i)
+                    Next
+                End If
         End Select
 
     End Sub
@@ -463,6 +472,19 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     Private Sub InsertDrawableVisual(drawable As IDrawable, Optional insertIndex As Integer = -1)
         Dim child As FrameworkElement = drawable.DrawableElement
         AddChild(child, drawable, insertIndex)
+        Dim notifier = TryCast(drawable, ComponentModel.INotifyPropertyChanged)
+        If notifier IsNot Nothing Then AddHandler notifier.PropertyChanged, AddressOf OnDrawablePropertyChanged
+    End Sub
+
+    'Hiding something has to take it out of the canvas selection as well: the model's selected set already filters
+    'hidden drawables, so leaving it selected here makes the sidebar, the gizmo and the canvas disagree.
+    Private Sub OnDrawablePropertyChanged(sender As Object, e As ComponentModel.PropertyChangedEventArgs)
+        If Not String.Equals(e.PropertyName, NameOf(IDrawable.IsHidden)) Then Return
+
+        Dim drawable = TryCast(sender, IDrawable)
+        If drawable IsNot Nothing AndAlso drawable.IsHidden Then
+            _selectionManager?.ApplySelection(Nothing, {drawable})
+        End If
     End Sub
 
     Private Sub RemoveChild(child As FrameworkElement)
@@ -475,6 +497,8 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     End Sub
     Private Sub RemoveChild(drawable As IDrawable)
         Dim child As FrameworkElement = drawable.DrawableElement
+        Dim notifier = TryCast(drawable, ComponentModel.INotifyPropertyChanged)
+        If notifier IsNot Nothing Then RemoveHandler notifier.PropertyChanged, AddressOf OnDrawablePropertyChanged
         RemoveChild(child)
     End Sub
 

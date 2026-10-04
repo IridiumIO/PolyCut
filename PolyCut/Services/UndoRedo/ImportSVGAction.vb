@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.[Shared]
 
 Public Class ImportSVGAction : Implements IUndoableAction
@@ -58,11 +59,16 @@ Public Class ImportSVGAction : Implements IUndoableAction
             End If
         Next
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing Then
-            _indexInImportedGroups = mainVM.ImportedGroups.Count
-            mainVM.ImportedGroups.Add(_importedGroup)
-        End If
+        'Importing the same file twice must not leave two roots sharing a name as this causes ambigutiy with copy/paste (TODO: stop using name lookup for paste)
+        Dim baseName As String = _importedGroup.Name
+        Dim suffix As Integer = 2
+        While _manager.ImportRoots.Any(Function(g) String.Equals(g.Name, _importedGroup.Name, StringComparison.OrdinalIgnoreCase))
+            _importedGroup.Name = $"{baseName}_{suffix}"
+            suffix += 1
+        End While
+
+        _indexInImportedGroups = _manager.ImportRoots.Count()
+        _manager.AddImportRoot(_importedGroup)
 
         Return True
     End Function
@@ -81,9 +87,8 @@ Public Class ImportSVGAction : Implements IUndoableAction
             _manager.ClearDrawableParent(drawable)
         Next
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing AndAlso mainVM.ImportedGroups.Contains(_importedGroup) Then
-            mainVM.ImportedGroups.Remove(_importedGroup)
+        If _manager.ContainsImportRoot(_importedGroup) Then
+            _manager.RemoveImportRoot(_importedGroup)
         End If
     End Sub
 
@@ -99,18 +104,11 @@ Public Class ImportSVGAction : Implements IUndoableAction
                 End If
             End If
 
-            If Not _manager.DrawableCollection.Contains(drawable) Then
-                _manager.DrawableCollection.Add(drawable)
-            End If
+            _manager.AddDrawableToCollection(drawable, -1)
         Next
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing AndAlso Not mainVM.ImportedGroups.Contains(_importedGroup) Then
-            If _indexInImportedGroups >= 0 AndAlso _indexInImportedGroups <= mainVM.ImportedGroups.Count Then
-                mainVM.ImportedGroups.Insert(_indexInImportedGroups, _importedGroup)
-            Else
-                mainVM.ImportedGroups.Add(_importedGroup)
-            End If
+        If Not _manager.ContainsImportRoot(_importedGroup) Then
+            _manager.AddImportRoot(_importedGroup, _indexInImportedGroups)
         End If
     End Sub
 

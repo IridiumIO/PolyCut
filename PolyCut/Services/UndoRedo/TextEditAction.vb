@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 

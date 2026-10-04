@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.[Shared]
 Imports PolyCut.RichCanvas
 
@@ -5,7 +6,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
     Private ReadOnly _drawable As IDrawable
-    Private ReadOnly _parentGroup As DrawableGroup
+    Private ReadOnly _parent As IDrawable
     Private ReadOnly _indexInCollection As Integer
     Private ReadOnly _indexInGroup As Integer
     Private ReadOnly _transformSnapshot As TransformAction.Snapshot
@@ -14,9 +15,9 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         _manager = manager
         _drawable = drawable
 
-        _parentGroup = TryCast(drawable.ParentGroup, DrawableGroup)
+        _parent = drawable.ParentGroup
         _indexInCollection = If(_manager.DrawableCollection IsNot Nothing, _manager.DrawableCollection.IndexOf(drawable), -1)
-        _indexInGroup = If(_parentGroup IsNot Nothing, _parentGroup.GroupChildren.IndexOf(drawable), -1)
+        _indexInGroup = If(_parent IsNot Nothing, _manager.IndexOfChild(_parent, drawable), -1)
 
         Try
             _transformSnapshot = TransformAction.MakeSnapshotFromDrawable(_drawable)
@@ -34,26 +35,19 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _drawable Is Nothing Then Return False
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-
-        Dim deferring As Boolean = mainVM IsNot Nothing AndAlso mainVM.IsDrawableRemovalDeferred
+        Dim deferring As Boolean = _manager.IsRemovalDeferred
         If Not deferring Then
-            If mainVM IsNot Nothing Then
-                PolyCanvas.RemoveFromSelection(_drawable)
-            End If
-
+            PolyCanvas.RemoveFromSelection(_drawable)
             _manager.RemoveDrawableFromCollection(_drawable)
         End If
 
-        If _parentGroup IsNot Nothing Then
-            _parentGroup.RemoveChild(_drawable)
+        If _parent IsNot Nothing Then
+            _manager.RemoveChildFromGroup(_parent, _drawable)
         End If
 
         _manager.ClearDrawableParent(_drawable)
 
-        If mainVM IsNot Nothing AndAlso Not mainVM.IsDrawableRemovalDeferred Then
-            mainVM.NotifyCollectionsChanged()
-        End If
+        If Not _manager.IsRemovalDeferred Then _manager.NotifyChanged()
 
         Return True
     End Function
@@ -72,9 +66,9 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         Catch
         End Try
 
-        If _parentGroup IsNot Nothing Then
-            If Not _parentGroup.GroupChildren.Contains(_drawable) Then
-                _parentGroup.AddChild(_drawable, _indexInGroup)
+        If _parent IsNot Nothing Then
+            If Not _manager.ContainsChild(_parent, _drawable) Then
+                _manager.AddChildToGroup(_parent, _drawable, _indexInGroup)
             End If
 
             If Not _manager.DrawableCollection.Contains(_drawable) Then
@@ -92,6 +86,15 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
             Sub()
                 Try
                     TransformAction.ApplySnapshot(snapshot, _drawable)
+                Catch
+                End Try
+
+                'Undoing a delete has to put the item back in the selection, otherwise what came back is invisible to the user:
+                'the gizmo, the property panel and the next delete would all act on nothing.
+
+                'Keep these try/catch blocks seapearte for now until properly testing style and selection restore
+                Try
+                    PolyCanvas.ApplySelection({_drawable}, Nothing, False)
                 Catch
                 End Try
             End Sub)

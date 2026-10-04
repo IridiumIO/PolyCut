@@ -1,4 +1,5 @@
-﻿Imports System.Collections.ObjectModel
+Option Strict On
+Imports System.Collections.ObjectModel
 
 Imports PolyCut.[Shared]
 
@@ -63,8 +64,7 @@ Public Class ReorderDrawableAction : Implements IUndoableAction
             End If
         End If
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        mainVM?.NotifyCollectionsChanged()
+        _manager.NotifyChanged()
 
         Return True
     End Function

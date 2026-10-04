@@ -160,6 +160,17 @@ Public Class ProjectSerializationService
             CollectCanvasItems(root, groupDataById, built, result)
         Next
 
+        ' Clipboard data carries a loose drawable with no group ancestor at all, because the Drawing Group is
+        ' deliberately left out of it. The group walk then finds nothing, so collect those drawables directly.
+        Dim seen As New HashSet(Of IDrawable)(result)
+        For Each d In projectData.Drawables
+            Dim item As IDrawable = Nothing
+            If d IsNot Nothing AndAlso built.DrawableById.TryGetValue(d.Id, item) AndAlso
+               Not item.HasNestedAncestor() AndAlso seen.Add(item) Then
+                result.Add(item)
+            End If
+        Next
+
         Return result
     End Function
 

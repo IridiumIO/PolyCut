@@ -24,7 +24,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             OnPropertyChanged(NameOf(CanvasToolModeIsText))
             If value <> CanvasMode.Selection Then
                 PolyCanvas.ApplySelection(Nothing, MainVM.DrawableCollection)
-                MainVM.NotifyCollectionsChanged()
+                MainVM.Document.NotifyChanged()
             End If
         End Set
     End Property
@@ -306,7 +306,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
         If items.Count = 0 Then Return
 
-        Dim action As New StyleAction(MainVM, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
+        Dim action As New StyleAction(MainVM.Document, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 

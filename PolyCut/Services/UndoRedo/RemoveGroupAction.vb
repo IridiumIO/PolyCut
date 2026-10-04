@@ -1,4 +1,6 @@
+Option Strict On
 Imports PolyCut.[Shared]
+Imports PolyCut.RichCanvas
 
 Public Class RemoveGroupAction : Implements IUndoableAction
 
@@ -14,16 +16,13 @@ Public Class RemoveGroupAction : Implements IUndoableAction
         _group = group
         _parentGroup = TryCast(group.ParentGroup, DrawableGroup)
 
-        Dim mainVM = TryCast(manager, MainViewModel)
-        If mainVM IsNot Nothing Then
-            _wasInImportedGroups = mainVM.ImportedGroups.Contains(group)
-            _indexInImportedGroups = If(_wasInImportedGroups, mainVM.ImportedGroups.IndexOf(group), -1)
-        End If
+        _wasInImportedGroups = _manager.ContainsImportRoot(group)
+        _indexInImportedGroups = If(_wasInImportedGroups, _manager.IndexOfImportRoot(group), -1)
 
-        CaptureCollectionMembers(mainVM)
+        CaptureCollectionMembers()
     End Sub
 
-    Private Sub CaptureCollectionMembers(mainVM As MainViewModel)
+    Private Sub CaptureCollectionMembers()
         If _manager.DrawableCollection Is Nothing Then Return
 
         Dim tracked As New HashSet(Of IDrawable)()
@@ -32,20 +31,19 @@ Public Class RemoveGroupAction : Implements IUndoableAction
         Next
 
         AddCollectionMember(_group, tracked)
-        CaptureChildren(_group, tracked, New HashSet(Of IDrawable)(), mainVM)
+        CaptureChildren(_group, tracked, New HashSet(Of IDrawable)())
     End Sub
 
-    Private Sub CaptureChildren(drawable As IDrawable, tracked As HashSet(Of IDrawable), seen As HashSet(Of IDrawable), mainVM As MainViewModel)
+    Private Sub CaptureChildren(drawable As IDrawable, tracked As HashSet(Of IDrawable), seen As HashSet(Of IDrawable))
         For Each child In ProjectGraph.GetGroupChildren(drawable)
             If child Is Nothing Then Continue For
-            If mainVM IsNot Nothing AndAlso (child Is mainVM.DrawingGroup OrElse
-               String.Equals(child.Name, "Drawing Group", StringComparison.OrdinalIgnoreCase)) Then
+            If _manager.IsDrawingGroup(child) Then
                 Continue For
             End If
             If Not seen.Add(child) Then Continue For
 
             AddCollectionMember(child, tracked)
-            CaptureChildren(child, tracked, seen, mainVM)
+            CaptureChildren(child, tracked, seen)
         Next
     End Sub
 
@@ -64,26 +62,26 @@ Public Class RemoveGroupAction : Implements IUndoableAction
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _group Is Nothing Then Return False
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
         If _parentGroup IsNot Nothing Then
             _parentGroup.RemoveChild(_group)
-        ElseIf mainVM IsNot Nothing AndAlso mainVM.ImportedGroups.Contains(_group) Then
-            mainVM.ImportedGroups.Remove(_group)
+        ElseIf _manager.ContainsImportRoot(_group) Then
+            _manager.RemoveImportRoot(_group)
         End If
+
+        'A removed group must not stay selected: the canvas would keep a gizmo on something the document no longer holds, and the next delete would act on nothing.
+        Try
+            PolyCanvas.RemoveFromSelection(_group)
+            For Each m In _collectionMembers
+                PolyCanvas.RemoveFromSelection(m.Drawable)
+            Next
+        Catch
+        End Try
 
         If _collectionMembers.Count > 0 Then
-            If mainVM IsNot Nothing Then
-                mainVM.RemoveDrawablesFromCollection(_collectionMembers.Select(Function(m) m.Drawable))
-            Else
-                For Each m In _collectionMembers
-                    _manager.RemoveDrawableFromCollection(m.Drawable)
-                Next
-            End If
+            _manager.RemoveDrawablesFromCollection(_collectionMembers.Select(Function(m) m.Drawable))
         End If
 
-        If mainVM IsNot Nothing Then
-            mainVM.NotifyCollectionsChanged()
-        End If
+        _manager.NotifyChanged()
 
         Return True
     End Function
@@ -91,33 +89,23 @@ Public Class RemoveGroupAction : Implements IUndoableAction
     Public Sub Undo() Implements IUndoableAction.Undo
         If _group Is Nothing Then Return
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-
         If _parentGroup IsNot Nothing Then
             If Not _parentGroup.GroupChildren.Contains(_group) Then
                 _parentGroup.AddChild(_group)
             End If
-        ElseIf mainVM IsNot Nothing AndAlso _wasInImportedGroups Then
-            If _indexInImportedGroups >= 0 AndAlso _indexInImportedGroups <= mainVM.ImportedGroups.Count Then
-                mainVM.ImportedGroups.Insert(_indexInImportedGroups, _group)
-            Else
-                mainVM.ImportedGroups.Add(_group)
-            End If
+        ElseIf _wasInImportedGroups Then
+            _manager.AddImportRoot(_group, _indexInImportedGroups)
         End If
 
         For Each m In _collectionMembers
             QueueMemberRestore(m.Drawable, m.Index, m.Snapshot)
         Next
 
-        Dim topLevel = If(mainVM IsNot Nothing, mainVM.GetTopLevelGroup(_group), Nothing)
-        If topLevel IsNot Nothing Then
-            topLevel.RebuildDisplayChildren()
-        End If
+        Dim topLevel = TryCast(_manager.TopLevelGroupOf(_group), DrawableGroup)
+        topLevel?.RebuildDisplayChildren()
         _group.RebuildDisplayChildren()
 
-        If mainVM IsNot Nothing Then
-            mainVM.NotifyCollectionsChanged()
-        End If
+        _manager.NotifyChanged()
     End Sub
 
     Private Sub QueueMemberRestore(drawable As IDrawable, index As Integer, snapshot As TransformAction.Snapshot)

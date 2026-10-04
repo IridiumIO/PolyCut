@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.[Shared]
 
 Public Class AddDrawableAction : Implements IUndoableAction
@@ -44,18 +45,17 @@ Public Class AddDrawableAction : Implements IUndoableAction
         Dim drawable As IDrawable = Nothing
 
         If TypeOf element Is Rectangle AndAlso RegistrationMarkHelper.IsRegistrationMark(element) Then
-            drawable = New DrawableRegistrationMark(element)
+            drawable = New DrawableRegistrationMark(DirectCast(element, Rectangle))
         ElseIf TypeOf element Is Line Then
-            drawable = New DrawableLine(element)
+            drawable = New DrawableLine(DirectCast(element, Line))
         ElseIf TypeOf element Is Rectangle Then
-            drawable = New DrawableRectangle(element)
+            drawable = New DrawableRectangle(DirectCast(element, Rectangle))
         ElseIf TypeOf element Is Ellipse Then
-            drawable = New DrawableEllipse(element)
-        ElseIf TypeOf element Is System.Windows.Controls.TextBox Then
-            drawable = New DrawableText(element)
-            drawable.StrokeThickness = 0
-        ElseIf TypeOf element Is System.Windows.Shapes.Path Then
-            drawable = New DrawablePath(element)
+            drawable = New DrawableEllipse(DirectCast(element, Ellipse))
+        ElseIf TypeOf element Is TextBox Then
+            drawable = New DrawableText(DirectCast(element, TextBox)) With {.StrokeThickness = 0}
+        ElseIf TypeOf element Is Shapes.Path Then
+            drawable = New DrawablePath(DirectCast(element, Shapes.Path))
         End If
 
         If drawable IsNot Nothing Then
@@ -115,18 +115,15 @@ Public Class AddDrawableAction : Implements IUndoableAction
     Private Sub AddDrawableToManager()
         If _drawable Is Nothing Then Return
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM Is Nothing Then Return
-
         ' Respect a parent group if provided; otherwise fall back to DrawingGroup
         If _parentGroup Is Nothing Then
-            _parentGroup = mainVM.DrawingGroup
+            _parentGroup = TryCast(_manager.DrawingGroup, DrawableGroup)
         End If
 
         ' Ensure parent group is present in ImportedGroups if necessary
-        If _parentGroup IsNot Nothing AndAlso Not (_parentGroup Is mainVM.DrawingGroup) Then
-            If Not mainVM.ImportedGroups.Contains(_parentGroup) Then
-                mainVM.ImportedGroups.Add(_parentGroup)
+        If _parentGroup IsNot Nothing AndAlso Not _manager.IsDrawingGroup(_parentGroup) Then
+            If Not _manager.ContainsImportRoot(_parentGroup) Then
+                _manager.AddImportRoot(_parentGroup)
             End If
         End If
 

@@ -49,7 +49,7 @@ Partial Public Class SidebarItemVM : Inherits ObservableObject
 
     Public ReadOnly Property ParentName As String
         Get
-            Return If(ParentGroup?.Name = "Drawing Group", "Basic Drawing", ParentGroup.Name)
+            Return If(ParentGroup?.Name = Document.DrawingGroupName, "Basic Drawing", ParentGroup.Name)
         End Get
     End Property
 

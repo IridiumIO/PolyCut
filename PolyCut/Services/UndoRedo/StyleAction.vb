@@ -1,3 +1,4 @@
+Option Strict On
 Imports PolyCut.Shared
 
 Public Class StyleAction
@@ -80,8 +81,7 @@ Public Class StyleAction
             End If
         Next
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing Then mainVM.NotifyCollectionsChanged()
+        _manager.NotifyChanged()
 
         Return True
     End Function
@@ -168,8 +168,7 @@ Public Class StyleAction
             RestorePrevious(record)
         Next
 
-        Dim mainVM = TryCast(_manager, MainViewModel)
-        If mainVM IsNot Nothing Then mainVM.NotifyCollectionsChanged()
+        _manager.NotifyChanged()
     End Sub
 
 

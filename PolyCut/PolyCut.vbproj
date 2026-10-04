@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,7 +7,7 @@
     <UseWPF>true</UseWPF>
     <Company>IridiumIO</Company>
     <Description>Plotter/Cutter GCode Generator for 3D printers</Description>
-    <Copyright>Copyright © 2025</Copyright>
+    <Copyright>Copyright © 2026</Copyright>
     <PackageProjectUrl>https://github.com/IridiumIO/PolyCut/</PackageProjectUrl>
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
     <DebugType>embedded</DebugType>

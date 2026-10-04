@@ -1,4 +1,5 @@
-﻿Imports PolyCut.Shared
+Option Strict On
+Imports PolyCut.Shared
 
 Public Class RenameDrawableAction : Implements IUndoableAction
 

@@ -66,7 +66,7 @@ Public Class ClipboardService
             offset = 10
         End If
 
-        Dim act As New PasteDrawablesAction(_mainVM, _projectService, pd, designerStyle)
+        Dim act As New PasteDrawablesAction(_mainVM.Document, _projectService, pd, designerStyle)
 
 
         If act.Execute() Then

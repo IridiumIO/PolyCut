@@ -265,7 +265,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Function GetAllLeafChildren() As List(Of IDrawable)
-        Return EnumerateLeafChildren().ToList()
+        Return ProjectGraph.GetLeafChildren(Me)
     End Function
 
 

@@ -99,7 +99,7 @@ Public Class ImportSVGAction : Implements IUndoableAction
 
             Dim parentGrp As DrawableGroup = Nothing
             If _parentMap.TryGetValue(drawable, parentGrp) Then
-                If Not parentGrp.GroupChildren.Contains(drawable) Then
+                If Not _manager.ContainsChild(parentGrp, drawable) Then
                     parentGrp.AddChild(drawable)
                 End If
             End If

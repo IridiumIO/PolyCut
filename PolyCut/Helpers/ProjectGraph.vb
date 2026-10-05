@@ -23,6 +23,23 @@ Friend Module ProjectGraph
         End If
         Return Enumerable.Empty(Of IDrawable)()
     End Function
+    <Extension>
+    Friend Function GetLeafChildren(g As IDrawable) As List(Of IDrawable)
+        Dim results As New List(Of IDrawable)
+        If g Is Nothing Then Return results
+
+        For Each ch In ProjectGraph.GetGroupChildren(g)
+            If ch Is Nothing Then Continue For
+
+            If ch.IsAnyGroup() Then
+                results.AddRange(ProjectGraph.GetLeafChildren(ch))
+            Else
+                results.Add(ch)
+            End If
+        Next
+
+        Return results
+    End Function
 
     <Extension>
     Friend Function HasNestedAncestor(ByVal item As IDrawable) As Boolean

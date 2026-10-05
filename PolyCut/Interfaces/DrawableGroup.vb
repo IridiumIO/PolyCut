@@ -233,16 +233,7 @@ Public Class DrawableGroup : Inherits BaseDrawable
 
 
     Public Function GetAllLeafChildren() As List(Of IDrawable)
-        Dim results As New List(Of IDrawable)
-        For Each ch In GroupChildren
-            Dim nested = TryCast(ch, DrawableGroup)
-            If nested IsNot Nothing Then
-                results.AddRange(nested.GetAllLeafChildren())
-            Else
-                results.Add(ch)
-            End If
-        Next
-        Return results
+        Return ProjectGraph.GetLeafChildren(Me)
     End Function
 
 

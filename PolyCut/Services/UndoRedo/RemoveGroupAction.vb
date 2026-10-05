@@ -90,7 +90,7 @@ Public Class RemoveGroupAction : Implements IUndoableAction
         If _group Is Nothing Then Return
 
         If _parentGroup IsNot Nothing Then
-            If Not _parentGroup.GroupChildren.Contains(_group) Then
+            If Not _manager.ContainsChild(_parentGroup, _group) Then
                 _parentGroup.AddChild(_group)
             End If
         ElseIf _wasInImportedGroups Then

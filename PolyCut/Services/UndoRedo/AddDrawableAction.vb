@@ -149,7 +149,7 @@ Public Class AddDrawableAction : Implements IUndoableAction
         If _drawable Is Nothing Then Return
 
         If _parentGroup IsNot Nothing Then
-            If Not _parentGroup.GroupChildren.Contains(_drawable) Then
+            If Not _manager.ContainsChild(_parentGroup, _drawable) Then
                 _parentGroup.AddChild(_drawable)
             End If
 

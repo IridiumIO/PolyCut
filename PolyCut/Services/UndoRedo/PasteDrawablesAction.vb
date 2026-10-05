@@ -242,10 +242,10 @@ Friend NotInheritable Class ProjectApplyHelper
                 .Width = If(gd.Width > 0, gd.Width, Double.NaN),
                 .Height = If(gd.Height > 0, gd.Height, Double.NaN),
                 .Rotation = gd.RotationAngle,
-                .Scale = New Point(If(gd.ScaleX = 0, 1.0, gd.ScaleX), If(gd.ScaleY = 0, 1.0, gd.ScaleY))
+                .Scale = New Point(If(gd.ScaleX = 0, 1.0, gd.ScaleX), If(gd.ScaleY = 0, 1.0, gd.ScaleY)),
+                .ZIndex = gd.ZIndex
             }
             groupState.ApplyToWrapper(wrapper, applyScale:=True)
-            Panel.SetZIndex(wrapper, gd.ZIndex)
             MetadataHelper.SetOriginalDimensions(wrapper, (gd.Width, gd.Height))
 
         Next
@@ -267,10 +267,10 @@ Friend NotInheritable Class ProjectApplyHelper
                 .Translation = New Point(dd.Left, dd.Top),
                 .Width = If(dd.Width > 0, dd.Width, Double.NaN),
                 .Height = If(dd.Height > 0, dd.Height, Double.NaN),
-                .Rotation = dd.RotationAngle
+                .Rotation = dd.RotationAngle,
+                .ZIndex = dd.ZIndex
             }
             drawState.ApplyToWrapper(wrapper, applyScale:=False)
-            Panel.SetZIndex(wrapper, dd.ZIndex)
             MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))
 
         Next

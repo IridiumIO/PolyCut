@@ -9,7 +9,7 @@ Public Class RemoveGroupAction : Implements IUndoableAction
     Private ReadOnly _wasInImportedGroups As Boolean
     Private ReadOnly _indexInImportedGroups As Integer
     Private ReadOnly _parentGroup As DrawableGroup
-    Private ReadOnly _collectionMembers As New List(Of (Drawable As IDrawable, Index As Integer, Snapshot As TransformAction.Snapshot))()
+    Private ReadOnly _collectionMembers As New List(Of (Drawable As IDrawable, Index As Integer, Snapshot As TransformState))()
 
     Public Sub New(manager As IDrawableManager, group As DrawableGroup)
         _manager = manager
@@ -50,7 +50,7 @@ Public Class RemoveGroupAction : Implements IUndoableAction
     Private Sub AddCollectionMember(drawable As IDrawable, tracked As HashSet(Of IDrawable))
         If drawable Is Nothing OrElse Not tracked.Contains(drawable) Then Return
 
-        _collectionMembers.Add((drawable, _manager.DrawableCollection.IndexOf(drawable), TransformAction.MakeSnapshotFromDrawable(drawable)))
+        _collectionMembers.Add((drawable, _manager.DrawableCollection.IndexOf(drawable), TransformAction.CaptureState(drawable)))
     End Sub
 
     Public ReadOnly Property Description As String Implements IUndoableAction.Description
@@ -108,9 +108,9 @@ Public Class RemoveGroupAction : Implements IUndoableAction
         _manager.NotifyChanged()
     End Sub
 
-    Private Sub QueueMemberRestore(drawable As IDrawable, index As Integer, snapshot As TransformAction.Snapshot)
+    Private Sub QueueMemberRestore(drawable As IDrawable, index As Integer, snapshot As TransformState)
         ModelBatch.RestoreToCollection(_manager, drawable, index,
-            Sub() TransformAction.ApplySnapshot(snapshot, drawable))
+            Sub() TransformAction.ApplyState(snapshot, drawable))
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo

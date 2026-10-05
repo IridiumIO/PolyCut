@@ -519,9 +519,9 @@ Public Class TransformGizmo
                 If item?.DrawableElement IsNot Nothing Then
                     Dim beforeSnap = kvp.Value
                     Dim wrapperNow = TryCast(item.DrawableElement.Parent, ContentControl)
-                    Dim afterSnap As TransformAction.Snapshot = Nothing
+                    Dim afterSnap As TransformState = Nothing
                     If wrapperNow IsNot Nothing Then
-                        afterSnap = TransformAction.MakeSnapshotFromWrapper(wrapperNow)
+                        afterSnap = TransformAction.CaptureState(wrapperNow)
                     End If
 
                     If beforeSnap IsNot Nothing AndAlso afterSnap IsNot Nothing Then
@@ -739,7 +739,7 @@ Public Class TransformGizmo
         CaptureInitialTransforms()
         Me.CaptureMouse()
     End Sub
-    Private _initialSnapshots As New Dictionary(Of IDrawable, TransformAction.Snapshot)
+    Private _initialSnapshots As New Dictionary(Of IDrawable, TransformState)
     Private Sub CaptureInitialTransforms()
         _initialTransforms.Clear()
         _initialSnapshots.Clear() ' <-- capture snapshots at the start
@@ -750,7 +750,7 @@ Public Class TransformGizmo
                     _initialTransforms(item) = TransformState.FromWrapper(wrapper)
 
                     Try
-                        Dim snap = TransformAction.MakeSnapshotFromWrapper(wrapper)
+                        Dim snap = TransformAction.CaptureState(wrapper)
                         If snap IsNot Nothing Then
                             _initialSnapshots(item) = snap
                         End If

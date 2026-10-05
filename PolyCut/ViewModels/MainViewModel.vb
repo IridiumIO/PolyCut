@@ -395,7 +395,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
         Dim items = msg.Items.
             Where(Function(it) it.Drawable IsNot Nothing).
-            Select(Function(it) (drawable:=it.Drawable, before:=TryCast(it.Before, TransformAction.Snapshot), after:=TryCast(it.After, TransformAction.Snapshot))).
+            Select(Function(it) (drawable:=it.Drawable, before:=TryCast(it.Before, TransformState), after:=TryCast(it.After, TransformState))).
             Where(Function(t) t.before IsNot Nothing AndAlso t.after IsNot Nothing AndAlso Not IsTransformUnchanged(t.before, t.after)).
             Select(Function(t) (t.drawable, t.before, t.after)).
             ToList()
@@ -406,13 +406,11 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
 
-    Private Function IsTransformUnchanged(before As TransformAction.Snapshot, after As TransformAction.Snapshot) As Boolean
-        Return Math.Abs(before.Left - after.Left) < 0.01 AndAlso
-               Math.Abs(before.Top - after.Top) < 0.01 AndAlso
-               Math.Abs(before.Width - after.Width) < 0.01 AndAlso
-               Math.Abs(before.Height - after.Height) < 0.01 AndAlso
-               ((before.RenderTransform Is Nothing AndAlso after.RenderTransform Is Nothing) OrElse
-                (before.RenderTransform IsNot Nothing AndAlso after.RenderTransform IsNot Nothing AndAlso before.RenderTransform.Value = after.RenderTransform.Value))
+    Private Function IsTransformUnchanged(before As TransformState, after As TransformState) As Boolean
+        If before Is Nothing OrElse after Is Nothing Then Return True
+        If before Is Nothing OrElse after Is Nothing Then Return True
+
+        Return before.Matches(after)
     End Function
 
     ' -----------------

@@ -9,7 +9,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
     Private ReadOnly _parent As IDrawable
     Private ReadOnly _indexInCollection As Integer
     Private ReadOnly _indexInGroup As Integer
-    Private ReadOnly _transformSnapshot As TransformAction.Snapshot
+    Private ReadOnly _transformSnapshot As TransformState
 
     Private Shared ReadOnly _restoredForSelection As New List(Of IDrawable)
 
@@ -22,7 +22,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         _indexInGroup = If(_parent IsNot Nothing, _manager.IndexOfChild(_parent, drawable), -1)
 
         Try
-            _transformSnapshot = TransformAction.MakeSnapshotFromDrawable(_drawable)
+            _transformSnapshot = TransformAction.CaptureState(_drawable)
         Catch
             _transformSnapshot = Nothing
         End Try
@@ -87,7 +87,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         ModelBatch.RestoreToCollection(_manager, _drawable, _indexInCollection,
             Sub()
                 Try
-                    TransformAction.ApplySnapshot(snapshot, _drawable)
+                    TransformAction.ApplyState(snapshot, _drawable)
                 Catch
                 End Try
             End Sub)

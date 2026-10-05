@@ -129,9 +129,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             Dim wrapper = TryCast(selected.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
 
-            Dim beforeSnapshot = TransformAction.MakeSnapshotFromWrapper(wrapper)
+            Dim beforeSnapshot = TransformAction.CaptureState(wrapper)
             TransformAction.ApplyMirror(wrapper, selectionCenter, mirrorX, mirrorY)
-            Dim afterSnapshot = TransformAction.MakeSnapshotFromWrapper(wrapper)
+            Dim afterSnapshot = TransformAction.CaptureState(wrapper)
 
             If beforeSnapshot IsNot Nothing AndAlso afterSnapshot IsNot Nothing Then
                 snapshots.Add((selected, CType(beforeSnapshot, Object), CType(afterSnapshot, Object)))

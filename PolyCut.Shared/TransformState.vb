@@ -10,6 +10,7 @@ Public Class TransformState
     Public Property TransformOrigin As Point
     Public Property Width As Double = Double.NaN
     Public Property Height As Double = Double.NaN
+    Public Property ZIndex As Integer
 
     Public Sub New()
         Translation = New Point(0, 0)
@@ -28,7 +29,8 @@ Public Class TransformState
     Public Function Clone() As TransformState
         Dim c As New TransformState(Translation, Rotation, Scale, TransformOrigin) With {
             .Width = Width,
-            .Height = Height
+            .Height = Height,
+            .ZIndex = ZIndex
         }
         Return c
     End Function
@@ -46,6 +48,7 @@ Public Class TransformState
         state.Width = size.Width
         state.Height = size.Height
         state.TransformOrigin = wrapper.RenderTransformOrigin
+        state.ZIndex = Panel.GetZIndex(wrapper)
 
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
         If rotateTransform IsNot Nothing Then
@@ -79,11 +82,12 @@ Public Class TransformState
 
         Canvas.SetLeft(wrapper, Translation.X)
         Canvas.SetTop(wrapper, Translation.Y)
-        If Not Double.IsNaN(Width) Then wrapper.Width = Width
-        If Not Double.IsNaN(Height) Then wrapper.Height = Height
+        If Not Double.IsNaN(Width) AndAlso Width > 0 Then wrapper.Width = Width
+        If Not Double.IsNaN(Height) AndAlso Height > 0 Then wrapper.Height = Height
 
         wrapper.RenderTransformOrigin = TransformOrigin
         wrapper.RenderTransform = If(Math.Abs(Rotation) > 0.01, New RotateTransform(Rotation), Nothing)
+        Panel.SetZIndex(wrapper, ZIndex)
 
         If Not applyScale Then Return
 
@@ -135,4 +139,26 @@ Public Class TransformState
             contentFe.RenderTransform = Nothing
         End If
     End Sub
+    Public Function Matches(other As TransformState, Optional tolerance As Double = 0.01) As Boolean
+        If other Is Nothing Then Return False
+
+        If Math.Abs(Translation.X - other.Translation.X) >= tolerance Then Return False
+        If Math.Abs(Translation.Y - other.Translation.Y) >= tolerance Then Return False
+        If Math.Abs(Rotation - other.Rotation) >= tolerance Then Return False
+        If Math.Abs(Scale.X - other.Scale.X) >= 0.0001 Then Return False
+        If Math.Abs(Scale.Y - other.Scale.Y) >= 0.0001 Then Return False
+        If Math.Abs(TransformOrigin.X - other.TransformOrigin.X) >= tolerance Then Return False
+        If Math.Abs(TransformOrigin.Y - other.TransformOrigin.Y) >= tolerance Then Return False
+        If Not SizeMatches(Width, other.Width, tolerance) Then Return False
+        If Not SizeMatches(Height, other.Height, tolerance) Then Return False
+        If ZIndex <> other.ZIndex Then Return False
+
+        Return True
+    End Function
+
+    Private Shared Function SizeMatches(a As Double, b As Double, tolerance As Double) As Boolean
+        If Double.IsNaN(a) AndAlso Double.IsNaN(b) Then Return True
+        If Double.IsNaN(a) OrElse Double.IsNaN(b) Then Return False
+        Return Math.Abs(a - b) < tolerance
+    End Function
 End Class

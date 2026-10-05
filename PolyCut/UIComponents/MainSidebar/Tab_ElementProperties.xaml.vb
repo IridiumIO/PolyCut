@@ -230,8 +230,8 @@ Public Class Tab_ElementProperties
         Dim numberBox = TryCast(sender, WPF.Ui.Controls.NumberBox)
         If numberBox Is Nothing OrElse _before Is Nothing Then Return
 
-        Dim center = New Point(_before.Left + _before.Width / 2, _before.Top + _before.Height / 2)
-        Dim startRotation As Double = CType(_before.RenderTransform, RotateTransform)?.Angle Or 0
+        Dim center = New Point(_before.Translation.X + _before.Width / 2, _before.Translation.Y + _before.Height / 2)
+        Dim startRotation As Double = _before.Rotation
 
         Dim newRotation As Double = (If(numberBox.Value, 0) - startRotation) Mod 360
 
@@ -240,10 +240,10 @@ Public Class Tab_ElementProperties
             Return
         End If
 
-        TransformAction.ApplyRotation(MainVM.SelectedWrapper, center, startRotation, newRotation, New Point(_before.Left, _before.Top))
+        TransformAction.ApplyRotation(MainVM.SelectedWrapper, center, startRotation, newRotation, New Point(_before.Translation.X, _before.Translation.Y))
         MainVM.SelectedWrapper.UpdateLayout()
 
-        _after = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+        _after = TransformAction.CaptureState(MainVM.SelectedWrapper)
 
         Dim items As New List(Of (IDrawable, Object, Object)) From {
             (MainVM.SelectedDrawable, _before, _after)
@@ -258,13 +258,13 @@ Public Class Tab_ElementProperties
 
 
 
-    Private _before As TransformAction.Snapshot
-    Private _after As TransformAction.Snapshot
+    Private _before As TransformState
+    Private _after As TransformState
 
 
     Private Sub TextBox_GotKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
 
-        _before = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+        _before = TransformAction.CaptureState(MainVM.SelectedWrapper)
 
 
         Dim tb = TryCast(sender, WPF.Ui.Controls.TextBox)
@@ -299,7 +299,7 @@ Public Class Tab_ElementProperties
         Canvas.GetTop(MainVM.SelectedWrapper))
 
         MainVM.SelectedWrapper.UpdateLayout()
-        _after = TransformAction.MakeSnapshotFromWrapper(MainVM.SelectedWrapper)
+        _after = TransformAction.CaptureState(MainVM.SelectedWrapper)
 
         Dim items As New List(Of (IDrawable, Object, Object)) From {
         (MainVM.SelectedDrawable, _before, _after)

@@ -71,15 +71,15 @@ Public Class ClipboardService
 
         If act.Execute() Then
 
-            Dim items As New List(Of (IDrawable, TransformAction.Snapshot, TransformAction.Snapshot))
+            Dim items As New List(Of (IDrawable, TransformState, TransformState))
 
             For Each sel In _mainVM.SelectedDrawables
                 Dim wrapper = TryCast(sel.DrawableElement.Parent, ContentControl)
                 If wrapper Is Nothing Then Continue For
 
-                Dim before = TransformAction.MakeSnapshotFromWrapper(wrapper)
+                Dim before = TransformAction.CaptureState(wrapper)
                 TransformAction.ApplyMove(wrapper, offset, offset)
-                Dim after = TransformAction.MakeSnapshotFromWrapper(wrapper)
+                Dim after = TransformAction.CaptureState(wrapper)
                 items.Add((sel, before, after))
             Next
             Dim tfact As New TransformAction(items)

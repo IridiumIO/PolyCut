@@ -237,18 +237,16 @@ Friend NotInheritable Class ProjectApplyHelper
             If grp.ParentGroup Is Nothing OrElse TypeOf (grp.ParentGroup) Is DrawableGroup Then
                 toSelect.Add(grp)
             End If
-            ApplyWrapperState(wrapper,
-                                New WrapperState With {
-                                    .Left = gd.Left,
-                                    .Top = gd.Top,
-                                    .Width = gd.Width,
-                                    .Height = gd.Height,
-                                    .ZIndex = gd.ZIndex,
-                                    .RotationAngle = gd.RotationAngle,
-                                    .ScaleX = gd.ScaleX,
-                                    .ScaleY = gd.ScaleY
-                                },
-                                applyScaleToContent:=True)
+            Dim groupState As New TransformState With {
+                .Translation = New Point(gd.Left, gd.Top),
+                .Width = If(gd.Width > 0, gd.Width, Double.NaN),
+                .Height = If(gd.Height > 0, gd.Height, Double.NaN),
+                .Rotation = gd.RotationAngle,
+                .Scale = New Point(If(gd.ScaleX = 0, 1.0, gd.ScaleX), If(gd.ScaleY = 0, 1.0, gd.ScaleY))
+            }
+            groupState.ApplyToWrapper(wrapper, applyScale:=True)
+            Panel.SetZIndex(wrapper, gd.ZIndex)
+            MetadataHelper.SetOriginalDimensions(wrapper, (gd.Width, gd.Height))
 
         Next
 
@@ -265,51 +263,20 @@ Friend NotInheritable Class ProjectApplyHelper
             If d.ParentGroup Is Nothing OrElse TypeOf (d.ParentGroup) Is DrawableGroup Then
                 toSelect.Add(d)
             End If
-            ApplyWrapperState(wrapper,
-                              New WrapperState With {
-                                  .Left = dd.Left,
-                                  .Top = dd.Top,
-                                  .Width = dd.Width,
-                                  .Height = dd.Height,
-                                  .ZIndex = dd.ZIndex,
-                                  .RotationAngle = dd.RotationAngle
-                              })
+            Dim drawState As New TransformState With {
+                .Translation = New Point(dd.Left, dd.Top),
+                .Width = If(dd.Width > 0, dd.Width, Double.NaN),
+                .Height = If(dd.Height > 0, dd.Height, Double.NaN),
+                .Rotation = dd.RotationAngle
+            }
+            drawState.ApplyToWrapper(wrapper, applyScale:=False)
+            Panel.SetZIndex(wrapper, dd.ZIndex)
+            MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))
 
         Next
         PolyCanvas.ApplySelection(toSelect, Nothing, True)
 
     End Sub
 
-
-    Public Shared Sub ApplyWrapperState(wrapper As ContentControl, wrapperState As WrapperState, Optional applyScaleToContent As Boolean = False)
-
-        Dim state As New TransformState() With {
-            .Translation = New Point(wrapperState.Left, wrapperState.Top),
-            .Width = wrapperState.Width,
-            .Height = wrapperState.Height,
-            .Rotation = wrapperState.RotationAngle,
-            .Scale = New Point(wrapperState.ScaleX, wrapperState.ScaleY)
-        }
-
-        state.ApplyToWrapper(wrapper, applyScale:=applyScaleToContent)
-
-        Panel.SetZIndex(wrapper, wrapperState.ZIndex)
-
-        MetadataHelper.SetOriginalDimensions(wrapper, (wrapperState.Width, wrapperState.Height))
-        wrapper.InvalidateMeasure()
-        wrapper.InvalidateArrange()
-    End Sub
-
 End Class
 
-
-Friend NotInheritable Class WrapperState
-    Public Property Left As Double
-    Public Property Top As Double
-    Public Property Width As Double
-    Public Property Height As Double
-    Public Property ZIndex As Integer
-    Public Property RotationAngle As Double
-    Public Property ScaleX As Double = 1.0
-    Public Property ScaleY As Double = 1.0
-End Class

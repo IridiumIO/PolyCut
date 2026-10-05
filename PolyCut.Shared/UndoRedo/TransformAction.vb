@@ -6,13 +6,53 @@ Public Class TransformAction
     Implements IUndoableAction
 
     Public Class Snapshot
-        Public Property Left As Double
-        Public Property Top As Double
-        Public Property Width As Double
-        Public Property Height As Double
-        Public Property RenderTransform As Transform
-
+        Public Property State As TransformState
         Public Property ZIndex As Integer
+
+        Public ReadOnly Property Left As Double
+            Get
+                Return If(State Is Nothing, 0.0, State.Translation.X)
+            End Get
+        End Property
+
+        Public ReadOnly Property Top As Double
+            Get
+                Return If(State Is Nothing, 0.0, State.Translation.Y)
+            End Get
+        End Property
+
+        Public ReadOnly Property Width As Double
+            Get
+                Return If(State Is Nothing, Double.NaN, State.Width)
+            End Get
+        End Property
+
+        Public ReadOnly Property Height As Double
+            Get
+                Return If(State Is Nothing, Double.NaN, State.Height)
+            End Get
+        End Property
+
+        Public ReadOnly Property TransformOrigin As Point
+            Get
+                Return If(State Is Nothing, New Point(0.5, 0.5), State.TransformOrigin)
+            End Get
+        End Property
+
+        Public ReadOnly Property RenderTransform As Transform
+            Get
+                If State Is Nothing Then Return Nothing
+
+                Dim group As New TransformGroup()
+                If Math.Abs(State.Rotation) > 0.01 Then group.Children.Add(New RotateTransform(State.Rotation))
+                If Math.Abs(State.Scale.X - 1.0) > 0.0001 OrElse Math.Abs(State.Scale.Y - 1.0) > 0.0001 Then
+                    group.Children.Add(New ScaleTransform(State.Scale.X, State.Scale.Y))
+                End If
+
+                If group.Children.Count = 0 Then Return Nothing
+                Return group
+            End Get
+        End Property
     End Class
 
     Private ReadOnly _items As New List(Of (Target As IDrawable, Before As Snapshot, After As Snapshot))
@@ -48,12 +88,11 @@ Public Class TransformAction
     Public Shared Function MakeSnapshotFromWrapper(wrapper As ContentControl) As Snapshot
         If wrapper Is Nothing Then Return Nothing
         Dim state = TransformState.FromWrapper(wrapper)
+        If state.Width <= 0 Then state.Width = Double.NaN
+        If state.Height <= 0 Then state.Height = Double.NaN
+
         Return New Snapshot With {
-            .Left = state.Translation.X,
-            .Top = state.Translation.Y,
-            .Width = state.Width,
-            .Height = state.Height,
-            .RenderTransform = If(wrapper.RenderTransform, Nothing),
+            .State = state,
             .ZIndex = Panel.GetZIndex(wrapper)
         }
     End Function
@@ -69,11 +108,7 @@ Public Class TransformAction
     Public Shared Sub ApplySnapshotToWrapper(snapshot As Snapshot, wrapper As ContentControl)
         If snapshot Is Nothing OrElse wrapper Is Nothing Then Return
 
-        Canvas.SetLeft(wrapper, snapshot.Left)
-        Canvas.SetTop(wrapper, snapshot.Top)
-        If Not Double.IsNaN(snapshot.Width) AndAlso snapshot.Width > 0 Then wrapper.Width = snapshot.Width
-        If Not Double.IsNaN(snapshot.Height) AndAlso snapshot.Height > 0 Then wrapper.Height = snapshot.Height
-        wrapper.RenderTransform = snapshot.RenderTransform
+        If snapshot.State IsNot Nothing Then snapshot.State.ApplyToWrapper(wrapper, applyScale:=True)
         Panel.SetZIndex(wrapper, snapshot.ZIndex)
     End Sub
 

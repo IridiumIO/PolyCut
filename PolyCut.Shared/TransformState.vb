@@ -99,17 +99,40 @@ Public Class TransformState
                     contentFe.RenderTransform = tg
                 End If
 
-                Dim st = tg.Children.OfType(Of ScaleTransform)().FirstOrDefault()
+                Dim scales = tg.Children.OfType(Of ScaleTransform)().ToList()
+                Dim st = scales.FirstOrDefault()
                 If st Is Nothing Then
                     st = New ScaleTransform(1, 1)
                     tg.Children.Add(st)
+                Else
+                    For Each extra In scales.Skip(1).ToList()
+                        tg.Children.Remove(extra)
+                    Next
                 End If
 
                 st.ScaleX = Scale.X
                 st.ScaleY = Scale.Y
                 contentFe.RenderTransformOrigin = New Point(0.5, 0.5)
+            Else
+                RemoveContentScale(contentFe)
             End If
         End If
     End Sub
 
+    Private Shared Sub RemoveContentScale(contentFe As FrameworkElement)
+        If contentFe Is Nothing Then Return
+
+        Dim group = TryCast(contentFe.RenderTransform, TransformGroup)
+        If group IsNot Nothing Then
+            For Each s In group.Children.OfType(Of ScaleTransform)().ToList()
+                group.Children.Remove(s)
+            Next
+
+            Return
+        End If
+
+        If TypeOf contentFe.RenderTransform Is ScaleTransform Then
+            contentFe.RenderTransform = Nothing
+        End If
+    End Sub
 End Class

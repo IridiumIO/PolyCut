@@ -66,24 +66,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         grp.BeginBulkChildUpdate()
         Try
             For Each d In items
-                Dim fe = d.DrawableElement
-                Dim element As FrameworkElement
-
-                If TypeOf fe Is Shapes.Path Then
-                    Dim p = DirectCast(fe, Shapes.Path)
-                    'Stretch stays a local value: ConvertPath assigns Stretch=None locally, which a Style setter cannot override.
-                    p.Stretch = Media.Stretch.Fill
-                    p.Style = groupChildPathStyle
-                    PerformantRasteriser.SetCacheEligible(p, True)
-                    element = p
-                Else
-                    element = DrawableWrapperFactory.CreateWrapper(fe, d, style)
-                    If element Is Nothing Then Continue For
-
-                    Canvas.SetLeft(element, GetLeftSafe(fe))
-                    Canvas.SetTop(element, GetTopSafe(fe))
-                    element.IsHitTestVisible = False
-                End If
+                Dim element = CreateChildElement(d, style, groupChildPathStyle)
+                If element Is Nothing Then Continue For
 
                 wrappers.Add((d, element))
                 grp.AddChild(d)
@@ -341,6 +325,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Canvas.SetTop(vbe, bounds.Top)
 
         ' Create child wrappers and place them in LOCAL space
+        Dim pathStyle As Style = TryCast(Application.Current?.TryFindResource("GroupChildPathStyle"), Style)
+
         Dim rebuilt As New List(Of FrameworkElement)
         For Each child In GroupChildren
             If child?.DrawableElement Is Nothing Then Continue For
@@ -350,15 +336,14 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Dim left = GetLeftSafe(fe)
             Dim top = GetTopSafe(fe)
 
-            Dim wrapper = DrawableWrapperFactory.CreateWrapper(fe, child, designerItemStyle)
-            If wrapper Is Nothing Then Continue For
+            Dim element = CreateChildElement(child, designerItemStyle, pathStyle)
+            If element Is Nothing Then Continue For
 
             ' Localize into group space
-            Canvas.SetLeft(wrapper, left - bounds.Left)
-            Canvas.SetTop(wrapper, top - bounds.Top)
+            Canvas.SetLeft(element, left - bounds.Left)
+            Canvas.SetTop(element, top - bounds.Top)
 
-            wrapper.IsHitTestVisible = False
-            rebuilt.Add(wrapper)
+            rebuilt.Add(element)
 
             ' Keep model links consistent
             child.ParentGroup = Me
@@ -422,6 +407,30 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
         If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)
         Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
+    End Function
+
+    'One rule for how a nested group's child appears in its inner canvas, shared by the import factory and the visual rebuild:
+    'paths stay as bare elements (styled, cache-eligible) so a group of thousands does not pay for a wrapper each, and everything else is wrapped so it can be interacted with individually.
+    Private Shared Function CreateChildElement(child As IDrawable, designerItemStyle As Style, pathStyle As Style) As FrameworkElement
+        Dim fe = child?.DrawableElement
+        If fe Is Nothing Then Return Nothing
+
+        If TypeOf fe Is Shapes.Path Then
+            Dim p = DirectCast(fe, Shapes.Path)
+            'Stretch stays a local value: ConvertPath assigns Stretch=None locally, which a Style setter cannot override.
+            p.Stretch = Stretch.Fill
+            p.Style = pathStyle
+            PerformantRasteriser.SetCacheEligible(p, True)
+            Return p
+        End If
+
+        Dim wrapper = DrawableWrapperFactory.CreateWrapper(fe, child, designerItemStyle)
+        If wrapper Is Nothing Then Return Nothing
+
+        Canvas.SetLeft(wrapper, GetLeftSafe(fe))
+        Canvas.SetTop(wrapper, GetTopSafe(fe))
+        wrapper.IsHitTestVisible = False
+        Return wrapper
     End Function
 
     'One canvas per cell, holding its leaves at cell-local offsets.

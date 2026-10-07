@@ -509,7 +509,9 @@ Public NotInheritable Class PerformantRasteriser
                 Dim weight As Integer
                 If _weightMemo.TryGetValue(geometry, weight) Then Return weight
 
+                'Geometry arrives as a PathGeometry from the importer but as a StreamGeometry when a project is parsed back
                 Dim pathGeometry = TryCast(geometry, PathGeometry)
+                If pathGeometry Is Nothing Then pathGeometry = PathGeometry.CreateFromGeometry(geometry)
                 If pathGeometry IsNot Nothing Then
                     weight = GeometryWeight(pathGeometry)
                     _weightMemo(geometry) = weight

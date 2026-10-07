@@ -378,6 +378,43 @@ End Class
 
 Friend NotInheritable Class DrawableCodec
 
+    'The state a drawable persists, independent of whether its visual is currently wrapped
+    Private Shared Function CaptureDrawableState(drawable As IDrawable) As TransformState
+        Dim element = drawable?.DrawableElement
+        If element Is Nothing Then Return New TransformState()
+
+        Dim wrapper = TryCast(element.Parent, ContentControl)
+        If wrapper IsNot Nothing Then Return TransformState.FromWrapper(wrapper)
+
+        Dim state As New TransformState()
+        Dim left = CanvasUtil.GetLeftSafe(element)
+        Dim top = CanvasUtil.GetTopSafe(element)
+
+        Dim parentNested = TryCast(drawable.ParentGroup, NestedDrawableGroup)
+        If parentNested IsNot Nothing AndAlso parentNested.InnerCanvas IsNot Nothing Then
+            Try
+                Dim origin = element.TransformToVisual(parentNested.InnerCanvas).Transform(New Point(0, 0))
+                left = origin.X
+                top = origin.Y
+            Catch
+            End Try
+        End If
+
+        state.Translation = New Point(left, top)
+        state.Width = If(element.ActualWidth > 0, element.ActualWidth, CanvasUtil.GetWidthSafe(element))
+        state.Height = If(element.ActualHeight > 0, element.ActualHeight, CanvasUtil.GetHeightSafe(element))
+
+        Dim rotate = TryCast(element.RenderTransform, RotateTransform)
+        state.Rotation = If(rotate IsNot Nothing, rotate.Angle, 0)
+
+        Dim group = TryCast(element.RenderTransform, TransformGroup)
+        Dim scale = If(group IsNot Nothing, group.Children.OfType(Of ScaleTransform)().FirstOrDefault(), TryCast(element.RenderTransform, ScaleTransform))
+        If scale IsNot Nothing Then state.Scale = New Point(scale.ScaleX, scale.ScaleY)
+
+        state.ZIndex = Panel.GetZIndex(element)
+        Return state
+    End Function
+
     Protected Friend Shared Function SerializeDrawable(drawable As IDrawable, id As Guid) As DrawableData
         If drawable?.DrawableElement Is Nothing Then Return Nothing
 
@@ -390,43 +427,15 @@ Friend NotInheritable Class DrawableCodec
             .IsHidden = drawable.IsHidden
         }
 
-        If wrapper IsNot Nothing Then
-
-            Dim state = TransformState.FromWrapper(wrapper)
-            data.Left = state.Translation.X
-            data.Top = state.Translation.Y
-            data.Width = state.Width
-            data.Height = state.Height
-            data.RotationAngle = state.Rotation
-            data.ScaleX = state.Scale.X
-            data.ScaleY = state.Scale.Y
-            data.ZIndex = Panel.GetZIndex(wrapper)
-        Else
-
-            Dim localLeft As Double = CanvasUtil.GetLeftSafe(element)
-            Dim localTop As Double = CanvasUtil.GetTopSafe(element)
-
-            Dim parentNested = TryCast(drawable.ParentGroup, NestedDrawableGroup)
-            If parentNested IsNot Nothing AndAlso parentNested.InnerCanvas IsNot Nothing Then
-                Try
-                    Dim origin = element.TransformToVisual(parentNested.InnerCanvas).Transform(New Point(0, 0))
-                    localLeft = origin.X
-                    localTop = origin.Y
-                Catch
-                End Try
-            End If
-
-            data.Left = localLeft
-            data.Top = localTop
-            data.Width = CanvasUtil.GetWidthSafe(element)
-            data.Height = CanvasUtil.GetHeightSafe(element)
-
-            Dim rotate = TryCast(element.RenderTransform, RotateTransform)
-            data.RotationAngle = If(rotate IsNot Nothing, rotate.Angle, 0)
-            data.ScaleX = 1
-            data.ScaleY = 1
-            data.ZIndex = Panel.GetZIndex(element)
-        End If
+        Dim state = CaptureDrawableState(drawable)
+        data.Left = state.Translation.X
+        data.Top = state.Translation.Y
+        data.Width = state.Width
+        data.Height = state.Height
+        data.RotationAngle = state.Rotation
+        data.ScaleX = state.Scale.X
+        data.ScaleY = state.Scale.Y
+        data.ZIndex = state.ZIndex
 
         If Double.IsNaN(data.Left) Then data.Left = 0
         If Double.IsNaN(data.Top) Then data.Top = 0
@@ -496,7 +505,7 @@ Friend NotInheritable Class DrawableCodec
             groupData.ScaleX = state.Scale.X
             groupData.ScaleY = state.Scale.Y
 
-            groupData.ZIndex = Panel.GetZIndex(wrapper)
+            groupData.ZIndex = If(wrapper IsNot Nothing, Panel.GetZIndex(wrapper), Panel.GetZIndex(CType(group.DrawableElement, FrameworkElement)))
             groupData.IsHidden = group.IsHidden
 
         Catch

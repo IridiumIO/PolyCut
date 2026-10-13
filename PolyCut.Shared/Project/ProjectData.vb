@@ -31,7 +31,6 @@ Public Class DrawableData
     Public Property ScaleX As Double = 1.0
     Public Property ScaleY As Double = 1.0
     Public Property IsHidden As Boolean
-    Public Property ZIndex As Integer
 
     Public Property IsRegistrationMark As Boolean 'Always export regardless of single-colour filtering
 
@@ -75,7 +74,6 @@ Public Class GroupData
     Public Property ScaleX As Double = 1.0
     Public Property ScaleY As Double = 1.0
     Public Property IsHidden As Boolean
-    Public Property ZIndex As Integer
 
     ' For NestedDrawableGroup with Viewbox: inner-canvas "native" size (pre-scale)
     Public Property NativeWidth As Double

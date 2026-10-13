@@ -411,7 +411,6 @@ Friend NotInheritable Class DrawableCodec
         Dim scale = If(group IsNot Nothing, group.Children.OfType(Of ScaleTransform)().FirstOrDefault(), TryCast(element.RenderTransform, ScaleTransform))
         If scale IsNot Nothing Then state.Scale = New Point(scale.ScaleX, scale.ScaleY)
 
-        state.ZIndex = Panel.GetZIndex(element)
         Return state
     End Function
 
@@ -435,7 +434,6 @@ Friend NotInheritable Class DrawableCodec
         data.RotationAngle = state.Rotation
         data.ScaleX = state.Scale.X
         data.ScaleY = state.Scale.Y
-        data.ZIndex = state.ZIndex
 
         If Double.IsNaN(data.Left) Then data.Left = 0
         If Double.IsNaN(data.Top) Then data.Top = 0
@@ -505,7 +503,6 @@ Friend NotInheritable Class DrawableCodec
             groupData.ScaleX = state.Scale.X
             groupData.ScaleY = state.Scale.Y
 
-            groupData.ZIndex = If(wrapper IsNot Nothing, Panel.GetZIndex(wrapper), Panel.GetZIndex(CType(group.DrawableElement, FrameworkElement)))
             groupData.IsHidden = group.IsHidden
 
         Catch

@@ -10,7 +10,6 @@ Public Class TransformState
     Public Property TransformOrigin As Point
     Public Property Width As Double = Double.NaN
     Public Property Height As Double = Double.NaN
-    Public Property ZIndex As Integer
 
     Public Sub New()
         Translation = New Point(0, 0)
@@ -29,8 +28,7 @@ Public Class TransformState
     Public Function Clone() As TransformState
         Dim c As New TransformState(Translation, Rotation, Scale, TransformOrigin) With {
             .Width = Width,
-            .Height = Height,
-            .ZIndex = ZIndex
+            .Height = Height
         }
         Return c
     End Function
@@ -48,7 +46,6 @@ Public Class TransformState
         state.Width = size.Width
         state.Height = size.Height
         state.TransformOrigin = wrapper.RenderTransformOrigin
-        state.ZIndex = Panel.GetZIndex(wrapper)
 
         Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
         If rotateTransform IsNot Nothing Then
@@ -87,7 +84,6 @@ Public Class TransformState
 
         wrapper.RenderTransformOrigin = TransformOrigin
         wrapper.RenderTransform = If(Math.Abs(Rotation) > 0.01, New RotateTransform(Rotation), Nothing)
-        Panel.SetZIndex(wrapper, ZIndex)
 
         If Not applyScale Then Return
 
@@ -151,7 +147,6 @@ Public Class TransformState
         If Math.Abs(TransformOrigin.Y - other.TransformOrigin.Y) >= tolerance Then Return False
         If Not SizeMatches(Width, other.Width, tolerance) Then Return False
         If Not SizeMatches(Height, other.Height, tolerance) Then Return False
-        If ZIndex <> other.ZIndex Then Return False
 
         Return True
     End Function

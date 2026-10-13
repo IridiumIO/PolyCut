@@ -94,4 +94,87 @@ Public Module TransformMath
         Return New MatrixTransform(m).TransformBounds(New Rect(0, 0, width, height))
     End Function
 
+
+
+    'vvvv   duplidcated logic until I can decide where to unify this stuff
+
+    Public Function ComputeSelectionFrame(items As IEnumerable(Of IDrawable), frameAngle As Double) As (Origin As Point, Frame As Rect)
+        Dim corners As New List(Of Point)
+        If items IsNot Nothing Then
+            For Each item In items
+                If item?.DrawableElement Is Nothing Then Continue For
+
+                Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
+                If wrapper Is Nothing Then Continue For
+
+                corners.AddRange(FootprintCorners(wrapper))
+            Next
+        End If
+
+        If corners.Count = 0 Then Return (New Point(0, 0), Rect.Empty)
+
+        Dim world = BoundsOf(corners)
+        Dim origin As New Point(world.Left + world.Width / 2, world.Top + world.Height / 2)
+
+        Dim local As New List(Of Point)
+        For Each corner In corners
+            local.Add(RotateAbout(corner, origin, -frameAngle))
+        Next
+
+        Return (origin, BoundsOf(local))
+    End Function
+
+    Private Function FootprintCorners(wrapper As ContentControl) As List(Of Point)
+        Dim result As New List(Of Point)
+        If wrapper Is Nothing Then Return result
+
+        Dim left = Canvas.GetLeft(wrapper)
+        Dim top = Canvas.GetTop(wrapper)
+        If Double.IsNaN(left) Then left = 0
+        If Double.IsNaN(top) Then top = 0
+
+        Dim size = GetWrapperSize(wrapper)
+        Dim rotation = If(TryCast(wrapper.RenderTransform, RotateTransform)?.Angle, 0.0)
+        Dim origin = wrapper.RenderTransformOrigin
+        Dim center As New Point(left + size.Width * origin.X, top + size.Height * origin.Y)
+
+        result.Add(RotateAbout(New Point(left, top), center, rotation))
+        result.Add(RotateAbout(New Point(left + size.Width, top), center, rotation))
+        result.Add(RotateAbout(New Point(left + size.Width, top + size.Height), center, rotation))
+        result.Add(RotateAbout(New Point(left, top + size.Height), center, rotation))
+
+        Return result
+    End Function
+
+
+    Public Function RotateAbout(p As Point, center As Point, angleDegrees As Double) As Point
+        If Math.Abs(angleDegrees) < 0.0001 Then Return p
+
+        Dim rad = angleDegrees * Math.PI / 180.0
+        Dim cosA = Math.Cos(rad)
+        Dim sinA = Math.Sin(rad)
+        Dim dx = p.X - center.X
+        Dim dy = p.Y - center.Y
+
+        'This fucker 
+        Return New Point(center.X + dx * cosA - dy * sinA, center.Y + dx * sinA + dy * cosA)
+    End Function
+
+    Private Function BoundsOf(points As IEnumerable(Of Point)) As Rect
+        Dim minX = Double.MaxValue
+        Dim minY = Double.MaxValue
+        Dim maxX = Double.MinValue
+        Dim maxY = Double.MinValue
+
+        For Each p In points
+            minX = Math.Min(minX, p.X)
+            minY = Math.Min(minY, p.Y)
+            maxX = Math.Max(maxX, p.X)
+            maxY = Math.Max(maxY, p.Y)
+        Next
+
+        If minX = Double.MaxValue Then Return Rect.Empty
+        Return New Rect(minX, minY, maxX - minX, maxY - minY)
+    End Function
+
 End Module

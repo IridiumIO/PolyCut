@@ -25,6 +25,10 @@ Public Class TransformGizmo
     Private _renderHooked As Boolean
     Private _needsRefresh As Boolean
     Private _multiBoundsDirty As Boolean
+
+    Private _dragFrameAngle As Double
+    Private _dragFrameOrigin As Point
+
     Private _pendingDragPosition As Point?
     Private ReadOnly _dragLimiter As InteractionRateLimiter
 
@@ -110,6 +114,36 @@ Public Class TransformGizmo
     Private Function GetCanvasToGizmoMatrix() As Matrix
         If _canvas Is Nothing Then Return Matrix.Identity
         Return TransformMath.GetAccumulatedMatrix(_canvas, Me)
+    End Function
+
+    Private Function SnapshotDragFrame() As (Angle As Double, Origin As Point, Frame As Rect)
+        Dim frame = CurrentFrame()
+        _dragFrameAngle = frame.Angle
+        _dragFrameOrigin = frame.Origin
+        Return frame
+    End Function
+
+    Private Function CurrentFrame() As (Angle As Double, Origin As Point, Frame As Rect)
+        Dim items = _selectionManager?.SelectedItems
+        If items Is Nothing OrElse items.Count = 0 Then Return (0.0, New Point(0, 0), Rect.Empty)
+
+        Dim angle = GetSelectionRotation()
+        Dim frame = TransformMath.ComputeSelectionFrame(items, angle)
+
+        Return (angle, frame.Origin, frame.Frame)
+    End Function
+
+    Private Function SelectionHasMixedRotation() As Boolean
+        If _selectionManager.Count < 2 Then Return False
+
+        Dim angle = GetSelectionRotation()
+        For Each item In _selectionManager.SelectedItems
+            Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Continue For
+            If Math.Abs(TransformAction.GetRotationAngle(wrapper) - angle) > 0.01 Then Return True
+        Next
+
+        Return False
     End Function
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
@@ -202,19 +236,20 @@ Public Class TransformGizmo
 
         _styleCache.EnsurePens()
 
-        Dim bounds = _selectionManager.GetUnrotatedBounds()
-        If Not bounds.HasValue Then Return
+        Dim frame = CurrentFrame()
+        If frame.Frame.IsEmpty Then Return
 
         Dim dpi = VisualTreeHelper.GetDpi(Me).PixelsPerDip
 
         ' Map canvas-space selection bounds into this overlay's 1:1 screen space
-        Dim rect = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
-        Dim rotationAngle = GetSelectionRotation()
+        Dim toGizmo = GetCanvasToGizmoMatrix()
+        Dim rect = New MatrixTransform(toGizmo).TransformBounds(frame.Frame)
+        Dim rotationAngle = frame.Angle
         Dim hasRotation = Math.Abs(rotationAngle) > 0.01
 
         If hasRotation Then
-            Dim boundsCenter = New Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2)
-            drawingContext.PushTransform(New RotateTransform(rotationAngle, boundsCenter.X, boundsCenter.Y))
+            Dim mappedOrigin = toGizmo.Transform(frame.Origin)
+            drawingContext.PushTransform(New RotateTransform(rotationAngle, mappedOrigin.X, mappedOrigin.Y))
         End If
 
         Dim handleSize = HANDLE_SIZE
@@ -235,10 +270,12 @@ Public Class TransformGizmo
         drawingContext.DrawRectangle(_styleCache.HandleBrush, _styleCache.HandlePen, _handleRects(HandleId.BottomRight))
 
         ' Draw edge handles
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top), 5, 5)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom), 5, 5)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left), 5, 5)
-        drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right), 5, 5)
+        If Not SelectionHasMixedRotation() Then
+            drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Top), 5, 5)
+            drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Bottom), 5, 5)
+            drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Left), 5, 5)
+            drawingContext.DrawRoundedRectangle(_styleCache.EdgeHandleBrush, _styleCache.EdgePen, _handleRects(HandleId.Right), 5, 5)
+        End If
 
         ' Draw rotate handle background
         Dim iconCenter = New Point(_rotateHandleRect.Left + _rotateHandleRect.Width / 2, _rotateHandleRect.Top + _rotateHandleRect.Height - 8)
@@ -306,13 +343,7 @@ Public Class TransformGizmo
 
 
     Private Function GetSelectionRotation() As Double
-
-        If _selectionManager.Count <> 1 Then Return 0
-
-        Dim item = _selectionManager.SelectedItems.FirstOrDefault()
-        Dim wrapper = TryCast(item?.DrawableElement?.Parent, ContentControl)
-        Return TransformAction.GetRotationAngle(wrapper)
-
+        Return TransformAction.GetRotationAngle(TryCast(_selectionManager.SelectedItems.FirstOrDefault()?.DrawableElement?.Parent, ContentControl))
     End Function
 
     Private Function GetCurrentRotationAngle() As Double
@@ -418,13 +449,14 @@ Public Class TransformGizmo
     End Function
 
     Private Function IsPointOverGizmoContent(p As Point) As Boolean
-        Dim bounds = _selectionManager?.GetUnrotatedBounds()
-        If bounds.HasValue Then
-            Dim rect = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
+        Dim frame = CurrentFrame()
+        If Not frame.Frame.IsEmpty Then
+            Dim toGizmo = GetCanvasToGizmoMatrix()
+            Dim rect = New MatrixTransform(toGizmo).TransformBounds(frame.Frame)
 
-            Dim rotationAngle = GetSelectionRotation()
+            Dim rotationAngle = frame.Angle
             If Math.Abs(rotationAngle) > 0.01 Then
-                Dim centerPt = New Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2)
+                Dim centerPt = toGizmo.Transform(frame.Origin)
                 p = InverseRotatePoint(p, centerPt, rotationAngle)
             End If
 
@@ -646,16 +678,17 @@ Public Class TransformGizmo
 
 
     Private Function HitTestGizmo(pos As Point) As String
-        Dim bounds = _selectionManager.GetUnrotatedBounds()
-        If Not bounds.HasValue Then Return Nothing
+        Dim frame = CurrentFrame()
+        If frame.Frame.IsEmpty Then Return Nothing
 
         ' pos is in gizmo (1:1 screen) space - map the canvas-space bounds into it.
-        Dim mapped = New MatrixTransform(GetCanvasToGizmoMatrix()).TransformBounds(bounds.Value)
+        Dim toGizmo = GetCanvasToGizmoMatrix()
+        Dim mapped = New MatrixTransform(toGizmo).TransformBounds(frame.Frame)
 
         ' ----- inverse rotate mouse into gizmo space -----
-        Dim rotationAngle = GetSelectionRotation()
+        Dim rotationAngle = frame.Angle
         If Math.Abs(rotationAngle) > 0.01 Then
-            Dim centerPt = New Point(mapped.Left + mapped.Width / 2, mapped.Top + mapped.Height / 2)
+            Dim centerPt = toGizmo.Transform(frame.Origin)
             pos = InverseRotatePoint(pos, centerPt, rotationAngle)
         End If
 
@@ -665,7 +698,12 @@ Public Class TransformGizmo
 
         ' ----- resize handles -----
         Dim h = HitTestHandle(pos)
-        If h.HasValue Then Return HandleIdToName(h.Value)
+        If h.HasValue Then
+            Dim handleName = HandleIdToName(h.Value)
+            If Not (SelectionHasMixedRotation() AndAlso (handleName = "Top" OrElse handleName = "Bottom" OrElse handleName = "Left" OrElse handleName = "Right")) Then
+                Return handleName
+            End If
+        End If
 
 
         ' ----- move area (inflated bounds) -----
@@ -681,7 +719,7 @@ Public Class TransformGizmo
     Private Sub StartRotate(pos As Point)
         _activeHandle = "Rotate"
         _dragStart = pos
-        _initialBounds = _selectionManager.GetSelectionBounds().GetValueOrDefault()
+        SnapshotDragFrame()
         CaptureInitialTransforms()
 
         _initialPositions.Clear()
@@ -700,7 +738,8 @@ Public Class TransformGizmo
     Private Sub StartResize(handleName As String, pos As Point)
         _activeHandle = handleName
         _dragStart = pos
-        _initialBounds = _selectionManager.GetUnrotatedBounds().GetValueOrDefault()
+        Dim frame = SnapshotDragFrame()
+        _initialBounds = frame.Frame
         _cumulativeChangeX = 0
         _cumulativeChangeY = 0
 
@@ -763,7 +802,7 @@ Public Class TransformGizmo
     End Sub
 
     Private Sub PerformRotate(currentPos As Point)
-        Dim center = New Point(_initialBounds.Left + _initialBounds.Width / 2, _initialBounds.Top + _initialBounds.Height / 2)
+        Dim center = _dragFrameOrigin
         Dim startVector = Point.Subtract(_dragStart, center)
         Dim currentVector = Point.Subtract(currentPos, center)
 
@@ -872,6 +911,12 @@ Public Class TransformGizmo
             _cumulativeChangeY = _rawResizeY
         End If
 
+        If Math.Abs(_dragFrameAngle) > 0.01 Then
+            Dim toFrame = TransformMath.RotateAbout(New Point(_cumulativeChangeX, _cumulativeChangeY), New Point(0, 0), -_dragFrameAngle)
+            _cumulativeChangeX = toFrame.X
+            _cumulativeChangeY = toFrame.Y
+        End If
+
         PerformMultiItemResize()
     End Sub
 
@@ -972,6 +1017,12 @@ Public Class TransformGizmo
         If scaleX < 0.01 Then scaleX = 0.01
         If scaleY < 0.01 Then scaleY = 0.01
 
+        If Math.Abs(_dragFrameAngle) > 0.01 Then
+            Dim rotatedAnchor = TransformMath.RotateAbout(New Point(anchorX, anchorY), _dragFrameOrigin, _dragFrameAngle)
+            anchorX = rotatedAnchor.X
+            anchorY = rotatedAnchor.Y
+        End If
+
         For Each item In _selectionManager.SelectedItems
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
@@ -984,7 +1035,7 @@ Public Class TransformGizmo
                         rotation = _initialTransforms(item).Rotation
                     End If
 
-                    TransformAction.ApplyResizeMulti(wrapper, scaleX, scaleY, anchorX, anchorY, initialSize, initialPos, rotation)
+                    TransformAction.ApplyResizeMulti(wrapper, scaleX, scaleY, anchorX, anchorY, initialSize, initialPos, rotation, _dragFrameAngle)
                 End If
             End If
         Next

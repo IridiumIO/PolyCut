@@ -37,6 +37,7 @@ Public Class TextEditingController
 
     Public Sub StartNewText(startPos As Point, chars As TextCharacteristics, pcanvas As PolyCanvas)
         If _activeTextBox IsNot Nothing Then Return
+        pcanvas.SelectionManager.ClearSelection()
         Dim textBox = CreateTextBox(startPos, chars)
         pcanvas.Children.Add(textBox)
         BeginSession(textBox, pcanvas)

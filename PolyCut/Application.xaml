@@ -247,6 +247,16 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
 
             </ResourceDictionary.MergedDictionaries>
+            <FontFamily x:Key="TextEditMenuFontFamily">Segoe UI</FontFamily>
+            <system:Double x:Key="TextEditMenuFontSize">14</system:Double>
+
+            <ContextMenu x:Key="TextEditContextMenu" x:Shared="False"
+                         FontFamily="{StaticResource TextEditMenuFontFamily}"
+                         FontSize="{StaticResource TextEditMenuFontSize}">
+                <MenuItem Command="ApplicationCommands.Cut" />
+                <MenuItem Command="ApplicationCommands.Copy" />
+                <MenuItem Command="ApplicationCommands.Paste" />
+            </ContextMenu>
 
         </ResourceDictionary>
     </Application.Resources>

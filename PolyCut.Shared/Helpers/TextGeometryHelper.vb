@@ -103,4 +103,23 @@ Public Module TextGeometryHelper
         Dim chrome = textBox.BorderThickness.Left + textBox.BorderThickness.Right
         textBox.Width = chrome + (3 * inset) + Math.Max(ft.WidthIncludingTrailingWhitespace, geometry.Bounds.Right) + 2
     End Sub
+    Public Sub UseDefaultContextMenuFont(textBox As TextBox)
+        If textBox Is Nothing Then Return
+
+        Dim menu = TryCast(textBox.FindResource("TextEditContextMenu"), ContextMenu)
+        If menu IsNot Nothing Then textBox.ContextMenu = menu
+
+        RemoveHandler textBox.ContextMenuOpening, AddressOf OnTextBoxContextMenuOpening
+        AddHandler textBox.ContextMenuOpening, AddressOf OnTextBoxContextMenuOpening
+    End Sub
+
+    Private Sub OnTextBoxContextMenuOpening(sender As Object, e As ContextMenuEventArgs)
+        Dim textBox = TryCast(sender, TextBox)
+        If textBox Is Nothing OrElse textBox.ContextMenu Is Nothing Then Return
+
+        textBox.ContextMenu.PlacementTarget = textBox
+        textBox.ContextMenu.IsOpen = True
+        e.Handled = True
+    End Sub
+
 End Module

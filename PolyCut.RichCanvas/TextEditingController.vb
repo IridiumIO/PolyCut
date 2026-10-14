@@ -105,6 +105,7 @@ Public Class TextEditingController
     End Function
 
     Private Sub BeginSession(textBox As TextBox, pcanvas As PolyCanvas)
+        TextGeometryHelper.UseDefaultContextMenuFont(textBox)
         CommitActiveText(pcanvas)
         _activeTextBox = textBox
         _sessionStartChars = TextCharacteristics.FromTextBox(textBox)

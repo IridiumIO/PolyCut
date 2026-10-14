@@ -30,6 +30,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         If tb Is Nothing Then Return
 
         _attachedTextBox = tb
+        TextGeometryHelper.UseDefaultContextMenuFont(_attachedTextBox)
 
         _strokePen = New Pen(If(Me.Stroke, Brushes.Black), Me.StrokeThickness)
         If _strokePen.IsFrozen Then _strokePen = _strokePen.Clone()

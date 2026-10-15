@@ -7,6 +7,7 @@ Public Class ColorPickerControl
     Public Sub New()
         InitializeComponent()
 
+
         ' Skip runtime-only initialisation in the Visual Studio designer.
         If DesignerProperties.GetIsInDesignMode(Me) Then Return
 
@@ -82,10 +83,21 @@ Public Class ColorPickerControl
     Private _updatingHex As Boolean = False
 
     Private Sub ColorButton_Click(sender As Object, e As RoutedEventArgs)
+
+        If ColorPopup.IsOpen Then
+            ColorPopup.IsOpen = False
+            Return
+        End If
+
         RaiseEvent PopupOpening(Me, EventArgs.Empty)
         UpdateHexFromColor()
+        If _openPicker IsNot Nothing AndAlso Not ReferenceEquals(_openPicker, Me) Then _openPicker.ColorPopup.IsOpen = False
+        _openPicker = Me
         ColorPopup.IsOpen = True
     End Sub
+
+    Private Shared _openPicker As ColorPickerControl
+
 
     Private Sub ColorMenuItem_Click(sender As Object, e As RoutedEventArgs)
         Dim button = TryCast(sender, Button)

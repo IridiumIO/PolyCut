@@ -1,11 +1,11 @@
-<UserControl x:Class="ColorPickerControl"
+<UserControl x:Class="ColorPickerControl" xmlns:local="clr-namespace:PolyCut"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" /> 
         </Grid.ColumnDefinitions>
         <Label VerticalAlignment="Center" Content="{Binding LabelText, RelativeSource={RelativeSource AncestorType=UserControl}}" />
         <Button x:Name="ColorButton"
@@ -18,11 +18,11 @@
                     BorderThickness="1" CornerRadius="4" />
         </Button>
         <Popup x:Name="ColorPopup"
-               AllowsTransparency="True" Placement="Bottom"
+               AllowsTransparency="True" Placement="Bottom" 
                PlacementTarget="{Binding ElementName=ColorButton}"
                StaysOpen="False">
             <Border x:Name="ColorPopupBorder"
-                    Padding="8"
+                    Padding="8" 
                     Background="{DynamicResource ApplicationBackgroundBrush}"
                     BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                     BorderThickness="1" CornerRadius="8">

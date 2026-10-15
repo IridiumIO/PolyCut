@@ -37,6 +37,7 @@ Public Class TextEditingController
 
     Public Sub StartNewText(startPos As Point, chars As TextCharacteristics, pcanvas As PolyCanvas)
         If _activeTextBox IsNot Nothing Then Return
+        pcanvas.SelectionManager.ClearSelection()
         Dim textBox = CreateTextBox(startPos, chars)
         pcanvas.Children.Add(textBox)
         BeginSession(textBox, pcanvas)
@@ -104,15 +105,34 @@ Public Class TextEditingController
     End Function
 
     Private Sub BeginSession(textBox As TextBox, pcanvas As PolyCanvas)
+        TextGeometryHelper.UseDefaultContextMenuFont(textBox)
         CommitActiveText(pcanvas)
         _activeTextBox = textBox
         _sessionStartChars = TextCharacteristics.FromTextBox(textBox)
         _sessionStartText = textBox.Text
         TextEditHelper.SetIsEditing(textBox, True)
-        textBox.Background = Brushes.Transparent
         textBox.Cursor = Cursors.IBeam
+        AddHandler textBox.TextChanged, AddressOf OnSessionTextChanged
+        AddHandler textBox.SizeChanged, AddressOf OnSessionSizeChanged
         AddHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
         AddHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
+        UpdateSessionInk()
+    End Sub
+
+    Private Sub OnSessionTextChanged(sender As Object, e As TextChangedEventArgs)
+        UpdateSessionInk()
+    End Sub
+
+    Private Sub OnSessionSizeChanged(sender As Object, e As SizeChangedEventArgs)
+        UpdateSessionInk()
+    End Sub
+
+    Private Sub UpdateSessionInk()
+        Dim textBox = _activeTextBox
+        If textBox Is Nothing Then Return
+
+        TextGeometryHelper.FitToInk(textBox)
+        textBox.UpdateLayout()
     End Sub
 
     Private Sub EndSession(pcanvas As PolyCanvas, raiseSessionFinished As Boolean)
@@ -123,6 +143,8 @@ Public Class TextEditingController
         _activeTextBox = Nothing
         RemoveHandler textBox.LostFocus, AddressOf OnActiveTextBoxLostFocus
         RemoveHandler textBox.PreviewKeyDown, AddressOf OnActiveTextBoxKeyDown
+        RemoveHandler textBox.TextChanged, AddressOf OnSessionTextChanged
+        RemoveHandler textBox.SizeChanged, AddressOf OnSessionSizeChanged
         TextEditHelper.SetIsEditing(textBox, False)
         If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(textBox) Then
             pcanvas.Children.Remove(textBox)

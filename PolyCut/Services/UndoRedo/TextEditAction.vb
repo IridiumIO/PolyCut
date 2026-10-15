@@ -84,6 +84,7 @@ Public Class TextEditAction : Implements IUndoableAction
         wrapper.Height = Double.NaN
         _textBox.Width = Double.NaN
         _textBox.Height = Double.NaN
+        TextGeometryHelper.FitToInk(_textBox)
         wrapper.UpdateLayout()
 
         Dim contentWidth As Double = wrapper.ActualWidth
@@ -91,6 +92,8 @@ Public Class TextEditAction : Implements IUndoableAction
 
         wrapper.Width = contentWidth
         wrapper.Height = contentHeight
+        _textBox.Width = Double.NaN
+        _textBox.Height = Double.NaN
         wrapper.UpdateLayout()
 
         If preserveCenter Then

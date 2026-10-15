@@ -81,5 +81,45 @@ Public Module TextGeometryHelper
         If ft Is Nothing Then Return 0
         Return ft.Width
     End Function
+    Public Sub FitToInk(textBox As TextBox)
+        If textBox Is Nothing Then Return
+        If String.IsNullOrEmpty(textBox.Text) Then Return
+        If textBox.TextWrapping <> TextWrapping.NoWrap Then Return
+
+        Dim ft = CreateFormattedText(textBox, textBox.Text, , TextTrimming.None, textBox.TextAlignment)
+        If ft Is Nothing Then Return
+
+        Dim geometry = ft.BuildGeometry(New Point(0, 0))
+        If geometry Is Nothing Then Return
+
+        Dim inset As Double = 0
+        Dim host = TryCast(textBox.Template.FindName("PART_ContentHost", textBox), ScrollViewer)
+        If host IsNot Nothing Then
+            Dim hostOrigin = host.TransformToAncestor(textBox).Transform(New Point(0, 0))
+            Dim contentOrigin As Point
+            If TryGetContentOrigin(textBox, contentOrigin) Then inset = Math.Max(0.0, contentOrigin.X - hostOrigin.X)
+        End If
+
+        Dim chrome = textBox.BorderThickness.Left + textBox.BorderThickness.Right
+        textBox.Width = chrome + (3 * inset) + Math.Max(ft.WidthIncludingTrailingWhitespace, geometry.Bounds.Right) + 2
+    End Sub
+    Public Sub UseDefaultContextMenuFont(textBox As TextBox)
+        If textBox Is Nothing Then Return
+
+        Dim menu = TryCast(textBox.FindResource("TextEditContextMenu"), ContextMenu)
+        If menu IsNot Nothing Then textBox.ContextMenu = menu
+
+        RemoveHandler textBox.ContextMenuOpening, AddressOf OnTextBoxContextMenuOpening
+        AddHandler textBox.ContextMenuOpening, AddressOf OnTextBoxContextMenuOpening
+    End Sub
+
+    Private Sub OnTextBoxContextMenuOpening(sender As Object, e As ContextMenuEventArgs)
+        Dim textBox = TryCast(sender, TextBox)
+        If textBox Is Nothing OrElse textBox.ContextMenu Is Nothing Then Return
+
+        textBox.ContextMenu.PlacementTarget = textBox
+        textBox.ContextMenu.IsOpen = True
+        e.Handled = True
+    End Sub
 
 End Module

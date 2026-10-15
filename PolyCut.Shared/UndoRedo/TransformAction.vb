@@ -183,16 +183,21 @@ Public Class TransformAction
         Canvas.SetLeft(wrapper, placement.Left)
     End Sub
 
-    Public Shared Sub ApplyResizeMulti(wrapper As ContentControl, scaleX As Double, scaleY As Double, anchorX As Double, anchorY As Double, initialSize As (Width As Double, Height As Double), initialPosition As Point, initialRotation As Double)
+    Public Shared Sub ApplyResizeMulti(wrapper As ContentControl, scaleX As Double, scaleY As Double, anchorX As Double, anchorY As Double, initialSize As (Width As Double, Height As Double), initialPosition As Point, initialRotation As Double, Optional selectionRotation As Double = 0)
         If wrapper Is Nothing Then Return
 
         wrapper.Width = initialSize.Width * scaleX
         wrapper.Height = initialSize.Height * scaleY
 
-        Dim offsetX = initialPosition.X - anchorX
-        Dim offsetY = initialPosition.Y - anchorY
-        Canvas.SetLeft(wrapper, anchorX + (offsetX * scaleX))
-        Canvas.SetTop(wrapper, anchorY + (offsetY * scaleY))
+
+        Dim anchor = New Point(anchorX, anchorY)
+        Dim center = New Point(initialPosition.X + initialSize.Width / 2, initialPosition.Y + initialSize.Height / 2)
+        Dim local = TransformMath.RotateAbout(center, anchor, -selectionRotation)
+        local = New Point(anchor.X + (local.X - anchor.X) * scaleX, anchor.Y + (local.Y - anchor.Y) * scaleY)
+        Dim scaledCenter = TransformMath.RotateAbout(local, anchor, selectionRotation)
+
+        Canvas.SetLeft(wrapper, scaledCenter.X - wrapper.Width / 2)
+        Canvas.SetTop(wrapper, scaledCenter.Y - wrapper.Height / 2)
 
         If Math.Abs(initialRotation) > 0.01 Then
             wrapper.RenderTransform = New RotateTransform(initialRotation)

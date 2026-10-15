@@ -94,7 +94,7 @@
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                             IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus"
-                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit}" />
+                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
                                 <Label Grid.Row="2" Grid.Column="3"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
                                        Content="Y" />
@@ -103,7 +103,7 @@
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
                                             IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus"
-                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit}" />
+                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
 
                                 <Label Grid.Row="4"
                                        Padding="1 2 0 0" VerticalAlignment="Center"

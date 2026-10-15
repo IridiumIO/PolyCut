@@ -536,7 +536,7 @@ Public Class CountEqualsOneToBoolConverter
     Implements IValueConverter
     Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
         If TypeOf value Is Integer Then
-            Return CInt(value) = 0
+            Return CInt(value) = 1
         End If
         Return False
     End Function

@@ -92,13 +92,11 @@
 
                             </Menu.Resources>
 
-                            <ui:MenuItem x:Name="dlsk"
-                                         loc:L.Value="_File" local:BackdropSampler.IntervalMs="5000"
-                                         local:BackdropSampler.IsEnabled="{Binding IsWindows}"
-                                         local:BackdropSampler.TintColor="#08FFFFFF"
-                                         Background="{StaticResource ApplicationBackgroundBrush}">
+                            <ui:MenuItem x:Name="FileMenu"
+                                         loc:L.Value="_File" local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.SamplePadding="0,0,140,260" local:MicaBackdrop.TintColor="#23FFFFFF"
+                                         Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
                                 <MenuItem.Resources>
-                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                    <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=FileMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
                                 </MenuItem.Resources>
 
                                 <ui:MenuItem loc:L.Context="New Project" loc:L.Value="_New" local:MenuItemHelper.Footer="Ctrl + N"
@@ -112,9 +110,11 @@
                                 <MenuItem loc:L.Value="_Export As SVG..." local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" />
                             </ui:MenuItem>
 
-                            <ui:MenuItem loc:L.Value="_Edit">
+                            <ui:MenuItem x:Name="EditMenu"
+                                         loc:L.Value="_Edit" local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.SamplePadding="0,0,140,260" local:MicaBackdrop.TintColor="#23FFFFFF"
+                                         Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
                                 <ui:MenuItem.Resources>
-                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                    <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=EditMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
                                 </ui:MenuItem.Resources>
                                 <ui:MenuItem loc:L.Value="Cut" local:MenuItemHelper.Footer="Ctrl + X"
                                              Command="{Binding CutSelectionCommand}"
@@ -130,9 +130,11 @@
                             </ui:MenuItem>
 
 
-                            <ui:MenuItem loc:L.Value="_View">
+                            <ui:MenuItem x:Name="ViewMenu"
+                                         loc:L.Value="_View" local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.SamplePadding="0,0,140,260" local:MicaBackdrop.TintColor="#23FFFFFF"
+                                         Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
                                 <ui:MenuItem.Resources>
-                                    <SolidColorBrush x:Key="FlyoutBackground" Color="{Binding ElementName=dlsk, Path=Background.(SolidColorBrush.Color)}" />
+                                    <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=ViewMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
                                 </ui:MenuItem.Resources>
                                 <StackPanel Orientation="Horizontal">
                                     <ToggleButton IsChecked="{Binding IsGridVisible, Mode=TwoWay}">

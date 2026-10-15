@@ -5,7 +5,8 @@
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-      xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+      xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+      xmlns:local="clr-namespace:PolyCut"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
       xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
@@ -61,14 +62,13 @@
         <ui:Card Grid.Column="0"
                  Margin="5 5 0 5" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center"
                  VerticalContentAlignment="Stretch" Panel.ZIndex="1"
-                 beh:BackdropSampler.Corner="Left"
-                 beh:BackdropSampler.IsEnabled="{Binding MainVM.IsWindows}"
-                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" Background="#323232" BorderThickness="0">
+                 local:LiveBlurBackground.EnableBlur="True"
+                 BorderThickness="0">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
             </ui:Card.Effect>
 
-            <local:ToolSelectorPane x:Name="ToolSelectorPanel" Background="Transparent" />
+            <local:ToolSelectorPane x:Name="ToolSelectorPanel" Margin="7" Background="Transparent" />
 
         </ui:Card>
 
@@ -82,17 +82,15 @@
         <ui:Card Grid.Column="1"
                  Height="50"
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="20"
-                 beh:BackdropSampler.Corner="Left"
-                 beh:BackdropSampler.IsEnabled="{Binding MainVM.IsWindows}"
-                 beh:BackdropSampler.SampleX="2" beh:BackdropSampler.TintColor="#0AFFFFFF" polycutShared:TextEditHelper.IsTextStyleHost="True" Background="#323232" BorderThickness="0"
-                 IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
+                 local:LiveBlurBackground.EnableBlur="True"
+                 polycutShared:TextEditHelper.IsTextStyleHost="True" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
                  Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
             </ui:Card.Effect>
             <Grid>
 
-                <StackPanel Orientation="Horizontal" loc:L.Context="Font Styling">
+                <StackPanel loc:L.Context="Font Styling" Orientation="Horizontal">
                     <Label Margin="0 2 10 0" VerticalAlignment="Center" loc:L.Value="Font" />
                     <local:FontPickerComboBox x:Name="OverlayFontPicker"
                                               Width="200"
@@ -154,7 +152,7 @@
             <rc:ZoomBorder.ContextMenu>
                 <ContextMenu>
 
-                    <MenuItem IsTabStop="False" loc:L.Context="Clipboard Actions">
+                    <MenuItem loc:L.Context="Clipboard Actions" IsTabStop="False">
                         <MenuItem.Template>
                             <ControlTemplate TargetType="MenuItem">
                                 <ContentPresenter Content="{TemplateBinding Header}" />
@@ -173,7 +171,7 @@
                                            Command="{Binding MainVM.CutSelectionCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="Cut20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Cut" />
+                                        <TextBlock Margin="0 5 0 0" loc:L.Value="Cut" FontSize="12" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -183,7 +181,7 @@
                                            Command="{Binding MainVM.CopySelectionCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="Copy20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Copy" />
+                                        <TextBlock Margin="0 5 0 0" loc:L.Value="Copy" FontSize="12" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -193,7 +191,7 @@
                                            Command="{Binding MainVM.PasteClipboardCommand}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="ClipboardPaste20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="12" loc:L.Value="Paste" />
+                                        <TextBlock Margin="0 5 0 0" loc:L.Value="Paste" FontSize="12" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -206,7 +204,7 @@
                                            IsEnabled="{Binding MainVM.HasDrawables}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="CopySelect20" />
-                                        <TextBlock Margin="0 5 0 0" FontSize="11" loc:L.Value="Select All" />
+                                        <TextBlock Margin="0 5 0 0" loc:L.Value="Select All" FontSize="11" />
                                     </StackPanel>
                                 </ui:Button>
 
@@ -237,14 +235,16 @@
                                                           Grid.Row="0"
                                                           ColorSelected="ContextStrokePicker_ColorSelected"
                                                           CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
-                                                          LabelText="{loc:T 'Stroke'}" PopupOpening="ContextStrokePicker_PopupOpening" />
+                                                          LabelText="{loc:T 'Stroke'}"
+                                                          PopupOpening="ContextStrokePicker_PopupOpening" />
 
                                 <local:ColorPickerControl x:Name="ContextFillPicker"
                                                           Grid.Row="1"
                                                           Margin="0 10"
                                                           ColorSelected="ContextFillPicker_ColorSelected"
                                                           CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
-                                                          LabelText="{loc:T 'Fill'}" PopupOpening="ContextFillPicker_PopupOpening" />
+                                                          LabelText="{loc:T 'Fill'}"
+                                                          PopupOpening="ContextFillPicker_PopupOpening" />
 
                             </Grid>
 
@@ -302,7 +302,10 @@
                         </MenuItem.Header>
                     </MenuItem>
 
-                    <ui:MenuItem x:Name="ArrangeMenuItem" Header="{loc:T 'Arrange'}" Icon="{ui:SymbolIcon Symbol=Archive16}" loc:L.Context="Arrange objects on canvas">
+                    <ui:MenuItem x:Name="ArrangeMenuItem"
+                                 loc:L.Context="Arrange objects on canvas"
+                                 Header="{loc:T 'Arrange'}"
+                                 Icon="{ui:SymbolIcon Symbol=Archive16}">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 
@@ -343,7 +346,7 @@
 
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" loc:L.Value="Bring Forward" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Bring Forward" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -381,7 +384,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" loc:L.Value="Bring To Front" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Bring To Front" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -410,7 +413,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" loc:L.Value="Send Backwards" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Send Backwards" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -447,7 +450,7 @@
                                                 </Border>
                                             </Grid>
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="10" loc:L.Value="Send To Back" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Send To Back" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -462,7 +465,7 @@
 
                     </ui:MenuItem>
 
-                    <ui:MenuItem x:Name="CombineMenuItem" Header="{loc:T 'Combine'}" loc:L.Context="Boolean Operations">
+                    <ui:MenuItem x:Name="CombineMenuItem" loc:L.Context="Boolean Operations" Header="{loc:T 'Combine'}">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 
@@ -483,7 +486,7 @@
 
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeUnion20" />
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" loc:L.Value="Union" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Union" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -495,7 +498,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeIntersect20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" loc:L.Value="Intersect" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Intersect" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -507,7 +510,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeSubtract20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" loc:L.Value="Subtract" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Subtract" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -519,7 +522,7 @@
                                             <ui:SymbolIcon Filled="True" FontSize="18" Symbol="ShapeExclude20" />
 
                                             <TextBlock Margin="0 5 0 0" HorizontalAlignment="Center"
-                                                       FontSize="12" loc:L.Value="Exclude" TextAlignment="Center" TextWrapping="Wrap" />
+                                                       loc:L.Value="Exclude" FontSize="12" TextAlignment="Center" TextWrapping="Wrap" />
                                         </StackPanel>
                                     </ui:Button>
 
@@ -681,7 +684,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <ui:Card Grid.Row="0"
+                <ui:Card Grid.Row="0" 
                          Margin="5 5 0 0" Padding="20 10" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <StackPanel Grid.Row="0" Orientation="Vertical">
                         <Grid Margin="0 0" FlowDirection="LeftToRight">
@@ -690,7 +693,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <Label Padding="1 2 0 0" VerticalAlignment="Center" loc:L.Context="3D Printer/Machine" loc:L.Value="Printer" />
+                            <Label Padding="1 2 0 0" VerticalAlignment="Center"
+                                   loc:L.Context="3D Printer/Machine" loc:L.Value="Printer" />
                             <Grid Grid.Column="2" Margin="10 0 0 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -717,7 +721,7 @@
                     </StackPanel>
                 </ui:Card>
 
-                <ui:Card Grid.Row="1"
+                <ui:Card Grid.Row="1" 
                          Margin="5 5 0 5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <ui:Card.Background>
                         <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />

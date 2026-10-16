@@ -97,6 +97,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         Next
 
         _compositeAction = New CompositeAction(actions)
+        PolyCanvas.AddToSelection(_manager.DrawableCollection(_manager.DrawableCollection.Count - 1))
         Return True
     End Function
 
@@ -157,6 +158,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
 
     Public Sub Undo() Implements IUndoableAction.Undo
         _compositeAction?.Undo()
+
     End Sub
 
     Public Sub Redo() Implements IUndoableAction.Redo

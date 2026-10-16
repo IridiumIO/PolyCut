@@ -23,74 +23,29 @@
                AllowsTransparency="True" Placement="Bottom"
                PlacementTarget="{Binding ElementName=ColorButton}"
                StaysOpen="False">
-            <Border x:Name="ColorPopupBorder"
-                    Padding="8"
-                    Background="{DynamicResource ApplicationBackgroundBrush}"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                    BorderThickness="1" CornerRadius="8">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" Direction="270" Opacity="0.8" ShadowDepth="2" />
-                </Border.Effect>
-                <StackPanel>
-                    <ItemsControl x:Name="DefaultColorsList">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="4" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Margin="5" Padding="5"
-                                        Background="Transparent" BorderThickness="0" Click="ColorMenuItem_Click"
-                                        Tag="{Binding}">
-                                    <Border Width="32" Height="32"
-                                            Background="{Binding}"
-                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                                            BorderThickness="1" CornerRadius="4" />
-                                    <Button.ToolTip>
-                                        <ToolTip Content="{Binding}" />
-                                    </Button.ToolTip>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                        <ItemsControl.Items>
-                            <SolidColorBrush Color="Black" />
-                            <SolidColorBrush Color="Red" />
-                            <SolidColorBrush Color="Cyan" />
-                            <SolidColorBrush Color="Orange" />
-                            <SolidColorBrush Color="Gray" />
-                            <SolidColorBrush Color="Blue" />
-                            <SolidColorBrush Color="Magenta" />
-                            <SolidColorBrush Color="Indigo" />
-                            <SolidColorBrush Color="White" />
-
-                            <SolidColorBrush Color="#FF00FF00" />
-
-
-                            <SolidColorBrush Color="Yellow" />
-                            <SolidColorBrush Color="Transparent" />
-
-                        </ItemsControl.Items>
-                    </ItemsControl>
-
-                    <Separator x:Name="WorkspaceColorsSeparator" Margin="0 8 0 0" Visibility="Collapsed" />
-
-                    <ScrollViewer x:Name="WorkspaceColorsScroller"
-                                  Width="{Binding ActualWidth, ElementName=DefaultColorsList}"
-                                  Margin="0 8 0 0"
-                                  HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="WorkspaceColorsScroller_PreviewMouseWheel" VerticalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                        <ItemsControl x:Name="WorkspaceColorsList">
+            <Border Padding="5">
+                <Border x:Name="ColorPopupBorder"
+                        Padding="0"
+                        local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.TintColor="#23FFFFFF"
+                        Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" Direction="270" Opacity="0.8" ShadowDepth="2" />
+                    </Border.Effect>
+                    <StackPanel>
+                        <ItemsControl x:Name="DefaultColorsList">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Margin="0 0 0 10" Orientation="Horizontal" />
+                                    <UniformGrid Columns="4" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Margin="3" Padding="3"
+                                    <Button Margin="5" Padding="5"
                                             Background="Transparent" BorderThickness="0" Click="ColorMenuItem_Click"
                                             Tag="{Binding}">
-                                        <Border Width="16" Height="16"
+                                        <Border Width="32" Height="32"
                                                 Background="{Binding}"
                                                 BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                                                 BorderThickness="1" CornerRadius="4" />
@@ -100,39 +55,88 @@
                                     </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
+                            <ItemsControl.Items>
+                                <SolidColorBrush Color="Black" />
+                                <SolidColorBrush Color="Red" />
+                                <SolidColorBrush Color="Cyan" />
+                                <SolidColorBrush Color="Orange" />
+                                <SolidColorBrush Color="Gray" />
+                                <SolidColorBrush Color="Blue" />
+                                <SolidColorBrush Color="Magenta" />
+                                <SolidColorBrush Color="Indigo" />
+                                <SolidColorBrush Color="White" />
+
+                                <SolidColorBrush Color="#FF00FF00" />
+
+
+                                <SolidColorBrush Color="Yellow" />
+                                <SolidColorBrush Color="Transparent" />
+
+                            </ItemsControl.Items>
                         </ItemsControl>
-                    </ScrollViewer>
 
-                    <Separator Margin="0 0 0 8" />
+                        <Separator x:Name="WorkspaceColorsSeparator" Margin="0 8 0 0" Visibility="Collapsed" />
 
-                    <Grid Margin="8 0 8 8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Margin="0 0 8 0" VerticalAlignment="Center" Text="Hex:" />
-                        <ui:TextBox x:Name="HexTextBox"
-                                    Grid.Column="1"
-                                    KeyDown="HexTextBox_KeyDown" LostFocus="HexTextBox_LostFocus" MaxLength="9"
-                                    Text="{Binding HexColor, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
-                            <ui:TextBox.ToolTip>
-                                <ToolTip loc:L.Value="Enter hex color (e.g., #FFFF0000 or #FF0000)" />
-                            </ui:TextBox.ToolTip>
-                        </ui:TextBox>
+                        <ScrollViewer x:Name="WorkspaceColorsScroller"
+                                      Width="{Binding ActualWidth, ElementName=DefaultColorsList}"
+                                      Margin="0 8 0 0"
+                                      HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="WorkspaceColorsScroller_PreviewMouseWheel" VerticalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                            <ItemsControl x:Name="WorkspaceColorsList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Margin="0 0 0 10" Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Margin="3" Padding="3"
+                                                Background="Transparent" BorderThickness="0" Click="ColorMenuItem_Click"
+                                                Tag="{Binding}">
+                                            <Border Width="16" Height="16"
+                                                    Background="{Binding}"
+                                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                    BorderThickness="1" CornerRadius="4" />
+                                            <Button.ToolTip>
+                                                <ToolTip Content="{Binding}" />
+                                            </Button.ToolTip>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
 
-                        <ui:Button x:Name="EyedropperButton"
-                                   Grid.Column="2"
-                                   Width="35" Height="35"
-                                   Margin="8 0 0 0" Padding="4"
-                                   Click="EyedropperButton_Click">
-                            <ui:SymbolIcon Symbol="Eyedropper20" />
-                        </ui:Button>
-                    </Grid>
+                        <Separator Margin="0 0 0 8" />
+
+                        <Grid Margin="8 0 8 8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Margin="0 0 8 0" VerticalAlignment="Center" Text="Hex:" />
+                            <ui:TextBox x:Name="HexTextBox"
+                                        Grid.Column="1"
+                                        KeyDown="HexTextBox_KeyDown" LostFocus="HexTextBox_LostFocus" MaxLength="9"
+                                        Text="{Binding HexColor, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=LostFocus}">
+                                <ui:TextBox.ToolTip>
+                                    <ToolTip loc:L.Value="Enter hex color (e.g., #FFFF0000 or #FF0000)" />
+                                </ui:TextBox.ToolTip>
+                            </ui:TextBox>
+
+                            <ui:Button x:Name="EyedropperButton"
+                                       Grid.Column="2"
+                                       Width="35" Height="35"
+                                       Margin="8 0 0 0" Padding="4"
+                                       Click="EyedropperButton_Click">
+                                <ui:SymbolIcon Symbol="Eyedropper20" />
+                            </ui:Button>
+                        </Grid>
 
 
-                </StackPanel>
+                    </StackPanel>
+                </Border>
             </Border>
+
         </Popup>
     </Grid>
 </UserControl>

@@ -505,6 +505,10 @@ Public NotInheritable Class LiveBlurBackground
 
             If Not ReferenceEquals(_brush.Visual, source) Then _brush.Visual = source
 
+            If PresentationSource.FromVisual(_element) Is Nothing OrElse PresentationSource.FromVisual(source) Is Nothing Then
+                _brush.Visual = Nothing
+                Return
+            End If
             Try
                 Dim overscan = Math.Ceiling(Math.Max(0, BlurRadiusDefault) * 1.5)
 

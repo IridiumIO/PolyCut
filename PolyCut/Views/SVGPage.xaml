@@ -62,8 +62,7 @@
         <ui:Card Grid.Column="0"
                  Margin="5 5 0 5" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center"
                  VerticalContentAlignment="Stretch" Panel.ZIndex="1"
-                 local:LiveBlurBackground.EnableBlur="True"
-                 BorderThickness="0">
+                 local:LiveBlurBackground.EnableBlur="True" BorderThickness="0">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
             </ui:Card.Effect>
@@ -82,8 +81,7 @@
         <ui:Card Grid.Column="1"
                  Height="50"
                  Margin="5" Padding="8" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="20"
-                 local:LiveBlurBackground.EnableBlur="True"
-                 polycutShared:TextEditHelper.IsTextStyleHost="True" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
+                 local:LiveBlurBackground.EnableBlur="True" polycutShared:TextEditHelper.IsTextStyleHost="True" BorderThickness="0" IsKeyboardFocusWithinChanged="TextStyleCard_IsKeyboardFocusWithinChanged"
                  Visibility="{Binding CanvasToolModeIsText, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
@@ -150,7 +148,10 @@
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="None" ScaleAmount="0.002" ScaleMax="150"
                        ScaleMin="0.01">
             <rc:ZoomBorder.ContextMenu>
-                <ContextMenu>
+                <ContextMenu local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.TintColor="#23FFFFFF" Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
+                    <ContextMenu.Resources>
+                        <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=EditMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
+                    </ContextMenu.Resources>
 
                     <MenuItem loc:L.Context="Clipboard Actions" IsTabStop="False">
                         <MenuItem.Template>
@@ -684,7 +685,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <ui:Card Grid.Row="0" 
+                <ui:Card Grid.Row="0"
                          Margin="5 5 0 0" Padding="20 10" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <StackPanel Grid.Row="0" Orientation="Vertical">
                         <Grid Margin="0 0" FlowDirection="LeftToRight">
@@ -721,7 +722,7 @@
                     </StackPanel>
                 </ui:Card>
 
-                <ui:Card Grid.Row="1" 
+                <ui:Card Grid.Row="1"
                          Margin="5 5 0 5" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <ui:Card.Background>
                         <SolidColorBrush Color="{StaticResource CardBackgroundFillColorDefault}" />

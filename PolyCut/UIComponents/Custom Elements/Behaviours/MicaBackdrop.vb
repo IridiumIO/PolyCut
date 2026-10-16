@@ -307,7 +307,6 @@ Public NotInheritable Class MicaBackdrop
         Public Window As Window
         Public LastRect As Int32Rect
         Public LastActive As Boolean
-        Public HasSample As Boolean
 
         Public Sub New(element As FrameworkElement)
             Me.Element = element
@@ -335,7 +334,6 @@ Public NotInheritable Class MicaBackdrop
         Dim st As State = Nothing
         If Not _states.TryGetValue(fe, st) Then Return
 
-        st.HasSample = False
         Sample(st)
     End Sub
 
@@ -365,6 +363,16 @@ Public NotInheritable Class MicaBackdrop
         PublishFallback(fe)
     End Sub
 
+    Private Shared Sub SampleSoon(st As State)
+        st.Element.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, New Action(Sub() SampleDeferred(st)))
+    End Sub
+
+    Private Shared Sub SampleDeferred(st As State)
+        If Not st.Element.IsLoaded Then Return
+        If st.Window Is Nothing Then Attach(st)
+        Sample(st)
+    End Sub
+
     Private Shared Sub OnElementLoaded(sender As Object, e As RoutedEventArgs)
         Dim fe = TryCast(sender, FrameworkElement)
         If fe Is Nothing Then Return
@@ -382,6 +390,8 @@ Public NotInheritable Class MicaBackdrop
     End Sub
 
     Private Shared Sub Attach(st As State)
+        If st.Window IsNot Nothing Then Detach(st)
+
         st.Window = Window.GetWindow(st.Element)
         If st.Window Is Nothing Then Return
 
@@ -393,9 +403,9 @@ Public NotInheritable Class MicaBackdrop
         AddHandler st.Window.DpiChanged, AddressOf OnWindowChanged
         AddHandler st.Element.SizeChanged, AddressOf OnWindowChanged
 
-        st.HasSample = False
         st.Timer.Start()
         Sample(st)
+        SampleSoon(st)
     End Sub
 
     Private Shared Sub Detach(st As State)
@@ -423,11 +433,10 @@ Public NotInheritable Class MicaBackdrop
 
     Private Shared Sub OnTick(sender As Object, e As EventArgs)
         For Each st In _states.Values
+            If st.Window Is Nothing OrElse Not st.Element.IsLoaded OrElse Not st.Element.IsVisible Then Continue For
 
-            ' only re-samples when the window actually moved, resized or changed state.
-            If st.Window IsNot Nothing AndAlso (Not st.HasSample OrElse
-                                                st.LastActive <> st.Window.IsActive OrElse
-                                                Not RectsMatch(st.LastRect, CurrentElementRect(st.Element))) Then Sample(st)
+            If st.LastActive <> st.Window.IsActive OrElse
+               Not RectsMatch(st.LastRect, CurrentElementRect(st.Element)) Then Sample(st)
         Next
     End Sub
 
@@ -447,12 +456,15 @@ Public NotInheritable Class MicaBackdrop
         If w Is Nothing Then Return
 
         Dim rect = CurrentElementRect(fe)
-        If rect.Width <= 0 OrElse rect.Height <= 0 Then Return
+        st.LastActive = w.IsActive
+
+        If rect.Width <= 0 OrElse rect.Height <= 0 Then
+            st.LastRect = rect
+            Return
+        End If
 
         rect = ExpandRect(rect, GetSamplePadding(fe), VisualTreeHelper.GetDpi(fe))
-
-        st.HasSample = True
-        st.LastActive = w.IsActive
+        st.LastRect = rect
 
         'Linux(not tested yet) or unfocused window: publish the plain app background instead of a region.
         If Not _micaSupported OrElse Not w.IsActive Then
@@ -471,10 +483,6 @@ Public NotInheritable Class MicaBackdrop
         brush.Freeze()
 
         PublishSurface(fe, tinted, average)
-
-        ' Re-check the position on the next tick; the window may have moved by then.
-        st.LastRect = rect
-        st.HasSample = False
     End Sub
 
 
@@ -569,6 +577,7 @@ Public NotInheritable Class MicaBackdrop
     End Function
 
     Private Shared Function CurrentElementRect(fe As FrameworkElement) As Int32Rect
+        If PresentationSource.FromVisual(fe) Is Nothing Then Return New Int32Rect(0, 0, 0, 0)
         Try
             Dim topLeft = fe.PointToScreen(New Point(0, 0))
             Dim dpi = VisualTreeHelper.GetDpi(fe)

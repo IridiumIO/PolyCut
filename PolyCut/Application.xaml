@@ -8,7 +8,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:uic="clr-namespace:Wpf.Ui.Converters;assembly=Wpf.Ui"
              DispatcherUnhandledException="OnDispatcherUnhandledException"
-             Exit="OnExit"
+             Exit="OnExit" ShutdownMode="OnMainWindowClose"
              Startup="OnStartup">
     <Application.Resources>
         <ResourceDictionary>

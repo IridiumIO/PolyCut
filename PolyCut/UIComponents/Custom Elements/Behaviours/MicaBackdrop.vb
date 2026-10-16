@@ -23,7 +23,21 @@ Public NotInheritable Class MicaBackdrop
 
 
     Private Const DecodeWidth As Integer = 512
-    Private Shared ReadOnly _micaSupported As Boolean = OperatingSystem.IsWindows()
+    Private Shared ReadOnly _micaSupported As Boolean = OperatingSystem.IsWindows() AndAlso TransparencyEffectsEnabled()
+
+    Private Shared Function TransparencyEffectsEnabled() As Boolean
+        Try
+            Using key = Registry.CurrentUser.OpenSubKey("SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+                If key IsNot Nothing Then
+                    Dim value = key.GetValue("EnableTransparency")
+                    If value IsNot Nothing Then Return Convert.ToInt32(value) <> 0
+                End If
+            End Using
+        Catch
+        End Try
+
+        Return True
+    End Function
 
     Private Enum WallpaperFit
         Fill = 0

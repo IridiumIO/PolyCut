@@ -148,9 +148,11 @@
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="None" ScaleAmount="0.002" ScaleMax="150"
                        ScaleMin="0.01">
             <rc:ZoomBorder.ContextMenu>
-                <ContextMenu local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.TintColor="#23FFFFFF" Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
+                <ContextMenu x:Name="CanvasContextMenu"
+                             local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.TintColor="#23FFFFFF"
+                             Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
                     <ContextMenu.Resources>
-                        <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=EditMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
+                        <SolidColorBrush x:Key="FlyoutBackground" Color="#2B2B2B" />
                     </ContextMenu.Resources>
 
                     <MenuItem loc:L.Context="Clipboard Actions" IsTabStop="False">
@@ -311,6 +313,7 @@
                         <MenuItem Focusable="False" IsTabStop="False">
 
                             <MenuItem.Template>
+
                                 <ControlTemplate TargetType="{x:Type MenuItem}">
                                     <ContentPresenter Content="{TemplateBinding Header}" />
                                 </ControlTemplate>

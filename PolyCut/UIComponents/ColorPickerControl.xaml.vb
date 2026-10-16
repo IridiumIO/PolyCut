@@ -1,11 +1,19 @@
+Imports System.Collections.ObjectModel
+Imports PolyCut.Shared
+
 Imports System.ComponentModel
 Imports System.Windows
 
 Public Class ColorPickerControl
     Inherits UserControl
 
+    Private Shared ReadOnly WorkspaceColors As New ObservableCollection(Of SolidColorBrush)
+    Private Const MaxWorkspaceColors As Integer = 30
+
     Public Sub New()
         InitializeComponent()
+
+        WorkspaceColorsList.ItemsSource = WorkspaceColors
 
 
         ' Skip runtime-only initialisation in the Visual Studio designer.
@@ -89,6 +97,8 @@ Public Class ColorPickerControl
             Return
         End If
 
+        RefreshWorkspaceColors()
+
         RaiseEvent PopupOpening(Me, EventArgs.Empty)
         UpdateHexFromColor()
         If _openPicker IsNot Nothing AndAlso Not ReferenceEquals(_openPicker, Me) Then _openPicker.ColorPopup.IsOpen = False
@@ -98,6 +108,80 @@ Public Class ColorPickerControl
 
     Private Shared _openPicker As ColorPickerControl
 
+
+    Private Sub RefreshWorkspaceColors()
+
+        Dim defaults As New HashSet(Of Color)
+        For Each brush In DefaultColorsList.Items.OfType(Of SolidColorBrush)()
+            defaults.Add(brush.Color)
+        Next
+
+        Dim known As New HashSet(Of Color)(defaults)
+        For Each brush In WorkspaceColors
+            known.Add(brush.Color)
+        Next
+
+        Dim additions As New List(Of Color)
+        Dim mainVM = Application.GetService(Of MainViewModel)()
+
+        If mainVM IsNot Nothing AndAlso mainVM.DrawableCollection IsNot Nothing Then
+            For Each drawable In FlattenDrawables(mainVM.DrawableCollection)
+                CollectColor(additions, known, drawable.Stroke)
+                CollectColor(additions, known, drawable.Fill)
+            Next
+        End If
+
+        For i = additions.Count - 1 To 0 Step -1
+            Dim brush As New SolidColorBrush(additions(i))
+            brush.Freeze()
+            WorkspaceColors.Insert(0, brush)
+        Next
+
+        While WorkspaceColors.Count > MaxWorkspaceColors
+            WorkspaceColors.RemoveAt(WorkspaceColors.Count - 1)
+        End While
+
+        Dim sectionVisibility As Visibility = If(WorkspaceColors.Count = 0, Visibility.Collapsed, Visibility.Visible)
+        WorkspaceColorsSeparator.Visibility = sectionVisibility
+        WorkspaceColorsScroller.Visibility = sectionVisibility
+
+    End Sub
+
+    'Fun time to use an iterator, always forget these exist
+    Private Shared Iterator Function FlattenDrawables(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)
+        If items Is Nothing Then Return
+        For Each drawable In items
+            If drawable Is Nothing Then Continue For
+
+            Dim group = TryCast(drawable, DrawableGroup)
+            If group Is Nothing Then
+                Yield drawable
+            Else
+                For Each child In FlattenDrawables(group.GroupChildren)
+                    Yield child
+                Next
+            End If
+        Next
+    End Function
+
+    Private Shared Sub CollectColor(into As List(Of Color), known As HashSet(Of Color), brush As Brush)
+        Dim solid = TryCast(brush, SolidColorBrush)
+        If solid Is Nothing Then Return
+
+        Dim color = solid.Color
+        If color.A = 0 Then Return
+        If Not known.Add(color) Then Return
+
+        into.Add(color)
+    End Sub
+
+    Private Sub WorkspaceColorsScroller_PreviewMouseWheel(sender As Object, e As MouseWheelEventArgs)
+        Dim scroller = TryCast(sender, ScrollViewer)
+        If scroller Is Nothing Then Return
+
+        scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta)
+        e.Handled = True
+    End Sub
 
     Private Sub ColorMenuItem_Click(sender As Object, e As RoutedEventArgs)
         Dim button = TryCast(sender, Button)
@@ -176,6 +260,8 @@ Public Class ColorPickerControl
 
     Private Async Sub EyedropperButton_Click(sender As Object, e As RoutedEventArgs)
         Dim before As Brush = CloneBrush(TryCast(CurrentColor, Brush))
+        RefreshWorkspaceColors()
+
         RaiseEvent PopupOpening(Me, EventArgs.Empty)
         If _eyedropper Is Nothing Then
             _eyedropper = New Eyedropper(Window.GetWindow(Me))

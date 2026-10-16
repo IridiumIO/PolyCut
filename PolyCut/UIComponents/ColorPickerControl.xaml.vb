@@ -150,17 +150,21 @@ Public Class ColorPickerControl
     'Fun time to use an iterator, always forget these exist
     Private Shared Iterator Function FlattenDrawables(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)
         If items Is Nothing Then Return
+
         For Each drawable In items
             If drawable Is Nothing Then Continue For
 
-            Dim group = TryCast(drawable, DrawableGroup)
-            If group Is Nothing Then
-                Yield drawable
-            Else
-                For Each child In FlattenDrawables(group.GroupChildren)
+            Dim children = ProjectGraph.GetGroupChildren(drawable)
+            Dim yielded As Boolean = False
+
+            If children IsNot Nothing Then
+                For Each child In FlattenDrawables(children)
+                    yielded = True
                     Yield child
                 Next
             End If
+
+            If Not yielded Then Yield drawable
         Next
     End Function
 

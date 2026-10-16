@@ -25,7 +25,7 @@
                StaysOpen="False">
             <Border Padding="5">
                 <Border x:Name="ColorPopupBorder"
-                        Padding="0"
+                        Padding="8"
                         local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.TintColor="#23FFFFFF"
                         Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}"
                         BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"

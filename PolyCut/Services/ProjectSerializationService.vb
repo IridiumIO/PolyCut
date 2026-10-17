@@ -432,6 +432,9 @@ Friend NotInheritable Class DrawableCodec
         data.Width = state.Width
         data.Height = state.Height
         data.RotationAngle = state.Rotation
+        data.AffineTransform = state.AffineTransform.ToString(Globalization.CultureInfo.InvariantCulture)
+        data.TransformOriginX = state.TransformOrigin.X
+        data.TransformOriginY = state.TransformOrigin.Y
         data.ScaleX = state.Scale.X
         data.ScaleY = state.Scale.Y
 
@@ -500,6 +503,9 @@ Friend NotInheritable Class DrawableCodec
             groupData.Width = state.Width
             groupData.Height = state.Height
             groupData.RotationAngle = state.Rotation
+            groupData.AffineTransform = state.AffineTransform.ToString(Globalization.CultureInfo.InvariantCulture)
+            groupData.TransformOriginX = state.TransformOrigin.X
+            groupData.TransformOriginY = state.TransformOrigin.Y
             groupData.ScaleX = state.Scale.X
             groupData.ScaleY = state.Scale.Y
 

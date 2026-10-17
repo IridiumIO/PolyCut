@@ -28,6 +28,9 @@ Public Class DrawableData
     Public Property Width As Double
     Public Property Height As Double
     Public Property RotationAngle As Double
+    Public Property AffineTransform As String
+    Public Property TransformOriginX As Double = 0.5
+    Public Property TransformOriginY As Double = 0.5
     Public Property ScaleX As Double = 1.0
     Public Property ScaleY As Double = 1.0
     Public Property IsHidden As Boolean
@@ -71,6 +74,9 @@ Public Class GroupData
     Public Property Width As Double
     Public Property Height As Double
     Public Property RotationAngle As Double
+    Public Property AffineTransform As String
+    Public Property TransformOriginX As Double = 0.5
+    Public Property TransformOriginY As Double = 0.5
     Public Property ScaleX As Double = 1.0
     Public Property ScaleY As Double = 1.0
     Public Property IsHidden As Boolean

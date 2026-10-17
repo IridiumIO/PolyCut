@@ -415,6 +415,15 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Dim fe = child?.DrawableElement
         If fe Is Nothing Then Return Nothing
 
+        ' Reuse existing wrapper (position, size, rotation and origin)  when grouping canvas objects, including paths, rather than wrapping afresh.
+        Dim existingWrapper = TryCast(fe.Parent, ContentControl)
+        If existingWrapper IsNot Nothing AndAlso existingWrapper.Content Is fe Then
+            Dim host = TryCast(existingWrapper.Parent, Panel)
+            If host IsNot Nothing Then host.Children.Remove(existingWrapper)
+            existingWrapper.IsHitTestVisible = False
+            Return existingWrapper
+        End If
+
         If TypeOf fe Is Shapes.Path Then
             Dim p = DirectCast(fe, Shapes.Path)
             'Stretch stays a local value: ConvertPath assigns Stretch=None locally, which a Style setter cannot override.
@@ -497,10 +506,18 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Dim ww = CanvasUtil.GetWidthSafe(w)
             Dim hh = CanvasUtil.GetHeightSafe(w)
 
-            minX = Math.Min(minX, left)
-            minY = Math.Min(minY, top)
-            maxX = Math.Max(maxX, left + ww)
-            maxY = Math.Max(maxY, top + hh)
+            ' Wrappers are detached here, so include their render transform explicitly.
+            Dim origin = w.RenderTransformOrigin
+            Dim m = Matrix.Identity
+            m.Translate(-origin.X * ww, -origin.Y * hh)
+            m.Append(If(w.RenderTransform?.Value, Matrix.Identity))
+            m.Translate(origin.X * ww + left, origin.Y * hh + top)
+            Dim bounds = New MatrixTransform(m).TransformBounds(New Rect(0, 0, ww, hh))
+
+            minX = Math.Min(minX, bounds.Left)
+            minY = Math.Min(minY, bounds.Top)
+            maxX = Math.Max(maxX, bounds.Right)
+            maxY = Math.Max(maxY, bounds.Bottom)
         Next
 
         If minX = Double.MaxValue Then Return New Rect(0, 0, 0, 0)

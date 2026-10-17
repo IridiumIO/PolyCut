@@ -777,6 +777,42 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End Select
     End Function
 
+
+    ' -----------------
+    ' Grouping / Ungrouping
+    ' -----------------
+
+    <RelayCommand>
+    Private Sub GroupSelected()
+        Dim selectedItems = SelectedDrawables.ToList()
+        If selectedItems.Count < 2 Then
+            _snackbarService.GenerateError("Error".LT(), "Select at least 2 shapes to group".LT(), 3)
+            Return
+        End If
+
+        ExecuteGroupingAction(New GroupAction(_document, selectedItems))
+    End Sub
+
+    <RelayCommand>
+    Private Sub UngroupSelected()
+        Dim selectedItems = SelectedDrawables.ToList()
+        If Not selectedItems.OfType(Of NestedDrawableGroup)().Any(Function(g) DrawableCollection.Contains(g)) Then
+            _snackbarService.GenerateError("Error".LT(), "No groups selected to ungroup".LT(), 3)
+            Return
+        End If
+
+        ExecuteGroupingAction(New UngroupAction(_document, selectedItems))
+    End Sub
+
+    Private Sub ExecuteGroupingAction(action As IUndoableAction)
+        _suspendTransformMessageHandling = True
+        Try
+            If action.Execute() Then _undoRedoService.Push(action)
+        Finally
+            _suspendTransformMessageHandling = False
+        End Try
+    End Sub
+
     <NotifyPropertyChangedFor(NameOf(CurrentProjectName))>
     <ObservableProperty> Private _currentProjectPath As String = Nothing
 

@@ -107,9 +107,9 @@ Public Class GeometryHitTestHelper
             Dim wrapper = TryCast(d.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
 
-            ' Quick reject by wrapper bounds (skip for rotated wrappers, whosegeometry can extend outside the AABB).
+            ' Only untransformed wrappers fit the simple bounds check; rotation/shear can extend beyond it.
             Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
-            If rotate Is Nothing OrElse rotate.Angle = 0 Then
+            If (rotate IsNot Nothing AndAlso rotate.Angle = 0) OrElse wrapper.RenderTransform Is Nothing Then
                 Dim left = Canvas.GetLeft(wrapper)
                 Dim top = Canvas.GetTop(wrapper)
                 If Double.IsNaN(left) Then left = 0

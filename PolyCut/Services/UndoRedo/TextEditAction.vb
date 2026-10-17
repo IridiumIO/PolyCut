@@ -65,8 +65,7 @@ Public Class TextEditAction : Implements IUndoableAction
         If wrapper Is Nothing Then Return
 
         ' A rotated wrapper pivots around its center (RenderTransformOrigin 0.5,0.5), so a
-        Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
-        Dim preserveCenter As Boolean = rotate IsNot Nothing AndAlso Math.Abs(rotate.Angle) > 0.01
+        Dim preserveCenter As Boolean = wrapper.RenderTransform IsNot Nothing AndAlso Not wrapper.RenderTransform.Value.IsIdentity
         Dim centerX As Double = 0
         Dim centerY As Double = 0
         If preserveCenter Then

@@ -242,6 +242,8 @@ Friend NotInheritable Class ProjectApplyHelper
                 .Width = If(gd.Width > 0, gd.Width, Double.NaN),
                 .Height = If(gd.Height > 0, gd.Height, Double.NaN),
                 .Rotation = gd.RotationAngle,
+                .AffineTransform = If(String.IsNullOrWhiteSpace(gd.AffineTransform), Matrix.Identity, Matrix.Parse(gd.AffineTransform)),
+                .TransformOrigin = New Point(gd.TransformOriginX, gd.TransformOriginY),
                 .Scale = New Point(If(gd.ScaleX = 0, 1.0, gd.ScaleX), If(gd.ScaleY = 0, 1.0, gd.ScaleY))
             }
             groupState.ApplyToWrapper(wrapper, applyScale:=True)
@@ -266,7 +268,9 @@ Friend NotInheritable Class ProjectApplyHelper
                 .Translation = New Point(dd.Left, dd.Top),
                 .Width = If(dd.Width > 0, dd.Width, Double.NaN),
                 .Height = If(dd.Height > 0, dd.Height, Double.NaN),
-                .Rotation = dd.RotationAngle
+                .Rotation = dd.RotationAngle,
+                .AffineTransform = If(String.IsNullOrWhiteSpace(dd.AffineTransform), Matrix.Identity, Matrix.Parse(dd.AffineTransform)),
+                .TransformOrigin = New Point(dd.TransformOriginX, dd.TransformOriginY)
             }
             drawState.ApplyToWrapper(wrapper, applyScale:=False)
             MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))

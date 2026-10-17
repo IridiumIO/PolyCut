@@ -10,6 +10,8 @@ Public Class TransformState
     Public Property TransformOrigin As Point
     Public Property Width As Double = Double.NaN
     Public Property Height As Double = Double.NaN
+    ' Scale/shear inherited when a visual group is removed; rotation stays independently editable.
+    Public Property AffineTransform As Matrix = Matrix.Identity
 
     Public Sub New()
         Translation = New Point(0, 0)
@@ -28,13 +30,15 @@ Public Class TransformState
     Public Function Clone() As TransformState
         Dim c As New TransformState(Translation, Rotation, Scale, TransformOrigin) With {
             .Width = Width,
-            .Height = Height
+            .Height = Height,
+            .AffineTransform = AffineTransform
         }
         Return c
     End Function
 
 
-    'Reads the  wrapper transform state: Canvas Left/Top + Width/Heighton the wrapper, rotation from the wrapper's RenderTransform (RotateTransform), scale (mirror) from the child element's TransformGroup ScaleTransform, and the wrapper's RenderTransformOrigin. Mirrors DrawableCodec serialization.
+    ' The wrapper carries position, size, origin, and affine-then-rotation transforms.
+    ' Mirror scale remains on the child element, matching project serialization.
     Public Shared Function FromWrapper(wrapper As ContentControl) As TransformState
         Dim state As New TransformState()
         If wrapper Is Nothing Then Return state
@@ -47,9 +51,12 @@ Public Class TransformState
         state.Height = size.Height
         state.TransformOrigin = wrapper.RenderTransformOrigin
 
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then
-            state.Rotation = rotateTransform.Angle
+        state.Rotation = GetRotation(wrapper)
+        If wrapper.RenderTransform IsNot Nothing AndAlso Not TypeOf wrapper.RenderTransform Is RotateTransform Then
+            state.AffineTransform = wrapper.RenderTransform.Value
+            Dim unrotate = Matrix.Identity
+            unrotate.Rotate(-state.Rotation)
+            state.AffineTransform = Matrix.Multiply(state.AffineTransform, unrotate)
         End If
 
         ' Mirror scale lives on the child element's render transform.
@@ -73,7 +80,7 @@ Public Class TransformState
     End Function
 
 
-    'Writes the state back to the exact same storage layout FromWrapper reads. Canvas Left/Top + Width/Height on the wrapper, RotateTransform on the  wrapper, mirror scale in the child element's TransformGroup ScaleTransform.
+    ' Restore the same storage layout FromWrapper reads, including inherited scale/shear.
     Public Sub ApplyToWrapper(wrapper As ContentControl, Optional applyScale As Boolean = True)
         If wrapper Is Nothing Then Return
 
@@ -83,7 +90,7 @@ Public Class TransformState
         If Not Double.IsNaN(Height) AndAlso Height > 0 Then wrapper.Height = Height
 
         wrapper.RenderTransformOrigin = TransformOrigin
-        wrapper.RenderTransform = If(Math.Abs(Rotation) > 0.01, New RotateTransform(Rotation), Nothing)
+        wrapper.RenderTransform = CreateRenderTransform(AffineTransform, Rotation)
 
         If Not applyScale Then Return
 
@@ -119,6 +126,27 @@ Public Class TransformState
         End If
     End Sub
 
+    Public Shared Function GetRotation(wrapper As ContentControl) As Double
+        Dim rotation = TryCast(wrapper?.RenderTransform, RotateTransform)
+        If rotation IsNot Nothing Then Return rotation.Angle
+        Dim group = TryCast(wrapper?.RenderTransform, TransformGroup)
+        Return If(group?.Children.OfType(Of RotateTransform)().LastOrDefault()?.Angle, 0)
+    End Function
+
+    Public Shared Sub SetRotation(wrapper As ContentControl, angle As Double)
+        If wrapper Is Nothing Then Return
+        Dim state = FromWrapper(wrapper)
+        wrapper.RenderTransform = CreateRenderTransform(state.AffineTransform, angle)
+    End Sub
+
+    Private Shared Function CreateRenderTransform(affine As Matrix, angle As Double) As Transform
+        If affine.IsIdentity Then Return New RotateTransform(angle)
+        Dim group As New TransformGroup()
+        group.Children.Add(New MatrixTransform(affine))
+        group.Children.Add(New RotateTransform(angle))
+        Return group
+    End Function
+
     Private Shared Sub RemoveContentScale(contentFe As FrameworkElement)
         If contentFe Is Nothing Then Return
 
@@ -147,8 +175,16 @@ Public Class TransformState
         If Math.Abs(TransformOrigin.Y - other.TransformOrigin.Y) >= tolerance Then Return False
         If Not SizeMatches(Width, other.Width, tolerance) Then Return False
         If Not SizeMatches(Height, other.Height, tolerance) Then Return False
+        If Not MatrixMatches(AffineTransform, other.AffineTransform) Then Return False
 
         Return True
+    End Function
+
+    Private Shared Function MatrixMatches(a As Matrix, b As Matrix) As Boolean
+        Const epsilon As Double = 0.000000001
+        Return Math.Abs(a.M11 - b.M11) < epsilon AndAlso Math.Abs(a.M12 - b.M12) < epsilon AndAlso
+               Math.Abs(a.M21 - b.M21) < epsilon AndAlso Math.Abs(a.M22 - b.M22) < epsilon AndAlso
+               Math.Abs(a.OffsetX - b.OffsetX) < epsilon AndAlso Math.Abs(a.OffsetY - b.OffsetY) < epsilon
     End Function
 
     Private Shared Function SizeMatches(a As Double, b As Double, tolerance As Double) As Boolean

@@ -341,6 +341,10 @@
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasDownCommand}" Gesture="Ctrl+OemOpenBrackets" />
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasToTopCommand}" Gesture="Ctrl+Shift+OemCloseBrackets" />
         <KeyBinding Command="{Binding MoveSelectedItemsCanvasToBottomCommand}" Gesture="Ctrl+Shift+OemOpenBrackets" />
+
+        <KeyBinding Command="{Binding GroupSelectedCommand}" Gesture="Ctrl+G" />
+        <KeyBinding Command="{Binding UngroupSelectedCommand}" Gesture="Ctrl+Shift+G" />
+
     </ui:FluentWindow.InputBindings>
 
 

@@ -3,6 +3,15 @@ Imports PolyCut.Shared
 
 Public Class Tab_Elements
 
+    Sub New()
+
+        ' This call is required by the designer.
+        InitializeComponent()
+
+        ' Add any initialization after the InitializeComponent() call.
+
+    End Sub
+
     'manually sync Listiew selection from canvas (avoids infinite loop from binding)
     Public Sub SyncListViewSelection(selectedDrawables As IEnumerable(Of IDrawable))
         Dim lv = FilesList ' your flat ListView

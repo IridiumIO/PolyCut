@@ -260,15 +260,22 @@ Class SVGPage
         ArrangeMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
         CanvasContextMenuSeparator.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
         ZoomMenuItem.Visibility = If(hasSelection, Visibility.Collapsed, Visibility.Visible)
+        GroupMenuItem.Visibility = If(hasMultiSelection, Visibility.Visible, Visibility.Collapsed)
 
         ContextCutButton.IsEnabled = hasSelection
         ContextCopyButton.IsEnabled = hasSelection
         ContextPasteButton.IsEnabled = Clipboard.ContainsData(ClipboardService.ClipFormat)
 
+        GroupMenuItem.IsEnabled = hasSelection
+
         If hasSelection Then
             Dim selected = MainViewModel.SelectedDrawables.ToList()
             ContextFillPicker.IsEnabled = Not selected.All(Function(d) RegistrationMarkHelper.IsRegistrationMark(d))
+            UngroupMenuItem.Visibility = If(selected.Any(Function(d) TypeOf d Is NestedDrawableGroup), Visibility.Visible, Visibility.Collapsed)
         End If
+
+        CanvasContextMenuGroupingSeparator.Visibility = If(UngroupMenuItem.Visibility = Visibility.Visible OrElse GroupMenuItem.Visibility = Visibility.Visible, Visibility.Visible, Visibility.Collapsed)
+
     End Sub
 
     Private Sub ContextStrokePicker_PopupOpening(sender As Object, e As EventArgs)

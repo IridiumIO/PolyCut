@@ -256,6 +256,7 @@
 
                     <Separator />
 
+
                     <MenuItem x:Name="ZoomMenuItem">
                         <MenuItem.Template>
                             <ControlTemplate TargetType="MenuItem">
@@ -305,10 +306,26 @@
                         </MenuItem.Header>
                     </MenuItem>
 
+
+                    <MenuItem x:Name="GroupMenuItem"
+                              Command="{Binding MainVM.GroupSelectedCommand}"
+                              Header="{loc:T 'Group'}"
+                              Icon="{ui:SymbolIcon Symbol=ShapeUnion16}"
+                              Visibility="Collapsed" />
+
+                    <MenuItem x:Name="UngroupMenuItem"
+                              Command="{Binding MainVM.UngroupSelectedCommand}"
+                              Header="{loc:T 'Ungroup'}"
+                              Icon="{ui:SymbolIcon Symbol=ShapeIntersect16}"
+                              Visibility="Collapsed" />
+
+                    <Separator x:Name="CanvasContextMenuGroupingSeparator" />
+
+
                     <ui:MenuItem x:Name="ArrangeMenuItem"
                                  loc:L.Context="Arrange objects on canvas"
                                  Header="{loc:T 'Arrange'}"
-                                 Icon="{ui:SymbolIcon Symbol=Archive16}">
+                                 Icon="{ui:SymbolIcon Symbol=Layer20}">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 
@@ -469,7 +486,10 @@
 
                     </ui:MenuItem>
 
-                    <ui:MenuItem x:Name="CombineMenuItem" loc:L.Context="Boolean Operations" Header="{loc:T 'Combine'}">
+                    <ui:MenuItem x:Name="CombineMenuItem"
+                                 loc:L.Context="Boolean Operations"
+                                 Header="{loc:T 'Combine'}"
+                                 Icon="{ui:SymbolIcon Symbol=ShapeIntersect16}">
 
                         <MenuItem Focusable="False" IsTabStop="False">
 

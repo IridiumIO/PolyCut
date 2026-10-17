@@ -67,7 +67,7 @@ Public Class TransformAction
     Public Shared Sub ApplyRotation(wrapper As ContentControl, centerPoint As Point, initialRotation As Double, angle As Double, initialPosition As Point)
         If wrapper Is Nothing Then Return
 
-        wrapper.RenderTransform = New RotateTransform(initialRotation + angle)
+        TransformState.SetRotation(wrapper, initialRotation + angle)
 
         Dim size = TransformMath.GetWrapperSize(wrapper)
         Dim initialItemCenter = New Point(
@@ -97,15 +97,21 @@ Public Class TransformAction
     Public Shared Sub ApplyResizeSingle(wrapper As ContentControl, handleName As String, deltaX As Double, deltaY As Double)
         If wrapper Is Nothing Then Return
 
-        Dim angle As Double = 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        If rotateTransform IsNot Nothing Then angle = rotateTransform.Angle
+        Dim angle As Double = GetRotationAngle(wrapper)
 
         Dim angleRad = angle * Math.PI / 180.0
         Dim cosA = Math.Cos(-angleRad)
         Dim sinA = Math.Sin(-angleRad)
         Dim localDeltaX = deltaX * cosA - deltaY * sinA
         Dim localDeltaY = deltaX * sinA + deltaY * cosA
+        Dim affine = TransformState.FromWrapper(wrapper).AffineTransform
+        If Not affine.IsIdentity AndAlso affine.HasInverse Then
+            Dim inverse = affine
+            inverse.Invert()
+            Dim localDelta = inverse.Transform(New Vector(localDeltaX, localDeltaY))
+            localDeltaX = localDelta.X
+            localDeltaY = localDelta.Y
+        End If
 
         Dim transformOrigin = wrapper.RenderTransformOrigin
         Dim startSize = TransformMath.GetWrapperSize(wrapper)
@@ -174,7 +180,7 @@ Public Class TransformAction
 
         Dim placement = TransformMath.ComputeResizePlacement(
             currentLeft, currentTop, startSize.Width, startSize.Height,
-            angle, transformOrigin, newWidth, newHeight, anchor)
+            angle, transformOrigin, newWidth, newHeight, anchor, affine)
 
         wrapper.Height -= deltaVertical
         wrapper.Width -= deltaHorizontal
@@ -199,11 +205,7 @@ Public Class TransformAction
         Canvas.SetLeft(wrapper, scaledCenter.X - wrapper.Width / 2)
         Canvas.SetTop(wrapper, scaledCenter.Y - wrapper.Height / 2)
 
-        If Math.Abs(initialRotation) > 0.01 Then
-            wrapper.RenderTransform = New RotateTransform(initialRotation)
-        Else
-            wrapper.RenderTransform = Nothing
-        End If
+        TransformState.SetRotation(wrapper, initialRotation)
     End Sub
 
     Public Shared Sub SetSizeAndPosition(wrapper As ContentControl, width As Double, height As Double, Optional left As Double? = Nothing, Optional top As Double? = Nothing)
@@ -246,13 +248,13 @@ Public Class TransformAction
 
             placement = TransformMath.ComputeResizePlacement(
                 newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
-                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0.5, 0.5))
+                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0.5, 0.5), TransformState.FromWrapper(wrapper).AffineTransform)
         Else
             ' Bottom-right resize semantics: the top-left corner stays anchored.
 
             placement = TransformMath.ComputeResizePlacement(
                 newLeft, newTop, e.PreviousSize.Width, e.PreviousSize.Height,
-                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0, 0))
+                angle, transformOrigin, e.NewSize.Width, e.NewSize.Height, New Point(0, 0), TransformState.FromWrapper(wrapper).AffineTransform)
         End If
 
         Canvas.SetTop(wrapper, placement.Top)
@@ -291,10 +293,16 @@ Public Class TransformAction
 
         ' Mirror rotation
         Dim newRotation = CalculateMirroredRotation(currentRotation, mirrorX, mirrorY)
-        wrapper.RenderTransform = New RotateTransform(newRotation)
+        Dim state = TransformState.FromWrapper(wrapper)
+        Dim reflection = Matrix.Identity
+        reflection.Scale(If(mirrorX, -1.0, 1.0), If(mirrorY, -1.0, 1.0))
+        state.AffineTransform = Matrix.Multiply(Matrix.Multiply(reflection, state.AffineTransform), reflection)
+        state.Rotation = newRotation
+        state.ApplyToWrapper(wrapper, applyScale:=False)
 
         ' Mirror visual appearance (mirror scale on the child element)
-        ApplyScaleTransform(wrapper.Content, mirrorX, mirrorY)
+        ' A reflection in both axes is already represented by the 180-degree rotation.
+        If mirrorX Xor mirrorY Then ApplyScaleTransform(wrapper.Content, mirrorX, mirrorY)
 
         wrapper.InvalidateMeasure()
         wrapper.InvalidateArrange()
@@ -323,8 +331,7 @@ Public Class TransformAction
 
     Public Shared Function GetRotationAngle(wrapper As ContentControl) As Double
         If wrapper Is Nothing Then Return 0
-        Dim rotateTransform = TryCast(wrapper.RenderTransform, RotateTransform)
-        Return If(rotateTransform IsNot Nothing, rotateTransform.Angle, 0)
+        Return TransformState.GetRotation(wrapper)
     End Function
 
     Public Shared Sub ApplyScaleTransform(element As FrameworkElement, mirrorX As Boolean, mirrorY As Boolean)

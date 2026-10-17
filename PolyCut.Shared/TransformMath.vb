@@ -36,11 +36,10 @@ Public Module TransformMath
                                            angleDeg As Double,
                                            origin As Point,
                                            newW As Double, newH As Double,
-                                           anchor As Point) As (Left As Double, Top As Double)
+                                           anchor As Point, Optional affine As Matrix? = Nothing) As (Left As Double, Top As Double)
 
-        Dim angle = angleDeg * Math.PI / 180.0
-        Dim cosA = Math.Cos(angle)
-        Dim sinA = Math.Sin(angle)
+        Dim m = If(affine, Matrix.Identity)
+        m.Rotate(angleDeg)
 
         Dim fxOld = anchor.X * w
         Dim fyOld = anchor.Y * h
@@ -50,16 +49,16 @@ Public Module TransformMath
         Dim oldPivotX = left + origin.X * w
         Dim oldPivotY = top + origin.Y * h
 
-        Dim fixedWorldX = oldPivotX + cosA * (fxOld - origin.X * w) - sinA * (fyOld - origin.Y * h)
-        Dim fixedWorldY = oldPivotY + sinA * (fxOld - origin.X * w) + cosA * (fyOld - origin.Y * h)
+        Dim oldOffset = m.Transform(New Vector(fxOld - origin.X * w, fyOld - origin.Y * h))
+        Dim fixedWorldX = oldPivotX + oldOffset.X
+        Dim fixedWorldY = oldPivotY + oldOffset.Y
 
         Dim newPivotX = origin.X * newW
         Dim newPivotY = origin.Y * newH
 
-        Dim rotatedX = cosA * (fxNew - newPivotX) - sinA * (fyNew - newPivotY)
-        Dim rotatedY = sinA * (fxNew - newPivotX) + cosA * (fyNew - newPivotY)
+        Dim newOffset = m.Transform(New Vector(fxNew - newPivotX, fyNew - newPivotY))
 
-        Return (fixedWorldX - newPivotX - rotatedX, fixedWorldY - newPivotY - rotatedY)
+        Return (fixedWorldX - newPivotX - newOffset.X, fixedWorldY - newPivotY - newOffset.Y)
     End Function
 
 
@@ -134,14 +133,16 @@ Public Module TransformMath
         If Double.IsNaN(top) Then top = 0
 
         Dim size = GetWrapperSize(wrapper)
-        Dim rotation = If(TryCast(wrapper.RenderTransform, RotateTransform)?.Angle, 0.0)
         Dim origin = wrapper.RenderTransformOrigin
-        Dim center As New Point(left + size.Width * origin.X, top + size.Height * origin.Y)
+        Dim m = Matrix.Identity
+        m.Translate(-origin.X * size.Width, -origin.Y * size.Height)
+        m.Append(If(wrapper.RenderTransform?.Value, Matrix.Identity))
+        m.Translate(left + origin.X * size.Width, top + origin.Y * size.Height)
 
-        result.Add(RotateAbout(New Point(left, top), center, rotation))
-        result.Add(RotateAbout(New Point(left + size.Width, top), center, rotation))
-        result.Add(RotateAbout(New Point(left + size.Width, top + size.Height), center, rotation))
-        result.Add(RotateAbout(New Point(left, top + size.Height), center, rotation))
+        result.Add(m.Transform(New Point(0, 0)))
+        result.Add(m.Transform(New Point(size.Width, 0)))
+        result.Add(m.Transform(New Point(size.Width, size.Height)))
+        result.Add(m.Transform(New Point(0, size.Height)))
 
         Return result
     End Function

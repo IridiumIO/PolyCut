@@ -5,7 +5,7 @@
              xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
              xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
              d:DesignHeight="800"
              d:DesignWidth="380"
              mc:Ignorable="d">
@@ -22,257 +22,255 @@
 
 
 
-            <ui:ListView x:Name="FilesList" Grid.Row="3"
-                         ScrollViewer.CanContentScroll="True"
-                         ScrollViewer.VerticalScrollBarVisibility="Visible"
-                         VirtualizingStackPanel.IsVirtualizing="True"
-                         VirtualizingStackPanel.VirtualizationMode="Recycling"
-                         FocusVisualStyle="{x:Null}"
-                         ItemsSource="{Binding MainVM.FlatSidebarItems}"
-                         SelectionChanged="ListView_SelectionChanged" SelectionMode="Extended">
-                <ui:ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ui:ListView.ItemsPanel>
-                <ui:ListView.Resources>
-                    <!--  Default / fallback (Group / unknown)  -->
+        <ui:ListView x:Name="FilesList"
+                     Grid.Row="3"
+                     FocusVisualStyle="{x:Null}"
+                     ItemsSource="{Binding MainVM.FlatSidebarItems}"
+                     ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Visible" SelectionChanged="ListView_SelectionChanged" SelectionMode="Extended" VirtualizingStackPanel.IsVirtualizing="True"
+                     VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <ui:ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </ui:ListView.ItemsPanel>
+            <ui:ListView.Resources>
+                <!--  Default / fallback (Group / unknown)  -->
 
-                    <Style x:Key="DrawableIconStyle" TargetType="ui:SymbolIcon">
-                        <!--  Fill colour; falls back to stroke, then theme white (see IconBrushConverter)  -->
-                        <Setter Property="Filled" Value="True" />
-                        <Setter Property="Foreground">
-                            <Setter.Value>
-                                <MultiBinding Converter="{local:IconBrushConverter}">
-                                    <Binding Path="Fill" />
-                                    <Binding Path="Stroke" />
-                                </MultiBinding>
-                            </Setter.Value>
-                        </Setter>
+                <Style x:Key="DrawableIconStyle" TargetType="ui:SymbolIcon">
+                    <!--  Fill colour; falls back to stroke, then theme white (see IconBrushConverter)  -->
+                    <Setter Property="Filled" Value="True" />
+                    <Setter Property="Foreground">
+                        <Setter.Value>
+                            <MultiBinding Converter="{local:IconBrushConverter}">
+                                <Binding Path="Fill" />
+                                <Binding Path="Stroke" />
+                            </MultiBinding>
+                        </Setter.Value>
+                    </Setter>
 
-                        <Style.Triggers>
-                            <!--  when row selected  -->
-                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
-                                <Setter Property="Filled" Value="False" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
+                    <Style.Triggers>
+                        <!--  when row selected  -->
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                            <Setter Property="Filled" Value="False" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
 
-                    <DataTemplate DataType="{x:Type local:DrawableEllipse}">
-                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Circle24" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:DrawableEllipse}">
+                    <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Circle24" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:DrawableRectangle}">
-                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Square24" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:DrawableRectangle}">
+                    <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Square24" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:DrawableLine}">
-                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Line24" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:DrawableLine}">
+                    <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Line24" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:DrawablePath}">
-                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Pentagon20" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:DrawablePath}">
+                    <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Pentagon20" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:DrawableText}">
-                        <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Text16" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:DrawableText}">
+                    <ui:SymbolIcon FontSize="20" Style="{StaticResource DrawableIconStyle}" Symbol="Text16" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:NestedDrawableGroup}">
-                        <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Shapes20" />
-                    </DataTemplate>
+                <DataTemplate DataType="{x:Type local:NestedDrawableGroup}">
+                    <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Shapes20" />
+                </DataTemplate>
 
-                    <DataTemplate DataType="{x:Type local:DrawableRegistrationMark}">
-                        <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Bookmark20" />
-                    </DataTemplate>
-                </ui:ListView.Resources>
+                <DataTemplate DataType="{x:Type local:DrawableRegistrationMark}">
+                    <ui:SymbolIcon FontSize="23" Style="{StaticResource DrawableIconStyle}" Symbol="Bookmark20" />
+                </DataTemplate>
+            </ui:ListView.Resources>
 
-                <ui:ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListViewItem">
-                                    <Border Margin="0 5 0 5" Background="{TemplateBinding Background}">
-                                        <ContentPresenter />
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ui:ListView.ItemContainerStyle>
+            <ui:ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border Margin="0 5 0 5" Background="{TemplateBinding Background}">
+                                    <ContentPresenter />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ui:ListView.ItemContainerStyle>
 
-                <ui:ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=ActualWidth}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="25" />
-                                <ColumnDefinition Width="15" />
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="5" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
+            <ui:ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=ActualWidth}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="25" />
+                            <ColumnDefinition Width="15" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="32" />
+                        </Grid.ColumnDefinitions>
 
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="30" />
-                                <RowDefinition Height="20" />
-                            </Grid.RowDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="20" />
+                        </Grid.RowDefinitions>
 
-                            <Border x:Name="ContainingGrid"
-                                    Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="6"
-                                    CornerRadius="5">
-                                <Border.Background>
-                                    <LinearGradientBrush Opacity="0" StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Offset="0.4" Color="#FFFFFFFF" />
-                                        <GradientStop Offset="1" Color="#FFFFFFFF" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
+                        <Border x:Name="ContainingGrid"
+                                Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="6"
+                                CornerRadius="5">
+                            <Border.Background>
+                                <LinearGradientBrush Opacity="0" StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Offset="0.4" Color="#FFFFFFFF" />
+                                    <GradientStop Offset="1" Color="#FFFFFFFF" />
+                                </LinearGradientBrush>
+                            </Border.Background>
 
-                            </Border>
+                        </Border>
 
-                            <StackPanel Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                        Margin="0 0 0 0" VerticalAlignment="Center" Panel.ZIndex="12">
-                                <Button Padding="4"
-                                        Background="Transparent" BorderThickness="0"
-                                        Command="{Binding DataContext.MainVM.MoveSelectedItemUpCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                        CommandParameter="{Binding Item}">
-                                    <ui:SymbolIcon FontSize="16" Symbol="ArrowUp12" />
-                                    <Button.Style>
-                                        <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
-                                            <Setter Property="Visibility" Value="Hidden" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-
-                                </Button>
-                                <Button Padding="4"
-                                        Background="Transparent" BorderThickness="0"
-                                        Command="{Binding DataContext.MainVM.MoveSelectedItemDownCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                        CommandParameter="{Binding Item}">
-                                    <ui:SymbolIcon FontSize="16" Symbol="ArrowDown12" />
-                                    <Button.Style>
-                                        <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
-                                            <Setter Property="Visibility" Value="Hidden" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-
-                                </Button>
-                            </StackPanel>
-
-
-                            <!--  Selection bar  -->
-                            <Border Grid.RowSpan="2" Grid.Column="0"
-                                    Width="4"
-                                    Margin="0 5 0 5"
-                                    Background="{StaticResource PaletteBlueBrush}"
-                                    CornerRadius="2">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Visibility" Value="Collapsed" />
+                        <StackPanel Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Margin="0 0 0 0" VerticalAlignment="Center" Panel.ZIndex="12">
+                            <Button Padding="4"
+                                    Background="Transparent" BorderThickness="0"
+                                    Command="{Binding DataContext.MainVM.MoveSelectedItemUpCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                    CommandParameter="{Binding Item}">
+                                <ui:SymbolIcon FontSize="16" Symbol="ArrowUp12" />
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
+                                        <Setter Property="Visibility" Value="Hidden" />
                                         <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="False" />
-                                                    <Condition Binding="{Binding Item.IsSelected}" Value="True" />
-                                                </MultiDataTrigger.Conditions>
+                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible" />
-                                            </MultiDataTrigger>
-
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Border.Style>
-                            </Border>
+                                </Button.Style>
 
-                            <ContentControl Grid.RowSpan="2" Grid.Column="1"
-                                            Width="24" Height="24"
-                                            VerticalAlignment="Center" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
-                                            Content="{Binding Item}" />
-
-                            <!--  Eye toggle now binds to the wrapped child  -->
-                            <ToggleButton Grid.RowSpan="2" Grid.Column="5" IsChecked="{Binding Item.IsHidden}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-
-                                        <ui:Card x:Name="IconCard"
-                                                 Padding="5 4 5 0"
-                                                 Background="Transparent"
-                                                 BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
-                                                 Opacity="0">
-                                            <ui:SymbolIcon x:Name="Icon" Filled="True" Symbol="Eye48" />
-                                        </ui:Card>
-
-                                        <ControlTemplate.Triggers>
-
-                                            <!--  Hidden => EyeOff + always visible  -->
-                                            <Trigger Property="IsChecked" Value="True">
-                                                <Setter TargetName="Icon" Property="Symbol" Value="EyeOff24" />
-                                                <Setter TargetName="IconCard" Property="Opacity" Value="1" />
-                                            </Trigger>
-
-                                            <!--  Visible => Eye icon, default hidden  -->
-                                            <Trigger Property="IsChecked" Value="False">
-                                                <Setter TargetName="Icon" Property="Symbol" Value="Eye48" />
-                                                <Setter TargetName="IconCard" Property="Opacity" Value="0" />
-                                            </Trigger>
-
-                                            <!--  On row hover, show the icon (but only applies when IsChecked=False because the above trigger sets opacity)  -->
+                            </Button>
+                            <Button Padding="4"
+                                    Background="Transparent" BorderThickness="0"
+                                    Command="{Binding DataContext.MainVM.MoveSelectedItemDownCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                    CommandParameter="{Binding Item}">
+                                <ui:SymbolIcon FontSize="16" Symbol="ArrowDown12" />
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                        <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
-                                                <Setter TargetName="IconCard" Property="Opacity" Value="1" />
+                                                <Setter Property="Visibility" Value="Visible" />
                                             </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
 
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
+                            </Button>
+                        </StackPanel>
 
-                            <!--  Main text + parent "pill"  -->
-                            <Grid Grid.Column="3" Margin="0 5" VerticalAlignment="Center">
 
-                                <TextBlock VerticalAlignment="Center" Text="{Binding Item.Name}" TextTrimming="CharacterEllipsis">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
+                        <!--  Selection bar  -->
+                        <Border Grid.RowSpan="2" Grid.Column="0"
+                                Width="4"
+                                Margin="0 5 0 5"
+                                Background="{StaticResource PaletteBlueBrush}"
+                                CornerRadius="2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="False" />
+                                                <Condition Binding="{Binding Item.IsSelected}" Value="True" />
+                                            </MultiDataTrigger.Conditions>
                                             <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsEditingName}" Value="True">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                    <TextBlock.InputBindings>
-                                        <MouseBinding Command="{Binding BeginRenameCommand}" MouseAction="LeftDoubleClick" />
-                                    </TextBlock.InputBindings>
-                                </TextBlock>
+                                        </MultiDataTrigger>
 
-                                <TextBox MinWidth="80"
-                                         Padding="2 1" VerticalAlignment="Center"
-                                         Background="{StaticResource CardBackground}"
-                                         IsVisibleChanged="NameTextBox_IsVisibleChanged" KeyDown="NameTextBox_KeyDown" LostFocus="NameTextBox_LostFocus"
-                                         Text="{Binding Item.Name, UpdateSourceTrigger=PropertyChanged}">
-                                    <TextBox.Style>
-                                        <Style BasedOn="{StaticResource {x:Type TextBox}}" TargetType="TextBox">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsEditingName}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBox.Style>
-                                </TextBox>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
 
-                            </Grid>
+                        <ContentControl Grid.RowSpan="2" Grid.Column="1"
+                                        Width="24" Height="24"
+                                        VerticalAlignment="Center" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                        Content="{Binding Item}" />
 
-                            <!--<Border Margin="5 0" Padding="10 2" VerticalAlignment="Center"
+                        <!--  Eye toggle now binds to the wrapped child  -->
+                        <ToggleButton Grid.RowSpan="2" Grid.Column="5" IsChecked="{Binding Item.IsHidden}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+
+                                    <ui:Card x:Name="IconCard"
+                                             Padding="5 4 5 0"
+                                             Background="Transparent"
+                                             BorderBrush="{StaticResource ControlAltFillColorDisabledBrush}"
+                                             Opacity="0">
+                                        <ui:SymbolIcon x:Name="Icon" Filled="True" Symbol="Eye48" />
+                                    </ui:Card>
+
+                                    <ControlTemplate.Triggers>
+
+                                        <!--  Hidden => EyeOff + always visible  -->
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Icon" Property="Symbol" Value="EyeOff24" />
+                                            <Setter TargetName="IconCard" Property="Opacity" Value="1" />
+                                        </Trigger>
+
+                                        <!--  Visible => Eye icon, default hidden  -->
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter TargetName="Icon" Property="Symbol" Value="Eye48" />
+                                            <Setter TargetName="IconCard" Property="Opacity" Value="0" />
+                                        </Trigger>
+
+                                        <!--  On row hover, show the icon (but only applies when IsChecked=False because the above trigger sets opacity)  -->
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                                            <Setter TargetName="IconCard" Property="Opacity" Value="1" />
+                                        </DataTrigger>
+
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <!--  Main text + parent "pill"  -->
+                        <Grid Grid.Column="3" Margin="0 5" VerticalAlignment="Center">
+
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Item.Name}" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                                <TextBlock.InputBindings>
+                                    <MouseBinding Command="{Binding BeginRenameCommand}" MouseAction="LeftDoubleClick" />
+                                </TextBlock.InputBindings>
+                            </TextBlock>
+
+                            <TextBox MinWidth="80"
+                                     Padding="2 1" VerticalAlignment="Center"
+                                     Background="{StaticResource CardBackground}"
+                                     IsVisibleChanged="NameTextBox_IsVisibleChanged" KeyDown="NameTextBox_KeyDown" LostFocus="NameTextBox_LostFocus"
+                                     Text="{Binding Item.Name, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Style>
+                                    <Style BasedOn="{StaticResource {x:Type TextBox}}" TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+
+                        </Grid>
+
+                        <!--<Border Margin="5 0" Padding="10 2" VerticalAlignment="Center"
                                         Background="{StaticResource CardBackground}"
                                         CornerRadius="4">
                                     <TextBlock VerticalAlignment="Center"
@@ -282,39 +280,40 @@
 
 
 
-                            <TextBlock Grid.Row="2" Grid.Column="3"
-                                       VerticalAlignment="Top"
-                                       FontSize="11" Foreground="#60FFFFFF"
-                                       Text="{Binding ParentName}" />
+                        <TextBlock Grid.Row="2" Grid.Column="3"
+                                   VerticalAlignment="Top"
+                                   FontSize="11" Foreground="#60FFFFFF"
+                                   Text="{Binding ParentName}" />
 
-                        </Grid>
+                    </Grid>
 
-                        <DataTemplate.Triggers>
-                            <EventTrigger RoutedEvent="MouseEnter">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)" To="0.11" Duration="0:0:0.2" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                            <EventTrigger RoutedEvent="MouseLeave">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)" To="0" Duration="0:0:0.05" />
+                    <DataTemplate.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)" To="0.11" Duration="0:0:0.2" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="ContainingGrid" Storyboard.TargetProperty="(Grid.Background).(LinearGradientBrush.Opacity)" To="0" Duration="0:0:0.05" />
 
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ui:ListView.ItemTemplate>
-            </ui:ListView>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ui:ListView.ItemTemplate>
+        </ui:ListView>
 
         <Separator Grid.Row="4" Margin="5" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
         <Grid Grid.Row="5" Margin="10 0 10 -10" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
 
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
                 <ColumnDefinition Width="auto" />
                 <ColumnDefinition />
                 <ColumnDefinition Width="auto" />
@@ -370,6 +369,30 @@
                         <MenuItem loc:L.Context="Boolean Operations" loc:L.Value="Exclude"
                                   Command="{Binding MainVM.XorShapesCommand}"
                                   Icon="{ui:SymbolIcon Symbol=ShapeExclude20}" />
+                    </ContextMenu>
+                </ui:DropDownButton.Flyout>
+
+            </ui:DropDownButton>
+
+            <ui:DropDownButton Grid.Column="1"
+                               Width="65" Height="40"
+                               Margin="20 0" Padding="0"
+                               Background="Transparent" BorderThickness="0">
+                <ui:DropDownButton.Content>
+                    <StackPanel Orientation="Vertical">
+                        <ui:SymbolIcon Filled="True" FontSize="16" Symbol="Group24" />
+                        <TextBlock loc:L.Value="Group" FontSize="9" />
+                    </StackPanel>
+                </ui:DropDownButton.Content>
+
+                <ui:DropDownButton.Flyout>
+                    <ContextMenu>
+                        <MenuItem loc:L.Value="Group"
+                                  Command="{Binding MainVM.GroupSelectedCommand}"
+                                  Icon="{ui:SymbolIcon Symbol=ShapeUnion20}"
+                                  Visibility="{Binding MainVM.HasMultipleSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <MenuItem loc:L.Value="Ungroup" Command="{Binding MainVM.UngroupSelectedCommand}" Icon="{ui:SymbolIcon Symbol=ShapeIntersect20}" />
+
                     </ContextMenu>
                 </ui:DropDownButton.Flyout>
 

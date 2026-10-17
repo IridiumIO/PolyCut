@@ -66,6 +66,7 @@
 "Global Settings" = "Allgemeine Einstellungen"
 "Grid Settings" = "Rastereinstellungen"
 "Gridline Colour" = "Rasterlinienfarbe"
+"Group" = "Group" # LOC:TODO
 "Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
 "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "Als SVG importieren"
@@ -84,6 +85,7 @@
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Erforderlicher Mindestfarbunterschied zwischen benachbarten Verlaufsebenen, 0–255. Höhere Werte führen ähnliche Farbtöne zu weniger, flacheren Farbbändern zusammen; niedrigere Werte erhalten weichere Verläufe mit mehr unterscheidbaren Ebenen."
 "New Project" = "Neues Projekt"
 "No" = "Nein"
+"No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
 "No intersection found. The selected shapes do not overlap." = "Keine Schnittmenge gefunden. Die ausgewählten Formen überlappen sich nicht."
 "No paths on canvas" = "Keine Pfade auf der Zeichenfläche"
 "Number of Passes" = "Anzahl der Durchgänge"
@@ -116,6 +118,7 @@
 "Saved to: {0}" = "Gespeichert unter: {0}"
 "Scaling may not be correct" = "Die Skalierung ist möglicherweise nicht korrekt"
 "Select at least 2 shapes to combine" = "Wählen Sie mindestens 2 Formen zum Kombinieren aus"
+"Select at least 2 shapes to group" = "Select at least 2 shapes to group" # LOC:TODO
 "Send Preview" = "Vorschau senden"
 "Send to 3D Printer" = "An 3D-Drucker senden"
 "Sends just the bounding box to the printer for preview, which runs in the travel height." = "Sendet für die Vorschau nur den Begrenzungsrahmen an den Drucker; dieser wird auf Verfahrhöhe abgefahren."
@@ -148,6 +151,7 @@
 "Travel Line Colour" = "Farbe der Verfahrlinien"
 "Travel Speed" = "Verfahrgeschwindigkeit"
 "UI Language" = "UI-Sprache"
+"Ungroup" = "Ungroup" # LOC:TODO
 "Union operation resulted in an empty geometry. This should not happen." = "Die Vereinigungsoperation hat eine leere Geometrie ergeben. Dies sollte nicht passieren."
 "Unknown SVG Unit Type: " = "Unbekannter SVG-Einheitentyp: "
 "Update Available ▸ Version {0}" = "Update verfügbar ▸ Version {0}"

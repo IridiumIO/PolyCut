@@ -294,15 +294,25 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             End Try
 
             'Move wrapper creation to factory but keep interactive wiring here
-            Dim wrapper = DrawableWrapperFactory.CreateWrapper(child, parentIDrawable, style)
+            Dim wrapper = TryCast(child.Parent, ContentControl)
+            If wrapper Is Nothing OrElse wrapper.Content IsNot child Then
+                wrapper = DrawableWrapperFactory.CreateWrapper(child, parentIDrawable, style)
+            Else
+                wrapper.Style = style
+                wrapper.IsHitTestVisible = True
+            End If
             If wrapper Is Nothing Then Return
 
-
+            RemoveHandler wrapper.PreviewMouseLeftButtonDown, AddressOf OnWrapperPreviewMouseDown
+            RemoveHandler wrapper.MouseLeftButtonDown, AddressOf OnWrapperMouseDown
             AddHandler wrapper.PreviewMouseLeftButtonDown, AddressOf OnWrapperPreviewMouseDown
             AddHandler wrapper.MouseLeftButtonDown, AddressOf OnWrapperMouseDown
 
             If TypeOf child Is TextBox Then
                 Dim textBox = CType(child, TextBox)
+                RemoveHandler textBox.GotFocus, AddressOf OnTextBoxFocusChanged
+                RemoveHandler textBox.LostFocus, AddressOf OnTextBoxFocusChanged
+                RemoveHandler textBox.KeyDown, AddressOf OnTextBoxKeyDown
                 AddHandler textBox.GotFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.LostFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.KeyDown, AddressOf OnTextBoxKeyDown
@@ -313,6 +323,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             Else
                 Me.Children.Add(wrapper)
             End If
+            RemoveHandler wrapper.SizeChanged, AddressOf DesignerItem_SizeChanged
             AddHandler wrapper.SizeChanged, AddressOf DesignerItem_SizeChanged
         End If
     End Sub
@@ -381,8 +392,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             textBox.Height = Double.NaN
         Else
             ' Exiting edit mode - fix size based on actual rendered size
-            Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
-            Dim preserveCenter As Boolean = rotate IsNot Nothing AndAlso Math.Abs(rotate.Angle) > 0.01
+            Dim preserveCenter As Boolean = wrapper.RenderTransform IsNot Nothing AndAlso Not wrapper.RenderTransform.Value.IsIdentity
             Dim centerX As Double = 0
             Dim centerY As Double = 0
             If preserveCenter Then

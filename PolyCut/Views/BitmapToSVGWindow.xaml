@@ -83,7 +83,9 @@
 
             <ui:Card Width="150" Height="35"
                      Padding="0"
-                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                     local:LiveBlurBackground.EnableBlur="True" local:MicaBackdrop.TintColor="#23FFFFFF"
+                     
+                     BorderThickness="0">
                 <Grid Height="35">
                     <TextBlock Width="70"
                                Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
@@ -102,7 +104,8 @@
             <ui:Card Grid.Column="1"
                      Width="150" Height="35"
                      Margin="20 0" Padding="0"
-                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                     local:LiveBlurBackground.EnableBlur="True" local:MicaBackdrop.TintColor="#23FFFFFF"
+                     BorderThickness="0">
                 <Grid Height="35">
                     <TextBlock Width="70"
                                Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
@@ -123,7 +126,8 @@
             <ui:Card Grid.Column="2"
                      Width="150" Height="35"
                      Padding="0"
-                     local:BackdropSampler.Corner="BottomRight" local:BackdropSampler.IsEnabled="True" BorderThickness="0">
+                     local:LiveBlurBackground.EnableBlur="True" local:MicaBackdrop.TintColor="#23FFFFFF"
+                     BorderThickness="0">
                 <Grid Height="35">
                     <TextBlock Width="70"
                                Margin="10 0" HorizontalAlignment="Left" VerticalAlignment="Center"
@@ -146,7 +150,7 @@
         <ui:Card Grid.Row="1"
                  MaxWidth="300"
                  Margin="20 20 0 0" Padding="10" HorizontalAlignment="Left" VerticalAlignment="Top" Panel.ZIndex="2"
-                 local:BackdropSampler.Corner="TopLeft" local:BackdropSampler.IsEnabled="True" local:BackdropSampler.TintColor="#20FFFFFF">
+                 local:LiveBlurBackground.EnableBlur="True" local:MicaBackdrop.TintColor="#23FFFFFF">
             <StackPanel>
                 <ui:SymbolIcon HorizontalAlignment="Left" FontSize="16" Symbol="Info16" />
                 <StackPanel x:Name="controlsInfoGuide" Margin="15 0 15 15" loc:L.Context="Bitmap to SVG Keyboard Controls Guide">
@@ -162,7 +166,7 @@
                     </StackPanel.Style>
                     <TextBlock Margin="0 10 0 10"
                                loc:L.Value="Controls" FontSize="18" FontWeight="SemiBold" />
-                    <TextBlock FontWeight="Bold" loc:L.Value="Alt Key" />
+                    <TextBlock loc:L.Value="Alt Key" FontWeight="Bold" />
                     <TextBlock loc:L.Value="Shows an overlay of the original image" TextWrapping="Wrap" />
                     <TextBlock Margin="0 10 0 0" loc:L.Value="Ctrl + Hover" FontWeight="Bold" />
                     <TextBlock loc:L.Value="Highlights the shape region under the cursor" TextWrapping="Wrap" />
@@ -316,8 +320,8 @@
                                           ItemsSource="{Binding Source={StaticResource ClusteringMethodValues}}"
                                           SelectedItem="{Binding VTracerOptions.Clustering}" />
                             </local:LabeledControl.ValueContent>
-                            <local:LabeledControl.ToolTip >
-                                <StackPanel TextBlock.TextAlignment="Left" loc:L.Context="RegionDetection Tooltip">
+                            <local:LabeledControl.ToolTip>
+                                <StackPanel loc:L.Context="RegionDetection Tooltip" TextBlock.TextAlignment="Left">
                                     <TextBlock loc:L.Value="Default = Colour Clustering" FontWeight="SemiBold" />
                                     <TextBlock Margin="0 2 0 0" loc:L.Value="Chooses the algorithm used to form regions before tracing." TextWrapping="Wrap" />
                                     <Separator Margin="0 6" />
@@ -336,8 +340,8 @@
                                           ItemsSource="{Binding Source={StaticResource HeiarchicalMethodValues}}"
                                           SelectedItem="{Binding VTracerOptions.Hierarchical}" />
                             </local:LabeledControl.ValueContent>
-                            <local:LabeledControl.ToolTip >
-                                <StackPanel MaxWidth="280" TextBlock.TextAlignment="Left" loc:L.Context="Stacking Mode Tooltip">
+                            <local:LabeledControl.ToolTip>
+                                <StackPanel MaxWidth="280" loc:L.Context="Stacking Mode Tooltip" TextBlock.TextAlignment="Left">
                                     <TextBlock loc:L.Value="Stacking (Default = Cutout)" FontWeight="SemiBold" />
                                     <TextBlock Margin="0 2 0 0" loc:L.Value="Controls how the detected regions are layered on top of one another." TextWrapping="Wrap" />
                                     <Separator Margin="0 6" />

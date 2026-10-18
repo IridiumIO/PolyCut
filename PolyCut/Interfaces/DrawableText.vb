@@ -30,6 +30,7 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
         If tb Is Nothing Then Return
 
         _attachedTextBox = tb
+        RichCanvas.TextBoxBorderOverlay.PrepareTextBox(tb)
         TextGeometryHelper.UseDefaultContextMenuFont(_attachedTextBox)
 
         _strokePen = New Pen(If(Me.Stroke, Brushes.Black), Me.StrokeThickness)

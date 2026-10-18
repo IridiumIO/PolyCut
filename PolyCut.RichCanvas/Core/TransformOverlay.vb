@@ -20,6 +20,7 @@ Public Class TransformOverlay
         _gizmo = New TransformGizmo(selectionManager, contentCanvas)
         _gizmo.IsHitTestVisible = True
 
+        Me.Children.Add(New TextBoxBorderOverlay(contentCanvas, GetZoomBorder()?.DrawingManager.TextEditor))
         Me.Children.Add(_gizmo)
 
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged

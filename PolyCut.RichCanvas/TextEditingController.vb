@@ -258,6 +258,7 @@ Public Class TextEditingController
         }
 
         chars?.ApplyTo(tb)
+        TextBoxBorderOverlay.PrepareTextBox(tb)
 
         Canvas.SetLeft(tb, p.X)
         Canvas.SetTop(tb, p.Y)

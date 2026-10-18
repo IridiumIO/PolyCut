@@ -21,6 +21,7 @@ Public Class ZoomBorder
     Private _pendingZoomPoint As Point
     Private _pendingTranslation As Point?
     Private ReadOnly _viewportLimiter As InteractionRateLimiter
+    Private _applyingViewport As Boolean
 
     Public Shared ReadOnly LeftButtonActionProperty As DependencyProperty = DependencyProperty.Register(NameOf(LeftButtonAction), GetType(ZoomBorderMouseAction), GetType(ZoomBorder), New PropertyMetadata(ZoomBorderMouseAction.Move, Nothing))
 
@@ -127,12 +128,9 @@ Public Class ZoomBorder
         If control IsNot Nothing AndAlso control.ScaleTransform IsNot Nothing Then
             control.ScaleTransform.ScaleX = e.NewValue
             control.ScaleTransform.ScaleY = e.NewValue
-            control.RaiseScaleChangedEvent(e.NewValue)
-            EventAggregator.Publish(New ScaleChangedMessage(e.NewValue))
-            'Route every scale change through the rasteriser, not just the ones that come through the
-            'interaction limiter: Reset() (context-menu fit) and direct Scale assignments bypass it entirely,
-            'so the cache checks never ran and the culling stayed stale.
-            control.UpdateRasteriser(True)
+            If Not control._applyingViewport Then
+                control.NotifyViewportChanged(CDbl(e.OldValue), New Point(control.TranslateTransform.X, control.TranslateTransform.Y))
+            End If
         End If
 
     End Sub
@@ -274,16 +272,18 @@ Public Class ZoomBorder
         Dim x0 = TranslateTransform.X
         Dim y0 = TranslateTransform.Y
 
-        ' Compute final centered translation at target scale
-        Scale = targetScale
-        Dim b = fit.TransformToAncestor(Me).TransformBounds(New Rect(0, 0, w, h))
+        ' Measure the fitted bounds without broadcasting the temporary scale changes.
+        Dim b As Rect
+        _applyingViewport = True
+        Try
+            Scale = targetScale
+            b = fit.TransformToAncestor(Me).TransformBounds(New Rect(0, 0, w, h))
+        Finally
+            Scale = s0
+            _applyingViewport = False
+        End Try
         Dim targetX = TranslateTransform.X + (Padding.Left + ((vw - b.Width) / 2.0) - b.Left)
         Dim targetY = TranslateTransform.Y + (Padding.Top + ((vh - b.Height) / 2.0) - b.Top)
-
-        ' Restore start and animate
-        Scale = s0
-        TranslateTransform.X = x0
-        TranslateTransform.Y = y0
 
         If Not skipAnimation Then
             Const durationMs As Integer = 200
@@ -293,20 +293,14 @@ Public Class ZoomBorder
             For i As Integer = 1 To frames
                 Dim t = i / CDbl(frames)
                 t = t * t * (3 - 2 * t) ' smoothstep easing
-                Scale = s0 + ((targetScale - s0) * t)
-                TranslateTransform.X = x0 + ((targetX - x0) * t)
-                TranslateTransform.Y = y0 + ((targetY - y0) * t)
+                ApplyViewport(s0 + ((targetScale - s0) * t), New Point(x0 + ((targetX - x0) * t), y0 + ((targetY - y0) * t)))
                 Await Task.Delay(delayMs)
             Next
 
         End If
 
 
-        Scale = targetScale
-        TranslateTransform.X = targetX
-        TranslateTransform.Y = targetY
-        'Also covers a reset that changes only the translation, where no Scale change fires.
-        UpdateRasteriser(True)
+        ApplyViewport(targetScale, New Point(targetX, targetY))
     End Sub
 
     Private Function FindElementByNameInChild(elementName As String) As FrameworkElement
@@ -414,9 +408,6 @@ Public Class ZoomBorder
     Private _middleMouseDownPosStart As Point
 
     Private Sub HandleMouseDown(e As MouseButtonEventArgs, isPreview As Boolean)
-        EventAggregator.Publish(New ScaleChangedMessage(Scale))
-        EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
-
         If DrawingManager.TextEditor.HandleTextMouseDown(CanvasMode, e) Then Return
 
         If _selectionMarquee IsNot Nothing AndAlso e.ChangedButton <> MouseButton.Left Then
@@ -545,32 +536,54 @@ Public Class ZoomBorder
             _pendingTranslation = Nothing
             Return
         End If
-        Dim applied As Boolean = False
-        Dim zoomed As Boolean = _pendingScale.HasValue
-        If _pendingTranslation.HasValue Then
-            TranslateTransform.X = _pendingTranslation.Value.X
-            TranslateTransform.Y = _pendingTranslation.Value.Y
-            EventAggregator.Publish(New TranslationChangedMessage(_pendingTranslation.Value))
-            applied = True
-        End If
-        If _pendingScale.HasValue Then
-            Dim relative = Me.TranslatePoint(_pendingZoomPoint, Child)
-            Dim absoluteX = relative.X * Scale + TranslateTransform.X
-            Dim absoluteY = relative.Y * Scale + TranslateTransform.Y
-            Scale = _pendingScale.Value
-            TranslateTransform.X = absoluteX - (relative.X * Scale)
-            TranslateTransform.Y = absoluteY - (relative.Y * Scale)
-            If Child.IsMouseCaptured Then
-                start = Mouse.GetPosition(Me)
-                origin = New Point(TranslateTransform.X, TranslateTransform.Y)
-            End If
-            applied = True
+        If Not _pendingScale.HasValue AndAlso Not _pendingTranslation.HasValue Then Return
+
+        ApplyViewport(If(_pendingScale, Scale), If(_pendingTranslation, New Point(TranslateTransform.X, TranslateTransform.Y)),
+                      If(_pendingScale.HasValue, CType(_pendingZoomPoint, Point?), Nothing))
+        If _pendingScale.HasValue AndAlso Child.IsMouseCaptured Then
+            start = Mouse.GetPosition(Me)
+            origin = New Point(TranslateTransform.X, TranslateTransform.Y)
         End If
         _pendingScale = Nothing
         _pendingTranslation = Nothing
-        If applied Then
-            _frameMeter.Pulse()
-            UpdateRasteriser(zoomed)
+        _frameMeter.Pulse()
+    End Sub
+
+    Private Sub ApplyViewport(scale As Double, translation As Point, Optional zoomPoint As Point? = Nothing)
+        Dim oldScale = Me.Scale
+        Dim transform = TranslateTransform
+        Dim oldTranslation As New Point(transform.X, transform.Y)
+        If scale = oldScale AndAlso translation = oldTranslation Then Return
+        _applyingViewport = True
+        Try
+            If zoomPoint.HasValue AndAlso scale <> oldScale Then
+                transform.X = translation.X
+                transform.Y = translation.Y
+                Dim relative = Me.TranslatePoint(zoomPoint.Value, Child)
+                translation = New Point(relative.X * oldScale + translation.X - relative.X * scale,
+                                        relative.Y * oldScale + translation.Y - relative.Y * scale)
+            End If
+            Me.Scale = scale
+            transform.X = translation.X
+            transform.Y = translation.Y
+        Finally
+            _applyingViewport = False
+        End Try
+        NotifyViewportChanged(oldScale, oldTranslation)
+    End Sub
+
+    Private Sub NotifyViewportChanged(oldScale As Double, oldTranslation As Point)
+        Dim zoomChanged = Scale <> oldScale
+        Dim transform = TranslateTransform
+        Dim translation As New Point(transform.X, transform.Y)
+        Dim translationChanged = translation <> oldTranslation
+        If zoomChanged Then
+            RaiseScaleChangedEvent(Scale)
+            EventAggregator.Publish(New ScaleChangedMessage(Scale))
+        End If
+        If translationChanged Then EventAggregator.Publish(New TranslationChangedMessage(translation))
+        If zoomChanged OrElse translationChanged Then
+            UpdateRasteriser(zoomChanged)
         End If
     End Sub
 

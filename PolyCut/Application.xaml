@@ -175,7 +175,7 @@
                                         <Rectangle x:Name="selectedHighlight"
                                                    Width="20" Height="3"
                                                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="1"
-                                                   Fill="{StaticResource PaletteBlueBrush}"
+                                                   Fill="{DynamicResource AccentFillColorDefaultBrush}"
                                                    Visibility="Hidden" />
                                         <Border x:Name="Border"
                                                 MinWidth="2" MinHeight="40"

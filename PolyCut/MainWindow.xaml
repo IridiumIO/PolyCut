@@ -246,7 +246,7 @@
                                        Tag="{Binding}"
                                        TargetPageType="{x:Type local:SVGPage}">
                     <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Filled="True" Foreground="{StaticResource PaletteLightBlueBrush}" Symbol="Home12" />
+                        <ui:SymbolIcon Filled="True" Foreground="{DynamicResource AccentFillColorDefaultBrush}" Symbol="Home12" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="15 2"

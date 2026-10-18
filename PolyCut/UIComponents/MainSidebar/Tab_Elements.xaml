@@ -171,7 +171,7 @@
                         <Border Grid.RowSpan="2" Grid.Column="0"
                                 Width="4"
                                 Margin="0 5 0 5"
-                                Background="{StaticResource PaletteBlueBrush}"
+                                Background="{DynamicResource AccentFillColorDefaultBrush}"
                                 CornerRadius="2">
                             <Border.Style>
                                 <Style TargetType="Border">

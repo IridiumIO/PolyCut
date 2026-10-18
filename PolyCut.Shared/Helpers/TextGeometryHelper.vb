@@ -137,16 +137,16 @@ Public Module TextGeometryHelper
         Dim geometry = ft.BuildGeometry(New Point(0, 0))
         If geometry Is Nothing Then Return
 
-        Dim inset As Double = 0
-        Dim host = TryCast(textBox.Template.FindName("PART_ContentHost", textBox), ScrollViewer)
-        If host IsNot Nothing Then
-            Dim hostOrigin = host.TransformToAncestor(textBox).Transform(New Point(0, 0))
-            Dim contentOrigin As Point
-            If TryGetContentOrigin(textBox, contentOrigin) Then inset = Math.Max(0.0, contentOrigin.X - hostOrigin.X)
-        End If
+        textBox.ApplyTemplate()
+        Dim host = TryCast(textBox.Template?.FindName("PART_ContentHost", textBox), ScrollViewer)
+        Dim view = TryCast(host?.Content, FrameworkElement)
+        If view Is Nothing Then Return
 
+        Dim contentWidth = Math.Max(ft.WidthIncludingTrailingWhitespace, geometry.Bounds.Right)
         Dim chrome = textBox.BorderThickness.Left + textBox.BorderThickness.Right
-        textBox.Width = chrome + (3 * inset) + Math.Max(ft.WidthIncludingTrailingWhitespace, geometry.Bounds.Right) + 2
+        Dim padding = host.Padding.Left + host.Padding.Right
+        Dim margins = view.Margin.Left + view.Margin.Right
+        textBox.Width = chrome + padding + margins + contentWidth
     End Sub
     Public Sub UseDefaultContextMenuFont(textBox As TextBox)
         If textBox Is Nothing Then Return

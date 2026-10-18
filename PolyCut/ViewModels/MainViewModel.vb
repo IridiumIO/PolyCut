@@ -273,7 +273,6 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         _projectService = projectService
 
 
-        AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnCanvasSelectionChanged
         AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         AddHandler _document.Changed, AddressOf OnDocumentChanged
@@ -370,13 +369,6 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' -----------------
     ' Selection / Transform event handlers
     ' -----------------
-    Private Sub OnCanvasSelectionChanged(sender As Object, e As EventArgs)
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(SelectedDrawables))
-        OnPropertyChanged(NameOf(HasMultipleSelected))
-        OnPropertyChanged(NameOf(HasDrawables))
-    End Sub
-
     Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
         OnPropertyChanged(NameOf(SelectedWrapper))
         OnPropertyChanged(NameOf(SelectedDrawable))

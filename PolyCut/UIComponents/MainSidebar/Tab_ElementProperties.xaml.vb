@@ -53,7 +53,7 @@ Public Class Tab_ElementProperties
     End Sub
 
     Private Sub OnViewModelPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
-        If e.PropertyName = NameOf(MainVM.SelectedDrawable) OrElse e.PropertyName = NameOf(MainVM.SelectedDrawables) OrElse e.PropertyName = NameOf(MainVM.HasMultipleSelected) Then
+        If e.PropertyName = NameOf(MainVM.SelectedDrawables) Then
             UpdateSelectedDrawablesSubscriptions()
             UpdateSliderFromThickness()
         End If
@@ -148,17 +148,7 @@ Public Class Tab_ElementProperties
 
     Private Sub UpdateSliderFromThickness()
 
-        ' Unhook old drawable
-        If _currentDrawable IsNot Nothing Then
-            RemoveHandler _currentDrawable.PropertyChanged, AddressOf OnDrawablePropertyChanged
-        End If
-
         _currentDrawable = TryCast(MainVM.SelectedDrawable, BaseDrawable)
-
-        ' Hook new drawbable
-        If _currentDrawable IsNot Nothing Then
-            AddHandler _currentDrawable.PropertyChanged, AddressOf OnDrawablePropertyChanged
-        End If
 
         If _currentDrawable Is Nothing Then Return
 

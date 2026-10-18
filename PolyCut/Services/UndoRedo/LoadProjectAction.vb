@@ -84,7 +84,7 @@ Public Class LoadProjectAction
             End If
 
             Application.Current.Dispatcher.BeginInvoke(New Action(Sub()
-                                                                      ProjectApplyHelper.ApplyWrapperStateForPaste(projectData, built)
+                                                                      ProjectApplyHelper.ApplyWrapperStateForPaste(projectData, built, selectRestoredItems:=False)
                                                                       PolyCanvas.ClearSelection()
 
                                                                       Try : Application.Current.MainWindow?.UpdateLayout() : Catch : End Try

@@ -217,7 +217,7 @@ End Class
 
 Friend NotInheritable Class ProjectApplyHelper
 
-    Public Shared Sub ApplyWrapperStateForPaste(pd As ProjectData, built As RuntimeProjectModel)
+    Public Shared Sub ApplyWrapperStateForPaste(pd As ProjectData, built As RuntimeProjectModel, Optional selectRestoredItems As Boolean = True)
         If pd Is Nothing OrElse built Is Nothing Then Return
 
         Dim toSelect As New List(Of IDrawable)
@@ -234,7 +234,7 @@ Friend NotInheritable Class ProjectApplyHelper
             If wrapper Is Nothing Then Continue For
 
             wrapper.Visibility = If(gd.IsHidden, Visibility.Collapsed, Visibility.Visible)
-            If grp.ParentGroup Is Nothing OrElse TypeOf (grp.ParentGroup) Is DrawableGroup Then
+            If selectRestoredItems AndAlso (grp.ParentGroup Is Nothing OrElse TypeOf (grp.ParentGroup) Is DrawableGroup) Then
                 toSelect.Add(grp)
             End If
             Dim groupState As New TransformState With {
@@ -261,7 +261,7 @@ Friend NotInheritable Class ProjectApplyHelper
 
             Dim wrapper = TryCast(d.DrawableElement.Parent, ContentControl)
             If wrapper Is Nothing Then Continue For
-            If d.ParentGroup Is Nothing OrElse TypeOf (d.ParentGroup) Is DrawableGroup Then
+            If selectRestoredItems AndAlso (d.ParentGroup Is Nothing OrElse TypeOf (d.ParentGroup) Is DrawableGroup) Then
                 toSelect.Add(d)
             End If
             Dim drawState As New TransformState With {
@@ -276,7 +276,7 @@ Friend NotInheritable Class ProjectApplyHelper
             MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))
 
         Next
-        PolyCanvas.ApplySelection(toSelect, Nothing, True)
+        If selectRestoredItems Then PolyCanvas.ApplySelection(toSelect, Nothing, True)
 
     End Sub
 

@@ -10,6 +10,53 @@ Imports PolyCut.Shared
 Public Class GeometryHitTestHelper
 
 
+    Public Shared Function GetRenderedBounds(drawable As IDrawable, relativeTo As UIElement) As Rect
+        Dim bounds = Rect.Empty
+        If drawable Is Nothing OrElse drawable.IsHidden OrElse drawable.DrawableElement Is Nothing Then Return bounds
+        AccumulateRenderedBounds(drawable.DrawableElement, relativeTo, bounds, drawable)
+        Return bounds
+    End Function
+
+    Private Shared Sub AccumulateRenderedBounds(visual As Visual, relativeTo As UIElement, ByRef bounds As Rect, Optional drawable As IDrawable = Nothing)
+        Dim ui = TryCast(visual, UIElement)
+        If ui IsNot Nothing AndAlso (Not ui.IsVisible OrElse ui.Opacity <= 0) Then Return
+
+        ' WPF already supplies each shape's stretched geometry and complete stroke pen.
+        Dim drawing = If(TypeOf visual Is Shape, VisualTreeHelper.GetDrawing(visual), Nothing)
+        Dim textBox = TryCast(visual, TextBox)
+        If textBox IsNot Nothing Then
+            If drawable Is Nothing Then
+                Dim wrapper = TryCast(textBox.Parent, ContentControl)
+                If wrapper IsNot Nothing Then drawable = MetadataHelper.GetDrawableReference(wrapper)
+            End If
+            Dim pen = If(drawable IsNot Nothing AndAlso drawable.StrokeThickness > 0, New Pen(drawable.Stroke, drawable.StrokeThickness), Nothing)
+            drawing = New DrawingGroup()
+            drawing.Children.Add(New GeometryDrawing(textBox.Foreground, pen, TextGeometryHelper.BuildTextGeometry(textBox)))
+        End If
+
+        If drawing IsNot Nothing Then
+            Dim painted As New DrawingGroup With {.Transform = New MatrixTransform(TransformMath.GeneralTransformToMatrix(visual.TransformToVisual(relativeTo)))}
+            For Each part As GeometryDrawing In drawing.Children.OfType(Of GeometryDrawing)()
+                Dim fill = If(HasPaint(part.Brush), part.Brush, Nothing)
+                Dim pen = If(HasPaint(part.Pen?.Brush), part.Pen, Nothing)
+                If fill IsNot Nothing OrElse pen IsNot Nothing Then painted.Children.Add(New GeometryDrawing(fill, pen, part.Geometry))
+            Next
+            bounds.Union(painted.Bounds)
+            Return
+        End If
+
+        For i = 0 To VisualTreeHelper.GetChildrenCount(visual) - 1
+            Dim child = TryCast(VisualTreeHelper.GetChild(visual, i), Visual)
+            If child IsNot Nothing Then AccumulateRenderedBounds(child, relativeTo, bounds)
+        Next
+    End Sub
+
+    Private Shared Function HasPaint(brush As Brush) As Boolean
+        If brush Is Nothing OrElse brush.Opacity <= 0 Then Return False
+        Dim solid = TryCast(brush, SolidColorBrush)
+        Return solid Is Nothing OrElse solid.Color.A > 0
+    End Function
+
     Public Shared Function GetTransformedGeometry(drawable As IDrawable) As Geometry
         If drawable?.DrawableElement Is Nothing Then Return Nothing
 

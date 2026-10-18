@@ -84,10 +84,7 @@ Public NotInheritable Class SelectionMarquee
             If wrapper Is Nothing OrElse wrapper.Parent IsNot _canvas OrElse
                Not wrapper.IsVisible OrElse Not wrapper.IsHitTestVisible Then Continue For
             Try
-                Dim footprint As New Rect(0, 0, wrapper.ActualWidth, wrapper.ActualHeight)
-                Dim visualBounds = VisualTreeHelper.GetDescendantBounds(wrapper)
-                If Not visualBounds.IsEmpty Then footprint.Union(visualBounds)
-                Dim transformed = wrapper.TransformToVisual(Me).TransformBounds(footprint)
+                Dim transformed = GeometryHitTestHelper.GetRenderedBounds(item, Me)
                 If Not transformed.IsEmpty AndAlso bounds.Contains(transformed) Then result.Add(item)
             Catch ex As InvalidOperationException
                 'idk but it can crash if you're doing a selection while the canvas is being updated. Almost never happens but can't pin it down properly

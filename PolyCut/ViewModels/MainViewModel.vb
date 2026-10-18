@@ -699,8 +699,6 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
             GCode = compiledGCodeString
             GCodeGeometry = New GCodeGeometry(GeneratedGCode)
-            OnPropertyChanged(NameOf(GCode))
-            OnPropertyChanged(NameOf(GCodeGeometry))
             _navigationService.Navigate(GetType(PreviewPage))
         Finally
 

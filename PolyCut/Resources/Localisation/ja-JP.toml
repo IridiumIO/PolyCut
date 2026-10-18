@@ -63,6 +63,7 @@
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "白黒モードで使用する固定輝度しきい値（0～255）。この値より暗いピクセルは前景（黒）になり、この値以上のピクセルは背景（白）になります。適応サンプリングが有効な場合は無視されます。"
 "GCode" = "GCode"
 "Generate GCode" = "GCode を生成"
+"Generating ..." = "Generating ..." # LOC:TODO
 "Global Settings" = "全般設定"
 "Grid Settings" = "グリッド設定"
 "Gridline Colour" = "グリッド線の色"

@@ -63,6 +63,7 @@
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled."
 "GCode" = "GCode"
 "Generate GCode" = "Generate GCode"
+"Generating ..." = "Generating ..."
 "Global Settings" = "Global Settings"
 "Grid Settings" = "Grid Settings"
 "Gridline Colour" = "Gridline Colour"

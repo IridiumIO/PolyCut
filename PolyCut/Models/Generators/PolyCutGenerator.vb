@@ -15,38 +15,21 @@ Public Class PolyCutGenerator : Implements IGenerator
     Public Async Function GenerateGcode() As Task(Of (StatusCode As Integer, Message As String)) Implements IGenerator.GenerateGcodeAsync
 
 
-        Dim processedElements = GeneratePathBasedElements()
-
-        If processedElements.Count = 0 Then
-            Return (1, "No paths on canvas".LT())
-        End If
-
-        Dim processedlines As List(Of GeoLine)
-
-        Dim processorManager As New ProcessorManager(Configuration)
-        processedlines = processorManager.Process(processedElements)
-
-        Dim GCodeData = processorManager.GenerateGCode(processedlines)
-
-        GCodes = GCodeData.GCodes
+        Dim config = Configuration.Clone()
+        Dim snapshots = DrawableObjects.Where(Function(drawable) Not TypeOf drawable Is DrawableGroup).
+            SelectMany(Function(drawable) GeometryExtractor.CaptureFromDrawable(drawable, config, MainCanvas)).ToList()
+        Dim codes = Await Task.Run(Function()
+                                   Dim processedElements = snapshots.SelectMany(Function(item) GeometryExtractor.ProcessSnapshot(item, config)).ToList()
+                                   If processedElements.Count = 0 Then Return Nothing
+                                   Dim processorManager As New ProcessorManager(config)
+                                   Dim processedLines = processorManager.Process(processedElements)
+                                   Return processorManager.GenerateGCode(processedLines).GCodes
+                               End Function)
+        If codes Is Nothing Then Return (1, "No paths on canvas".LT())
+        GCodes = codes
 
         Return (0, "")
 
-    End Function
-
-    Public Function GeneratePathBasedElements() As List(Of IPathBasedElement)
-        Dim elements As New List(Of IPathBasedElement)
-
-        For Each drawable In DrawableObjects
-            If TypeOf drawable Is DrawableGroup Then Continue For
-
-            Dim pathElements = GeometryExtractor.ExtractFromDrawable(drawable, Configuration, MainCanvas)
-            If pathElements IsNot Nothing AndAlso pathElements.Count > 0 Then
-                elements.AddRange(pathElements)
-            End If
-        Next
-
-        Return elements
     End Function
 
     Public Function GetGCode() As List(Of GCode) Implements IGenerator.GetGCode

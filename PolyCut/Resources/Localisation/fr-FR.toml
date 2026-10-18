@@ -63,6 +63,7 @@
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Seuil de luminosité fixe (0 à 255) utilisé en mode Noir et blanc. Les pixels plus sombres que cette valeur deviennent le premier plan (noir) ; les pixels égaux ou supérieurs deviennent l’arrière-plan (blanc). Ignoré lorsque l’échantillonnage adaptatif est activé."
 "GCode" = "GCode"
 "Generate GCode" = "Générer le GCode"
+"Generating ..." = "Generating ..." # LOC:TODO
 "Global Settings" = "Paramètres généraux"
 "Grid Settings" = "Paramètres de la grille"
 "Gridline Colour" = "Couleur des lignes de la grille"

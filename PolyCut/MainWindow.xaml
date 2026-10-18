@@ -279,23 +279,33 @@
             <ui:NavigationView.FooterMenuItems>
 
                 <ui:NavigationViewItem x:Name="GenerateGCodeButton">
-                    <ui:SplitButton loc:L.Value="Generate GCode" Command="{Binding GenerateGCodeCommand}">
-                        <ui:SplitButton.Flyout>
+          
+                        <ui:SplitButton Command="{Binding GenerateGCodeCommand}" Height="32" IsEnabled="{Binding GenerateGCodeCommand.IsRunning, Converter={StaticResource InverseBoolConverter}}" >
+                            
+                            <StackPanel Orientation="Horizontal">
+                            <TextBlock  loc:L.Value="Generate GCode" VerticalAlignment="Center" Visibility="{Binding GenerateGCodeCommand.IsRunning, Converter={StaticResource BoolToInvertedVisibilityConverter}}"/>
+                            <TextBlock  loc:L.Value="Generating ..." VerticalAlignment="Center" Visibility="{Binding GenerateGCodeCommand.IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <ui:ProgressRing Margin="10 0 0 0" Height="18" Width="18" IsIndeterminate="True" Visibility="{Binding GenerateGCodeCommand.IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                               
+                            </StackPanel>
+                            
+                            <ui:SplitButton.Flyout>
 
-                            <ContextMenu>
-                                <MenuItem loc:L.Value="Clip Geometry to Canvas" IsCheckable="True"
-                                          IsChecked="{Binding Configuration.ClipToBounds}"
-                                          StaysOpenOnClick="True"
-                                          ToolTip="{loc:T 'Clips the geometry to the bounds of the canvas'}" />
-                                <MenuItem loc:L.Value="Ignore Canvas Bounds" IsCheckable="True"
-                                          IsChecked="{Binding Configuration.SkipBoundsCheck}"
-                                          StaysOpenOnClick="True"
-                                          ToolTip="{loc:T 'Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!'}" />
+                                <ContextMenu>
+                                    <MenuItem loc:L.Value="Clip Geometry to Canvas" IsCheckable="True"
+                                              IsChecked="{Binding Configuration.ClipToBounds}"
+                                              StaysOpenOnClick="True"
+                                              ToolTip="{loc:T 'Clips the geometry to the bounds of the canvas'}" />
+                                    <MenuItem loc:L.Value="Ignore Canvas Bounds" IsCheckable="True"
+                                              IsChecked="{Binding Configuration.SkipBoundsCheck}"
+                                              StaysOpenOnClick="True"
+                                              ToolTip="{loc:T 'Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!'}" />
 
-                            </ContextMenu>
+                                </ContextMenu>
 
-                        </ui:SplitButton.Flyout>
-                    </ui:SplitButton>
+                            </ui:SplitButton.Flyout>
+                        </ui:SplitButton>
+                       
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItem Margin="-5 0 15 1"
                                        NavigationCacheMode="Required"

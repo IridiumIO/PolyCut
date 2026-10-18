@@ -6,19 +6,27 @@ Imports PolyCut.[Shared]
 
 Public Class GeometryExtractor
 
-    Public Shared Function ExtractFromDrawable(drawable As IDrawable, cfg As ProcessorConfiguration, mainCanvas As UIElement) As List(Of IPathBasedElement)
+    Friend NotInheritable Class GeometrySnapshot
+        Public Geometry As Geometry
+        Public Transform As Matrix
+        Public ElementType As Type
+        Public FillColor As String
+        Public IsFilled As Boolean
+    End Class
 
+    ' Capture WPF state on the UI thread; only frozen geometry and values leave it.
+    Friend Shared Function CaptureFromDrawable(drawable As IDrawable, cfg As ProcessorConfiguration, mainCanvas As UIElement) As List(Of GeometrySnapshot)
         If drawable Is Nothing OrElse mainCanvas Is Nothing Then
-            Return New List(Of IPathBasedElement)
+            Return New List(Of GeometrySnapshot)
         End If
 
         ' Handle nested groups by recursing through children
         Dim nestedGroup = TryCast(drawable, NestedDrawableGroup)
         If nestedGroup IsNot Nothing Then
-            Dim results As New List(Of IPathBasedElement)
+            Dim results As New List(Of GeometrySnapshot)
             For Each child In nestedGroup.GroupChildren
                 If child IsNot Nothing Then
-                    results.AddRange(ExtractFromDrawable(child, cfg, mainCanvas))
+                    results.AddRange(CaptureFromDrawable(child, cfg, mainCanvas))
                 End If
             Next
             Return results
@@ -30,35 +38,44 @@ Public Class GeometryExtractor
             'only want to extract this if its stroke or fill matches the extraction color
             If Not String.Equals(fillColor, cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase) AndAlso
                Not (strokeColor.HasValue AndAlso String.Equals($"#FF{strokeColor.Value.R:X2}{strokeColor.Value.G:X2}{strokeColor.Value.B:X2}", cfg.ExtractionColor, StringComparison.OrdinalIgnoreCase)) Then
-                Return New List(Of IPathBasedElement)
+                Return New List(Of GeometrySnapshot)
             End If
 
         End If
 
         ' Handle simple (non-group) drawable
         Dim element = TryCast(drawable.DrawableElement, FrameworkElement)
-        If element Is Nothing Then Return New List(Of IPathBasedElement)
+        If element Is Nothing Then Return New List(Of GeometrySnapshot)
 
         ' 1. Get geometry in element's local coordinate space
         Dim geometry = GetGeometryFromElement(element)
-        If geometry Is Nothing Then Return New List(Of IPathBasedElement)
+        If geometry Is Nothing Then Return New List(Of GeometrySnapshot)
 
         ' 2. Get accumulated transform from element to main canvas. WHY THE FUCK DID I NOT JUST DO THIS MONTHS AGO
         Dim gt As GeneralTransform
         Try
             gt = element.TransformToVisual(mainCanvas)
         Catch
-            Return New List(Of IPathBasedElement)
+            Return New List(Of GeometrySnapshot)
         End Try
 
-        Dim t As Transform = If(TryCast(gt, Transform), New MatrixTransform(TransformMath.GeneralTransformToMatrix(gt)))
+        geometry.Freeze()
+        Return New List(Of GeometrySnapshot) From {New GeometrySnapshot With {
+            .Geometry = geometry,
+            .Transform = TransformMath.GeneralTransformToMatrix(gt),
+            .ElementType = element.GetType(),
+            .FillColor = GetFillColor(drawable),
+            .IsFilled = IsFillEnabled(drawable)
+        }}
+    End Function
 
+    Friend Shared Function ProcessSnapshot(item As GeometrySnapshot, cfg As ProcessorConfiguration) As List(Of IPathBasedElement)
         ' 3. Flatten in local space first
-        Dim flattened As PathGeometry = geometry.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
+        Dim flattened As PathGeometry = item.Geometry.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
 
         ' 4. Apply transform
         Dim transformed As PathGeometry = flattened.Clone()
-        transformed.Transform = t
+        transformed.Transform = New MatrixTransform(item.Transform)
 
         ' 5. Flatten again after transform
         transformed = transformed.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
@@ -66,7 +83,7 @@ Public Class GeometryExtractor
         Dim wasClipped As Boolean = False
 
         ' now build lines from transformed
-        Dim isFilled = IsFillEnabled(drawable)
+        Dim isFilled = item.IsFilled
 
         Dim figures = PolyCut.Core.BuildLinesFromGeometry(transformed, cfg.Tolerance)
 
@@ -89,10 +106,10 @@ Public Class GeometryExtractor
         End If
 
         ' 6. Create IPathBasedElement
-        Dim pathElement = CreatePathBasedElement(drawable, figures)
+        Dim pathElement = CreatePathBasedElement(item.ElementType, figures)
         If pathElement Is Nothing Then Return New List(Of IPathBasedElement)
 
-        pathElement.FillColor = GetFillColor(drawable)
+        pathElement.FillColor = item.FillColor
         pathElement.IsFilled = isFilled
         pathElement.Config = cfg
 
@@ -239,12 +256,10 @@ Public Class GeometryExtractor
     End Function
 
 
-    Private Shared Function CreatePathBasedElement(drawable As IDrawable, figures As List(Of List(Of GeoLine))) As IPathBasedElement
+    Private Shared Function CreatePathBasedElement(elementType As Type, figures As List(Of List(Of GeoLine))) As IPathBasedElement
         If figures Is Nothing OrElse figures.Count = 0 Then Return Nothing
 
-        Dim element = drawable.DrawableElement
-
-        Select Case element.GetType()
+        Select Case elementType
             Case GetType(Rectangle)
                 Return New RectangleElement With {.Figures = figures}
             Case GetType(Ellipse)

@@ -667,34 +667,51 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' -----------------
     ' GCode Generation
     ' -----------------
+
+    Private _generatingGCode As Boolean = False
+
     <RelayCommand>
     Private Async Function GenerateGCode() As Task
-        Configuration.WorkAreaHeight = Printer.BedHeight
-        Configuration.WorkAreaWidth = Printer.BedWidth
-        Configuration.ToolOffsetX = Printer.ToolOffsetX
-        Configuration.ToolOffsetY = Printer.ToolOffsetY
+        Try
+            _generatingGCode = True
+            GenerateGCodeCommand.NotifyCanExecuteChanged()
 
-        Configuration.SoftwareVersion = SettingsHandler.Version
+            Configuration.WorkAreaHeight = Printer.BedHeight
+            Configuration.WorkAreaWidth = Printer.BedWidth
+            Configuration.ToolOffsetX = Printer.ToolOffsetX
+            Configuration.ToolOffsetY = Printer.ToolOffsetY
 
-        Dim generator As IGenerator = New PolyCutGenerator(Configuration, Printer, DrawableCollection.
-                                                           Where(Function(d) Not d.IsHidden).
-                                                           ToList(), PolyCanvas.ActiveInstance)
+            Configuration.SoftwareVersion = SettingsHandler.Version
 
-        Dim retcode = Await generator.GenerateGcodeAsync
+            Dim generator As IGenerator = New PolyCutGenerator(Configuration, Printer, DrawableCollection.
+                                                               Where(Function(d) Not d.IsHidden).
+                                                               ToList(), PolyCanvas.ActiveInstance)
 
-        If retcode.StatusCode = 1 Then
-            _snackbarService.GenerateError("Error".LT(), retcode.Message, 5)
-            Return
-        End If
+            Dim retcode = Await generator.GenerateGcodeAsync
 
-        GeneratedGCode = generator.GetGCode
-        Dim compiledGCodeString = BuildStringFromGCodes(GeneratedGCode)
+            If retcode.StatusCode = 1 Then
+                _snackbarService.GenerateError("Error".LT(), retcode.Message, 5)
+                Return
+            End If
 
-        GCode = compiledGCodeString
-        GCodeGeometry = New GCodeGeometry(GeneratedGCode)
-        OnPropertyChanged(NameOf(GCode))
-        OnPropertyChanged(NameOf(GCodeGeometry))
-        _navigationService.Navigate(GetType(PreviewPage))
+            GeneratedGCode = generator.GetGCode
+            Dim compiledGCodeString = BuildStringFromGCodes(GeneratedGCode)
+
+            GCode = compiledGCodeString
+            GCodeGeometry = New GCodeGeometry(GeneratedGCode)
+            OnPropertyChanged(NameOf(GCode))
+            OnPropertyChanged(NameOf(GCodeGeometry))
+            _navigationService.Navigate(GetType(PreviewPage))
+        Finally
+
+            _generatingGCode = False
+            GenerateGCodeCommand.NotifyCanExecuteChanged()
+        End Try
+
+    End Function
+
+    Private Function CanGenerateGCode() As Boolean
+        Return Not _generatingGCode
     End Function
 
     Private Function BuildStringFromGCodes(GeneratedGCode As List(Of GCode)) As String

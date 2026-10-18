@@ -63,6 +63,7 @@
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Fester Helligkeitsgrenzwert (0–255) für den Schwarzweißmodus. Pixel, die dunkler als dieser Wert sind, werden zum Vordergrund (schwarz); Pixel mit diesem oder einem höheren Wert werden zum Hintergrund (weiß). Wird ignoriert, wenn die adaptive Abtastung aktiviert ist."
 "GCode" = "GCode"
 "Generate GCode" = "GCode erzeugen"
+"Generating ..." = "Generating ..." # LOC:TODO
 "Global Settings" = "Allgemeine Einstellungen"
 "Grid Settings" = "Rastereinstellungen"
 "Gridline Colour" = "Rasterlinienfarbe"

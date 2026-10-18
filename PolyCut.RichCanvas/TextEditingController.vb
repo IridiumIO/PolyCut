@@ -6,8 +6,7 @@ Imports PolyCut.Shared
 Public Class TextEditingController
     Private _activeTextBox As TextBox
     Private _styleSource As TextBox
-    Private _sessionStartChars As TextCharacteristics
-    Private _sessionStartText As String
+    Private _sessionStart As TextEditState
     Private _suppressStyleSourceApply As Boolean
 
     Public ReadOnly Property ActiveTextBox As TextBox
@@ -27,7 +26,7 @@ Public Class TextEditingController
 
     Public Event SessionFinished(element As UIElement)
     Public Event EditRequested(sender As Object, textBox As TextBox)
-    Public Event TextEdited(sender As Object, textBox As TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
+    Public Event TextEdited(sender As Object, textBox As TextBox, before As TextEditState, after As TextEditState)
 
     Public Sub BeginEditingText(textBox As TextBox, pcanvas As PolyCanvas)
         If textBox Is Nothing OrElse _activeTextBox Is textBox Then Return
@@ -108,9 +107,15 @@ Public Class TextEditingController
         TextGeometryHelper.UseDefaultContextMenuFont(textBox)
         CommitActiveText(pcanvas)
         _activeTextBox = textBox
-        _sessionStartChars = TextCharacteristics.FromTextBox(textBox)
-        _sessionStartText = textBox.Text
+        _sessionStart = New TextEditState(textBox)
         TextEditHelper.SetIsEditing(textBox, True)
+        Dim wrapper = TryCast(textBox.Parent, ContentControl)
+        If wrapper IsNot Nothing Then
+            wrapper.Width = Double.NaN
+            wrapper.Height = Double.NaN
+        End If
+        textBox.Width = Double.NaN
+        textBox.Height = Double.NaN
         textBox.Cursor = Cursors.IBeam
         AddHandler textBox.TextChanged, AddressOf OnSessionTextChanged
         AddHandler textBox.SizeChanged, AddressOf OnSessionSizeChanged
@@ -129,7 +134,7 @@ Public Class TextEditingController
 
     Private Sub UpdateSessionInk()
         Dim textBox = _activeTextBox
-        If textBox Is Nothing Then Return
+        If textBox Is Nothing OrElse TextEditHelper.GetIsRestoring(textBox) Then Return
 
         TextGeometryHelper.FitToInk(textBox)
         textBox.UpdateLayout()
@@ -149,25 +154,34 @@ Public Class TextEditingController
         If pcanvas IsNot Nothing AndAlso pcanvas.Children.Contains(textBox) Then
             pcanvas.Children.Remove(textBox)
         End If
-        If wasEditingExisting AndAlso SessionChanged(textBox) Then
-            RaiseEvent TextEdited(Me, textBox, _sessionStartText, _sessionStartChars, textBox.Text, TextCharacteristics.FromTextBox(textBox))
+        If wasEditingExisting Then
+            ' Finish layout once, before recording history. Undo and redo restore these exact snapshots rather than repeating auto-fit and moving the pivot again.
+            Dim wrapper = DirectCast(textBox.Parent, ContentControl)
+            textBox.UpdateLayout()
+            wrapper.Width = wrapper.ActualWidth
+            wrapper.Height = wrapper.ActualHeight
+            If textBox.IsKeyboardFocusWithin Then wrapper.Focus()
+            wrapper.UpdateLayout()
+            MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.ActualWidth, wrapper.ActualHeight))
+            Dim after As New TextEditState(textBox)
+            If _sessionStart.HasChanges(after) Then
+                RaiseEvent TextEdited(Me, textBox, _sessionStart, after)
+            Else
+                _sessionStart.ApplyTo(textBox)
+                MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.ActualWidth, wrapper.ActualHeight))
+            End If
         End If
-        _sessionStartChars = Nothing
-        _sessionStartText = Nothing
+        _sessionStart = Nothing
         If raiseSessionFinished AndAlso Not wasEditingExisting AndAlso Not String.IsNullOrEmpty(textBox.Text) Then
             RaiseEvent SessionFinished(textBox)
         End If
     End Sub
 
-    Private Function SessionChanged(textBox As TextBox) As Boolean
-        If Not String.Equals(_sessionStartText, textBox.Text, StringComparison.Ordinal) Then Return True
-        If _sessionStartChars Is Nothing Then Return False
-        Return Not _sessionStartChars.SameAs(TextCharacteristics.FromTextBox(textBox))
-    End Function
-
-    Private Shared Sub FocusTextBox(textBox As TextBox)
+    Private Sub FocusTextBox(textBox As TextBox)
         If Not textBox.Focus() Then
-            textBox.Dispatcher.BeginInvoke(Sub() textBox.Focus(), DispatcherPriority.Input)
+            textBox.Dispatcher.BeginInvoke(Sub()
+                                              If _activeTextBox Is textBox Then textBox.Focus()
+                                          End Sub, DispatcherPriority.Input)
         End If
     End Sub
 
@@ -194,7 +208,7 @@ Public Class TextEditingController
 
     Private Sub OnStyleSourceSizeChanged(sender As Object, e As EventArgs)
         If _activeTextBox Is Nothing OrElse _suppressStyleSourceApply Then Return
-        _activeTextBox.FontSize = _styleSource.FontSize
+        TextGeometryHelper.SetEffectiveFontSize(_activeTextBox, _styleSource.FontSize)
     End Sub
 
     Private Sub OnStyleSourceFamilyChanged(sender As Object, e As EventArgs)

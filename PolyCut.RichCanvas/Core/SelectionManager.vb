@@ -157,6 +157,10 @@ Public Class SelectionManager
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
+                    Dim state = TransformState.FromWrapper(wrapper)
+                    If Not state.AffineTransform.IsIdentity Then
+                        Return TransformMath.ComputeSelectionFrame({item}, state.Rotation).Frame
+                    End If
                     Dim left = Canvas.GetLeft(wrapper)
                     Dim top = Canvas.GetTop(wrapper)
                     Dim size = TransformMath.GetWrapperSize(wrapper)

@@ -204,10 +204,12 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     <RelayCommand> Public Sub Undo()
+        PolyCanvas.ActiveInstance?.CommitActiveText()
         _undoRedoService.Undo()
     End Sub
 
     <RelayCommand> Public Sub Redo()
+        PolyCanvas.ActiveInstance?.CommitActiveText()
         _undoRedoService.Redo()
     End Sub
 

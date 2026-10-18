@@ -5,6 +5,51 @@ Imports System.Windows.Media
 
 Public Module TextGeometryHelper
 
+    ' Report the em height in document space. The perpendicular height (area divided by baseline length) excludes rotation, horizontal stretching, and baseline shear.
+    Public Function GetEffectiveFontSize(textBox As TextBox, Optional documentRoot As UIElement = Nothing) As Double
+        If textBox Is Nothing Then Return 0
+        Return textBox.FontSize * GetFontHeightScale(textBox, documentRoot)
+    End Function
+
+    Public Function SetEffectiveFontSize(textBox As TextBox, size As Double, Optional documentRoot As UIElement = Nothing) As Boolean
+        If textBox Is Nothing OrElse Not Double.IsFinite(size) OrElse size <= 0 Then Return False
+
+        textBox.UpdateLayout()
+        Dim scale = GetFontHeightScale(textBox, documentRoot)
+        If scale <= 0 Then Return False
+        Dim wrapper = TryCast(textBox.Parent, ContentControl)
+        If wrapper Is Nothing Then
+            If Not TextBox.FontSizeProperty.IsValidValue(size) Then Return False
+            textBox.FontSize = size
+        Else
+            ' Resize the whole object, including its chrome and glyph outline. 
+            Dim ratio = size / (textBox.FontSize * scale)
+            If Not Double.IsFinite(ratio) OrElse ratio <= 0 Then Return False
+            Dim state = TransformState.FromWrapper(wrapper)
+            Dim affine = state.AffineTransform
+            affine.Scale(ratio, ratio)
+            TransformState.SetAffineTransform(wrapper, affine)
+        End If
+        Return True
+    End Function
+
+    Private Function GetFontHeightScale(textBox As TextBox, documentRoot As UIElement) As Double
+        If documentRoot Is Nothing Then
+            ' The outermost canvas is the document; viewport zoom lives above it.
+            Dim current = VisualTreeHelper.GetParent(textBox)
+            While current IsNot Nothing
+                If TypeOf current Is Canvas Then documentRoot = DirectCast(current, Canvas)
+                current = VisualTreeHelper.GetParent(current)
+            End While
+        End If
+        If documentRoot Is Nothing Then Return 1
+
+        Dim m = TransformMath.GetAccumulatedMatrix(textBox, documentRoot)
+        Dim baseline = Math.Sqrt(m.M11 * m.M11 + m.M12 * m.M12)
+        If baseline <= Double.Epsilon Then Return 1
+        Return Math.Abs(m.Determinant) / baseline
+    End Function
+
     Public Function GetPixelsPerDip(textBox As TextBox) As Double
         If textBox Is Nothing Then Return 1.0
         Try

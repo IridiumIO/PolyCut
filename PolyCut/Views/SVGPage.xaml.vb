@@ -20,6 +20,8 @@ Class SVGPage
     Private _subscribedPrinter As Printer
 
     Private _hasLoaded As Boolean = False
+    Private _overlayTextBox As Controls.TextBox
+    Private _overlayEffectiveFontSize As Double = Double.NaN
 
     Sub New(viewmodel As SVGPageViewModel)
         Me.SVGPageViewModel = viewmodel
@@ -56,13 +58,21 @@ Class SVGPage
 
     Private Sub SyncTextStyleOverlayToSelection()
         Dim selected = PolyCanvas.SelectedItems
-        If selected Is Nothing OrElse selected.Count = 0 Then Return
-        Dim drawable = selected.FirstOrDefault()
-        If drawable Is Nothing Then Return
-        Dim textBox = TryCast(drawable.DrawableElement, System.Windows.Controls.TextBox)
+        Dim textBox = TryCast(selected?.FirstOrDefault()?.DrawableElement, Controls.TextBox)
+        If _overlayTextBox IsNot textBox Then
+            If _overlayTextBox IsNot Nothing Then RemoveHandler _overlayTextBox.LayoutUpdated, AddressOf OnOverlayTextLayoutUpdated
+            _overlayTextBox = textBox
+            If _overlayTextBox IsNot Nothing Then AddHandler _overlayTextBox.LayoutUpdated, AddressOf OnOverlayTextLayoutUpdated
+        End If
         If textBox IsNot Nothing Then
             SyncOverlayTo(textBox)
         End If
+    End Sub
+
+    Private Sub OnOverlayTextLayoutUpdated(sender As Object, e As EventArgs)
+        If _overlayTextBox Is Nothing OrElse OverlayFontSizeComboBox.IsKeyboardFocusWithin Then Return
+        Dim size = TextGeometryHelper.GetEffectiveFontSize(_overlayTextBox, mainCanvas)
+        If Math.Abs(size - _overlayEffectiveFontSize) > 0.000001 Then SyncOverlayTo(_overlayTextBox)
     End Sub
 
 
@@ -176,7 +186,7 @@ Class SVGPage
         If editor IsNot Nothing Then editor.SuppressStyleSourceApply = True
         Try
             SVGPageViewModel.CanvasTextBox.FontFamily = textBox.FontFamily
-            SVGPageViewModel.CanvasTextBox.FontSize = textBox.FontSize
+            SVGPageViewModel.CanvasTextBox.FontSize = TextGeometryHelper.GetEffectiveFontSize(textBox, mainCanvas)
             SVGPageViewModel.CanvasTextBox.FontStyle = textBox.FontStyle
             SVGPageViewModel.CanvasTextBox.FontWeight = textBox.FontWeight
         Finally
@@ -186,12 +196,12 @@ Class SVGPage
         SelectTextDrawable(textBox)
     End Sub
 
-    Private Sub OnTextEdited(sender As Object, textBox As System.Windows.Controls.TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
+    Private Sub OnTextEdited(sender As Object, textBox As Controls.TextBox, before As TextEditState, after As TextEditState)
         If textBox Is Nothing Then Return
-        SVGPageViewModel.RecordTextEdit(textBox, oldText, oldChars, newText, newChars)
+        SVGPageViewModel.RecordTextEdit(textBox, before, after)
     End Sub
 
-    Private Sub SelectTextDrawable(textBox As System.Windows.Controls.TextBox)
+    Private Sub SelectTextDrawable(textBox As Controls.TextBox)
 
         If textBox Is Nothing Then Return
         Dim wrapper = TryCast(textBox.Parent, ContentControl)
@@ -211,12 +221,14 @@ Class SVGPage
         If editor IsNot Nothing Then editor.SuppressStyleSourceApply = True
         SVGPageViewModel.BeginOverlaySync()
         Try
+            _overlayEffectiveFontSize = TextGeometryHelper.GetEffectiveFontSize(textBox, mainCanvas)
+            Dim fontSize = _overlayEffectiveFontSize.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
             SVGPageViewModel.CanvasFontFamily = textBox.FontFamily
-            SVGPageViewModel.CanvasFontSize = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            SVGPageViewModel.CanvasFontSize = fontSize
             SVGPageViewModel.CanvasFontWeightIsBold = textBox.FontWeight = FontWeights.Bold
             SVGPageViewModel.CanvasFontStyleIsItalic = textBox.FontStyle = FontStyles.Italic
             OverlayFontPicker.SelectedFont = textBox.FontFamily
-            OverlayFontSizeComboBox.Text = textBox.FontSize.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            OverlayFontSizeComboBox.Text = fontSize
             OverlayBoldToggleButton.IsChecked = textBox.FontWeight = FontWeights.Bold
             OverlayItalicToggleButton.IsChecked = textBox.FontStyle = FontStyles.Italic
         Finally

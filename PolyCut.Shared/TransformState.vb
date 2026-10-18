@@ -139,6 +139,11 @@ Public Class TransformState
         wrapper.RenderTransform = CreateRenderTransform(state.AffineTransform, angle)
     End Sub
 
+    Public Shared Sub SetAffineTransform(wrapper As ContentControl, affine As Matrix)
+        If wrapper Is Nothing Then Return
+        wrapper.RenderTransform = CreateRenderTransform(affine, GetRotation(wrapper))
+    End Sub
+
     Private Shared Function CreateRenderTransform(affine As Matrix, angle As Double) As Transform
         If affine.IsIdentity Then Return New RotateTransform(angle)
         Dim group As New TransformGroup()

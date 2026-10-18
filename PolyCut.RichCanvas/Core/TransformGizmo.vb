@@ -363,6 +363,10 @@ Public Class TransformGizmo
             If item?.DrawableElement IsNot Nothing Then
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing Then
+                    If TypeOf wrapper.Content Is TextBox Then
+                        Dim frame = TransformMath.ComputeSelectionFrame({item}, TransformAction.GetRotationAngle(wrapper))
+                        Return (frame.Frame.Width, frame.Frame.Height)
+                    End If
                     ' Return dimensions in millimeters (wrapper units, 1 unit = 1mm)
                     Return TransformMath.GetWrapperSize(wrapper)
                 End If
@@ -1031,11 +1035,13 @@ Public Class TransformGizmo
                     Dim initialPos = _initialPositions(item)
 
                     Dim rotation As Double = 0
+                    Dim affine = Matrix.Identity
                     If _initialTransforms.ContainsKey(item) Then
                         rotation = _initialTransforms(item).Rotation
+                        affine = _initialTransforms(item).AffineTransform
                     End If
 
-                    TransformAction.ApplyResizeMulti(wrapper, scaleX, scaleY, anchorX, anchorY, initialSize, initialPos, rotation, _dragFrameAngle)
+                    TransformAction.ApplyResizeMulti(wrapper, scaleX, scaleY, anchorX, anchorY, initialSize, initialPos, rotation, _dragFrameAngle, affine)
                 End If
             End If
         Next

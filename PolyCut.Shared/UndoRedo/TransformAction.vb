@@ -104,7 +104,8 @@ Public Class TransformAction
         Dim sinA = Math.Sin(-angleRad)
         Dim localDeltaX = deltaX * cosA - deltaY * sinA
         Dim localDeltaY = deltaX * sinA + deltaY * cosA
-        Dim affine = TransformState.FromWrapper(wrapper).AffineTransform
+        Dim state = TransformState.FromWrapper(wrapper)
+        Dim affine = state.AffineTransform
         If Not affine.IsIdentity AndAlso affine.HasInverse Then
             Dim inverse = affine
             inverse.Invert()
@@ -161,7 +162,6 @@ Public Class TransformAction
 
         If isCorner Then
             Dim aspectRatio = startSize.Width / startSize.Height
-            wrapper.Width = wrapper.Height * aspectRatio
             deltaVertical = Math.Min(deltaVertical, startSize.Height - wrapper.MinHeight)
             deltaHorizontal = Math.Min(deltaVertical * aspectRatio, startSize.Width - wrapper.MinWidth)
         End If
@@ -178,6 +178,24 @@ Public Class TransformAction
         Dim anchor = New Point(If(moveLeft, 1.0, 0.0),
                                If(moveTop, 1.0, 0.0))
 
+        If TypeOf wrapper.Content Is TextBox Then
+            If startSize.Width <= 0 OrElse startSize.Height <= 0 Then Return
+            ' Text does not stretch with its layout box. Scale its native cordinates instead,before the existing affine/rotation, keeping the opposite gizmo anchor fixed.
+            Dim scale = Matrix.Identity
+            scale.Scale(Math.Max(newWidth, 0.001) / startSize.Width, Math.Max(newHeight, 0.001) / startSize.Height)
+            state.AffineTransform = Matrix.Multiply(scale, affine)
+            Dim before = affine
+            before.Rotate(angle)
+            Dim after = state.AffineTransform
+            after.Rotate(angle)
+            Dim fixedOffset As New Vector((anchor.X - transformOrigin.X) * startSize.Width,
+                                          (anchor.Y - transformOrigin.Y) * startSize.Height)
+            Dim shift = before.Transform(fixedOffset) - after.Transform(fixedOffset)
+            state.Translation = Point.Add(state.Translation, shift)
+            state.ApplyToWrapper(wrapper, applyScale:=False)
+            Return
+        End If
+
         Dim placement = TransformMath.ComputeResizePlacement(
             currentLeft, currentTop, startSize.Width, startSize.Height,
             angle, transformOrigin, newWidth, newHeight, anchor, affine)
@@ -189,8 +207,32 @@ Public Class TransformAction
         Canvas.SetLeft(wrapper, placement.Left)
     End Sub
 
-    Public Shared Sub ApplyResizeMulti(wrapper As ContentControl, scaleX As Double, scaleY As Double, anchorX As Double, anchorY As Double, initialSize As (Width As Double, Height As Double), initialPosition As Point, initialRotation As Double, Optional selectionRotation As Double = 0)
+    Public Shared Sub ApplyResizeMulti(wrapper As ContentControl, scaleX As Double, scaleY As Double, anchorX As Double, anchorY As Double, initialSize As (Width As Double, Height As Double), initialPosition As Point, initialRotation As Double, Optional selectionRotation As Double = 0, Optional initialAffine As Matrix? = Nothing)
         If wrapper Is Nothing Then Return
+
+        If TypeOf wrapper.Content Is TextBox Then
+            If initialSize.Width <= 0 OrElse initialSize.Height <= 0 OrElse scaleX <= 0 OrElse scaleY <= 0 Then Return
+            Dim state = TransformState.FromWrapper(wrapper)
+
+            Dim affine = If(initialAffine, state.AffineTransform)
+            affine.Rotate(initialRotation - selectionRotation)
+            affine.Scale(scaleX, scaleY)
+            affine.Rotate(selectionRotation - initialRotation)
+            state.AffineTransform = affine
+            state.Rotation = initialRotation
+            state.Width = initialSize.Width
+            state.Height = initialSize.Height
+
+            Dim pivot As New Point(initialSize.Width * state.TransformOrigin.X, initialSize.Height * state.TransformOrigin.Y)
+            Dim textAnchor As New Point(anchorX, anchorY)
+            Dim textCenter As New Point(initialPosition.X + pivot.X, initialPosition.Y + pivot.Y)
+            Dim textLocal = TransformMath.RotateAbout(textCenter, textAnchor, -selectionRotation)
+            textLocal = New Point(textAnchor.X + (textLocal.X - textAnchor.X) * scaleX, textAnchor.Y + (textLocal.Y - textAnchor.Y) * scaleY)
+            Dim scaledTextCenter = TransformMath.RotateAbout(textLocal, textAnchor, selectionRotation)
+            state.Translation = New Point(scaledTextCenter.X - pivot.X, scaledTextCenter.Y - pivot.Y)
+            state.ApplyToWrapper(wrapper, applyScale:=False)
+            Return
+        End If
 
         wrapper.Width = initialSize.Width * scaleX
         wrapper.Height = initialSize.Height * scaleY

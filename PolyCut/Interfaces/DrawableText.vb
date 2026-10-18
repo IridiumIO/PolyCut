@@ -157,8 +157,11 @@ Public Class DrawableText : Inherits BaseDrawable : Implements IDrawable
 
     Public Sub RefreshVisualBox()
         Dim tb = _attachedTextBox
-        Dim wrapper As ContentControl = CType(tb.Parent, ContentControl)
+        If tb Is Nothing OrElse TextEditHelper.GetIsRestoring(tb) Then Return
+        Dim wrapper = TryCast(tb.Parent, ContentControl)
+        If wrapper Is Nothing Then Return
         tb.UpdateLayout()
+        If tb.ActualWidth <= 0 OrElse tb.ActualHeight <= 0 Then Return
 
         If TextEditHelper.GetIsEditing(tb) Then
             wrapper.Width = Double.NaN

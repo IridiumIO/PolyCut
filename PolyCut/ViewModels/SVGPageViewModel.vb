@@ -85,7 +85,12 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
             _CanvasFontSize = value
             OnPropertyChanged(NameOf(CanvasFontSize))
-            If Not _syncingOverlayStyle Then CanvasTextBox.FontSize = CInt(value)
+            If Not _syncingOverlayStyle Then
+                Dim size As Double
+                If (Double.TryParse(value, Globalization.NumberStyles.Float, Globalization.CultureInfo.CurrentCulture, size) OrElse
+                    Double.TryParse(value, Globalization.NumberStyles.Float, Globalization.CultureInfo.InvariantCulture, size)) AndAlso
+                    TextBox.FontSizeProperty.IsValidValue(size) Then CanvasTextBox.FontSize = size
+            End If
         End Set
     End Property
 
@@ -216,7 +221,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             Dim textbox As TextBox = TryCast(wrapper.Content, TextBox)
             If textbox Is Nothing Then Return
 
-            textbox.FontSize += 1
+            TextGeometryHelper.SetEffectiveFontSize(textbox, TextGeometryHelper.GetEffectiveFontSize(textbox) + 1)
 
 
         ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
@@ -229,8 +234,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
             Dim textbox As TextBox = TryCast(wrapper.Content, TextBox)
             If textbox Is Nothing Then Return
 
-            If textbox.FontSize > 1 Then
-                textbox.FontSize -= 1
+            Dim size = TextGeometryHelper.GetEffectiveFontSize(textbox)
+            If size > 1 Then
+                TextGeometryHelper.SetEffectiveFontSize(textbox, Math.Max(1, size - 1))
             End If
         End If
 
@@ -310,8 +316,8 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 
-    Public Sub RecordTextEdit(textBox As TextBox, oldText As String, oldChars As TextCharacteristics, newText As String, newChars As TextCharacteristics)
-        Dim action As New TextEditAction(textBox, oldText, oldChars, newText, newChars)
+    Public Sub RecordTextEdit(textBox As TextBox, before As TextEditState, after As TextEditState)
+        Dim action As New TextEditAction(textBox, before, after)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 

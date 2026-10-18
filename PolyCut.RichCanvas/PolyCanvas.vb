@@ -76,6 +76,10 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
         Return Nothing
     End Function
 
+    Public Sub CommitActiveText()
+        FindAncestorZoomBorder()?.DrawingManager.TextEditor.CommitActiveText(Me)
+    End Sub
+
     Private Shared Sub CopyGridPlacement(source As FrameworkElement, target As FrameworkElement)
         Dim row = Grid.GetRow(source)
         Dim column = Grid.GetColumn(source)
@@ -380,6 +384,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
     Private Sub OnTextBoxFocusChanged(sender As Object, e As RoutedEventArgs)
         Dim textBox = TryCast(sender, TextBox)
         If textBox Is Nothing Then Return
+        If TextEditHelper.GetIsRestoring(textBox) Then Return
 
         Dim wrapper = TryCast(textBox.Parent, ContentControl)
         If wrapper Is Nothing Then Return
@@ -619,6 +624,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
         Dim wrapper As ContentControl = CType(sender, ContentControl)
         Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
+        If TextEditHelper.GetIsRestoring(content) Then Return
 
         If TransformAction.HandleTextBoxSizeChanged(wrapper, e) Then Return
 

@@ -1,6 +1,16 @@
 Imports System.Windows
 
 Public Class TextEditHelper
+    Public Shared ReadOnly IsRestoringProperty As DependencyProperty = DependencyProperty.RegisterAttached("IsRestoring", GetType(Boolean), GetType(TextEditHelper), New FrameworkPropertyMetadata(False))
+
+    Public Shared Function GetIsRestoring(obj As DependencyObject) As Boolean
+        Return obj IsNot Nothing AndAlso CBool(obj.GetValue(IsRestoringProperty))
+    End Function
+
+    Public Shared Sub SetIsRestoring(obj As DependencyObject, value As Boolean)
+        obj.SetValue(IsRestoringProperty, value)
+    End Sub
+
     Public Shared ReadOnly IsEditingProperty As DependencyProperty =
         DependencyProperty.RegisterAttached(
             "IsEditing",

@@ -31,44 +31,46 @@ Public Class ImportSVGAction : Implements IUndoableAction
         Dim imported = _svgService.ParseFromFile(_filePath)
         If imported Is Nothing OrElse Not imported.Any() Then Return False
 
-        _importedGroup = New DrawableGroup(System.IO.Path.GetFileName(_filePath))
+        Using ModelBatch.Begin()
+            _importedGroup = New DrawableGroup(System.IO.Path.GetFileName(_filePath))
 
-        For Each d As IDrawable In imported
-            _importedGroup.AddChild(d)
+            For Each d As IDrawable In imported
+                _importedGroup.AddChild(d)
 
-            If TypeOf d Is DrawableGroup Then
-                Dim grp = CType(d, DrawableGroup)
-                For Each child In grp.GroupChildren.ToList()
-                    If Not _manager.DrawableCollection.Contains(child) Then
-                        _manager.DrawableCollection.Add(child)
-                        _allImportedDrawables.Add(child)
+                If TypeOf d Is DrawableGroup Then
+                    Dim grp = CType(d, DrawableGroup)
+                    For Each child In grp.GroupChildren.ToList()
+                        If Not _manager.DrawableCollection.Contains(child) Then
+                            _manager.DrawableCollection.Add(child)
+                            _allImportedDrawables.Add(child)
+                        End If
+                    Next
+                Else
+                    If Not _manager.DrawableCollection.Contains(d) Then
+                        _manager.DrawableCollection.Add(d)
+                        _allImportedDrawables.Add(d)
                     End If
-                Next
-            Else
-                If Not _manager.DrawableCollection.Contains(d) Then
-                    _manager.DrawableCollection.Add(d)
-                    _allImportedDrawables.Add(d)
                 End If
-            End If
-        Next
+            Next
 
-        For Each d In _allImportedDrawables
-            Dim pg = TryCast(d.ParentGroup, DrawableGroup)
-            If pg IsNot Nothing Then
-                _parentMap(d) = pg
-            End If
-        Next
+            For Each d In _allImportedDrawables
+                Dim pg = TryCast(d.ParentGroup, DrawableGroup)
+                If pg IsNot Nothing Then
+                    _parentMap(d) = pg
+                End If
+            Next
 
-        'Importing the same file twice must not leave two roots sharing a name as this causes ambigutiy with copy/paste (TODO: stop using name lookup for paste)
-        Dim baseName As String = _importedGroup.Name
-        Dim suffix As Integer = 2
-        While _manager.ImportRoots.Any(Function(g) String.Equals(g.Name, _importedGroup.Name, StringComparison.OrdinalIgnoreCase))
-            _importedGroup.Name = $"{baseName}_{suffix}"
-            suffix += 1
-        End While
+            'Importing the same file twice must not leave two roots sharing a name as this causes ambigutiy with copy/paste (TODO: stop using name lookup for paste)
+            Dim baseName As String = _importedGroup.Name
+            Dim suffix As Integer = 2
+            While _manager.ImportRoots.Any(Function(g) String.Equals(g.Name, _importedGroup.Name, StringComparison.OrdinalIgnoreCase))
+                _importedGroup.Name = $"{baseName}_{suffix}"
+                suffix += 1
+            End While
 
-        _indexInImportedGroups = _manager.ImportRoots.Count()
-        _manager.AddImportRoot(_importedGroup)
+            _indexInImportedGroups = _manager.ImportRoots.Count()
+            _manager.AddImportRoot(_importedGroup)
+        End Using
 
         Return True
     End Function

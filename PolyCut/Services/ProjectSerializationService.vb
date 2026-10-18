@@ -114,17 +114,19 @@ Public Class ProjectSerializationService
         Next
 
         ' 3) Wire group membership
-        For Each gd In projectData.Groups
-            Dim g = groupById(gd.Id)
+        Using ModelBatch.Begin()
+            For Each gd In projectData.Groups
+                Dim g = groupById(gd.Id)
 
-            For Each cid In gd.ChildIds
-                If drawableById.ContainsKey(cid) Then
-                    AddChildToGroup(g, drawableById(cid))
-                ElseIf groupById.ContainsKey(cid) Then
-                    AddChildToGroup(g, groupById(cid))
-                End If
+                For Each cid In gd.ChildIds
+                    If drawableById.ContainsKey(cid) Then
+                        AddChildToGroup(g, drawableById(cid))
+                    ElseIf groupById.ContainsKey(cid) Then
+                        AddChildToGroup(g, groupById(cid))
+                    End If
+                Next
             Next
-        Next
+        End Using
 
         ' 4) Wire parent groups
         For Each gd In projectData.Groups

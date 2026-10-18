@@ -155,7 +155,11 @@ Public Class ZoomBorder
         [RaiseEvent](New RoutedPropertyChangedEventArgs(Of Double)(GetValue(ScaleProperty), scale, ScaleChangedEvent))
     End Sub
 
-    Public Shared ReadOnly CanvasModeProperty As DependencyProperty = DependencyProperty.Register(NameOf(CanvasMode), GetType(CanvasMode), GetType(ZoomBorder), New PropertyMetadata(CanvasMode.Selection))
+    Public Shared ReadOnly CanvasModeProperty As DependencyProperty = DependencyProperty.Register(NameOf(CanvasMode), GetType(CanvasMode), GetType(ZoomBorder), New PropertyMetadata(CanvasMode.Selection, AddressOf OnCanvasModeChanged))
+
+    Private Shared Sub OnCanvasModeChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
+        DirectCast(d, ZoomBorder).CancelMarquee()
+    End Sub
 
     Public Property CanvasMode As CanvasMode
         Get
@@ -186,6 +190,8 @@ Public Class ZoomBorder
 
     Public Sub New()
         ClipToBounds = True
+        Focusable = True
+
         _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport, Me)
         AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown
@@ -194,6 +200,8 @@ Public Class ZoomBorder
         AddHandler Me.Loaded, AddressOf ZoomBorder_Loaded
         AddHandler Me.PreviewMouseDown, AddressOf ZoomBorder_PreviewMouseDown
         AddHandler Me.LostMouseCapture, AddressOf ZoomBorder_LostMouseCapture
+        AddHandler Me.PreviewKeyDown, AddressOf ZoomBorder_PreviewKeyDown
+        AddHandler Me.Unloaded, Sub() CancelMarquee(restoreSelection:=False)
     End Sub
 
 
@@ -362,6 +370,38 @@ Public Class ZoomBorder
     End Sub
 
     Public DrawingManager As New DrawingManager
+    Private _selectionMarquee As SelectionMarquee
+
+    Private Function StartMarquee(e As MouseButtonEventArgs) As Boolean
+        If CanvasMode <> CanvasMode.Selection OrElse e.ChangedButton <> MouseButton.Left OrElse
+           GetAction(MouseButton.Left) <> ZoomBorderMouseAction.None Then Return False
+        Dim canvas = GetPolyCanvas()
+        If canvas Is Nothing OrElse canvas.IsClickOnCanvasChild(TryCast(e.OriginalSource, DependencyObject)) Then Return False
+        Dim marquee = canvas.GetSelectionMarquee()
+        If marquee Is Nothing Then Return False
+        DrawingManager.TextEditor.CommitActiveText(canvas)
+        Dim start = e.GetPosition(marquee)
+        If Not CaptureMouse() Then Return False
+        _selectionMarquee = marquee
+        marquee.Begin(start, Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift))
+        Focus()
+        e.Handled = True
+        Return True
+    End Function
+
+    Private Sub CancelMarquee(Optional restoreSelection As Boolean = True)
+        Dim marquee = _selectionMarquee
+        If marquee Is Nothing Then Return
+        _selectionMarquee = Nothing
+        marquee.Cancel(restoreSelection)
+        If IsMouseCaptured Then ReleaseMouseCapture()
+    End Sub
+
+    Private Sub ZoomBorder_PreviewKeyDown(sender As Object, e As KeyEventArgs)
+        If e.Key <> Key.Escape OrElse _selectionMarquee Is Nothing Then Return
+        CancelMarquee()
+        e.Handled = True
+    End Sub
 
     Private Sub ZoomBorder_MouseDown(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
         HandleMouseDown(e, isPreview:=False)
@@ -378,6 +418,15 @@ Public Class ZoomBorder
         EventAggregator.Publish(New TranslationChangedMessage(New Point(TranslateTransform.X, TranslateTransform.Y)))
 
         If DrawingManager.TextEditor.HandleTextMouseDown(CanvasMode, e) Then Return
+
+        If _selectionMarquee IsNot Nothing AndAlso e.ChangedButton <> MouseButton.Left Then
+            CancelMarquee()
+            If e.ChangedButton = MouseButton.Right Then
+                e.Handled = True
+                Return
+            End If
+        End If
+        If isPreview AndAlso StartMarquee(e) Then Return
 
         If e.ChangedButton = MouseButton.Middle Then
             _middleMouseDownPosStart = e.GetPosition(Me)
@@ -421,6 +470,18 @@ Public Class ZoomBorder
 
     Private Sub ZoomBorder_MouseUp(ByVal sender As Object, ByVal e As MouseButtonEventArgs)
 
+        If _selectionMarquee IsNot Nothing AndAlso e.ChangedButton = MouseButton.Left Then
+            Dim marquee = _selectionMarquee
+            _selectionMarquee = Nothing
+            Try
+                marquee.Complete(e.GetPosition(marquee))
+            Finally
+                If IsMouseCaptured Then ReleaseMouseCapture()
+            End Try
+            e.Handled = True
+            Return
+        End If
+
         If CanvasMode <> CanvasMode.Selection AndAlso e.ChangedButton = MouseButton.Left Then
             Dim polyCanvas = GetPolyCanvas()
             DrawingManager.FinishDrawing(CanvasMode, polyCanvas, CanvasTextBox)
@@ -443,6 +504,10 @@ Public Class ZoomBorder
     End Function
 
     Private Sub ZoomBorder_MouseWheel(ByVal sender As Object, ByVal e As MouseWheelEventArgs)
+        If _selectionMarquee IsNot Nothing Then
+            e.Handled = True
+            Return
+        End If
         ZoomByWheel(e.Delta)
         e.Handled = False
     End Sub
@@ -510,6 +575,15 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
+        If _selectionMarquee IsNot Nothing Then
+            If e.LeftButton = MouseButtonState.Pressed Then
+                _selectionMarquee.Update(e.GetPosition(_selectionMarquee))
+            Else
+                CancelMarquee()
+            End If
+            e.Handled = True
+            Return
+        End If
         Dim currentPosition As Point = e.GetPosition(Me)
         If CanvasMode <> CanvasMode.Selection AndAlso e.LeftButton = MouseButtonState.Pressed Then
             Dim polyCanvas = GetPolyCanvas()
@@ -531,6 +605,7 @@ Public Class ZoomBorder
     End Sub
 
     Private Sub ZoomBorder_LostMouseCapture(sender As Object, e As MouseEventArgs)
+        If _selectionMarquee IsNot Nothing AndAlso Not IsMouseCaptured Then CancelMarquee()
         _viewportLimiter.Flush()
         If CanvasMode <> CanvasMode.Selection AndAlso DrawingManager.IsDrawing Then
             DrawingManager.CancelDrawing(GetPolyCanvas())

@@ -80,6 +80,11 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
         FindAncestorZoomBorder()?.DrawingManager.TextEditor.CommitActiveText(Me)
     End Sub
 
+    Friend Function GetSelectionMarquee() As SelectionMarquee
+        If _transformOverlay Is Nothing Then InitializeOverlay()
+        Return _transformOverlay?.Marquee
+    End Function
+
     Private Shared Sub CopyGridPlacement(source As FrameworkElement, target As FrameworkElement)
         Dim row = Grid.GetRow(source)
         Dim column = Grid.GetColumn(source)

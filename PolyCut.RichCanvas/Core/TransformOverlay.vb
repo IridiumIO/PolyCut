@@ -6,6 +6,7 @@ Public Class TransformOverlay
     Private _gizmo As TransformGizmo
     Private _selectionManager As SelectionManager
     Private _contentCanvas As Canvas
+    Public ReadOnly Property Marquee As SelectionMarquee
 
     Public Sub New()
         Me.IsHitTestVisible = True
@@ -20,8 +21,11 @@ Public Class TransformOverlay
         _gizmo = New TransformGizmo(selectionManager, contentCanvas)
         _gizmo.IsHitTestVisible = True
 
+        _Marquee = New SelectionMarquee(DirectCast(contentCanvas, PolyCanvas))
+
         Me.Children.Add(New TextBoxBorderOverlay(contentCanvas, GetZoomBorder()?.DrawingManager.TextEditor))
         Me.Children.Add(_gizmo)
+        Me.Children.Add(_Marquee)
 
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
         AddHandler Me.SizeChanged, AddressOf OnSizeChanged

@@ -502,7 +502,7 @@ Public Class TransformGizmo
                 Dim wrapper = TryCast(item.DrawableElement.Parent, ContentControl)
                 If wrapper IsNot Nothing AndAlso TypeOf wrapper.Content Is TextBox Then
                     Dim textBox = CType(wrapper.Content, TextBox)
-                    textBox.Focus()
+
                     Dim zb = GetZoomBorder()
                     If zb IsNot Nothing Then zb.DrawingManager.TextEditor.RaiseEditRequested(textBox)
                 End If

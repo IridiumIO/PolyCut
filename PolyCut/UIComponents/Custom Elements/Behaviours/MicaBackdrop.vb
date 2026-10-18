@@ -317,18 +317,28 @@ Public NotInheritable Class MicaBackdrop
 
     Private NotInheritable Class State
         Public ReadOnly Element As FrameworkElement
-        Public ReadOnly Timer As DispatcherTimer
         Public Window As Window
         Public LastRect As Int32Rect
         Public LastActive As Boolean
 
         Public Sub New(element As FrameworkElement)
             Me.Element = element
-            Me.Timer = New DispatcherTimer(DispatcherPriority.Background, element.Dispatcher) With {.Interval = TimeSpan.FromMilliseconds(SampleIntervalMs)}
+        End Sub
+    End Class
+
+    Private NotInheritable Class WindowState
+        Public ReadOnly States As New HashSet(Of State)()
+        Public ReadOnly Timer As DispatcherTimer
+
+        Public Sub New(window As Window)
+            Timer = New DispatcherTimer(DispatcherPriority.Background, window.Dispatcher) With {
+                .Interval = TimeSpan.FromMilliseconds(SampleIntervalMs), .Tag = Me
+            }
         End Sub
     End Class
 
     Private Shared ReadOnly _states As New Dictionary(Of FrameworkElement, State)()
+    Private Shared ReadOnly _windows As New Dictionary(Of Window, WindowState)()
 
     Private Shared Sub OnEnabledChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
         Dim fe = TryCast(d, FrameworkElement)
@@ -359,7 +369,6 @@ Public NotInheritable Class MicaBackdrop
 
         AddHandler fe.Loaded, AddressOf OnElementLoaded
         AddHandler fe.Unloaded, AddressOf OnElementUnloaded
-        AddHandler st.Timer.Tick, AddressOf OnTick
 
         If fe.IsLoaded Then Attach(st)
     End Sub
@@ -371,7 +380,6 @@ Public NotInheritable Class MicaBackdrop
 
         RemoveHandler fe.Loaded, AddressOf OnElementLoaded
         RemoveHandler fe.Unloaded, AddressOf OnElementUnloaded
-        RemoveHandler st.Timer.Tick, AddressOf OnTick
         Detach(st)
 
         PublishFallback(fe)
@@ -382,7 +390,8 @@ Public NotInheritable Class MicaBackdrop
     End Sub
 
     Private Shared Sub SampleDeferred(st As State)
-        If Not st.Element.IsLoaded Then Return
+        Dim current As State = Nothing
+        If Not _states.TryGetValue(st.Element, current) OrElse current IsNot st OrElse Not st.Element.IsLoaded Then Return
         If st.Window Is Nothing Then Attach(st)
         Sample(st)
     End Sub
@@ -409,54 +418,67 @@ Public NotInheritable Class MicaBackdrop
         st.Window = Window.GetWindow(st.Element)
         If st.Window Is Nothing Then Return
 
-        AddHandler st.Window.LocationChanged, AddressOf OnWindowChanged
-        AddHandler st.Window.SizeChanged, AddressOf OnWindowChanged
-        AddHandler st.Window.StateChanged, AddressOf OnWindowChanged
-        AddHandler st.Window.Activated, AddressOf OnWindowActivationChanged
-        AddHandler st.Window.Deactivated, AddressOf OnWindowActivationChanged
-        AddHandler st.Window.DpiChanged, AddressOf OnWindowChanged
-        AddHandler st.Element.SizeChanged, AddressOf OnWindowChanged
+        Dim ws As WindowState = Nothing
+        If Not _windows.TryGetValue(st.Window, ws) Then
+            ws = New WindowState(st.Window)
+            _windows.Add(st.Window, ws)
+            AddHandler st.Window.LocationChanged, AddressOf OnWindowChanged
+            AddHandler st.Window.SizeChanged, AddressOf OnWindowChanged
+            AddHandler st.Window.StateChanged, AddressOf OnWindowChanged
+            AddHandler st.Window.Activated, AddressOf OnWindowChanged
+            AddHandler st.Window.Deactivated, AddressOf OnWindowChanged
+            AddHandler st.Window.DpiChanged, AddressOf OnWindowChanged
+            AddHandler ws.Timer.Tick, AddressOf OnTick
+            ws.Timer.Start()
+        End If
+        ws.States.Add(st)
+        AddHandler st.Element.SizeChanged, AddressOf OnElementSizeChanged
 
-        st.Timer.Start()
         Sample(st)
         SampleSoon(st)
     End Sub
 
     Private Shared Sub Detach(st As State)
-        st.Timer.Stop()
-
         If st.Window Is Nothing Then Return
 
-        RemoveHandler st.Window.LocationChanged, AddressOf OnWindowChanged
-        RemoveHandler st.Window.SizeChanged, AddressOf OnWindowChanged
-        RemoveHandler st.Window.StateChanged, AddressOf OnWindowChanged
-        RemoveHandler st.Window.Activated, AddressOf OnWindowActivationChanged
-        RemoveHandler st.Window.Deactivated, AddressOf OnWindowActivationChanged
-        RemoveHandler st.Window.DpiChanged, AddressOf OnWindowChanged
+        RemoveHandler st.Element.SizeChanged, AddressOf OnElementSizeChanged
+        Dim ws = _windows(st.Window)
+        ws.States.Remove(st)
+        If ws.States.Count = 0 Then
+            ws.Timer.Stop()
+            RemoveHandler ws.Timer.Tick, AddressOf OnTick
+            RemoveHandler st.Window.LocationChanged, AddressOf OnWindowChanged
+            RemoveHandler st.Window.SizeChanged, AddressOf OnWindowChanged
+            RemoveHandler st.Window.StateChanged, AddressOf OnWindowChanged
+            RemoveHandler st.Window.Activated, AddressOf OnWindowChanged
+            RemoveHandler st.Window.Deactivated, AddressOf OnWindowChanged
+            RemoveHandler st.Window.DpiChanged, AddressOf OnWindowChanged
+            _windows.Remove(st.Window)
+        End If
 
         st.Window = Nothing
     End Sub
 
     Private Shared Sub OnWindowChanged(sender As Object, e As EventArgs)
-        InvalidateAll()
+        Dim ws As WindowState = Nothing
+        If Not _windows.TryGetValue(DirectCast(sender, Window), ws) Then Return
+        For Each st In ws.States
+            Sample(st)
+        Next
     End Sub
 
-    Private Shared Sub OnWindowActivationChanged(sender As Object, e As EventArgs)
-        InvalidateAll()
+    Private Shared Sub OnElementSizeChanged(sender As Object, e As SizeChangedEventArgs)
+        Dim st As State = Nothing
+        If _states.TryGetValue(DirectCast(sender, FrameworkElement), st) Then Sample(st)
     End Sub
 
     Private Shared Sub OnTick(sender As Object, e As EventArgs)
-        For Each st In _states.Values
+        Dim ws = DirectCast(DirectCast(sender, DispatcherTimer).Tag, WindowState)
+        For Each st In ws.States
             If st.Window Is Nothing OrElse Not st.Element.IsLoaded OrElse Not st.Element.IsVisible Then Continue For
 
             If st.LastActive <> st.Window.IsActive OrElse
                Not RectsMatch(st.LastRect, CurrentElementRect(st.Element)) Then Sample(st)
-        Next
-    End Sub
-
-    Private Shared Sub InvalidateAll()
-        For Each st In _states.Values
-            Sample(st)
         Next
     End Sub
 
@@ -470,15 +492,13 @@ Public NotInheritable Class MicaBackdrop
         If w Is Nothing Then Return
 
         Dim rect = CurrentElementRect(fe)
+        ' Keep the unpadded bounds for change detection; padding only affects the sampled region.
+        st.LastRect = rect
         st.LastActive = w.IsActive
 
-        If rect.Width <= 0 OrElse rect.Height <= 0 Then
-            st.LastRect = rect
-            Return
-        End If
+        If rect.Width <= 0 OrElse rect.Height <= 0 Then Return
 
         rect = ExpandRect(rect, GetSamplePadding(fe), VisualTreeHelper.GetDpi(fe))
-        st.LastRect = rect
 
         'Linux(not tested yet) or unfocused window: publish the plain app background instead of a region.
         If Not _micaSupported OrElse Not w.IsActive Then

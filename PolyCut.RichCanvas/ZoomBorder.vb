@@ -189,7 +189,7 @@ Public Class ZoomBorder
     Public Sub New()
         ClipToBounds = True
         Focusable = True
-
+        Me.FocusVisualStyle = Nothing
         _viewportLimiter = New InteractionRateLimiter(AddressOf ApplyPendingViewport, Me)
         AddHandler Me.MouseWheel, AddressOf ZoomBorder_MouseWheel
         AddHandler Me.MouseDown, AddressOf ZoomBorder_MouseDown

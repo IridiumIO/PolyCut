@@ -219,13 +219,19 @@
 "Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time." = "Les lignes courbes sont approximées par des segments droits lors de la conversion en GCode. Ce paramètre définit la plus petite longueur effective de chaque segment de la courbe. Des valeurs plus faibles augmentent la précision, mais accroissent fortement le temps de traitement."
 
 [context."Custom GCode Entries"]
+"After reaching Work Z, activates before the draw step" = "After reaching Work Z, activates before the draw step" # LOC:TODO
+"After the Klipper bounding-box preview runs" = "After the Klipper bounding-box preview runs" # LOC:TODO
+"After the draw step, before lifting or travel. Also runs at job start/end" = "After the draw step, before lifting or travel. Also runs at job start/end" # LOC:TODO
+"After the final lift to Travel Z at the end of the job" = "After the final lift to Travel Z at the end of the job" # LOC:TODO
+"Before initial positioning at the start of the job" = "Before initial positioning at the start of the job" # LOC:TODO
+"Before the Klipper bounding-box preview runs" = "Before the Klipper bounding-box preview runs" # LOC:TODO
 "Custom GCode" = "GCode personnalisé"
 "End GCode" = "GCode de fin"
 "End GCode used when sending the bounding box preview to Klipper" = "GCode de fin utilisé lors de l’envoi de l’aperçu du rectangle englobant à Klipper"
-"Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." = "Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." # LOC:TODO
+"Optional commands to activate a tool after moving to the work Z height, before cutting or drawing. Can be used to activate a laser/spindle or issue a custom 'pen down' GCode" = "Optional commands to activate a tool after moving to the work Z height, before cutting or drawing. Can be used to activate a laser/spindle or issue a custom 'pen down' GCode" # LOC:TODO
 "Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." = "Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." # LOC:TODO
-"Preview End GCode (?)" = "GCode de fin d’aperçu (?)"
-"Preview Start GCode (?)" = "GCode de début d’aperçu (?)"
+"Preview End GCode" = "Preview End GCode" # LOC:TODO
+"Preview Start GCode" = "Preview Start GCode" # LOC:TODO
 "Start GCode" = "GCode de début"
 "Start GCode used when sending the bounding box preview to Klipper" = "GCode de début utilisé lors de l’envoi de l’aperçu du rectangle englobant à Klipper"
 "Tool Off GCode" = "Tool Off GCode" # LOC:TODO
@@ -376,3 +382,7 @@
 
 [obsolete]
 "Printer: " = "Imprimante : "
+
+[obsolete.context."Custom GCode Entries"]
+"Preview End GCode (?)" = "GCode de fin d’aperçu (?)"
+"Preview Start GCode (?)" = "GCode de début d’aperçu (?)"

@@ -68,6 +68,7 @@
 "Grid Settings" = "グリッド設定"
 "Gridline Colour" = "グリッド線の色"
 "Group" = "Group" # LOC:TODO
+"Hardware" = "Hardware" # LOC:TODO
 "Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
 "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "SVG としてインポート"
@@ -103,7 +104,6 @@
 "Printer Name:" = "プリンター名:"
 "Printer name is empty" = "プリンター名が空です"
 "Printer not saved. Name already exists." = "プリンターは保存されませんでした。同じ名前が既に存在します。"
-"Printer: " = "プリンター: "
 "Processing Settings" = "処理設定"
 "Project Loaded" = "プロジェクトを読み込みました"
 "Project Saved" = "プロジェクトを保存しました"
@@ -373,3 +373,6 @@
 "For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." = "厚い材料を切断または彫刻する場合、わずかに負の値を設定すると各パスで徐々に深く加工できます。これにより品質が向上し、ブレード破損の可能性を低減できる場合があります。"
 "Positive values move the tool up after each pass, while negative values move the tool down after each pass." = "正の値では各パス後にツールが上がり、負の値では下がります。"
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "複数パスが有効な場合に、各パスの後でツールを Z 方向に移動する距離。"
+
+[obsolete]
+"Printer: " = "プリンター: "

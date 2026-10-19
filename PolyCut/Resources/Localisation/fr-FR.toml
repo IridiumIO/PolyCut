@@ -68,6 +68,7 @@
 "Grid Settings" = "Paramètres de la grille"
 "Gridline Colour" = "Couleur des lignes de la grille"
 "Group" = "Group" # LOC:TODO
+"Hardware" = "Hardware" # LOC:TODO
 "Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
 "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "Importer comme SVG"
@@ -103,7 +104,6 @@
 "Printer Name:" = "Nom de l’imprimante :"
 "Printer name is empty" = "Le nom de l’imprimante est vide"
 "Printer not saved. Name already exists." = "Imprimante non enregistrée. Ce nom existe déjà."
-"Printer: " = "Imprimante : "
 "Processing Settings" = "Paramètres de traitement"
 "Project Loaded" = "Projet chargé"
 "Project Saved" = "Projet enregistré"
@@ -373,3 +373,6 @@
 "For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." = "Pour couper ou graver des matériaux plus épais, une valeur légèrement négative peut être utilisée afin de couper progressivement plus profondément à chaque passe, ce qui peut améliorer la qualité et réduire le risque de casse de la lame."
 "Positive values move the tool up after each pass, while negative values move the tool down after each pass." = "Les valeurs positives déplacent l’outil vers le haut après chaque passe, tandis que les valeurs négatives le déplacent vers le bas."
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "Distance en Z que l’outil doit parcourir après chaque passe lorsque plusieurs passes sont activées."
+
+[obsolete]
+"Printer: " = "Imprimante : "

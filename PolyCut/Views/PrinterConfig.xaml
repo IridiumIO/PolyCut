@@ -3,12 +3,14 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-                 xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+                 xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+                 xmlns:local="clr-namespace:PolyCut"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  Title="{loc:T Printer Configuration}"
-                 Width="600"
-                 Height="900"
+                 Width="900"
+                 Height="600"
+                 MinWidth="760"
                  d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
                  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
                  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -18,53 +20,75 @@
                  WindowBackdropType="Mica"
                  WindowStartupLocation="CenterOwner"
                  mc:Ignorable="d">
-    <Grid Margin="20">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto" />
-                <RowDefinition Height="auto" />
-                <RowDefinition Height="auto" />
-                <RowDefinition Height="auto" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <ContentPresenter x:Name="RootContentDialog"
-                              Grid.Row="0" Grid.RowSpan="5"
-                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Panel.ZIndex="200"
-                              d:Visibility="Collapsed" />
-            <ui:TitleBar Grid.Row="0" Margin="-20" Panel.ZIndex="121" />
+    <Grid Margin="20" RowDefinitions="Auto Auto *">
+        <ContentPresenter x:Name="RootContentDialog"
+                          Grid.Row="0" Grid.RowSpan="3"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Panel.ZIndex="200"
+                          d:Visibility="Collapsed" />
+        <ui:TitleBar Grid.Row="0" Margin="-20" Panel.ZIndex="121" />
+        <Label Grid.Row="0" Margin="10 10" loc:L.Value="Printer Configuration" />
 
-            <Label Grid.Row="0" Margin="0 10" loc:L.Value="Printer Configuration" />
+        <Grid Grid.Row="1" Margin="10 0 10 10" ColumnDefinitions="Auto * Auto Auto">
 
-            <StackPanel Grid.Row="2" Margin="10 0" Orientation="Horizontal">
-                <Label Margin="0 0 20 -3" VerticalAlignment="Center" loc:L.Value="Printer: " />
-                <ComboBox MinWidth="400"
-                          DisplayMemberPath="Name"
-                          ItemsSource="{Binding MainVM.Printers}"
-                          SelectedItem="{Binding MainVM.Printer, Mode=TwoWay}" />
+            <ComboBox Grid.Column="1"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding MainVM.Printers}"
+                      SelectedItem="{Binding MainVM.Printer, Mode=TwoWay}" />
+            <ui:Button x:Name="AddPrinterBtn"
+                       Grid.Column="2"
+                       Width="25" Height="35"
+                       Margin="16 0 0 0" Padding="0"
+                       Background="Transparent" BorderBrush="Transparent" Click="AddPrinterBtn_Click">
+                <ui:SymbolIcon Margin="0" Symbol="Add16" />
+            </ui:Button>
+            <ui:Button Grid.Column="3"
+                       Width="25" Height="35"
+                       Margin="16 0 0 0" Padding="0"
+                       Background="Transparent" BorderBrush="Transparent"
+                       Command="{Binding MainVM.DeletePrinterCommand}">
+                <ui:SymbolIcon Margin="0" Foreground="{StaticResource PaletteRedBrush}" Symbol="Delete12" />
+            </ui:Button>
+        </Grid>
 
-                <ui:Button x:Name="AddPrinterBtn"
-                           Width="25" Height="35"
-                           Margin="20 0 -10 0" Padding="0"
-                           Background="Transparent" BorderBrush="Transparent" Click="AddPrinterBtn_Click">
-                    <ui:SymbolIcon Margin="0" Symbol="Add16" />
-                </ui:Button>
-                <ui:Button Grid.Column="1"
-                           Width="25" Height="35"
-                           Margin="20 0 -10 0" Padding="0"
-                           Background="Transparent" BorderBrush="Transparent"
-                           Command="{Binding MainVM.DeletePrinterCommand}">
-                    <ui:SymbolIcon Margin="0" Foreground="{StaticResource PaletteRedBrush}" Symbol="Delete12" />
-                </ui:Button>
-            </StackPanel>
-
-            <Separator Grid.Row="3" Margin="5" />
-            <ScrollViewer Grid.Row="4"
-                          Margin="-14 10 -14 0" Padding="25 0 25 0"
-                          CanContentScroll="True" VerticalScrollBarVisibility="Visible">
-                <DockPanel>
-
-                    <StackPanel DockPanel.Dock="Bottom">
-
+        <TabControl x:Name="PrinterConfigurationTabs"
+                    Grid.Row="2"
+                    VerticalAlignment="Stretch"
+                    BorderBrush="Transparent">
+            <TabControl.Template>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0"
+                                    Panel.ZIndex="1"
+                                    IsItemsHost="True" KeyboardNavigation.TabIndex="1" Orientation="Horizontal" />
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </TabControl.Template>
+            <TabItem x:Name="HardwareSettingsTab" IsSelected="True" Style="{StaticResource CustomTabStyle}">
+                <TabItem.Header>
+                    <StackPanel Margin="5 0" Orientation="Horizontal">
+                        <ui:SymbolIcon Margin="0 0 6 0" Symbol="Options20" />
+                        <TextBlock loc:L.Value="Hardware" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Separator Grid.Row="0" Margin="5" />
+                    <ScrollViewer Grid.Row="1"
+                                  Margin="-14 10 -14 0" Padding="25 0 25 0"
+                                  CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="14 0" FlowDirection="LeftToRight">
                             <StackPanel.Background>
                                 <SolidColorBrush Color="Transparent" />
@@ -148,7 +172,6 @@
 
                             </StackPanel>
 
-
                             <Grid Margin="0 0 0 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="25" />
@@ -206,132 +229,139 @@
 
                             </Grid>
 
-
                             <StackPanel Margin="0 10 0 10" Orientation="Horizontal">
 
                                 <Label Margin="0 4 10 0" loc:L.Value="Toolhead Offset" />
 
-
                             </StackPanel>
 
-                            <Grid Margin="5 0 0 0">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-
+                                    <ColumnDefinition Width="25" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="25" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <local:LabeledNumberBoxControl Margin="0 0 35 0"
-                                                               LabelText="X"
-                                                               Text="{Binding MainVM.Printer.ToolOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                                                               TextBoxWidth="200" UnitText="mm" />
-
-                                <local:LabeledNumberBoxControl Grid.Column="1"
-                                                               Margin="30 0 0 0"
-                                                               LabelText="Y"
-                                                               Text="{Binding MainVM.Printer.ToolOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
-                                                               TextBoxWidth="200" UnitText="mm" />
-
+                                <Label Padding="1 2 0 0" VerticalAlignment="Center" Content="X" />
+                                <ui:TextBox Grid.Column="1"
+                                            ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                            Text="{Binding MainVM.Printer.ToolOffsetX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allownegative}" />
+                                <Label Grid.Column="3"
+                                       Padding="1 2 0 0" VerticalAlignment="Center"
+                                       Content="Y" />
+                                <ui:TextBox Grid.Column="4"
+                                            ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                            Text="{Binding MainVM.Printer.ToolOffsetY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allownegative}" />
+                                <Label Grid.Column="1"
+                                       Padding="1 2 10 0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Content="mm"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
+                                <Label Grid.Column="4"
+                                       Padding="1 2 10 0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Content="mm"
+                                       Foreground="{StaticResource ControlFillColorSecondaryBrush}" />
                             </Grid>
 
-
                         </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
 
-                        <Separator Margin="0 10 0 5" />
-                        <ui:CardExpander x:Name="CustomGCode_Section"
-                                         Margin="-0 0" loc:L.Context="Custom GCode Entries"
-                                         Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
-                                         Style="{StaticResource CustomCardExpanderStyle}">
-                            <ui:CardExpander.Header>
-                                <Grid Margin="10 0" FlowDirection="LeftToRight">
+            <TabItem x:Name="CustomGCode_Section" Style="{StaticResource CustomTabStyle}">
+                <TabItem.Header>
+                    <StackPanel Margin="5 0" Orientation="Horizontal">
+                        <ui:SymbolIcon Margin="0 0 6 0" Symbol="Document20" />
+                        <TextBlock loc:L.Context="Custom GCode Entries" loc:L.Value="Custom GCode" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid loc:L.Context="Custom GCode Entries">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Separator Grid.Row="0" Margin="5" />
+                    <ScrollViewer Grid.Row="1"
+                                  Margin="-14 10 -14 0" Padding="25 0 25 0"
+                                  CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="14 0" ColumnDefinitions="* 20 *" RowDefinitions="auto 20 auto 20 auto">
 
-                                    <TextBlock Padding="1 2 10 0" VerticalAlignment="Center" loc:L.Value="Custom GCode" />
-
-
-
-                                </Grid>
-                            </ui:CardExpander.Header>
-
-                            <StackPanel Margin="14 0" FlowDirection="LeftToRight">
-
+                            <StackPanel Grid.Row="0" Grid.Column="0">
                                 <Label Margin="0 0 0 0" loc:L.Value="Start GCode" />
 
                                 <ui:TextBox x:Name="StartGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.StartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="End GCode" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center" loc:L.Value="End GCode" />
 
                                 <ui:TextBox x:Name="EndGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.EndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-                                <Label Margin="0 20 0 0" loc:L.Value="Tool On GCode">
-                                    <Label.ToolTip>
-                                        <ToolTip loc:L.Value="Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." />
-                                    </Label.ToolTip>
-                                </Label>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="0">
+                                <StackPanel.ToolTip>
+                                    <ToolTip loc:L.Value="Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." />
+                                </StackPanel.ToolTip>
+                                <Label Margin="0 0 0 0" loc:L.Value="Tool On GCode" />
 
                                 <ui:TextBox x:Name="ToolDownGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.ToolDownGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-                                <Label Margin="0 20 0 0" loc:L.Value="Tool Off GCode">
-                                    <Label.ToolTip>
-                                        <ToolTip loc:L.Value="Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." />
-                                    </Label.ToolTip>
-                                </Label>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2">
+                                <StackPanel.ToolTip>
+                                    <ToolTip loc:L.Value="Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." />
+                                </StackPanel.ToolTip>
+                                <Label Margin="0 0 0 0" loc:L.Value="Tool Off GCode" />
 
                                 <ui:TextBox x:Name="ToolUpGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.ToolUpGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="Preview Start GCode (?)">
-                                    <Label.ToolTip>
-                                        <ToolTip loc:L.Value="Start GCode used when sending the bounding box preview to Klipper" />
-                                    </Label.ToolTip>
-                                </Label>
+                            </StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="0">
+                                <StackPanel.ToolTip>
+                                    <ToolTip loc:L.Value="Start GCode used when sending the bounding box preview to Klipper" />
+                                </StackPanel.ToolTip>
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center" loc:L.Value="Preview Start GCode (?)" />
 
                                 <ui:TextBox x:Name="PreviewStartGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.PreviewStartGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-                                <Label Margin="0 20 0 0" VerticalAlignment="Center" loc:L.Value="Preview End GCode (?)">
-                                    <Label.ToolTip>
-                                        <ToolTip loc:L.Value="End GCode used when sending the bounding box preview to Klipper" />
-                                    </Label.ToolTip>
-                                </Label>
+                            </StackPanel>
+                            <StackPanel Grid.Row="4" Grid.Column="2">
+                                <StackPanel.ToolTip>
+                                    <ToolTip loc:L.Value="End GCode used when sending the bounding box preview to Klipper" />
+                                </StackPanel.ToolTip>
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center" loc:L.Value="Preview End GCode (?)" />
 
                                 <ui:TextBox x:Name="PreviewEndGCodeTextBox"
                                             Height="100"
                                             Margin="0 5 0 0"
-                                            AcceptsReturn="True"
+                                            AcceptsReturn="True" ClearButtonEnabled="False" HorizontalScrollBarVisibility="Auto"
                                             Text="{Binding MainVM.Printer.PreviewEndGCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
-
-
                             </StackPanel>
-
-                        </ui:CardExpander>
-                    </StackPanel>
-
-                </DockPanel>
-            </ScrollViewer>
-
-        </Grid>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </ui:FluentWindow>

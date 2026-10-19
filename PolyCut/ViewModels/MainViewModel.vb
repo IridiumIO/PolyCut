@@ -672,6 +672,8 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             Configuration.WorkAreaWidth = Printer.BedWidth
             Configuration.ToolOffsetX = Printer.ToolOffsetX
             Configuration.ToolOffsetY = Printer.ToolOffsetY
+            Configuration.ToolDownGCode = Printer.ToolDownGCode
+            Configuration.ToolUpGCode = Printer.ToolUpGCode
 
             Configuration.SoftwareVersion = SettingsHandler.Version
 

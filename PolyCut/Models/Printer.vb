@@ -84,6 +84,8 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
 
     <ObservableProperty> Private _StartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
     <ObservableProperty> Private _EndGCode As String = $""
+    <ObservableProperty> Private _ToolDownGCode As String = ""
+    <ObservableProperty> Private _ToolUpGCode As String = ""
     <ObservableProperty> Private _PreviewStartGCode As String = $"G0 E0{Environment.NewLine}G21{Environment.NewLine}G28"
     <ObservableProperty> Private _PreviewEndGCode As String = $""
 
@@ -101,7 +103,9 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             .WorkingWidth = Me.WorkingWidth,
             .WorkingHeight = Me.WorkingHeight,
             .StartGCode = Me.StartGCode,
-            .EndGCode = Me.EndGCode
+            .EndGCode = Me.EndGCode,
+            .ToolDownGCode = Me.ToolDownGCode,
+            .ToolUpGCode = Me.ToolUpGCode
         }
         Return p
     End Function
@@ -119,6 +123,8 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
         Me.WorkingHeight = other.WorkingHeight
         Me.StartGCode = other.StartGCode
         Me.EndGCode = other.EndGCode
+        Me.ToolDownGCode = other.ToolDownGCode
+        Me.ToolUpGCode = other.ToolUpGCode
     End Sub
 
 End Class

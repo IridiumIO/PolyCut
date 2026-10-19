@@ -222,10 +222,14 @@
 "Custom GCode" = "カスタム GCode"
 "End GCode" = "終了 GCode"
 "End GCode used when sending the bounding box preview to Klipper" = "外接矩形プレビューを Klipper に送信するときに使用する終了 GCode"
+"Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." = "Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." # LOC:TODO
+"Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." = "Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." # LOC:TODO
 "Preview End GCode (?)" = "プレビュー終了 GCode (?)"
 "Preview Start GCode (?)" = "プレビュー開始 GCode (?)"
 "Start GCode" = "開始 GCode"
 "Start GCode used when sending the bounding box preview to Klipper" = "外接矩形プレビューを Klipper に送信するときに使用する開始 GCode"
+"Tool Off GCode" = "Tool Off GCode" # LOC:TODO
+"Tool On GCode" = "Tool On GCode" # LOC:TODO
 
 [context."Cut/Draw tool work"]
 "Work" = "作業"

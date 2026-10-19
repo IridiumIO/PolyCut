@@ -222,10 +222,14 @@
 "Custom GCode" = "Custom GCode"
 "End GCode" = "End GCode"
 "End GCode used when sending the bounding box preview to Klipper" = "End GCode used when sending the bounding box preview to Klipper"
+"Optional commands to activate a tool after moving to the work Z height, before cutting or drawing." = "Optional commands to activate a tool after moving to the work Z height, before cutting or drawing."
+"Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." = "Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion."
 "Preview End GCode (?)" = "Preview End GCode (?)"
 "Preview Start GCode (?)" = "Preview Start GCode (?)"
 "Start GCode" = "Start GCode"
 "Start GCode used when sending the bounding box preview to Klipper" = "Start GCode used when sending the bounding box preview to Klipper"
+"Tool Off GCode" = "Tool Off GCode"
+"Tool On GCode" = "Tool On GCode"
 
 [context."Cut/Draw tool work"]
 "Work" = "Work"

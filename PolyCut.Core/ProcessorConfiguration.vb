@@ -41,6 +41,8 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     <ObservableProperty> Private _WorkAreaHeight As Double = 200
     <ObservableProperty> Private _ToolOffsetX As Double = 0
     <ObservableProperty> Private _ToolOffsetY As Double = 0
+    <ObservableProperty> Private _ToolDownGCode As String = ""
+    <ObservableProperty> Private _ToolUpGCode As String = ""
 
 
     <ObservableProperty> Private _CuttingConfig As New CuttingConfiguration

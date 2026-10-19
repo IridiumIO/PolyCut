@@ -28,12 +28,14 @@ Public Class GCodeGenerator
         End If
 
         GCD.EstimatedTime += GetTimeForLine(workLines(0), travelSpeed)
+        AppendSnippet(GCD, cfg.ToolUpGCode)
         GCD.GCodes.Add(GCode.G0(workLines(0).StartPoint.ToPoint, zTravel, travelSpeed))
 
         For passIndex As Integer = 0 To cfg.Passes - 1
 
             Dim zWork As Double = cfg.WorkZ + passIndex * cfg.PassHeightDelta
             Dim isNewLine As Boolean = True
+            Dim toolDown As Boolean = False
 
             If cfg.Passes > 1 Then
                 GCD.GCodes.Add(GCode.CommentLine($"Pass {passIndex + 1} of {cfg.Passes} at height {zWork}"))
@@ -44,6 +46,8 @@ Public Class GCodeGenerator
                 'Pen Down
                 If isNewLine Then
                     GCD.GCodes.Add(GCode.GZ(zWork))
+                    AppendSnippet(GCD, cfg.ToolDownGCode)
+                    toolDown = True
                     GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
                 End If
 
@@ -58,6 +62,8 @@ Public Class GCodeGenerator
                     isNewLine = False
                 Else
                     'Pen Up
+                    AppendSnippet(GCD, cfg.ToolUpGCode)
+                    toolDown = False
                     GCD.GCodes.Add(GCode.GZ(zTravel))
                     GCD.EstimatedTime += GetTimeForZ(zTravel - zWork, zSpeed)
 
@@ -74,6 +80,9 @@ Public Class GCodeGenerator
                 End If
 
             Next
+
+            ' A closed contour can end continuously with its start, bypassing the pen-up branch.
+            If toolDown Then AppendSnippet(GCD, cfg.ToolUpGCode)
 
             If passIndex <> cfg.Passes - 1 Then
                 ' Move to travel Z from safe
@@ -93,6 +102,11 @@ Public Class GCodeGenerator
         Return GCD
 
     End Function
+
+    Private Shared Sub AppendSnippet(data As GCodeData, snippet As String)
+        If String.IsNullOrWhiteSpace(snippet) Then Return
+        data.GCodes.Add(New GCode With {.Mode = Nothing, .RawText = snippet})
+    End Sub
 
     Private Shared Function RedefineOrigin(lines As List(Of GeoLine), cfg As ProcessorConfiguration) As List(Of GeoLine)
         Dim h As Single = cfg.WorkAreaHeight

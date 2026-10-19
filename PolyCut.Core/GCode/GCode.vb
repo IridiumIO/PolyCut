@@ -13,6 +13,7 @@ Public Class GCode
     Public Property F As Double? = Nothing
     Public Property Comment As String = Nothing
     Public Property BlankLine As Boolean = False
+    Public Property RawText As String = Nothing
 
     Public Sub New()
     End Sub
@@ -96,6 +97,7 @@ Public Class GCode
     End Function
 
     Public Overrides Function ToString() As String
+        If RawText IsNot Nothing Then Return RawText
         Dim GcodeLine As String = ""
 
         If BlankLine Then Return ""

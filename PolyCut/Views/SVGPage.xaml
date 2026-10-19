@@ -50,7 +50,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="55" MinWidth="55" MaxWidth="55" />
+            <ColumnDefinition Width="56" MinWidth="56" MaxWidth="56" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="380" MinWidth="380" MaxWidth="800" />
         </Grid.ColumnDefinitions>
@@ -60,14 +60,11 @@
 
 
         <ui:Card Grid.Column="0"
-                 Margin="5 5 0 5" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center"
+                 Margin="5 5 0 5" Padding="0 7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                  VerticalContentAlignment="Stretch" Panel.ZIndex="1"
                  local:LiveBlurBackground.EnableBlur="True" BorderThickness="0">
-            <ui:Card.Effect>
-                <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
-            </ui:Card.Effect>
 
-            <local:ToolSelectorPane x:Name="ToolSelectorPanel" Margin="7" Background="Transparent" />
+            <local:ToolSelectorPane x:Name="ToolSelectorPanel" HorizontalAlignment="Center" />
 
         </ui:Card>
 

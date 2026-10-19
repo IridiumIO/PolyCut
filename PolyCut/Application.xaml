@@ -231,18 +231,70 @@ To="#00FFFFFF" Duration="0:0:0.3" />
                             </Setter.Value>
                         </Setter>
                     </Style>
-                    <Style x:Key="MyRadioButtonStyle" BasedOn="{StaticResource {x:Type ToggleButton}}" TargetType="RadioButton">
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="0" />
-                        <Style.Triggers>
-                            <Trigger Property="IsChecked" Value="False">
-                                <Setter Property="Background" Value="Transparent" />
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Background" Value="#20FFFFFF" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
+                    <Style x:Key="MyRadioButtonStyle"
+       TargetType="RadioButton"
+       BasedOn="{StaticResource {x:Type ToggleButton}}">
+
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="RadioButton">
+                <Grid Background="Transparent">
+                    <!-- Persistent selection background -->
+                    <Border Background="{TemplateBinding Background}" CornerRadius="5" />
+
+                    <!-- Independent hover background -->
+                    <Border x:Name="HoverOverlay"
+                            Background="White"
+                            Opacity="0" CornerRadius="5"
+                            IsHitTestVisible="False" />
+
+                    <ContentPresenter
+                        Margin="{TemplateBinding Padding}"
+                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                        RecognizesAccessKey="True" />
+                </Grid>
+
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter Property="Background" Value="#20FFFFFF" />
+                        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                    </Trigger>
+
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation
+                                        Storyboard.TargetName="HoverOverlay"
+                                        Storyboard.TargetProperty="Opacity"
+                                        To="0.3"
+                                        Duration="0:0:0.2" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation
+                                        Storyboard.TargetName="HoverOverlay"
+                                        Storyboard.TargetProperty="Opacity"
+                                        To="0"
+                                        Duration="0:0:0.05" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+                    
                 </ResourceDictionary>
 
 

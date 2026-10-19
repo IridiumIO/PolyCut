@@ -260,8 +260,21 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End If
     End Sub
 
-
-
+    Public Sub ReorderSelectedItems(sidebarOrder As IEnumerable(Of IDrawable))
+        Using ModelBatch.Begin()
+            Dim actions As New List(Of IUndoableAction)
+            For Each siblings In sidebarOrder.GroupBy(AddressOf GetParentGroup)
+                If siblings.Key Is Nothing Then Continue For
+                Dim target = siblings.Key.GroupChildren.Count - 1
+                For Each item In siblings
+                    actions.AddRange(ReorderPlanner.Move(_document, {item}, target - siblings.Key.GroupChildren.IndexOf(item), AddressOf GetParentGroup))
+                    target -= 1
+                Next
+            Next
+            If actions.Count > 0 Then _undoRedoService.Push(New CompositeAction(actions))
+        End Using
+        RebuildFlatSidebarItems()
+    End Sub
 
     ' Constructor & initialization
     Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService)

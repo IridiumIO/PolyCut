@@ -166,7 +166,11 @@ Public Class ReorderPlanner
                 If selected.Contains(collection(src - 1)) Then Return src
                 Return src - 1
             Case Else
-                Return src
+                Dim target = Math.Clamp(CLng(src) + direction, 0L, CLng(collection.Count - 1))
+                While target <> src AndAlso selected.Contains(collection(CInt(target)))
+                    target -= Math.Sign(direction)
+                End While
+                Return CInt(target)
         End Select
     End Function
 

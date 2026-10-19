@@ -1,5 +1,6 @@
-Imports PolyCut.RichCanvas
+﻿Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
+Imports GongSolutions.Wpf.DragDrop
 
 Public Class Tab_Elements
 
@@ -7,10 +8,32 @@ Public Class Tab_Elements
 
         ' This call is required by the designer.
         InitializeComponent()
+        GongSolutions.Wpf.DragDrop.DragDrop.SetDropHandler(FilesList, New ElementsDropHandler(Me))
 
         ' Add any initialization after the InitializeComponent() call.
 
     End Sub
+
+    Private Class ElementsDropHandler : Inherits DefaultDropHandler
+        Private ReadOnly _owner As Tab_Elements
+
+        Public Sub New(owner As Tab_Elements)
+            _owner = owner
+        End Sub
+
+        Public Overrides Sub Drop(info As IDropInfo)
+            Dim vm = TryCast(_owner.DataContext, SVGPageViewModel)?.MainVM
+            If vm Is Nothing Then Return
+            _owner._syncingFromCanvas = True
+            Try
+                MyBase.Drop(info)
+                _owner.SyncListViewSelection(PolyCanvas.SelectedItems)
+            Finally
+                _owner._syncingFromCanvas = False
+            End Try
+            vm.ReorderSelectedItems(vm.FlatSidebarItems.Select(Function(row) row.Item).ToList())
+        End Sub
+    End Class
 
     'manually sync Listiew selection from canvas (avoids infinite loop from binding)
     Public Sub SyncListViewSelection(selectedDrawables As IEnumerable(Of IDrawable))
@@ -19,18 +42,17 @@ Public Class Tab_Elements
 
         RemoveHandler lv.SelectionChanged, AddressOf ListView_SelectionChanged
         Try
-            lv.SelectedItems.Clear()
+            Dim setSel = New HashSet(Of IDrawable)(selectedDrawables.Where(Function(d) d IsNot Nothing AndAlso Not TypeOf d Is DrawableGroup))
 
-            Dim setSel = New HashSet(Of IDrawable)(
-            selectedDrawables.Where(Function(d) d IsNot Nothing AndAlso Not TypeOf d Is DrawableGroup)
-        )
-
-            For Each obj In lv.Items
-                Dim vm = TryCast(obj, SidebarItemVM)
-                If vm?.Item IsNot Nothing AndAlso setSel.Contains(vm.Item) Then
+            Dim matches = lv.Items.OfType(Of SidebarItemVM)().Where(Function(vm) setSel.Contains(vm.Item))
+            If lv.SelectionMode = SelectionMode.Single Then
+                lv.SelectedItem = matches.FirstOrDefault()
+            Else
+                lv.SelectedItems.Clear()
+                For Each vm In matches
                     lv.SelectedItems.Add(vm)
-                End If
-            Next
+                Next
+            End If
         Finally
             AddHandler lv.SelectionChanged, AddressOf ListView_SelectionChanged
         End Try

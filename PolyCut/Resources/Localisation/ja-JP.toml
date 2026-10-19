@@ -58,6 +58,7 @@
 "File Saved" = "ファイルを保存しました"
 "File name: " = "ファイル名: "
 "Fill" = "塗りつぶし"
+"Fill Colour" = "Fill Colour" # LOC:TODO
 "Fill Style" = "塗りつぶしスタイル"
 "Finish Import" = "インポートを完了"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "白黒モードで使用する固定輝度しきい値（0～255）。この値より暗いピクセルは前景（黒）になり、この値以上のピクセルは背景（白）になります。適応サンプリングが有効な場合は無視されます。"
@@ -137,6 +138,7 @@
 "Stacking" = "積み重ね"
 "Start Menu Shortcut" = "スタートメニューのショートカット"
 "Stroke" = "ストローク"
+"Stroke Colour" = "Stroke Colour" # LOC:TODO
 "Stroke Thickness" = "ストロークの太さ"
 "Style" = "スタイル"
 "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "差分演算の結果が空のジオメトリになりました。形状が重なっていないか、結果が完全に差し引かれた可能性があります。"

@@ -58,6 +58,7 @@
 "File Saved" = "Fichier enregistré"
 "File name: " = "Nom du fichier : "
 "Fill" = "Remplissage"
+"Fill Colour" = "Fill Colour" # LOC:TODO
 "Fill Style" = "Style de remplissage"
 "Finish Import" = "Terminer l’importation"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Seuil de luminosité fixe (0 à 255) utilisé en mode Noir et blanc. Les pixels plus sombres que cette valeur deviennent le premier plan (noir) ; les pixels égaux ou supérieurs deviennent l’arrière-plan (blanc). Ignoré lorsque l’échantillonnage adaptatif est activé."
@@ -137,6 +138,7 @@
 "Stacking" = "Empilement"
 "Start Menu Shortcut" = "Raccourci du menu Démarrer"
 "Stroke" = "Trait"
+"Stroke Colour" = "Stroke Colour" # LOC:TODO
 "Stroke Thickness" = "Épaisseur du trait"
 "Style" = "Style"
 "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "La soustraction a produit une géométrie vide. Les formes ne se chevauchent peut-être pas, ou le résultat a été entièrement soustrait."

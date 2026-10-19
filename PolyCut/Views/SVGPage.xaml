@@ -142,6 +142,8 @@
                        Background="Transparent"
                        CanvasMode="{Binding CanvasToolMode, Mode=OneWay}"
                        CanvasTextBox="{Binding CanvasTextBox}"
+                       rc:DrawingManager.Stroke="{Binding DrawingStroke}"
+                       rc:DrawingManager.Fill="{Binding DrawingFill}"
                        ClipToBounds="True"
                        Cursor="{Binding CanvasToolMode, Converter={StaticResource CanvasToolModeCursorConverter}, Mode=OneWay}"
                        LeftButtonAction="None" MiddleButtonAction="Move" RightButtonAction="None" ScaleAmount="0.002" ScaleMax="150"

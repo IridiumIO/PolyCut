@@ -4,6 +4,31 @@ Imports PolyCut.Shared
 Public Class DrawingManager
     Private _currentShape As Shape
     Private _startPos As Point
+    Private _drawingStroke As Brush = Brushes.Black
+    Private _drawingFill As Brush = Brushes.Transparent
+
+    Public Shared ReadOnly StrokeProperty As DependencyProperty = DependencyProperty.RegisterAttached("Stroke", GetType(Brush), GetType(DrawingManager), New FrameworkPropertyMetadata(Brushes.Black, FrameworkPropertyMetadataOptions.Inherits))
+    Public Shared ReadOnly FillProperty As DependencyProperty = DependencyProperty.RegisterAttached("Fill", GetType(Brush), GetType(DrawingManager), New FrameworkPropertyMetadata(Brushes.Transparent, FrameworkPropertyMetadataOptions.Inherits))
+
+    Public Shared Function GetStroke(element As DependencyObject) As Brush
+        Return DirectCast(element.GetValue(StrokeProperty), Brush)
+    End Function
+
+    Public Shared Sub SetStroke(element As DependencyObject, value As Brush)
+        element.SetValue(StrokeProperty, value)
+    End Sub
+
+    Public Shared Function GetFill(element As DependencyObject) As Brush
+        Return DirectCast(element.GetValue(FillProperty), Brush)
+    End Function
+
+    Public Shared Sub SetFill(element As DependencyObject, value As Brush)
+        element.SetValue(FillProperty, value)
+    End Sub
+
+    Public Shared Function HasPaint(brush As Brush) As Boolean
+        Return brush IsNot Nothing AndAlso brush.Opacity > 0 AndAlso (TypeOf brush IsNot SolidColorBrush OrElse DirectCast(brush, SolidColorBrush).Color.A > 0)
+    End Function
 
     Public Shared SNAPTOGRID As Boolean = False
 
@@ -15,12 +40,18 @@ Public Class DrawingManager
     End Sub
 
     Private Sub OnTextSessionFinished(element As UIElement)
+        Dim textBox = TryCast(element, TextBox)
+        If textBox IsNot Nothing AndAlso textBox.ReadLocalValue(FillProperty) IsNot DependencyProperty.UnsetValue Then
+            textBox.Foreground = GetFill(textBox)
+        End If
         RaiseEvent DrawingFinished(Me, element)
     End Sub
 
     Public Sub StartDrawing(mode As CanvasMode, startPoint As Point, pcanvas As PolyCanvas)
         TextEditor.CommitActiveText(pcanvas)
         _startPos = startPoint
+        _drawingStroke = GetStroke(pcanvas)
+        _drawingFill = GetFill(pcanvas)
 
         Select Case mode
             Case CanvasMode.Line
@@ -34,6 +65,11 @@ Public Class DrawingManager
         End Select
 
         If _currentShape IsNot Nothing Then
+            If mode <> CanvasMode.RegistrationMark Then
+                _currentShape.Stroke = _drawingStroke
+                _currentShape.Fill = If(mode = CanvasMode.Line, Brushes.Transparent, _drawingFill)
+                _currentShape.StrokeThickness = 0.5
+            End If
             pcanvas.Children.Add(_currentShape)
         End If
     End Sub
@@ -59,6 +95,13 @@ Public Class DrawingManager
 
         If mode = CanvasMode.Text Then
             TextEditor.StartNewText(_startPos, TextCharacteristics.FromTextBox(ctextbox), pCanvas)
+            Dim textBox = TextEditor.ActiveTextBox
+            If textBox IsNot Nothing Then
+                SetStroke(textBox, _drawingStroke)
+                SetFill(textBox, _drawingFill)
+                ' Keep outline-only text readable while the new text is being entered.
+                textBox.Foreground = If(HasPaint(_drawingFill), _drawingFill, _drawingStroke)
+            End If
             Return
         End If
 
@@ -317,6 +360,7 @@ Public Class DrawingManager
 
         Dim path As Path = ConvertPolylineToBezierPath(polyline, smoothingFactor:=If(isCtrlPressed, 0, 0.1))
         If path Is Nothing Then Return Nothing
+        path.Fill = polyline.Fill
 
         Dim bounds As Rect = path.Data.Bounds
         path.Width = bounds.Width + polyline.StrokeThickness
@@ -371,7 +415,7 @@ Public Class DrawingManager
             pathFigure.Segments.Add(segment)
         Next
 
-        Return CreatePath(pathFigure, polyline.Stroke, 0.5)
+        Return CreatePath(pathFigure, polyline.Stroke, polyline.StrokeThickness)
     End Function
 
     Private Shared Function CreatePath(figure As PathFigure, stroke As Brush, strokeThickness As Double) As Path

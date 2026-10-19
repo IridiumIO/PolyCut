@@ -1,5 +1,6 @@
 Option Strict On
 Imports PolyCut.[Shared]
+Imports PolyCut.RichCanvas
 
 Public Class AddDrawableAction : Implements IUndoableAction
 
@@ -54,6 +55,10 @@ Public Class AddDrawableAction : Implements IUndoableAction
             drawable = New DrawableEllipse(DirectCast(element, Ellipse))
         ElseIf TypeOf element Is TextBox Then
             drawable = New DrawableText(DirectCast(element, TextBox)) With {.StrokeThickness = 0}
+            If element.ReadLocalValue(DrawingManager.StrokeProperty) IsNot DependencyProperty.UnsetValue Then
+                drawable.Stroke = DrawingManager.GetStroke(element)
+                drawable.StrokeThickness = If(DrawingManager.HasPaint(drawable.Stroke), 0.5, 0)
+            End If
         ElseIf TypeOf element Is Shapes.Path Then
             drawable = New DrawablePath(DirectCast(element, Shapes.Path))
         End If

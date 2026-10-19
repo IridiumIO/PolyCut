@@ -12,6 +12,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
     <ObservableProperty> Private _MainVM As MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
 
+    <ObservableProperty> Private _DrawingStroke As Brush = Brushes.Black
+    <ObservableProperty> Private _DrawingFill As Brush = Brushes.Transparent
+
 
     Private _CanvasToolMode As CanvasMode
     Public Property CanvasToolMode As CanvasMode

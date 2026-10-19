@@ -29,6 +29,18 @@ Public Class ColorPickerControl
 
     End Sub
 
+    ' Compact testing layout for toolbar
+    Public Shared ReadOnly IsCompactProperty As DependencyProperty = DependencyProperty.Register(NameOf(IsCompact), GetType(Boolean), GetType(ColorPickerControl), New PropertyMetadata(False))
+
+    Public Property IsCompact As Boolean
+        Get
+            Return CBool(GetValue(IsCompactProperty))
+        End Get
+        Set(value As Boolean)
+            SetValue(IsCompactProperty, value)
+        End Set
+    End Property
+
     ' Label text property
     Public Shared ReadOnly LabelTextProperty As DependencyProperty =
         DependencyProperty.Register("LabelText", GetType(String), GetType(ColorPickerControl), New PropertyMetadata("Color"))
@@ -195,6 +207,7 @@ Public Class ColorPickerControl
         If brush Is Nothing Then Return
 
         ColorPopup.IsOpen = False
+        SetCurrentValue(CurrentColorProperty, brush)
         RaiseEvent ColorSelected(Me, New ColorSelectedEventArgs(brush))
     End Sub
 
@@ -242,6 +255,7 @@ Public Class ColorPickerControl
             Try
                 Dim color = CType(ColorConverter.ConvertFromString(hexValue), Color)
                 Dim brush As New SolidColorBrush(color)
+                SetCurrentValue(CurrentColorProperty, brush)
                 RaiseEvent ColorSelected(Me, New ColorSelectedEventArgs(brush))
             Catch
                 ' Invalid hex, revert to current color

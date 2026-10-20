@@ -1,8 +1,4 @@
-﻿Imports Svg
-Imports System.Windows.Media
-Imports System.Windows.Shapes
-
-Public Class PathBasedElement
+﻿Public Class PathBasedElement
     Public ReadOnly Property FlattenedLines As List(Of GeoLine)
         Get
             Return Figures.SelectMany(Of GeoLine)(Function(x) x).ToList

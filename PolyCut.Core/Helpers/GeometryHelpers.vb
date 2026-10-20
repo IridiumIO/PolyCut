@@ -1,14 +1,5 @@
-
 Imports System.Windows
 Imports System.Windows.Media
-Imports System.Windows.Shapes
-
-Imports Svg
-Imports Svg.Transforms
-
-
-
-
 
 Public Module GeometryHelpers
 

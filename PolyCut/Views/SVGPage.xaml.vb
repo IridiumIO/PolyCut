@@ -1,17 +1,9 @@
 Imports System.ComponentModel
-Imports System.Data.SqlTypes
-Imports System.Xml
-Imports WPF.Ui.Controls
-Imports SharpVectors
-Imports System.Windows.Media.Animation
-Imports System.IO
-Imports System.Linq
-Imports CommunityToolkit.Mvvm.ComponentModel
-Imports Svg
-Imports System.Windows.Controls.Primitives
-Imports PolyCut.Shared
-Imports WPF
+
 Imports PolyCut.RichCanvas
+Imports PolyCut.Shared
+
+Imports Wpf.Ui.Controls
 Class SVGPage
 
     Public ReadOnly Property MainViewModel As MainViewModel
@@ -159,10 +151,6 @@ Class SVGPage
         SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
     End Sub
 
-    Private Sub zoomPanControl_PreviewMouseDown(sender As Object, e As MouseButtonEventArgs)
-        Dim rx = sender.GetHashCode
-        Debug.WriteLine($"zoomPanControl_PreviewMouseDown: Sender HashCode={rx}")
-    End Sub
 
     Private Sub TextStyleControl_DropDownClosed(sender As Object, e As EventArgs)
         GetTextEditor()?.RefocusActiveTextBox()

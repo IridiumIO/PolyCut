@@ -38,10 +38,6 @@ Class SettingsPage
         _viewModel.MainVM.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
-    Private Sub NumberBox_LostFocus(sender As Object, e As RoutedEventArgs)
-
-    End Sub
-
     Private Sub PreviewPage_DrawingBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
         _viewModel.MainVM.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub

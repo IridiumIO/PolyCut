@@ -540,19 +540,6 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End If
     End Sub
 
-    Public Sub UpdateSVGFiles()
-        For Each grp In ImportedGroups.ToList()
-            For Each ch In grp.GroupChildren
-                If Not DrawableCollection.Contains(ch) Then
-                    DrawableCollection.Add(ch)
-                End If
-            Next
-        Next
-        OnPropertyChanged(NameOf(ImportedGroups))
-        OnPropertyChanged(NameOf(PolyCutDocumentName))
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(FlatSidebarItems))
-    End Sub
 
     ' -----------------
     ' Drawable collection management (IDrawableManager)

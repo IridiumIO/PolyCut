@@ -460,34 +460,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         Return Nothing
     End Function
 
-    Private Function FindVisualChild(Of T As Visual)(parent As DependencyObject) As T
-        If parent Is Nothing Then Return Nothing
-
-        For i As Integer = 0 To VisualTreeHelper.GetChildrenCount(parent) - 1
-            Dim child = VisualTreeHelper.GetChild(parent, i)
-            Dim result = TryCast(child, T)
-            If result IsNot Nothing Then
-                Return result
-            End If
-
-            result = FindVisualChild(Of T)(child)
-            If result IsNot Nothing Then
-                Return result
-            End If
-        Next
-
-        Return Nothing
-    End Function
-
-    Private Sub AddChild(drawable As IDrawable)
-        Dim child As FrameworkElement = drawable.DrawableElement
-        AddChild(child, drawable)
-    End Sub
-
-    Private Sub AddChild(drawable As IDrawable, Optional insertIndex As Integer = -1)
-        Dim child As FrameworkElement = drawable.DrawableElement
-        AddChild(child, drawable, insertIndex)
-    End Sub
 
     Private Sub InsertDrawableVisual(drawable As IDrawable, Optional insertIndex As Integer = -1)
         Dim child As FrameworkElement = drawable.DrawableElement

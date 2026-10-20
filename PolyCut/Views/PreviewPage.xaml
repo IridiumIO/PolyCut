@@ -4,7 +4,8 @@
       xmlns:beh="clr-namespace:PolyCut"
       xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:PolyCut" xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+      xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+      xmlns:local="clr-namespace:PolyCut"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:rc="clr-namespace:PolyCut.RichCanvas;assembly=PolyCut.RichCanvas"
       xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
@@ -19,17 +20,6 @@
       Background="{DynamicResource ControlFillColorTertiaryBrush}"
       ScrollViewer.CanContentScroll="False"
       mc:Ignorable="d">
-    <Page.Resources>
-        <local:ZoomFactorToThicknessConverter x:Key="ZoomFactorToThicknessConverter" />
-        <c:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <local:InputToMillimetresConverter x:Key="UnitConverter" />
-        <local:AnimationFactorToValueConverter x:Key="AnimationFactorToValueConverter" />
-        <local:InverseBoolToVisConverter x:Key="InverseBoolToVisConverter" />
-        <local:NullableIntConverter x:Key="NullableIntConverter" />
-        <c:StringToObjectConverter x:Key="StringtoObjConverter" />
-        <local:GCodeToFlowDocumentConverter x:Key="GCodeToFlowDocConverter" />
-
-    </Page.Resources>
     <Grid Margin="5 5 10 5">
 
         <Grid.RowDefinitions>
@@ -61,12 +51,7 @@
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="-1"
-                            Background="#16181D" BorderBrush="White" BorderThickness="0" CornerRadius="7">
-                       
-
-
-
-                    </Border>
+                            Background="#16181D" BorderBrush="White" BorderThickness="0" CornerRadius="7" />
 
                     <Border x:Name="GridClipBorder"
                             Width="{Binding Printer.BedWidth, Mode=TwoWay}"
@@ -133,8 +118,7 @@
                  Grid.Column="0"
                  Width="500"
                  Margin="5" Padding="0" VerticalAlignment="Bottom" Panel.ZIndex="1"
-  local:LiveBlurBackground.EnableBlur="True"
-                 BorderThickness="0" UseLayoutRounding="True">
+                 local:LiveBlurBackground.EnableBlur="True" BorderThickness="0" UseLayoutRounding="True">
             <ui:Card.Effect>
                 <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.4" ShadowDepth="0" />
             </ui:Card.Effect>
@@ -149,7 +133,8 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Label Margin="0 2 0 0" VerticalAlignment="Center" loc:L.Value="Preview" loc:L.Context="Preview toolpath animation"/>
+                <Label Margin="0 2 0 0" VerticalAlignment="Center"
+                       loc:L.Context="Preview toolpath animation" loc:L.Value="Preview" />
                 <RepeatButton x:Name="StepBackPreviewButton"
                               Grid.Column="1"
                               Margin="10 0 0 0"

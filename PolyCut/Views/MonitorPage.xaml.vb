@@ -23,7 +23,6 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
     End Sub
 
 
-
     Private Sub WebView_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs) Handles webView.IsVisibleChanged
 
         Dim animation As New DoubleAnimation(-20, TimeSpan.FromSeconds(1))
@@ -43,12 +42,6 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
 
         storyboard.Begin()
 
-    End Sub
-
-
-    Private Sub CompositionTarget_Rendering(sender As Object, e As EventArgs)
-        ' Get the current time of the animation
-        webView.UpdateWindowPos()
     End Sub
 
 

@@ -10,11 +10,6 @@ Friend Module ProjectGraph
     End Function
 
     <Extension>
-    Friend Function IsVisualGroup(d As IDrawable) As Boolean
-        Return TypeOf d Is NestedDrawableGroup
-    End Function
-
-    <Extension>
     Friend Function GetGroupChildren(g As IDrawable) As IEnumerable(Of IDrawable)
         If TypeOf g Is DrawableGroup Then
             Return DirectCast(g, DrawableGroup).GroupChildren
@@ -23,6 +18,7 @@ Friend Module ProjectGraph
         End If
         Return Enumerable.Empty(Of IDrawable)()
     End Function
+
     <Extension>
     Friend Function GetLeafChildren(g As IDrawable) As List(Of IDrawable)
         Dim results As New List(Of IDrawable)

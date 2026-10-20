@@ -71,15 +71,6 @@ Class MainWindow : Implements INavigationWindow
 
     Dim svg_file As String = ""
 
-    Private Sub AnyPreviewKeyDown(sender As Object, e As KeyEventArgs)
-        If e.Key = Key.F5 Then
-            Dim fe = TryCast(Keyboard.FocusedElement, DependencyObject)
-            Debug.WriteLine($"F5 seen. Handled={e.Handled}. Focus={TryCast(fe, FrameworkElement)?.GetType().Name}")
-            Debug.WriteLine($"OriginalSource={TryCast(e.OriginalSource, FrameworkElement)?.GetType().Name}")
-        End If
-    End Sub
-
-
     Protected Overrides Sub OnPreviewKeyDown(e As KeyEventArgs)
 
         Dim k As Key = If(e.Key = Key.System, e.SystemKey, e.Key)
@@ -99,13 +90,5 @@ Class MainWindow : Implements INavigationWindow
     End Sub
 
 
-
-    Private Sub OpenMenu(sender As Object, e As MouseButtonEventArgs)
-        Dim sp = DirectCast(sender, StackPanel)
-        If sp.ContextMenu IsNot Nothing Then
-            sp.ContextMenu.PlacementTarget = sp
-            sp.ContextMenu.IsOpen = True
-        End If
-    End Sub
 
 End Class

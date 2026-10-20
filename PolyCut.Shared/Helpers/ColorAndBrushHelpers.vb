@@ -4,30 +4,6 @@ Imports Svg
 
 Public NotInheritable Class ColorAndBrushHelpers
 
-    Shared Function ColourToHex(colour As System.Drawing.Color, Optional returnAlpha As Boolean = False) As String
-        If colour = Nothing Then Return Nothing
-        If returnAlpha Then
-            Return "#" & colour.A.ToString("X2") & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
-        Else
-            Return "#" & colour.R.ToString("X2") & colour.G.ToString("X2") & colour.B.ToString("X2")
-        End If
-    End Function
-
-
-    Public Shared Function SVGPaintServerToString(paintServer As SvgPaintServer) As String
-
-        Dim colour As String
-
-        If paintServer Is Nothing OrElse paintServer.ToString() = "none" OrElse paintServer.GetType().Name.Contains("None") Then
-            colour = Nothing
-        Else
-            Dim casted = TryCast(paintServer, SvgColourServer)?.Colour
-            colour = If(casted.HasValue, ColourToHex(casted), Nothing)
-        End If
-
-        Return colour
-    End Function
-
 
     Public Shared Function BrushToSvgColourServer(brush As Brush) As SvgColourServer
         If brush Is Nothing Then Return Nothing

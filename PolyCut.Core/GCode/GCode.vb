@@ -1,5 +1,4 @@
-﻿Imports System.Text.RegularExpressions
-Imports System.Windows
+﻿Imports System.Windows
 
 'A simplified GCode class since we don't need all the features of the full GCode spec
 Public Class GCode
@@ -25,6 +24,7 @@ Public Class GCode
         Me.Z = Z
         Me.F = Feedrate
     End Sub
+
     Public Sub New(M As String, G As Integer?, Optional X As Double? = Nothing, Optional Y As Double? = Nothing, Optional Z As Double? = Nothing, Optional E As Double? = Nothing, Optional F As Double? = Nothing, Optional Comment As String = Nothing)
         Mode = M
         Code = G
@@ -36,54 +36,6 @@ Public Class GCode
         Me.Comment = Comment
     End Sub
 
-
-    Public Shared Function Parse(line As String) As GCode
-        Dim M As String = Nothing
-        Dim Code As Integer? = Nothing
-        Dim X As Double? = Nothing
-        Dim Y As Double? = Nothing
-        Dim Z As Double? = Nothing
-        Dim E As Double? = Nothing
-        Dim F As Double? = Nothing
-        Dim Comment As String = Nothing
-
-        Dim cIndex = line.IndexOf(";"c)
-        If cIndex <> -1 Then
-            Comment = line.Substring(cIndex + 1)
-            line = line.Substring(0, cIndex)
-        End If
-
-        Dim matches = Regex.Matches(line, "([A-Z])(-?\d+(.\d+)?)")
-
-
-        For Each match As Match In matches
-            Dim parameterType As Char = match.Groups(1).Value(0)
-            Dim parameterValue As Double? = Double.Parse(match.Groups(2).Value, New Globalization.NumberFormatInfo With {.NumberDecimalSeparator = "."})
-
-            Select Case parameterType
-                Case "F"
-                    F = If(parameterValue, Nothing)
-                Case "E"
-                    E = If(parameterValue, Nothing)
-                Case "X"
-                    X = If(parameterValue, Nothing)
-                Case "Y"
-                    Y = If(parameterValue, Nothing)
-                Case "Z"
-                    Z = If(parameterValue, Nothing)
-                Case "G"
-                    Code = If(parameterValue, Nothing)
-                    M = "G"
-                Case "M"
-                    Code = If(parameterValue, Nothing)
-                    M = "M"
-
-            End Select
-
-        Next
-        Return New GCode(M, Code, X, Y, Z, E, F, Comment)
-
-    End Function
 
     Public Shared Function CommentLine(comment As String) As GCode
 

@@ -58,22 +58,6 @@ Public Class DrawableGroup : Inherits BaseDrawable
         Next
     End Sub
 
-    Public Shadows Property Children As IEnumerable(Of IDrawable)
-        Get
-            Return GroupChildren
-        End Get
-        Set(value As IEnumerable(Of IDrawable))
-            RemoveHandler GroupChildren.CollectionChanged, AddressOf OnGroupChildrenChanged
-            GroupChildren.Clear()
-            If value IsNot Nothing Then
-                For Each c In value
-                    GroupChildren.Add(c)
-                Next
-            End If
-            AddHandler GroupChildren.CollectionChanged, AddressOf OnGroupChildrenChanged
-            RebuildDisplayChildren()
-        End Set
-    End Property
 
     Public Sub AddChild(child As IDrawable, Optional index As Integer = -1)
         If child Is Nothing Then Return
@@ -98,11 +82,6 @@ Public Class DrawableGroup : Inherits BaseDrawable
             child.ParentGroup = Nothing
         End If
     End Sub
-
-
-    Public Function GetAllLeafChildren() As List(Of IDrawable)
-        Return ProjectGraph.GetLeafChildren(Me)
-    End Function
 
 
 

@@ -18,44 +18,23 @@ End Structure
 Public Class GCodeGeometry : Inherits ObservableObject
 
     ' Use List for performance, convert to ObservableCollection later if needed
-    Private ReadOnly _paths As List(Of GCodeLine) = New List(Of GCodeLine)
+    Private ReadOnly _paths As New List(Of GCodeLine)
     Public ReadOnly Property Paths As ReadOnlyCollection(Of GCodeLine)
         Get
             Return _paths.AsReadOnly()
         End Get
     End Property
 
-    ' Lazy-evaluated and cached travel paths
-    Private _travelPaths As List(Of GCodeLine) = Nothing
-    Public ReadOnly Property TravelPaths As IEnumerable(Of GCodeLine)
-        Get
-            If _travelPaths Is Nothing Then
-                _travelPaths = _paths.Where(Function(f) f.IsRapidMove).ToList()
-            End If
-            Return _travelPaths
-        End Get
-    End Property
-
     ' Use List for faster bulk population
     Public ReadOnly Property GCode As List(Of GCode)
-
-
-    Public Sub New(instr As String)
-        GCode = instr.Split(Environment.NewLine).
-                     Select(Function(line) Core.GCode.Parse(line)).
-                     Where(Function(g) g IsNot Nothing).
-                     ToList()
-        BuildLines()
-    End Sub
 
     Public Sub New(gcodeCollection As List(Of GCode))
         GCode = New List(Of GCode)(gcodeCollection)
         BuildLines()
     End Sub
 
-    Public Sub BuildLines()
+    Private Sub BuildLines()
         _paths.Clear()
-        _travelPaths = Nothing ' Invalidate cache
 
         Dim lastX As Double = 0
         Dim lastY As Double = 0

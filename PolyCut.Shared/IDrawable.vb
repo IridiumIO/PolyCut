@@ -8,8 +8,6 @@ Public Interface IDrawable
 
     Property DrawableElement As FrameworkElement
 
-    Property Children As IEnumerable(Of IDrawable)
-
     Property IsHidden As Boolean
     Property IsSelected As Boolean
     ReadOnly Property VisualName As String

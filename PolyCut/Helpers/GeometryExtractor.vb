@@ -9,7 +9,6 @@ Public Class GeometryExtractor
     Friend NotInheritable Class GeometrySnapshot
         Public Geometry As Geometry
         Public Transform As Matrix
-        Public ElementType As Type
         Public FillColor As String
         Public IsFilled As Boolean
     End Class
@@ -63,7 +62,6 @@ Public Class GeometryExtractor
         Return New List(Of GeometrySnapshot) From {New GeometrySnapshot With {
             .Geometry = geometry,
             .Transform = TransformMath.GeneralTransformToMatrix(gt),
-            .ElementType = element.GetType(),
             .FillColor = GetFillColor(drawable),
             .IsFilled = IsFillEnabled(drawable)
         }}
@@ -105,12 +103,12 @@ Public Class GeometryExtractor
             Return New List(Of PathBasedElement)
         End If
 
-        ' 6. Create IPathBasedElement
-        Dim pathElement = CreatePathBasedElement(item.ElementType, figures)
-        If pathElement Is Nothing Then Return New List(Of PathBasedElement)
-
-        pathElement.FillColor = item.FillColor
-        pathElement.IsFilled = isFilled
+        ' 6. Create PathBasedElement
+        Dim pathElement = New PathBasedElement With {
+            .Figures = figures,
+            .FillColor = item.FillColor,
+            .IsFilled = isFilled
+        }
 
         Return New List(Of PathBasedElement) From {pathElement}
     End Function
@@ -255,7 +253,7 @@ Public Class GeometryExtractor
     End Function
 
 
-    Private Shared Function CreatePathBasedElement(elementType As Type, figures As List(Of List(Of GeoLine))) As PathBasedElement
+    Private Shared Function CreatePathBasedElement(figures As List(Of List(Of GeoLine))) As PathBasedElement
         If figures Is Nothing OrElse figures.Count = 0 Then Return Nothing
 
         Return New PathBasedElement With {.Figures = figures}

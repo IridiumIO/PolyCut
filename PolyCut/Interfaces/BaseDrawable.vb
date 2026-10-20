@@ -51,7 +51,6 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
     End Function
 
 
-    Public Property Children As IEnumerable(Of IDrawable) Implements IDrawable.Children
     Public Property IsHidden As Boolean Implements IDrawable.IsHidden
         Get
             Return DrawableElement.Visibility = Visibility.Collapsed

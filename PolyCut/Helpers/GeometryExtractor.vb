@@ -111,7 +111,6 @@ Public Class GeometryExtractor
 
         pathElement.FillColor = item.FillColor
         pathElement.IsFilled = isFilled
-        pathElement.Config = cfg
 
         Return New List(Of IPathBasedElement) From {pathElement}
     End Function

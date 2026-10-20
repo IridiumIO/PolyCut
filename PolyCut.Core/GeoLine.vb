@@ -131,14 +131,6 @@ Public Structure GeoLine
     End Function
 
 
-    Public Function TransformLine(transforms As System.Drawing.Drawing2D.Matrix) As GeoLine
-        Dim wpfMatrix As New Matrix(transforms.Elements(0), transforms.Elements(1), transforms.Elements(2), transforms.Elements(3), transforms.OffsetX, transforms.OffsetY)
-        Dim p1 = wpfMatrix.Transform(StartPoint.ToPoint)
-        Dim p2 = wpfMatrix.Transform(EndPoint.ToPoint)
-        Return New GeoLine(p1.X, p1.Y, p2.X, p2.Y)
-    End Function
-
-
     Public Function IsContinuousWith(otherline As GeoLine, Optional bidirectional As Boolean = False) As Boolean
         If bidirectional Then
             Return (X2 = otherline.X1 AndAlso Y2 = otherline.Y1) OrElse (X1 = otherline.X2 AndAlso Y1 = otherline.Y2)
@@ -231,14 +223,6 @@ End Structure
 
 
 Partial Public Module GeoLineExtensions
-
-    <Extension>
-    Public Function TransformLinesG(lines As IEnumerable(Of GeoLine), transforms As System.Drawing.Drawing2D.Matrix) As IEnumerable(Of GeoLine)
-        Return lines.Select(Function(line) line.TransformLine(transforms))
-    End Function
-
-
-
 
     <Extension>
     Public Function IsPointOnLineG(point As Vector2, line As GeoLine, tolerance As Double) As Boolean

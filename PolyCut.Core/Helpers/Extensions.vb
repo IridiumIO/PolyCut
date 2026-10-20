@@ -19,14 +19,6 @@ Partial Public Module Extensions
 
 
     <Extension>
-    Public Function TransformLines(lines As IEnumerable(Of GeoLine), transforms As System.Drawing.Drawing2D.Matrix) As IEnumerable(Of GeoLine)
-        Return lines.Select(Function(line) line.TransformLine(transforms))
-    End Function
-
-
-
-
-    <Extension>
     Public Function RotateStartAt(lines As IEnumerable(Of GeoLine), startIndex As Integer) As List(Of GeoLine)
         Dim list = lines.ToList()
         If list.Count = 0 OrElse startIndex <= 0 OrElse startIndex >= list.Count Then

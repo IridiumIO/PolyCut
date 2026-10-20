@@ -58,7 +58,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         If _drawable Is Nothing Then Return
 
         Try
-            If _transformSnapshot IsNot Nothing AndAlso _drawable.DrawableElement IsNot Nothing Then
+            If _transformSnapshot IsNot Nothing AndAlso _drawable.DrawableElement IsNot Nothing AndAlso TransformAction.GetWrapper(_drawable) Is Nothing Then
                 Dim child = TryCast(_drawable.DrawableElement, FrameworkElement)
                 If child IsNot Nothing Then
                     If _transformSnapshot.Width > 0 Then child.Width = _transformSnapshot.Width

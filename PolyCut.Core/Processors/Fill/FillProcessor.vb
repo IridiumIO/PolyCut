@@ -23,7 +23,7 @@ Public Class FillProcessor : Implements IProcessor
     ' Entry point
     ' -------------------------
 
-    Public Function Process(elements As List(Of IPathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
+    Public Function Process(elements As List(Of PathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
         If elements Is Nothing OrElse elements.Count = 0 Then
             Return New List(Of GeoLine)
         End If
@@ -39,7 +39,7 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
     ' Per-element processing
-    Private Function ProcessElement(element As IPathBasedElement, cfg As ProcessorConfiguration) As List(Of GeoLine)
+    Private Function ProcessElement(element As PathBasedElement, cfg As ProcessorConfiguration) As List(Of GeoLine)
         If element Is Nothing OrElse element.FlattenedLines Is Nothing OrElse element.FlattenedLines.Count = 0 Then
             Return New List(Of GeoLine)
         End If

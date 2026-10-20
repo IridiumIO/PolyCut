@@ -3,7 +3,7 @@ Imports System.Windows.Documents
 
 Public Class CutProcessor : Implements IProcessor
 
-    Public Function Process(elements As List(Of IPathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
+    Public Function Process(elements As List(Of PathBasedElement), cfg As ProcessorConfiguration) As List(Of GeoLine) Implements IProcessor.Process
         If elements Is Nothing OrElse elements.Count = 0 Then
             Return New List(Of GeoLine)
         End If

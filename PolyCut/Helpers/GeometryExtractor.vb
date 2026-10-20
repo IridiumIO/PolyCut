@@ -69,7 +69,7 @@ Public Class GeometryExtractor
         }}
     End Function
 
-    Friend Shared Function ProcessSnapshot(item As GeometrySnapshot, cfg As ProcessorConfiguration) As List(Of IPathBasedElement)
+    Friend Shared Function ProcessSnapshot(item As GeometrySnapshot, cfg As ProcessorConfiguration) As List(Of PathBasedElement)
         ' 3. Flatten in local space first
         Dim flattened As PathGeometry = item.Geometry.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
 
@@ -98,21 +98,21 @@ Public Class GeometryExtractor
 
 
         figures = NormalizeFiguresForCut(figures, cfg.Tolerance, isFilled)
-        If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of IPathBasedElement)
+        If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of PathBasedElement)
 
         ' Nothing to check once clipped: the clip rectangle already guarantees containment
         If Not wasClipped AndAlso Not cfg.SkipBoundsCheck AndAlso Not IsFullyOnCanvas(figures.ComputeBounds(), cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
-            Return New List(Of IPathBasedElement)
+            Return New List(Of PathBasedElement)
         End If
 
         ' 6. Create IPathBasedElement
         Dim pathElement = CreatePathBasedElement(item.ElementType, figures)
-        If pathElement Is Nothing Then Return New List(Of IPathBasedElement)
+        If pathElement Is Nothing Then Return New List(Of PathBasedElement)
 
         pathElement.FillColor = item.FillColor
         pathElement.IsFilled = isFilled
 
-        Return New List(Of IPathBasedElement) From {pathElement}
+        Return New List(Of PathBasedElement) From {pathElement}
     End Function
 
     Private Shared Function ClipFiguresToWorkArea(figures As List(Of List(Of GeoLine)), w As Double, h As Double) As List(Of List(Of GeoLine))
@@ -255,23 +255,11 @@ Public Class GeometryExtractor
     End Function
 
 
-    Private Shared Function CreatePathBasedElement(elementType As Type, figures As List(Of List(Of GeoLine))) As IPathBasedElement
+    Private Shared Function CreatePathBasedElement(elementType As Type, figures As List(Of List(Of GeoLine))) As PathBasedElement
         If figures Is Nothing OrElse figures.Count = 0 Then Return Nothing
 
-        Select Case elementType
-            Case GetType(Rectangle)
-                Return New RectangleElement With {.Figures = figures}
-            Case GetType(Ellipse)
-                Return New EllipseElement With {.Figures = figures}
-            Case GetType(Path)
-                Return New PathElement With {.Figures = figures}
-            Case GetType(Line)
-                Return New LineElement With {.Figures = figures}
-            Case GetType(TextBox)
-                Return New TextElement With {.Figures = figures}
-            Case Else
-                Return New PathElement With {.Figures = figures}
-        End Select
+        Return New PathBasedElement With {.Figures = figures}
+
     End Function
 
 

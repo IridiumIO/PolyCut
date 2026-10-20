@@ -10,7 +10,7 @@ Public Class ProcessorManager
         Me.ProcessorConfiguration = ProcessorConfiguration
     End Sub
 
-    Public Function Process(figures As List(Of IPathBasedElement)) As List(Of GeoLine)
+    Public Function Process(figures As List(Of PathBasedElement)) As List(Of GeoLine)
         Dim processor = GetProcessor()
         Return processor.Process(figures, ProcessorConfiguration)
     End Function

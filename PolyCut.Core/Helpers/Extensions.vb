@@ -107,13 +107,13 @@ Partial Public Module Extensions
 
     ' Overload for IPathBasedElement 
     <Extension>
-    Public Function ReorderFiguresGreedy(figures As IEnumerable(Of IPathBasedElement)) As List(Of IPathBasedElement)
+    Public Function ReorderFiguresGreedy(figures As IEnumerable(Of PathBasedElement)) As List(Of PathBasedElement)
 
-        If figures Is Nothing Then Return New List(Of IPathBasedElement)()
+        If figures Is Nothing Then Return New List(Of PathBasedElement)()
 
-        Dim remaining As New List(Of IPathBasedElement)(figures)
+        Dim remaining As New List(Of PathBasedElement)(figures)
         Dim count As Integer = remaining.Count
-        If count = 0 Then Return New List(Of IPathBasedElement)()
+        If count = 0 Then Return New List(Of PathBasedElement)()
 
         Dim centres(count - 1) As Point
         For i = 0 To count - 1
@@ -121,7 +121,7 @@ Partial Public Module Extensions
         Next
 
         Dim visited(count - 1) As Boolean
-        Dim orderedFigures As New List(Of IPathBasedElement)(count)
+        Dim orderedFigures As New List(Of PathBasedElement)(count)
 
         Dim currentPoint As New System.Windows.Point(0, 0)
 

@@ -9,52 +9,34 @@ Imports PolyCut.Shared
 
 Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
-    <ObservableProperty> Private _MainVM As MainViewModel
+    Public ReadOnly Property MainVM As MainViewModel
     Private ReadOnly _undoRedoService As UndoRedoService
 
     <ObservableProperty> Private _DrawingStroke As Brush = Brushes.Black
     <ObservableProperty> Private _DrawingFill As Brush = Brushes.Transparent
 
+    <NotifyPropertyChangedFor(NameOf(CanvasToolModeIsText))>
+    <ObservableProperty> Private _CanvasToolMode As CanvasMode
 
-    Private _CanvasToolMode As CanvasMode
-    Public Property CanvasToolMode As CanvasMode
-        Get
-            Return _CanvasToolMode
-        End Get
-        Set(value As CanvasMode)
-            _CanvasToolMode = value
-            OnPropertyChanged(NameOf(CanvasToolMode))
-            OnPropertyChanged(NameOf(CanvasToolModeIsText))
-            If value <> CanvasMode.Selection Then
-                PolyCanvas.ApplySelection(Nothing, MainVM.DrawableCollection)
-                MainVM.Document.NotifyChanged()
-            End If
-        End Set
-    End Property
+    <ObservableProperty> Private _CanvasFontWeightIsBold As Boolean
+    <ObservableProperty> Private _CanvasFontStyleIsItalic As Boolean
+    <ObservableProperty> Private _CanvasFontFamily As New FontFamily("Calibri")
+    <ObservableProperty> Private _CanvasFontSize As Double = 14
 
-    Private _CanvasFontWeightIsBold As Boolean
-    Public Property CanvasFontWeightIsBold As Boolean
-        Get
-            Return _CanvasFontWeightIsBold
-        End Get
-        Set(value As Boolean)
-            _CanvasFontWeightIsBold = value
-            OnPropertyChanged(NameOf(CanvasFontWeightIsBold))
-            If Not _syncingOverlayStyle Then CanvasTextBox.FontWeight = If(value, FontWeights.Bold, FontWeights.Normal)
-        End Set
-    End Property
+    Private Sub OnCanvasToolModeChanged(value As CanvasMode)
+        If value <> CanvasMode.Selection Then
+            PolyCanvas.ApplySelection(Nothing, MainVM.DrawableCollection)
+            MainVM.Document.NotifyChanged()
+        End If
+    End Sub
 
-    Private _CanvasFontStyleIsItalic As Boolean
-    Public Property CanvasFontStyleIsItalic As Boolean
-        Get
-            Return _CanvasFontStyleIsItalic
-        End Get
-        Set(value As Boolean)
-            _CanvasFontStyleIsItalic = value
-            OnPropertyChanged(NameOf(CanvasFontStyleIsItalic))
-            If Not _syncingOverlayStyle Then CanvasTextBox.FontStyle = If(value, FontStyles.Italic, FontStyles.Normal)
-        End Set
-    End Property
+    Private Sub OnCanvasFontWeightIsBoldChanged(value As Boolean)
+        If Not _syncingOverlayStyle Then CanvasTextBox.FontWeight = If(value, FontWeights.Bold, FontWeights.Normal)
+    End Sub
+
+    Private Sub OnCanvasFontStyleIsItalicChanged(value As Boolean)
+        If Not _syncingOverlayStyle Then CanvasTextBox.FontStyle = If(value, FontStyles.Italic, FontStyles.Normal)
+    End Sub
 
     Public ReadOnly Property CanvasToolModeIsText As Boolean
         Get
@@ -62,40 +44,15 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         End Get
     End Property
 
-    Private _CanvasFontFamily As New FontFamily("Calibri")
-    Public Property CanvasFontFamily As FontFamily
-        Get
-            Return _CanvasFontFamily
-        End Get
-        Set(value As FontFamily)
-            If value Is Nothing Then Return
-            If String.Equals(_CanvasFontFamily?.Source, value.Source, StringComparison.OrdinalIgnoreCase) Then Return
-            _CanvasFontFamily = value
-            OnPropertyChanged(NameOf(CanvasFontFamily))
-            If Not _syncingOverlayStyle Then CanvasTextBox.FontFamily = value
-        End Set
-    End Property
+    Private Sub OnCanvasFontFamilyChanged(value As FontFamily)
+        If Not _syncingOverlayStyle Then CanvasTextBox.FontFamily = value
+    End Sub
 
+    Private Sub OnCanvasFontSizeChanged(value As Double)
+        If Not TextBox.FontSizeProperty.IsValidValue(value) Then _CanvasFontSize = 14
+        If Not _syncingOverlayStyle Then CanvasTextBox.FontSize = _CanvasFontSize
+    End Sub
 
-    Private _CanvasFontSize As String = "14"
-    Public Property CanvasFontSize As String
-        Get
-            Return _CanvasFontSize
-        End Get
-        Set(value As String)
-            If String.IsNullOrEmpty(value) Then value = "14"
-            If String.Equals(_CanvasFontSize, value, StringComparison.Ordinal) Then Return
-
-            _CanvasFontSize = value
-            OnPropertyChanged(NameOf(CanvasFontSize))
-            If Not _syncingOverlayStyle Then
-                Dim size As Double
-                If (Double.TryParse(value, Globalization.NumberStyles.Float, Globalization.CultureInfo.CurrentCulture, size) OrElse
-                    Double.TryParse(value, Globalization.NumberStyles.Float, Globalization.CultureInfo.InvariantCulture, size)) AndAlso
-                    TextBox.FontSizeProperty.IsValidValue(size) Then CanvasTextBox.FontSize = size
-            End If
-        End Set
-    End Property
 
     ' ===== Overlay style synchronisation =====
     ' While _syncingOverlayStyle is True the font setters only update the overlay display
@@ -295,7 +252,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
                        previousThickness As IDictionary(Of IDrawable, Double))
 
         Dim raw = MainVM.SelectedDrawables.ToList()
-        If raw.Count < 1 Then Return
+        If raw.Count <1 Then Return
 
         Dim items As New List(Of IDrawable)()
         For Each d In raw

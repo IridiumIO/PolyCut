@@ -112,21 +112,11 @@ End Enum
 
 Partial Public Class DrawingConfiguration : Inherits ObservableObject
 
-    <ObservableProperty> Private _PenWidth As Double = 0.4
-    <ObservableProperty> Private _PenWidthCompensation As Boolean = False
-    Private _FillOutlineOverlap As Double = 100
-    Public Property FillOutlineOverlap As Double
-        Get
-            Return _FillOutlineOverlap
-        End Get
-        Set(value As Double)
-            SetProperty(_FillOutlineOverlap, Math.Clamp(value, 0, 100))
-        End Set
-    End Property
+
     <ObservableProperty> Private _MinStrokeWidth As Double = 1
     <ObservableProperty> Private _ShadingAngle As Double = 45
     <ObservableProperty> Private _KeepOutlines As Boolean = True
-    <NotifyPropertyChangedFor(NameOf(CrossHatch))>
+
     <ObservableProperty> Private _FillType As FillType = FillType.Hatch
 
     <ObservableProperty> Private _AllowDrawingOverOutlines As Boolean = True
@@ -134,16 +124,13 @@ Partial Public Class DrawingConfiguration : Inherits ObservableObject
     <ObservableProperty> Private _ShadingThreshold As Double = 1
     <ObservableProperty> Private _OutlinesBeforeFill As Boolean = False
 
+    <ObservableProperty> Private _PenWidth As Double = 0.4
+    <ObservableProperty> Private _PenWidthCompensation As Boolean = False
+    <ObservableProperty> Private _FillOutlineOverlap As Double = 100
 
-    Public ReadOnly Property CrossHatch As Boolean
-        Get
-            Return FillType = FillType.CrossHatch
-        End Get
-    End Property
-
-
-    ''' Currently only supported by GCodePlot
-    <ObservableProperty> Private _DrawingDirection As Integer? = Nothing
+    Private Sub OnFillOutlineOverlapChanged(value As Double)
+        _FillOutlineOverlap = Math.Clamp(value, 0, 100)
+    End Sub
 
 
     Public Function Clone() As DrawingConfiguration

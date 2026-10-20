@@ -35,6 +35,7 @@ Partial Public Class Application
                                services.AddSingleton(Of IContentDialogService, ContentDialogService)()
                                services.AddSingleton(Of ISvgImportService, SVGImportService)()
                                services.AddSingleton(Of UndoRedoService)()
+                               services.AddSingleton(Of PolyCut.RichCanvas.SelectionManager)()
                                services.AddSingleton(Of ProjectSerializationService)()
                                services.AddSingleton(Of ClipboardService)()
                                services.AddSingleton(Of VTracerService)()

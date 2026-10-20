@@ -5,13 +5,15 @@ Imports PolyCut.RichCanvas
 Public Class BooleanOperationAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _selectedItems As List(Of IDrawable)
     Private ReadOnly _combineMode As GeometryCombineMode
     Private _compositeAction As CompositeAction
     Private _operationName As String
 
-    Public Sub New(manager As IDrawableManager, selectedItems As IEnumerable(Of IDrawable), combineMode As GeometryCombineMode)
+    Public Sub New(manager As IDrawableManager, selectedItems As IEnumerable(Of IDrawable), combineMode As GeometryCombineMode, selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _selectedItems = selectedItems.ToList()
         _combineMode = combineMode
 
@@ -80,7 +82,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         actions.Add(addAction)
 
         For Each drawable In _selectedItems
-            Dim removeAction As New RemoveDrawableAction(_manager, drawable)
+            Dim removeAction As New RemoveDrawableAction(_manager, drawable, _selectionManager)
             If removeAction.Execute() Then
                 actions.Add(removeAction)
             End If
@@ -89,7 +91,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         For Each grp In parentGroups
             If _manager.IsDrawingGroup(grp) Then Continue For
             If Not grp.GroupChildren.Any() AndAlso Not _manager.IsAncestorOf(grp, insertionGroup) Then
-                Dim removeGroupAction As New RemoveGroupAction(_manager, grp)
+                Dim removeGroupAction As New RemoveGroupAction(_manager, grp, _selectionManager)
                 If removeGroupAction.Execute() Then
                     actions.Add(removeGroupAction)
                 End If
@@ -97,7 +99,7 @@ Public Class BooleanOperationAction : Implements IUndoableAction
         Next
 
         _compositeAction = New CompositeAction(actions)
-        PolyCanvas.AddToSelection(_manager.DrawableCollection(_manager.DrawableCollection.Count - 1))
+        _selectionManager.SelectItem(_manager.DrawableCollection(_manager.DrawableCollection.Count - 1), True)
         Return True
     End Function
 

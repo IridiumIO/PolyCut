@@ -1,12 +1,14 @@
 ﻿Imports System.Text.Json
 
 Imports PolyCut.[Shared]
+Imports PolyCut.RichCanvas
 
 Public Class ClipboardService
 
     Public Const ClipFormat As String = "application/x-polycut-projectdata+json"
 
 
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _mainVM As MainViewModel
     Private ReadOnly _undoRedo As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
@@ -16,7 +18,8 @@ Public Class ClipboardService
         .WriteIndented = False
     }
 
-    Public Sub New(mainVM As MainViewModel, undoRedo As UndoRedoService, projectService As ProjectSerializationService)
+    Public Sub New(mainVM As MainViewModel, undoRedo As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager)
+        _selectionManager = selectionManager
         _mainVM = mainVM
         _undoRedo = undoRedo
         _projectService = projectService
@@ -24,7 +27,7 @@ Public Class ClipboardService
 
     Public Sub CopySelectionToClipboard()
 
-        Dim selectedDrawables = _mainVM.SelectedDrawables
+        Dim selectedDrawables = _selectionManager.SelectedItems
         If selectedDrawables.Count = 0 Then Return
 
         Dim ret = _projectService.CreateProjectDataForClipboard(selectedDrawables, _mainVM.DrawingGroup)
@@ -37,7 +40,7 @@ Public Class ClipboardService
     End Sub
 
     Public Sub CutSelectionToClipboard()
-        Dim selectedDrawables = _mainVM.SelectedDrawables
+        Dim selectedDrawables = _selectionManager.SelectedItems
         If selectedDrawables.Count = 0 Then Return
 
         CopySelectionToClipboard()
@@ -66,14 +69,14 @@ Public Class ClipboardService
             offset = 10
         End If
 
-        Dim act As New PasteDrawablesAction(_mainVM.Document, _projectService, pd, designerStyle)
+        Dim act As New PasteDrawablesAction(_mainVM.Document, _projectService, pd, designerStyle, _selectionManager)
 
 
         If act.Execute() Then
 
             Dim items As New List(Of (IDrawable, TransformState, TransformState))
 
-            For Each sel In _mainVM.SelectedDrawables
+            For Each sel In _selectionManager.SelectedItems
                 Dim wrapper = TryCast(sel.DrawableElement.Parent, ContentControl)
                 If wrapper Is Nothing Then Continue For
 

@@ -6,10 +6,12 @@ Imports PolyCut.Shared
 Friend NotInheritable Class GroupingState
     Private ReadOnly _placements As List(Of Placement)
     Private ReadOnly _selection As List(Of IDrawable)
+    Private ReadOnly _selectionManager As SelectionManager
 
-    Public Sub New(manager As IDrawableManager, drawables As IEnumerable(Of IDrawable))
+    Public Sub New(manager As IDrawableManager, drawables As IEnumerable(Of IDrawable), selectionManager As SelectionManager)
         _placements = drawables.Select(Function(d) New Placement(manager, d)).ToList()
-        _selection = If(PolyCanvas.SelectedItems, Enumerable.Empty(Of IDrawable)()).ToList()
+        _selectionManager = selectionManager
+        _selection = selectionManager.SelectedItems.ToList()
     End Sub
 
     Public Sub Restore(manager As IDrawableManager, participants As IEnumerable(Of IDrawable))
@@ -35,7 +37,7 @@ Friend NotInheritable Class GroupingState
             Next
 
             manager.NotifyChanged()
-            PolyCanvas.ApplySelection(_selection, clearExisting:=True)
+            _selectionManager.ApplySelection(_selection, clearExisting:=True)
         End Using
     End Sub
 

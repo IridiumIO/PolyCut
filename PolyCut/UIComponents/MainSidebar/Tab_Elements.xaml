@@ -308,9 +308,9 @@
             </ui:ListView.ItemTemplate>
         </ui:ListView>
 
-        <Separator Grid.Row="4" Margin="5" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <Separator Grid.Row="4" Margin="5" Visibility="{Binding SelectionManager.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-        <Grid Grid.Row="5" Margin="10 0 10 -10" Visibility="{Binding MainVM.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Grid.Row="5" Margin="10 0 10 -10" Visibility="{Binding SelectionManager.HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" />
@@ -390,7 +390,7 @@
                         <MenuItem loc:L.Value="Group"
                                   Command="{Binding MainVM.GroupSelectedCommand}"
                                   Icon="{ui:SymbolIcon Symbol=ShapeUnion20}"
-                                  Visibility="{Binding MainVM.HasMultipleSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                  Visibility="{Binding SelectionManager.HasMultipleSelection, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <MenuItem loc:L.Value="Ungroup" Command="{Binding MainVM.UngroupSelectedCommand}" Icon="{ui:SymbolIcon Symbol=ShapeIntersect20}" />
 
                     </ContextMenu>

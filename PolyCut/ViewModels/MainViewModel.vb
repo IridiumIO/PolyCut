@@ -121,39 +121,11 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
 
     ' Convenience / computed properties
-    Public ReadOnly Property SelectedDrawable As IDrawable
-        Get
-            Return If(PolyCanvas.SelectedItems, Enumerable.Empty(Of IDrawable)())?.FirstOrDefault()
-        End Get
-    End Property
-
-    Public ReadOnly Property SelectedWrapper As ContentControl
-        Get
-            Return PolyCanvas.CurrentSelected
-        End Get
-    End Property
-
-    Public ReadOnly Property SelectedDrawables As IEnumerable(Of IDrawable)
-        Get
-            Return If(PolyCanvas.SelectedItems, Enumerable.Empty(Of IDrawable)())
-        End Get
-    End Property
-
-    Public ReadOnly Property HasSelection As Boolean
-        Get
-            Return PolyCut.RichCanvas.PolyCanvas.SelectedItems IsNot Nothing AndAlso PolyCanvas.SelectedItems.Where(Function(f) TypeOf (f) IsNot DrawableGroup).Any()
-        End Get
-    End Property
+    Public ReadOnly Property SelectionManager As SelectionManager
 
     Public ReadOnly Property HasDrawables As Boolean
         Get
             Return DrawableCollection.Any(Function(d) TypeOf (d) IsNot DrawableGroup)
-        End Get
-    End Property
-
-    Public ReadOnly Property HasMultipleSelected As Boolean
-        Get
-            Return SelectedDrawables.Where(Function(f) TypeOf (f) IsNot DrawableGroup).Count() > 1
         End Get
     End Property
 
@@ -233,19 +205,19 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     <RelayCommand> Public Sub MoveSelectedItemsCanvasUp()
-        ReorderSelectedItems(SelectedDrawables, 1)
+        ReorderSelectedItems(SelectionManager.SelectedItems, 1)
     End Sub
 
     <RelayCommand> Public Sub MoveSelectedItemsCanvasDown()
-        ReorderSelectedItems(SelectedDrawables, -1)
+        ReorderSelectedItems(SelectionManager.SelectedItems, -1)
     End Sub
 
     <RelayCommand> Public Sub MoveSelectedItemsCanvasToBottom()
-        ReorderSelectedItems(SelectedDrawables, Integer.MinValue)
+        ReorderSelectedItems(SelectionManager.SelectedItems, Integer.MinValue)
     End Sub
 
     <RelayCommand> Public Sub MoveSelectedItemsCanvasToTop()
-        ReorderSelectedItems(SelectedDrawables, Integer.MaxValue)
+        ReorderSelectedItems(SelectionManager.SelectedItems, Integer.MaxValue)
     End Sub
 
     Private Sub ReorderSelectedItem(item As IDrawable, direction As Integer)
@@ -277,16 +249,16 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     ' Constructor & initialization
-    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager)
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
         _svgImportService = svgImportService
         _undoRedoService = undoRedoService
         _projectService = projectService
+        Me.SelectionManager = selectionManager
 
 
-        AddHandler PolyCanvas.CurrentSelectedChanged, AddressOf OnCurrentSelectedChanged
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
         AddHandler _document.Changed, AddressOf OnDocumentChanged
         Initialise()
@@ -375,22 +347,13 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Sub SelectAll()
-        PolyCanvas.ApplySelection(DrawableCollection.Where(Function(f) TypeOf f IsNot DrawableGroup))
+        SelectionManager.ApplySelection(DrawableCollection.Where(Function(f) TypeOf f IsNot DrawableGroup))
     End Sub
 
 
     ' -----------------
     ' Selection / Transform event handlers
     ' -----------------
-    Private Sub OnCurrentSelectedChanged(sender As Object, e As EventArgs)
-        OnPropertyChanged(NameOf(SelectedWrapper))
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(SelectedDrawables))
-        OnPropertyChanged(NameOf(HasMultipleSelected))
-        OnPropertyChanged(NameOf(HasSelection))
-        OnPropertyChanged(NameOf(HasDrawables))
-    End Sub
-
     Private Sub OnTransformCompleted(msg As TransformCompletedMessage)
         If _suspendTransformMessageHandling Then
             Debug.WriteLine("[MainViewModel] TransformCompleted ignored because transform recording is suspended")
@@ -555,19 +518,16 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Private Sub OnDocumentChanged(sender As Object, e As EventArgs)
         OnPropertyChanged(NameOf(ImportedGroups))
         OnPropertyChanged(NameOf(DrawableCollection))
-        OnPropertyChanged(NameOf(SelectedDrawable))
-        OnPropertyChanged(NameOf(SelectedDrawables))
-        OnPropertyChanged(NameOf(HasMultipleSelected))
         OnPropertyChanged(NameOf(HasDrawables))
         OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
     Public Sub RemoveSelectedDrawables()
-        Dim selectedItems = SelectedDrawables.ToList()
+        Dim selectedItems = SelectionManager.SelectedItems.ToList()
         If selectedItems.Count = 0 Then Return
 
         PerformRemoveDrawables(selectedItems)
-        PolyCanvas.ClearSelection()
+        SelectionManager.ClearSelection()
     End Sub
 
     Private Sub PerformRemoveDrawables(drawables As List(Of IDrawable))
@@ -582,7 +542,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         _document.BeginRemovalDeferral()
         Try
             For Each drawable In drawables
-                Dim action As New RemoveDrawableAction(_document, drawable)
+                Dim action As New RemoveDrawableAction(_document, drawable, SelectionManager)
                 If action.Execute() Then
                     actions.Add(action)
                     removed.Add(drawable)
@@ -599,7 +559,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End If
 
         For Each grp In parentGroups.Where(Function(g) Not _document.IsDrawingGroup(g) AndAlso Not g.GroupChildren.Any())
-            Dim removeGroupAction As New RemoveGroupAction(_document, grp)
+            Dim removeGroupAction As New RemoveGroupAction(_document, grp, SelectionManager)
             If removeGroupAction.Execute() Then actions.Add(removeGroupAction)
         Next
 
@@ -622,7 +582,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             End If
             PerformRemoveDrawables(children)
         Else
-            Dim action As New RemoveGroupAction(_document, group)
+            Dim action As New RemoveGroupAction(_document, group, SelectionManager)
             If action.Execute() Then
                 _undoRedoService.Push(action)
             End If
@@ -751,7 +711,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' Boolean / Geometry operations
     ' -----------------
     Private Sub BooleanOperation(combineMode As GeometryCombineMode)
-        Dim selectedItems = SelectedDrawables.ToList()
+        Dim selectedItems = SelectionManager.SelectedItems.ToList()
         If selectedItems.Count < 2 Then
             _snackbarService.GenerateError("Error".LT(), "Select at least 2 shapes to combine".LT(), 3)
             Return
@@ -764,7 +724,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End If
 
         _suspendTransformMessageHandling = True
-        Dim action As New BooleanOperationAction(_document, selectedItems, combineMode)
+        Dim action As New BooleanOperationAction(_document, selectedItems, combineMode, SelectionManager)
         If action.Execute() Then
             _undoRedoService.Push(action)
         Else
@@ -795,24 +755,24 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Sub GroupSelected()
-        Dim selectedItems = SelectedDrawables.ToList()
+        Dim selectedItems = SelectionManager.SelectedItems.ToList()
         If selectedItems.Count < 2 Then
             _snackbarService.GenerateError("Error".LT(), "Select at least 2 shapes to group".LT(), 3)
             Return
         End If
 
-        ExecuteGroupingAction(New GroupAction(_document, selectedItems))
+        ExecuteGroupingAction(New GroupAction(_document, selectedItems, SelectionManager))
     End Sub
 
     <RelayCommand>
     Private Sub UngroupSelected()
-        Dim selectedItems = SelectedDrawables.ToList()
+        Dim selectedItems = SelectionManager.SelectedItems.ToList()
         If Not selectedItems.OfType(Of NestedDrawableGroup)().Any(Function(g) DrawableCollection.Contains(g)) Then
             _snackbarService.GenerateError("Error".LT(), "No groups selected to ungroup".LT(), 3)
             Return
         End If
 
-        ExecuteGroupingAction(New UngroupAction(_document, selectedItems))
+        ExecuteGroupingAction(New UngroupAction(_document, selectedItems, SelectionManager))
     End Sub
 
     Private Sub ExecuteGroupingAction(action As IUndoableAction)
@@ -889,7 +849,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         }
 
         If openDialog.ShowDialog() = True Then
-            Dim action As New LoadProjectAction(_document, _projectService, openDialog.FileName)
+            Dim action As New LoadProjectAction(_document, _projectService, openDialog.FileName, SelectionManager)
             If action.Execute() Then
                 If action.LoadedConfiguration IsNot Nothing Then Configuration = action.LoadedConfiguration
                 _undoRedoService.Clear()

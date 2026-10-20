@@ -5,6 +5,7 @@ Imports PolyCut.Shared
 Public Class PasteDrawablesAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _projectService As ProjectSerializationService
     Private ReadOnly _projectData As ProjectData
     Private ReadOnly _designerStyle As Style
@@ -15,8 +16,9 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
     Private _attachedToDrawingGroup As New List(Of IDrawable)
     Private _reattachedToExistingImportRoot As New List(Of (Host As IDrawable, Child As IDrawable))
 
-    Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, projectData As ProjectData, designerStyle As Style)
+    Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, projectData As ProjectData, designerStyle As Style, selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _projectService = projectService
         _projectData = projectData
         _designerStyle = designerStyle
@@ -66,7 +68,7 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
         If _projectData Is Nothing Then Return False
 
-        PolyCanvas.ClearSelection()
+        _selectionManager.ClearSelection()
 
         _built = _projectService.BuildRuntimeModel(_projectData, _designerStyle)
         If _built Is Nothing Then Return False
@@ -209,7 +211,7 @@ Public Class PasteDrawablesAction : Implements IUndoableAction
         Next
 
         ' Apply wrapper state + notify (keep deterministic; no BeginInvoke here)
-        ProjectApplyHelper.ApplyWrapperStateForPaste(_projectData, _built)
+        ProjectApplyHelper.ApplyWrapperStateForPaste(_projectData, _built, _selectionManager)
         _manager.NotifyChanged()
     End Sub
 
@@ -217,7 +219,7 @@ End Class
 
 Friend NotInheritable Class ProjectApplyHelper
 
-    Public Shared Sub ApplyWrapperStateForPaste(pd As ProjectData, built As RuntimeProjectModel, Optional selectRestoredItems As Boolean = True)
+    Public Shared Sub ApplyWrapperStateForPaste(pd As ProjectData, built As RuntimeProjectModel, selectionManager As SelectionManager, Optional selectRestoredItems As Boolean = True)
         If pd Is Nothing OrElse built Is Nothing Then Return
 
         Dim toSelect As New List(Of IDrawable)
@@ -276,7 +278,7 @@ Friend NotInheritable Class ProjectApplyHelper
             MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))
 
         Next
-        If selectRestoredItems Then PolyCanvas.ApplySelection(toSelect, Nothing, True)
+        If selectRestoredItems Then selectionManager.ApplySelection(toSelect, Nothing, True)
 
     End Sub
 

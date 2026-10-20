@@ -238,7 +238,7 @@
                                 <local:ColorPickerControl x:Name="ContextStrokePicker"
                                                           Grid.Row="0"
                                                           ColorSelected="ContextStrokePicker_ColorSelected"
-                                                          CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
+                                                          CurrentColor="{Binding SelectionManager.FirstSelectedItem.Stroke, Mode=OneWay}"
                                                           LabelText="{loc:T 'Stroke'}"
                                                           PopupOpening="ContextStrokePicker_PopupOpening" />
 
@@ -246,7 +246,7 @@
                                                           Grid.Row="1"
                                                           Margin="0 10"
                                                           ColorSelected="ContextFillPicker_ColorSelected"
-                                                          CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
+                                                          CurrentColor="{Binding SelectionManager.FirstSelectedItem.Fill, Mode=OneWay}"
                                                           LabelText="{loc:T 'Fill'}"
                                                           PopupOpening="ContextFillPicker_PopupOpening" />
 
@@ -577,6 +577,7 @@
                                    Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                                    Margin="0 0 0 0" Panel.ZIndex="1"
                                    Background="Transparent"
+                                   SelectionManager="{Binding SelectionManager}"
                                    ChildrenCollection="{Binding MainVM.DrawableCollection}"
                                    ClipToBounds="False" />
 

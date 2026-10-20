@@ -1,5 +1,6 @@
 Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
+Imports System.ComponentModel
 
 Imports PolyCut.Shared
 
@@ -8,6 +9,7 @@ Imports PolyCut.Shared
 ''' Decouples selection logic from UI rendering.
 ''' </summary>
 Public Class SelectionManager
+    Implements INotifyPropertyChanged
 
     Private _selectedItems As New ObservableCollection(Of IDrawable)
     Private ReadOnly _selectedSet As New HashSet(Of IDrawable)
@@ -44,6 +46,19 @@ Public Class SelectionManager
         End Get
     End Property
 
+    Public ReadOnly Property FirstSelectedItem As IDrawable
+        Get
+            Return _selectedItems.FirstOrDefault()
+        End Get
+    End Property
+
+    Public ReadOnly Property SelectedWrapper As ContentControl
+        Get
+            If Count <> 1 Then Return Nothing
+            Return TransformAction.GetWrapper(FirstSelectedItem)
+        End Get
+    End Property
+
     Public ReadOnly Property IsBatchingNotifications As Boolean
         Get
             Return _notificationBatchDepth > 0
@@ -63,7 +78,7 @@ Public Class SelectionManager
             If ModelBatch.Active Then
                 ModelBatch.OnEndOnce("SelectionChanged", AddressOf NotifySelectionChanged)
             Else
-                RaiseEvent SelectionChanged(Me, EventArgs.Empty)
+                NotifySelectionChanged()
             End If
         End If
     End Sub
@@ -220,17 +235,17 @@ Public Class SelectionManager
             Return
         End If
 
-        RaiseEvent SelectionChanged(Me, EventArgs.Empty)
+        NotifySelectionChanged()
     End Sub
 
     Private Sub NotifySelectionChanged()
+        For Each propertyName In {NameOf(SelectedItems), NameOf(Count), NameOf(HasSelection), NameOf(HasMultipleSelection), NameOf(FirstSelectedItem), NameOf(SelectedWrapper)}
+            RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
+        Next
         RaiseEvent SelectionChanged(Me, EventArgs.Empty)
     End Sub
 
-    Public Function GetFirstSelectedItem() As IDrawable
-        Return _selectedItems.FirstOrDefault()
-    End Function
-
     Public Event SelectionChanged As EventHandler
+    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
 
 End Class

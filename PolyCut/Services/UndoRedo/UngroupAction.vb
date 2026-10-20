@@ -4,13 +4,15 @@ Imports PolyCut.Shared
 
 Public Class UngroupAction : Implements IUndoableAction
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _selectedItems As List(Of IDrawable)
     Private _participants As List(Of IDrawable)
     Private _before As GroupingState
     Private _after As GroupingState
 
-    Public Sub New(manager As IDrawableManager, selectedItems As IEnumerable(Of IDrawable))
+    Public Sub New(manager As IDrawableManager, selectedItems As IEnumerable(Of IDrawable), selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _selectedItems = selectedItems.Where(Function(d) d IsNot Nothing).Distinct().ToList()
     End Sub
 
@@ -28,7 +30,7 @@ Public Class UngroupAction : Implements IUndoableAction
         canvas.UpdateLayout()
 
         _participants = groups.Cast(Of IDrawable)().Concat(groups.SelectMany(Function(g) g.GroupChildren)).ToList()
-        _before = New GroupingState(_manager, _participants)
+        _before = New GroupingState(_manager, _participants, _selectionManager)
 
         ' Capture placements before detaching the old visual tree, including its scale and shear.
         Dim placements As New Dictionary(Of IDrawable, TransformState)
@@ -87,8 +89,8 @@ Public Class UngroupAction : Implements IUndoableAction
                 Next
             Next
             _manager.NotifyChanged()
-            PolyCanvas.ApplySelection(released, clearExisting:=True)
-            _after = New GroupingState(_manager, _participants.Where(Function(d) Not groups.Contains(TryCast(d, NestedDrawableGroup))))
+            _selectionManager.ApplySelection(released, clearExisting:=True)
+            _after = New GroupingState(_manager, _participants.Where(Function(d) Not groups.Contains(TryCast(d, NestedDrawableGroup))), _selectionManager)
         End Using
         Return True
     End Function

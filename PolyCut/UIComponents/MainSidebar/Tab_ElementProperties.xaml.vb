@@ -6,6 +6,8 @@ Imports PolyCut.Shared
 
 Public Class Tab_ElementProperties
 
+    Private ReadOnly _selectionManager As SelectionManager
+
     ' ===== Cached state for undo =====
     Private _fillBeforeEditMap As Dictionary(Of IDrawable, Brush)
     Private _strokeBeforeEditMap As Dictionary(Of IDrawable, Brush)
@@ -25,8 +27,11 @@ Public Class Tab_ElementProperties
 
 
     Public Sub New()
+        _selectionManager = Application.GetService(Of SelectionManager)()
         InitializeComponent()
-        AddHandler DataContextChanged, AddressOf OnDataContextChanged
+        AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
+        UpdateSelectedDrawablesSubscriptions()
+        UpdateSliderFromThickness()
     End Sub
 
 
@@ -36,27 +41,9 @@ Public Class Tab_ElementProperties
         End Get
     End Property
 
-    Private ReadOnly Property MainVM As MainViewModel
-        Get
-            Return VM.MainVM
-        End Get
-    End Property
-
-
-    ' ===== ViewModel wiring =====
-
-    Private Sub OnDataContextChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
-        RemoveHandler MainVM.PropertyChanged, AddressOf OnViewModelPropertyChanged
-        AddHandler MainVM.PropertyChanged, AddressOf OnViewModelPropertyChanged
+    Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
         UpdateSelectedDrawablesSubscriptions()
         UpdateSliderFromThickness()
-    End Sub
-
-    Private Sub OnViewModelPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
-        If e.PropertyName = NameOf(MainVM.SelectedDrawables) Then
-            UpdateSelectedDrawablesSubscriptions()
-            UpdateSliderFromThickness()
-        End If
     End Sub
 
     Private Sub UpdateSelectedDrawablesSubscriptions()
@@ -69,9 +56,7 @@ Public Class Tab_ElementProperties
         Next
         _subscribedDrawables.Clear()
 
-        If MainVM Is Nothing Then Return
-
-        For Each d In MainVM.SelectedDrawables.OfType(Of BaseDrawable)()
+        For Each d In _selectionManager.SelectedItems.OfType(Of BaseDrawable)()
             AddHandler d.PropertyChanged, AddressOf OnDrawablePropertyChanged
             _subscribedDrawables.Add(d)
         Next
@@ -81,9 +66,7 @@ Public Class Tab_ElementProperties
     End Sub
 
     Private Sub UpdateFillPickerState()
-        If MainVM Is Nothing Then Return
-
-        Dim selected = MainVM.SelectedDrawables?.ToList()
+        Dim selected = _selectionManager.SelectedItems?.ToList()
         If selected Is Nothing OrElse selected.Count = 0 Then Return
 
         ' Only lock the picker when every selected item is a registration mark, with a mixed selection we can still fill the normal shapes.
@@ -93,7 +76,7 @@ Public Class Tab_ElementProperties
     ' ===== Fill =====
 
     Private Sub FillColorPicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+        Dim leaves = ExpandSelectionToLeaves(_selectionManager.SelectedItems)
         _fillBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Fill)
     End Sub
 
@@ -106,7 +89,7 @@ Public Class Tab_ElementProperties
     ' ===== Stroke =====
 
     Private Sub StrokeColorPicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+        Dim leaves = ExpandSelectionToLeaves(_selectionManager.SelectedItems)
         _strokeBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Stroke)
     End Sub
 
@@ -128,16 +111,16 @@ Public Class Tab_ElementProperties
         Dim newThickness = _thicknessValues(index)
         ThicknessSlider.Tag = newThickness.ToString()
 
-        Dim sd = MainVM.SelectedDrawable
+        Dim sd = _selectionManager.FirstSelectedItem
         If sd Is Nothing Then Return
 
         If _thicknessBeforeEditMap Is Nothing Then
-            Dim leaves = ExpandSelectionToLeaves(MainVM.SelectedDrawables)
+            Dim leaves = ExpandSelectionToLeaves(_selectionManager.SelectedItems)
             _thicknessBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.StrokeThickness)
         End If
 
 
-        For Each d In MainVM.SelectedDrawables.ToList()
+        For Each d In _selectionManager.SelectedItems.ToList()
             If Math.Abs(d.StrokeThickness - newThickness) > 0.001 Then
                 d.StrokeThickness = newThickness
             End If
@@ -148,7 +131,7 @@ Public Class Tab_ElementProperties
 
     Private Sub UpdateSliderFromThickness()
 
-        _currentDrawable = TryCast(MainVM.SelectedDrawable, BaseDrawable)
+        _currentDrawable = TryCast(_selectionManager.FirstSelectedItem, BaseDrawable)
 
         If _currentDrawable Is Nothing Then Return
 
@@ -216,8 +199,8 @@ Public Class Tab_ElementProperties
     End Sub
 
 
-    Private Sub NumberBox_LostFocus(sender As Object, e As WPF.Ui.Controls.NumberBoxValueChangedEventArgs)
-        Dim numberBox = TryCast(sender, WPF.Ui.Controls.NumberBox)
+    Private Sub NumberBox_LostFocus(sender As Object, e As Wpf.Ui.Controls.NumberBoxValueChangedEventArgs)
+        Dim numberBox = TryCast(sender, Wpf.Ui.Controls.NumberBox)
         If numberBox Is Nothing OrElse _before Is Nothing Then Return
 
         Dim center = New Point(_before.Translation.X + _before.Width / 2, _before.Translation.Y + _before.Height / 2)
@@ -230,13 +213,13 @@ Public Class Tab_ElementProperties
             Return
         End If
 
-        TransformAction.ApplyRotation(MainVM.SelectedWrapper, center, startRotation, newRotation, New Point(_before.Translation.X, _before.Translation.Y))
-        MainVM.SelectedWrapper.UpdateLayout()
+        TransformAction.ApplyRotation(_selectionManager.SelectedWrapper, center, startRotation, newRotation, New Point(_before.Translation.X, _before.Translation.Y))
+        _selectionManager.SelectedWrapper.UpdateLayout()
 
-        _after = TransformAction.CaptureState(MainVM.SelectedWrapper)
+        _after = TransformAction.CaptureState(_selectionManager.SelectedWrapper)
 
         Dim items As New List(Of (IDrawable, Object, Object)) From {
-            (MainVM.SelectedDrawable, _before, _after)
+            (_selectionManager.FirstSelectedItem, _before, _after)
         }
         EventAggregator.Publish(Of TransformCompletedMessage)(
                 New TransformCompletedMessage With {.Items = items}
@@ -254,12 +237,12 @@ Public Class Tab_ElementProperties
 
     Private Sub TextBox_GotKeyboardFocus(sender As Object, e As KeyboardFocusChangedEventArgs)
 
-        _before = TransformAction.CaptureState(MainVM.SelectedWrapper)
+        _before = TransformAction.CaptureState(_selectionManager.SelectedWrapper)
 
 
-        Dim tb = TryCast(sender, WPF.Ui.Controls.TextBox)
+        Dim tb = TryCast(sender, Wpf.Ui.Controls.TextBox)
         If tb Is Nothing Then
-            Dim nb = TryCast(sender, WPF.Ui.Controls.NumberBox)
+            Dim nb = TryCast(sender, Wpf.Ui.Controls.NumberBox)
             If nb IsNot Nothing Then
                 nb.Value = nb.Value Mod 360
             End If
@@ -276,23 +259,23 @@ Public Class Tab_ElementProperties
 
     Private Sub TextBox_LostFocus(sender As Object, e As RoutedEventArgs)
 
-        If MainVM.SelectedWrapper Is Nothing OrElse MainVM.SelectedDrawable Is Nothing Then Return
+        If _selectionManager.SelectedWrapper Is Nothing OrElse _selectionManager.FirstSelectedItem Is Nothing Then Return
         If _before Is Nothing Then Return
 
-        CommitTextBox(CType(sender, WPF.Ui.Controls.TextBox))
+        CommitTextBox(CType(sender, Wpf.Ui.Controls.TextBox))
 
 
 
-        TransformAction.SetSizeAndPosition(MainVM.SelectedWrapper, MainVM.SelectedWrapper.Width,
-        MainVM.SelectedWrapper.Height,
-        Canvas.GetLeft(MainVM.SelectedWrapper),
-        Canvas.GetTop(MainVM.SelectedWrapper))
+        TransformAction.SetSizeAndPosition(_selectionManager.SelectedWrapper, _selectionManager.SelectedWrapper.Width,
+        _selectionManager.SelectedWrapper.Height,
+        Canvas.GetLeft(_selectionManager.SelectedWrapper),
+        Canvas.GetTop(_selectionManager.SelectedWrapper))
 
-        MainVM.SelectedWrapper.UpdateLayout()
-        _after = TransformAction.CaptureState(MainVM.SelectedWrapper)
+        _selectionManager.SelectedWrapper.UpdateLayout()
+        _after = TransformAction.CaptureState(_selectionManager.SelectedWrapper)
 
         Dim items As New List(Of (IDrawable, Object, Object)) From {
-        (MainVM.SelectedDrawable, _before, _after)
+        (_selectionManager.FirstSelectedItem, _before, _after)
     }
 
         EventAggregator.Publish(Of TransformCompletedMessage)(

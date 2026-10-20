@@ -83,6 +83,7 @@ Public Class TransformGizmo
         AddHandler Me.MouseWheel, AddressOf OnMouseWheel
         AddHandler Me.MouseRightButtonDown, AddressOf OnRightButtonDown
         AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
+        OnSelectionChanged(Me, EventArgs.Empty)
 
         EventAggregator.Subscribe(Of ScaleChangedMessage)(AddressOf OnViewportChanged)
         EventAggregator.Subscribe(Of TranslationChangedMessage)(AddressOf OnViewportChanged)

@@ -6,27 +6,33 @@ Imports System.ComponentModel
 Imports PolyCut.Shared
 
 
-Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyChanged
+Public Class PolyCanvas : Inherits Controls.Canvas
 
-    ' New architecture: Decoupled selection management
-    Private _selectionManager As SelectionManager
     Private _transformOverlay As TransformOverlay
 
-    Public ReadOnly Property SelectionManager As SelectionManager
+    Public Shared ReadOnly SelectionManagerProperty As DependencyProperty = DependencyProperty.Register(
+        NameOf(SelectionManager), GetType(SelectionManager), GetType(PolyCanvas),
+        New PropertyMetadata(Nothing, AddressOf OnSelectionManagerChanged))
+
+    Public Property SelectionManager As SelectionManager
         Get
-            Return _selectionManager
+            Return DirectCast(GetValue(SelectionManagerProperty), SelectionManager)
         End Get
+        Set(value As SelectionManager)
+            SetValue(SelectionManagerProperty, value)
+        End Set
     End Property
+
+    Private Shared Sub OnSelectionManagerChanged(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
+        Dim canvas = DirectCast(d, PolyCanvas)
+        AddHandler DirectCast(e.NewValue, SelectionManager).SelectionChanged, AddressOf canvas.OnSelectionChanged
+    End Sub
 
     Shared Sub New()
         DefaultStyleKeyProperty.OverrideMetadata(GetType(PolyCanvas), New FrameworkPropertyMetadata(GetType(PolyCanvas)))
     End Sub
 
     Sub New()
-        ' Initialize selection manager
-        _selectionManager = New SelectionManager()
-        AddHandler _selectionManager.SelectionChanged, AddressOf OnSelectionChanged
-
         ' Handle mouse events
         AddHandler Me.MouseDown, AddressOf PolyCanvas_MouseDown
         AddHandler Me.Loaded, AddressOf PolyCanvas_Loaded
@@ -45,13 +51,14 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
     End Sub
 
     Private Sub InitializeOverlay()
+        If SelectionManager Is Nothing Then Return
         ' Host the overlay OUTSIDE the ZoomBorder's transformed layer so the gizmo renders at a constant 1:1 screen size regardless of zoom.
         Dim zoomHost As ZoomBorder = FindAncestorZoomBorder()
         Dim hostPanel As Panel = TryCast(zoomHost?.Parent, Panel)
         If hostPanel Is Nothing Then Return
 
         _transformOverlay = New TransformOverlay()
-        _transformOverlay.Initialize(_selectionManager, Me)
+        _transformOverlay.Initialize(SelectionManager, Me)
 
         ' Size to the ZoomBorder viewport so the overlay covers exactly the canvas region.
         Dim widthBinding As New Binding("ActualWidth") With {.Source = zoomHost}
@@ -97,11 +104,7 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
     End Sub
 
     Private Sub OnSelectionChanged(sender As Object, e As EventArgs)
-        RaiseEvent InstanceSelectionCountChanged(Me, EventArgs.Empty)
-        RaiseEvent SelectionCountChanged(Me, EventArgs.Empty)
-        OnPropertyChanged(NameOf(InstanceHasMultiSelection))
-
-        If ChildrenCollection.Count > 0 AndAlso _selectionManager.Count = 0 Then
+        If ChildrenCollection IsNot Nothing AndAlso ChildrenCollection.Count > 0 AndAlso SelectionManager.Count = 0 Then
 
             Dim textDrawables = ChildrenCollection.Where(Function(d) TypeOf d.DrawableElement Is TextBox)
 
@@ -118,74 +121,14 @@ Public Class PolyCanvas : Inherits Controls.Canvas : Implements INotifyPropertyC
             Next
 
         End If
-
-
-        ' Update legacy CurrentSelected for backwards compatibility
-        If _selectionManager.Count = 1 Then
-            Dim drawable = _selectionManager.SelectedItems.FirstOrDefault()
-            If drawable?.DrawableElement IsNot Nothing Then
-                Dim wrapper = TryCast(drawable.DrawableElement.Parent, ContentControl)
-                _currentSelected = wrapper
-            Else
-                _currentSelected = Nothing
-            End If
-        Else
-            _currentSelected = Nothing
-        End If
-
-        RaiseEvent CurrentSelectedChanged(Me, EventArgs.Empty)
     End Sub
 
-    ' Legacy compatibility for existing code that uses CurrentSelected
-    Private Shared _currentSelected As ContentControl
-    Public Shared Property CurrentSelected As ContentControl
-        Get
-            Return _currentSelected
-        End Get
-        Set(value As ContentControl)
-            _currentSelected = value
-            RaiseEvent CurrentSelectedChanged(Nothing, EventArgs.Empty)
-        End Set
-    End Property
-
-    Public Shared Event CurrentSelectedChanged As EventHandler
-
-    ' Static wrappers for backwards compatibility
     Private Shared _activeInstance As PolyCanvas
     Public Shared ReadOnly Property ActiveInstance As PolyCanvas
         Get
             Return _activeInstance
         End Get
     End Property
-
-    Public Shared Event SelectionCountChanged As EventHandler
-
-    ' Instance properties
-    Public ReadOnly Property InstanceSelectedItems As IReadOnlyCollection(Of IDrawable)
-        Get
-            Return _selectionManager?.SelectedItems
-        End Get
-    End Property
-
-    Public ReadOnly Property InstanceHasMultiSelection As Boolean
-        Get
-            Return _selectionManager?.HasMultipleSelection
-        End Get
-    End Property
-
-    ' Static properties for backwards compatibility
-    Public Shared ReadOnly Property SelectedItems As IReadOnlyCollection(Of IDrawable)
-        Get
-            Return If(_activeInstance?.InstanceSelectedItems, New List(Of IDrawable)().AsReadOnly())
-        End Get
-    End Property
-
-    Public Shared ReadOnly Property HasMultiSelection As Boolean
-        Get
-            Return If(_activeInstance?.InstanceHasMultiSelection, False)
-        End Get
-    End Property
-
 
     Public Shared ReadOnly ChildrenCollectionProperty As DependencyProperty = DependencyProperty.Register(NameOf(ChildrenCollection), GetType(ObservableCollection(Of IDrawable)), GetType(PolyCanvas),
 New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildrenCollectionChanged))
@@ -261,7 +204,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                     If oldItem.IsSelected Then removed.Add(oldItem)
                 Next
 
-                If removed.Count > 0 Then _selectionManager.ApplySelection(Nothing, removed)
+                If removed.Count > 0 Then SelectionManager?.ApplySelection(Nothing, removed)
             Case NotifyCollectionChangedAction.Move
                 Dim oldIndex As Integer = e.OldStartingIndex
                 Dim newIndex As Integer = e.NewStartingIndex
@@ -272,7 +215,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 End If
             Case NotifyCollectionChangedAction.Reset
                 Me.Children.Clear()
-                _selectionManager.ClearSelection()
+                SelectionManager?.ClearSelection()
 
                 ' AddRange/RemoveRange raise Reset, so the visuals have to be rebuilt from the collection:
                 ' clearing alone leaves the model (and the sidebar) correct while the canvas draws nothing.
@@ -379,9 +322,9 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             Dim isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
 
             If isShiftPressed Then
-                _selectionManager.ToggleItem(drawable)
+                SelectionManager.ToggleItem(drawable)
             Else
-                _selectionManager.SelectItem(drawable, False)
+                SelectionManager.SelectItem(drawable, False)
             End If
         End If
     End Sub
@@ -439,7 +382,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 Keyboard.ClearFocus()
 
                 ' Clear selection
-                _selectionManager.ClearSelection()
+                SelectionManager?.ClearSelection()
 
                 e.Handled = True
             End If
@@ -475,7 +418,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
         Dim drawable = TryCast(sender, IDrawable)
         If drawable IsNot Nothing AndAlso drawable.IsHidden Then
-            _selectionManager?.ApplySelection(Nothing, {drawable})
+            SelectionManager?.ApplySelection(Nothing, {drawable})
         End If
     End Sub
 
@@ -504,7 +447,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         If e.OriginalSource Is Me OrElse e.OriginalSource Is Me.Background Then
             Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
             If Not isShiftPressed Then
-                _selectionManager.ClearSelection()
+                SelectionManager?.ClearSelection()
             End If
             e.Handled = True
         End If
@@ -522,64 +465,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         End While
         Return False
     End Function
-
-    ' Instance methods (prefixed with Instance for clarity)
-    Public Sub InstanceClearSelection()
-        _selectionManager.ClearSelection()
-    End Sub
-
-    Public Sub InstanceAddToSelection(drawable As IDrawable)
-        _selectionManager.SelectItem(drawable, True)
-    End Sub
-
-    Public Sub InstanceRemoveFromSelection(drawable As IDrawable)
-        _selectionManager.DeselectItem(drawable)
-    End Sub
-
-
-    ' Static methods for backwards compatibility
-    Public Shared Sub ClearSelection()
-        _activeInstance?.InstanceClearSelection()
-    End Sub
-
-    Public Shared Sub ApplySelection(itemsToSelect As IEnumerable(Of IDrawable), Optional itemsToDeselect As IEnumerable(Of IDrawable) = Nothing, Optional clearExisting As Boolean = False)
-        _activeInstance?.InstanceApplySelection(itemsToSelect, itemsToDeselect, clearExisting)
-    End Sub
-
-    Friend Sub InstanceApplySelection(itemsToSelect As IEnumerable(Of IDrawable), itemsToDeselect As IEnumerable(Of IDrawable), clearExisting As Boolean)
-        _selectionManager?.ApplySelection(itemsToSelect, itemsToDeselect, clearExisting)
-    End Sub
-
-
-    Public Shared ReadOnly Property IsBatchingSelectionChanges As Boolean
-        Get
-            Return _activeInstance IsNot Nothing AndAlso _activeInstance.InstanceIsBatchingSelectionNotifications
-        End Get
-    End Property
-
-
-    Friend ReadOnly Property InstanceIsBatchingSelectionNotifications As Boolean
-        Get
-            Return _selectionManager IsNot Nothing AndAlso _selectionManager.IsBatchingNotifications
-        End Get
-    End Property
-
-    Public Shared Sub AddToSelection(drawable As IDrawable)
-        _activeInstance?.InstanceAddToSelection(drawable)
-    End Sub
-
-    Public Shared Sub RemoveFromSelection(drawable As IDrawable)
-        _activeInstance?.InstanceRemoveFromSelection(drawable)
-    End Sub
-
-
-    Public Event InstanceSelectionCountChanged As EventHandler
-
-    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
-
-    Protected Sub OnPropertyChanged(propertyName As String)
-        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
-    End Sub
 
     Friend Shared GridDefinition As GridDefinition
 

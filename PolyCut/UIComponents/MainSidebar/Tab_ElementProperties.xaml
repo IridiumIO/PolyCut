@@ -24,7 +24,7 @@
         <ScrollViewer Grid.Row="1"
                       Margin="-14 00 -14 0" Padding="25 0 25 0"
                       CanContentScroll="True"
-                      IsEnabled="{Binding MainVM.SelectedDrawable, Converter={StaticResource NullToBoolConverter}}"
+                      IsEnabled="{Binding SelectionManager.FirstSelectedItem, Converter={StaticResource NullToBoolConverter}}"
                       VerticalScrollBarVisibility="Visible">
             <DockPanel>
 
@@ -63,11 +63,11 @@
                                 <ui:TextBox x:Name="WidthTextBox"
                                             Grid.Row="0" Grid.Column="1"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                            IsEnabled="{Binding SelectionManager.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus">
                                     <ui:TextBox.Text>
                                         <Binding Converter="{StaticResource UnitConverter}"
-                                                 Mode="TwoWay" Path="MainVM.SelectedWrapper.Width" UpdateSourceTrigger="Explicit" />
+                                                 Mode="TwoWay" Path="SelectionManager.SelectedWrapper.Width" UpdateSourceTrigger="Explicit" />
 
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
@@ -77,11 +77,11 @@
                                 <ui:TextBox x:Name="HeightTextBox"
                                             Grid.Row="0" Grid.Column="4"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                            IsEnabled="{Binding SelectionManager.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus">
                                     <ui:TextBox.Text>
                                         <Binding Converter="{StaticResource UnitConverter}"
-                                                 Mode="TwoWay" NotifyOnValidationError="True" Path="MainVM.SelectedWrapper.Height" UpdateSourceTrigger="Explicit" ValidatesOnExceptions="True" />
+                                                 Mode="TwoWay" NotifyOnValidationError="True" Path="SelectionManager.SelectedWrapper.Height" UpdateSourceTrigger="Explicit" ValidatesOnExceptions="True" />
 
                                     </ui:TextBox.Text>
                                 </ui:TextBox>
@@ -92,18 +92,18 @@
                                 <ui:TextBox x:Name="XTextBox"
                                             Grid.Row="2" Grid.Column="1"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                            IsEnabled="{Binding SelectionManager.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus"
-                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
+                                            Text="{Binding SelectionManager.SelectedWrapper.(Canvas.Left), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
                                 <Label Grid.Row="2" Grid.Column="3"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
                                        Content="Y" />
                                 <ui:TextBox x:Name="YTextBox"
                                             Grid.Row="2" Grid.Column="4"
                                             ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus"
-                                            IsEnabled="{Binding MainVM.SelectedDrawables.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
+                                            IsEnabled="{Binding SelectionManager.Count, Converter={StaticResource CountEqualsOneToBoolConverter}}"
                                             LostFocus="TextBox_LostFocus"
-                                            Text="{Binding MainVM.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
+                                            Text="{Binding SelectionManager.SelectedWrapper.(Canvas.Top), Mode=TwoWay, Converter={StaticResource UnitConverter}, UpdateSourceTrigger=Explicit, ConverterParameter=allownegative}" />
 
                                 <Label Grid.Row="4"
                                        Padding="1 2 0 0" VerticalAlignment="Center"
@@ -111,7 +111,7 @@
                                 <ui:NumberBox Grid.Row="4" Grid.Column="1"
                                               AcceptsReturn="False" ClearButtonEnabled="False" GotKeyboardFocus="TextBox_GotKeyboardFocus" Maximum="360" Minimum="-360"
                                               SpinButtonPlacementMode="Hidden" ValueChanged="NumberBox_LostFocus"
-                                              Value="{Binding MainVM.SelectedWrapper.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
+                                              Value="{Binding SelectionManager.SelectedWrapper.RenderTransform.(RotateTransform.Angle), Mode=TwoWay, UpdateSourceTrigger=Explicit}" />
 
                                 <ui:Button Grid.Row="4" Grid.Column="4"
                                            Width="50"
@@ -171,12 +171,12 @@
                             <local:ColorPickerControl x:Name="FillColorPicker"
                                                       Margin="0 6 0 0"
                                                       ColorSelected="FillColorPicker_ColorSelected"
-                                                      CurrentColor="{Binding MainVM.SelectedDrawable.Fill, Mode=OneWay}"
+                                                      CurrentColor="{Binding SelectionManager.FirstSelectedItem.Fill, Mode=OneWay}"
                                                       LabelText="{loc:T Fill}" PopupOpening="FillColorPicker_PopupOpening" />
 
                             <local:ColorPickerControl Margin="0 6 0 0"
                                                       ColorSelected="StrokeColorPicker_ColorSelected"
-                                                      CurrentColor="{Binding MainVM.SelectedDrawable.Stroke, Mode=OneWay}"
+                                                      CurrentColor="{Binding SelectionManager.FirstSelectedItem.Stroke, Mode=OneWay}"
                                                       LabelText="{loc:T Stroke}" PopupOpening="StrokeColorPicker_PopupOpening" />
 
                             <Grid Margin="0 6 0 0">
@@ -290,7 +290,7 @@
                                                           Width="180" Height="35"
                                                           HorizontalAlignment="Left" VerticalAlignment="Center"
                                                           Background="Transparent"
-                                                          SelectedFont="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontFamily), Mode=TwoWay}" />
+                                                          SelectedFont="{Binding SelectionManager.FirstSelectedItem.DrawableElement.(TextBox.FontFamily), Mode=TwoWay}" />
 
                                 <ui:SymbolIcon Grid.Row="0" Grid.Column="1"
                                                Margin="0 0 10 0" HorizontalAlignment="Right"
@@ -299,7 +299,7 @@
                                           Width="80" Height="35"
                                           Padding="7" HorizontalAlignment="Right"
                                           Background="Transparent" IsEditable="True" SelectedIndex="6"
-                                          Text="{Binding MainVM.SelectedDrawable.DrawableElement.(TextBox.FontSize), Mode=TwoWay}">
+                                          Text="{Binding SelectionManager.FirstSelectedItem.DrawableElement.(TextBox.FontSize), Mode=TwoWay}">
                                     <ComboBoxItem Content="3" />
                                     <ComboBoxItem Content="4" />
                                     <ComboBoxItem Content="6" />

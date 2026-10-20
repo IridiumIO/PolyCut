@@ -5,14 +5,16 @@ Imports PolyCut.RichCanvas
 Public Class RemoveGroupAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _group As DrawableGroup
     Private ReadOnly _wasInImportedGroups As Boolean
     Private ReadOnly _indexInImportedGroups As Integer
     Private ReadOnly _parentGroup As DrawableGroup
     Private ReadOnly _collectionMembers As New List(Of (Drawable As IDrawable, Index As Integer, Snapshot As TransformState))()
 
-    Public Sub New(manager As IDrawableManager, group As DrawableGroup)
+    Public Sub New(manager As IDrawableManager, group As DrawableGroup, selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _group = group
         _parentGroup = TryCast(group.ParentGroup, DrawableGroup)
 
@@ -70,9 +72,9 @@ Public Class RemoveGroupAction : Implements IUndoableAction
 
         'A removed group must not stay selected: the canvas would keep a gizmo on something the document no longer holds, and the next delete would act on nothing.
         Try
-            PolyCanvas.RemoveFromSelection(_group)
+            _selectionManager.DeselectItem(_group)
             For Each m In _collectionMembers
-                PolyCanvas.RemoveFromSelection(m.Drawable)
+                _selectionManager.DeselectItem(m.Drawable)
             Next
         Catch
         End Try

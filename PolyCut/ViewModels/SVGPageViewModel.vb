@@ -10,6 +10,7 @@ Imports PolyCut.Shared
 Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public ReadOnly Property MainVM As MainViewModel
+    Public ReadOnly Property SelectionManager As SelectionManager
     Private ReadOnly _undoRedoService As UndoRedoService
 
     <ObservableProperty> Private _DrawingStroke As Brush = Brushes.Black
@@ -25,7 +26,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     Private Sub OnCanvasToolModeChanged(value As CanvasMode)
         If value <> CanvasMode.Selection Then
-            PolyCanvas.ApplySelection(Nothing, MainVM.DrawableCollection)
+            SelectionManager.ApplySelection(Nothing, MainVM.DrawableCollection)
             MainVM.Document.NotifyChanged()
         End If
     End Sub
@@ -83,7 +84,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
 
     Private Sub MirrorSelection(mirrorX As Boolean, mirrorY As Boolean)
-        Dim selectedItems = PolyCanvas.SelectedItems.ToList()
+        Dim selectedItems = SelectionManager.SelectedItems.ToList()
         If selectedItems.Count = 0 Then Return
 
         Dim selectionCenter = CalculateSelectionCenter(selectedItems)
@@ -145,8 +146,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     Private _UIConfiguration As UIConfiguration
 
-    Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService)
+    Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService, selectionManager As SelectionManager)
         Me.MainVM = mainvm
+        Me.SelectionManager = selectionManager
         Me._undoRedoService = undoRedoService
         _UIConfiguration = mainvm.UIConfiguration
 
@@ -170,9 +172,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     End Sub
 
-    Private Shared Sub ShortcutKeyHandler(Key As String)
+    Private Sub ShortcutKeyHandler(Key As String)
         If (Key = "]") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
-            Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
+            Dim selectedItem = SelectionManager.SelectedItems?.FirstOrDefault()
             If selectedItem Is Nothing Then Return
 
             Dim wrapper = TryCast(selectedItem.DrawableElement?.Parent, ContentControl)
@@ -185,7 +187,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
 
         ElseIf (Key = "[") AndAlso Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl) Then
-            Dim selectedItem = PolyCanvas.SelectedItems?.FirstOrDefault()
+            Dim selectedItem = SelectionManager.SelectedItems?.FirstOrDefault()
             If selectedItem Is Nothing Then Return
 
             Dim wrapper = TryCast(selectedItem.DrawableElement?.Parent, ContentControl)
@@ -251,7 +253,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
                        previousStroke As IDictionary(Of IDrawable, Brush),
                        previousThickness As IDictionary(Of IDrawable, Double))
 
-        Dim raw = MainVM.SelectedDrawables.ToList()
+        Dim raw = SelectionManager.SelectedItems.ToList()
         If raw.Count <1 Then Return
 
         Dim items As New List(Of IDrawable)()

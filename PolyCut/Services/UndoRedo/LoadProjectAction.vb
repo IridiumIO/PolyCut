@@ -5,13 +5,15 @@ Imports PolyCut.Shared
 Public Class LoadProjectAction
 
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _projectService As ProjectSerializationService
     Private ReadOnly _filePath As String
 
     Public Property LoadedConfiguration As PolyCut.Core.ProcessorConfiguration
 
-    Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, filePath As String)
+    Public Sub New(manager As IDrawableManager, projectService As ProjectSerializationService, filePath As String, selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _projectService = projectService
         _filePath = filePath
     End Sub
@@ -84,8 +86,8 @@ Public Class LoadProjectAction
             End If
 
             Application.Current.Dispatcher.BeginInvoke(New Action(Sub()
-                                                                      ProjectApplyHelper.ApplyWrapperStateForPaste(projectData, built, selectRestoredItems:=False)
-                                                                      PolyCanvas.ClearSelection()
+                                                                      ProjectApplyHelper.ApplyWrapperStateForPaste(projectData, built, _selectionManager, selectRestoredItems:=False)
+                                                                      _selectionManager.ClearSelection()
 
                                                                       Try : Application.Current.MainWindow?.UpdateLayout() : Catch : End Try
                                                                       _manager.NotifyChanged()

@@ -4,7 +4,10 @@ Imports GongSolutions.Wpf.DragDrop
 
 Public Class Tab_Elements
 
+    Private ReadOnly _selectionManager As SelectionManager
+
     Sub New()
+        _selectionManager = Application.GetService(Of SelectionManager)()
 
         ' This call is required by the designer.
         InitializeComponent()
@@ -27,7 +30,7 @@ Public Class Tab_Elements
             _owner._syncingFromCanvas = True
             Try
                 MyBase.Drop(info)
-                _owner.SyncListViewSelection(PolyCanvas.SelectedItems)
+                _owner.SyncListViewSelection(_owner._selectionManager.SelectedItems)
             Finally
                 _owner._syncingFromCanvas = False
             End Try
@@ -90,7 +93,7 @@ Public Class Tab_Elements
                 Me.Dispatcher.BeginInvoke(Sub()
                                                _syncingFromCanvas = True
                                                Try
-                                                   SyncListViewSelection(PolyCanvas.SelectedItems)
+                                                   SyncListViewSelection(_selectionManager.SelectedItems)
                                                Finally
                                                    _syncingFromCanvas = False
                                                End Try
@@ -99,7 +102,7 @@ Public Class Tab_Elements
             End If
         End If
 
-        If _syncingFromCanvas OrElse PolyCanvas.IsBatchingSelectionChanges Then Return
+        If mainViewModel Is Nothing OrElse _syncingFromCanvas OrElse _selectionManager.IsBatchingNotifications Then Return
 
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
         Dim isCtrlPressed As Boolean = Keyboard.IsKeyDown(Key.LeftCtrl) OrElse Keyboard.IsKeyDown(Key.RightCtrl)
@@ -116,7 +119,7 @@ Public Class Tab_Elements
             If d IsNot Nothing AndAlso Not TypeOf d Is DrawableGroup Then removed.Add(d)
         Next
 
-        PolyCanvas.ApplySelection(added, removed, Not isShiftPressed AndAlso Not isCtrlPressed)
+        _selectionManager.ApplySelection(added, removed, Not isShiftPressed AndAlso Not isCtrlPressed)
 
         If mainViewModel IsNot Nothing Then
             SelectionHelper.SyncSelectionStates(mainViewModel.DrawableCollection)

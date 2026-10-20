@@ -5,6 +5,7 @@ Imports PolyCut.RichCanvas
 Public Class RemoveDrawableAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
+    Private ReadOnly _selectionManager As SelectionManager
     Private ReadOnly _drawable As IDrawable
     Private ReadOnly _parent As IDrawable
     Private ReadOnly _indexInCollection As Integer
@@ -13,8 +14,9 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
     Private Shared ReadOnly _restoredForSelection As New List(Of IDrawable)
 
-    Public Sub New(manager As IDrawableManager, drawable As IDrawable)
+    Public Sub New(manager As IDrawableManager, drawable As IDrawable, selectionManager As SelectionManager)
         _manager = manager
+        _selectionManager = selectionManager
         _drawable = drawable
 
         _parent = drawable.ParentGroup
@@ -39,7 +41,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         Dim deferring As Boolean = _manager.IsRemovalDeferred
         If Not deferring Then
-            PolyCanvas.RemoveFromSelection(_drawable)
+            _selectionManager.DeselectItem(_drawable)
             _manager.RemoveDrawableFromCollection(_drawable)
         End If
 
@@ -101,7 +103,7 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
 
         If Not ModelBatch.Active Then
             Try
-                PolyCanvas.ApplySelection({drawable}, Nothing, False)
+                _selectionManager.ApplySelection({drawable}, Nothing, False)
             Catch
             End Try
             Return
@@ -111,14 +113,14 @@ Public Class RemoveDrawableAction : Implements IUndoableAction
         ModelBatch.OnEndOnce("RemoveDrawable.RestoreSelection", AddressOf FlushRestoredSelection)
     End Sub
 
-    Private Shared Sub FlushRestoredSelection()
+    Private Sub FlushRestoredSelection()
         If _restoredForSelection.Count = 0 Then Return
 
         Dim restored = _restoredForSelection.ToList()
         _restoredForSelection.Clear()
 
         Try
-            PolyCanvas.ApplySelection(restored, Nothing, False)
+            _selectionManager.ApplySelection(restored, Nothing, False)
         Catch
         End Try
     End Sub

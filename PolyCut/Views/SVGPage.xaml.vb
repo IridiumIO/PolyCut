@@ -8,6 +8,7 @@ Class SVGPage
 
     Public ReadOnly Property MainViewModel As MainViewModel
     Public ReadOnly Property SVGPageViewModel As SVGPageViewModel
+    Public ReadOnly Property SelectionManager As SelectionManager
 
     Private _subscribedPrinter As Printer
 
@@ -15,7 +16,8 @@ Class SVGPage
     Private _overlayTextBox As Controls.TextBox
     Private _overlayEffectiveFontSize As Double = Double.NaN
 
-    Sub New(viewmodel As SVGPageViewModel)
+    Sub New(viewmodel As SVGPageViewModel, selectionManager As SelectionManager)
+        Me.SelectionManager = selectionManager
         Me.SVGPageViewModel = viewmodel
         Me.MainViewModel = viewmodel.MainVM
         Me.DataContext = viewmodel
@@ -33,7 +35,7 @@ Class SVGPage
         AddHandler zoomPanControl.DrawingManager.TextEditor.TextEdited, AddressOf OnTextEdited
         AddHandler zoomPanControl.ContextMenuOpening, AddressOf OnCanvasContextMenuOpening
         AddHandler zoomPanControl.ContextMenu.Opened, AddressOf OnCanvasContextMenuOpened
-        AddHandler PolyCanvas.SelectionCountChanged, AddressOf OnSelectionCountChanged
+        AddHandler SelectionManager.SelectionChanged, AddressOf OnSelectionCountChanged
 
     End Sub
 
@@ -44,12 +46,12 @@ Class SVGPage
 
     Private Sub OnSelectionCountChanged(sender As Object, e As EventArgs)
 
-        MainSidebar.ElementsTab.SyncListViewSelection(PolyCanvas.SelectedItems)
+        MainSidebar.ElementsTab.SyncListViewSelection(SelectionManager.SelectedItems)
         SyncTextStyleOverlayToSelection()
     End Sub
 
     Private Sub SyncTextStyleOverlayToSelection()
-        Dim selected = PolyCanvas.SelectedItems
+        Dim selected = SelectionManager.SelectedItems
         Dim textBox = TryCast(selected?.FirstOrDefault()?.DrawableElement, Controls.TextBox)
         If _overlayTextBox IsNot textBox Then
             If _overlayTextBox IsNot Nothing Then RemoveHandler _overlayTextBox.LayoutUpdated, AddressOf OnOverlayTextLayoutUpdated
@@ -133,8 +135,8 @@ Class SVGPage
         Dim isShiftPressed As Boolean = Keyboard.IsKeyDown(Key.LeftShift) OrElse Keyboard.IsKeyDown(Key.RightShift)
 
         If SVGPageViewModel.CanvasToolMode <> CanvasMode.Selection Then
-            PolyCanvas.ClearSelection()
-            PolyCanvas.ApplySelection(Nothing, MainViewModel.DrawableCollection)
+            SelectionManager.ClearSelection()
+            SelectionManager.ApplySelection(Nothing, MainViewModel.DrawableCollection)
         End If
     End Sub
 
@@ -143,7 +145,7 @@ Class SVGPage
 
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
-        PolyCanvas.ApplySelection(Nothing, MainViewModel.DrawableCollection)
+        SelectionManager.ApplySelection(Nothing, MainViewModel.DrawableCollection)
         mainCanvas.RaiseEvent(New MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) With {
             .RoutedEvent = Mouse.MouseDownEvent,
             .Source = mainCanvas
@@ -196,9 +198,9 @@ Class SVGPage
         If wrapper Is Nothing Then Return
         Dim drawable = MetadataHelper.GetDrawableReference(wrapper)
         If drawable Is Nothing Then Return
-        If Not PolyCanvas.SelectedItems.Contains(drawable) Then
-            PolyCanvas.ClearSelection()
-            PolyCanvas.AddToSelection(drawable)
+        If Not SelectionManager.SelectedItems.Contains(drawable) Then
+            SelectionManager.ClearSelection()
+            SelectionManager.SelectItem(drawable, True)
         End If
     End Sub
 
@@ -252,8 +254,8 @@ Class SVGPage
     End Sub
 
     Private Sub UpdateCanvasContextMenuState()
-        Dim hasSelection = MainViewModel.HasSelection
-        Dim hasMultiSelection = MainViewModel.HasMultipleSelected
+        Dim hasSelection = SelectionManager.HasSelection
+        Dim hasMultiSelection = SelectionManager.HasMultipleSelection
 
         CombineMenuItem.Visibility = If(hasMultiSelection, Visibility.Visible, Visibility.Collapsed)
         StyleMenuItem.Visibility = If(hasSelection, Visibility.Visible, Visibility.Collapsed)
@@ -269,7 +271,7 @@ Class SVGPage
         GroupMenuItem.IsEnabled = hasSelection
 
         If hasSelection Then
-            Dim selected = MainViewModel.SelectedDrawables.ToList()
+            Dim selected = SelectionManager.SelectedItems.ToList()
             ContextFillPicker.IsEnabled = Not selected.All(Function(d) RegistrationMarkHelper.IsRegistrationMark(d))
             UngroupMenuItem.Visibility = If(selected.Any(Function(d) TypeOf d Is NestedDrawableGroup), Visibility.Visible, Visibility.Collapsed)
         End If
@@ -279,7 +281,7 @@ Class SVGPage
     End Sub
 
     Private Sub ContextStrokePicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim leaves = ExpandSelectionToLeaves(MainViewModel.SelectedDrawables)
+        Dim leaves = ExpandSelectionToLeaves(SelectionManager.SelectedItems)
         _contextStrokeBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Stroke)
     End Sub
 
@@ -289,7 +291,7 @@ Class SVGPage
     End Sub
 
     Private Sub ContextFillPicker_PopupOpening(sender As Object, e As EventArgs)
-        Dim leaves = ExpandSelectionToLeaves(MainViewModel.SelectedDrawables)
+        Dim leaves = ExpandSelectionToLeaves(SelectionManager.SelectedItems)
         _contextFillBeforeEditMap = leaves.ToDictionary(Function(d) d, Function(d) d.Fill)
     End Sub
 

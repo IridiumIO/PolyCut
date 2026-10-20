@@ -5,7 +5,14 @@ Public Class ContourFillGenerator
 
     Private Const EndpointToleranceSquared As Double = 16.0
 
-    Public Shared Function Generate(lines As List(Of GeoLine), spacing As Double) As List(Of List(Of GeoLine))
+    Friend Shared Function Inset(lines As List(Of GeoLine), distance As Double) As List(Of GeoLine)
+        Dim region = Clipper.Union(BuildPaths(lines), Clipper2Lib.FillRule.EvenOdd)
+        ' Round pen = rounded clearance around holes and concave corners.
+        Dim insetRegion = Clipper.InflatePaths(region, -distance, JoinType.Round, EndType.Polygon, 2.0, 1.0)
+        Return ToGeoLoops(insetRegion).SelectMany(Function(loopLines) loopLines).ToList()
+    End Function
+
+    Public Shared Function Generate(lines As List(Of GeoLine), spacing As Double, Optional includeBoundary As Boolean = False) As List(Of List(Of GeoLine))
 
         Dim result As New List(Of List(Of GeoLine))
         If lines Is Nothing OrElse lines.Count < 3 OrElse spacing <= 0 Then Return result
@@ -16,6 +23,8 @@ Public Class ContourFillGenerator
 
         sourceRegion = Clipper.Union(sourceRegion, Clipper2Lib.FillRule.EvenOdd)
         If sourceRegion.Count = 0 Then Return result
+        ' The separately inset fill boundary is already clear of the retained outline.
+        If includeBoundary Then result.AddRange(ToGeoLoops(sourceRegion))
 
         Dim cleanupTolerance As Double = Math.Max(1.0, spacing * 0.01)
         sourceRegion = Clipper.SimplifyPaths(sourceRegion, cleanupTolerance)

@@ -319,7 +319,9 @@
 
                         </ui:CardExpander.Header>
 
-                        <StackPanel Margin="15 0 15 0" FlowDirection="LeftToRight">
+                        <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
+
+
 
 
                             <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Optimise Drawing Paths'}">
@@ -371,18 +373,60 @@
                             </local:LabeledControl>
 
 
-                            <Separator Margin="0 5 0 0" />
+
+                            <local:LabeledControl Height="36" Margin="0 5 0 -7" LabelText="{loc:T 'Enable Pen Width Compensation'}">
+                                <local:LabeledControl.ValueContent>
+                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.PenWidthCompensation, Mode=TwoWay}" />
+                                </local:LabeledControl.ValueContent>
+                                <local:LabeledControl.ToolTip>
+                                    <TextBlock MaxWidth="320" loc:L.Value="Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." TextWrapping="Wrap" />
+                                </local:LabeledControl.ToolTip>
+
+                            </local:LabeledControl>
+
+                            <Grid Margin="0 5"
+                                  ColumnDefinitions="25, *" RowDefinitions="auto auto"
+                                  Visibility="{Binding MainVM.Configuration.DrawingConfig.PenWidthCompensation, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                           Text="∟" />
+                                <TextBlock Grid.Row="1"
+                                           Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                           Text="∟" />
+
+                                <local:LabeledNumberBoxControl Grid.Column="1"
+                                                               LabelText="{loc:T Pen Width}"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.PenWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}"
+                                                               TextBoxWidth="120" UnitText="mm">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock MaxWidth="320" loc:L.Value="Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." TextWrapping="Wrap" />
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
+
+                                <local:LabeledNumberBoxControl Grid.Row="1" Grid.Column="1"
+                                                               IsEnabled="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines}"
+                                                               LabelText="{loc:T Fill / Outline Overlap}"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.FillOutlineOverlap, Mode=TwoWay}"
+                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="%">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock MaxWidth="320" loc:L.Value="Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." TextWrapping="Wrap" />
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
+
+                            </Grid>
 
 
                         </StackPanel>
                     </ui:CardExpander>
 
+                    <Separator Margin="0 0 0 0" Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
                     <ui:CardExpander Margin="-15 0"
                                      Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
                                      Style="{StaticResource CustomCardExpanderStyle}"
                                      Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
+
                         <ui:CardExpander.Header>
-                            <Label Margin="10 0" loc:L.Value="Shading Settings" FlowDirection="LeftToRight" />
+                            <Label Margin="10 0" loc:L.Value="Fill Settings" FlowDirection="LeftToRight" />
 
                         </ui:CardExpander.Header>
 
@@ -411,73 +455,85 @@
                                 </local:LabeledControl.ToolTip>
                             </local:LabeledControl>
 
+                            <StackPanel>
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding MainVM.Configuration.DrawingConfig.FillType}" Value="{x:Static pc:FillType.None}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
 
 
-                            <local:LabeledNumberBoxControl x:Name="ShadingThresholdControl"
-                                                           Background="Transparent"
-                                                           LabelText="{loc:T Shading Threshold}"
-                                                           MouseEnter="LabeledNumberBoxControl_MouseEnter" MouseLeave="LabeledNumberBoxControl_MouseLeave"
-                                                           Text="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                           TextBoxWidth="120" ToolTipService.ShowOnDisabled="True">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Shading Threshold Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Range = 0 to 1" />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
+                                <local:LabeledNumberBoxControl x:Name="ShadingThresholdControl"
+                                                               Background="Transparent"
+                                                               LabelText="{loc:T Shading Threshold}"
+                                                               MouseEnter="LabeledNumberBoxControl_MouseEnter" MouseLeave="LabeledNumberBoxControl_MouseLeave"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock loc:L.Context="Shading Threshold Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="Range = 0 to 1" />
+                                            <LineBreak />
+                                            <LineBreak />
+                                            <Run loc:L.Value="How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." />
+                                        </TextBlock>
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Lightest shading spacing}"
-                                                           Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                           TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Lightest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="How far apart drawn lines should be when shading the lightest parts of the image." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
+                                <local:LabeledNumberBoxControl LabelText="{loc:T Lightest shading spacing}"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock loc:L.Context="Lightest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="How far apart drawn lines should be when shading the lightest parts of the image." />
+                                        </TextBlock>
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Darkest shading spacing}"
-                                                           Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                           TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Darkest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="How far apart drawn lines should be when shading the darkest parts of the image." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
+                                <local:LabeledNumberBoxControl LabelText="{loc:T Darkest shading spacing}"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock loc:L.Context="Darkest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="How far apart drawn lines should be when shading the darkest parts of the image." />
+                                        </TextBlock>
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
 
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Shading angle}"
-                                                           Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                           TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="°">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Shading Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Which Direction to draw when shading objects." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="0° represents East, with positive values rotating counterclockwise." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
+                                <local:LabeledNumberBoxControl LabelText="{loc:T Shading angle}"
+                                                               Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="°">
+                                    <local:LabeledNumberBoxControl.ToolTip>
+                                        <TextBlock loc:L.Context="Shading Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="Which Direction to draw when shading objects." />
+                                            <LineBreak />
+                                            <LineBreak />
+                                            <Run loc:L.Value="0° represents East, with positive values rotating counterclockwise." />
+                                        </TextBlock>
+                                    </local:LabeledNumberBoxControl.ToolTip>
+                                </local:LabeledNumberBoxControl>
 
 
-                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Draw Outlines Before Fill'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Outlines Before Fill Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Draws the outlines of shapes before filling them in." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Usually you want to draw outlines after filling." />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
+                                <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Draw Outlines Before Fill'}">
+                                    <local:LabeledControl.ValueContent>
+                                        <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}" />
+                                    </local:LabeledControl.ValueContent>
+                                    <local:LabeledControl.ToolTip>
+                                        <TextBlock loc:L.Context="Outlines Before Fill Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                                            <Run loc:L.Value="Draws the outlines of shapes before filling them in." />
+                                            <LineBreak />
+                                            <LineBreak />
+                                            <Run loc:L.Value="Usually you want to draw outlines after filling." />
+                                        </TextBlock>
+                                    </local:LabeledControl.ToolTip>
 
-                            </local:LabeledControl>
+                                </local:LabeledControl>
 
+                            </StackPanel>
 
 
                         </StackPanel>

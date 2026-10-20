@@ -49,7 +49,18 @@ Public Class FillProcessor : Implements IProcessor
 
         ' Respect per-element SVG fill presence when deciding to generate fills.
         If Not ShouldGenerateFill(fillTag) Then Return lines
-        If cfg.DrawingConfig.FillType = FillType.None OrElse Not element.IsFilled OrElse Not IsShapeClosed(lines) Then Return lines
+        If Not element.IsFilled OrElse Not IsShapeClosed(lines) Then Return lines
+
+        Dim penWidth = cfg.DrawingConfig.PenWidth
+        Dim compensate = cfg.DrawingConfig.PenWidthCompensation AndAlso penWidth > 0 AndAlso
+            element.Figures.All(Function(figure) figure.Count = 0 OrElse figure(0).StartPoint = figure.Last().EndPoint)
+        If compensate Then
+            lines = ToUnscaledLines(ContourFillGenerator.Inset(ToScaledGeoLines(lines, DefaultScalingFactor),
+                penWidth * DefaultScalingFactor / 2), DefaultScalingFactor)
+            If lines.Count = 0 Then Return lines
+        End If
+
+        If cfg.DrawingConfig.FillType = FillType.None Then Return lines
 
         Dim spacingNullable As Double? = ComputeSpacingFromTag(fillTag, cfg)
         If Not spacingNullable.HasValue Then Return lines
@@ -58,15 +69,22 @@ Public Class FillProcessor : Implements IProcessor
         Dim spacingScaled As Double = spacing * DefaultScalingFactor
 
         Dim outlineGeo As List(Of GeoLine) = ToScaledGeoLines(lines, DefaultScalingFactor)
+        Dim separateOutline = compensate AndAlso cfg.DrawingConfig.KeepOutlines
+        Dim overlap = cfg.DrawingConfig.FillOutlineOverlap
+        ' At 0% the ink edges touch; at 100% the fill reaches the outline centreline.
+        Dim clearance = penWidth * DefaultScalingFactor * (1 - overlap / 100)
+        Dim fillGeo = If(separateOutline AndAlso clearance > 0, ContourFillGenerator.Inset(outlineGeo, clearance), outlineGeo)
 
-        Dim processedGeo As List(Of List(Of GeoLine)) = GenerateFill(outlineGeo, spacingScaled, cfg.DrawingConfig.FillType, cfg.DrawingConfig.ShadingAngle, cfg)
+        Dim processedGeo As List(Of List(Of GeoLine)) = GenerateFill(fillGeo, spacingScaled, cfg.DrawingConfig.FillType, cfg.DrawingConfig.ShadingAngle, cfg, separateOutline)
 
         Dim newGeo As List(Of GeoLine) = Nothing
 
-
+        Dim shouldDrawOverOutlines = cfg.DrawingConfig.AllowDrawingOverOutlines AndAlso
+                                        Not (cfg.DrawingConfig.PenWidthCompensation AndAlso
+                                        penWidth > 0 AndAlso overlap < 100)
 
         If cfg.OptimisedToolPath Then
-            newGeo = FillOptimiser.Optimise(processedGeo, outlineGeo, cfg.DrawingConfig.AllowDrawingOverOutlines, cfg)
+            newGeo = FillOptimiser.Optimise(processedGeo, fillGeo, shouldDrawOverOutlines, cfg)
         Else
             newGeo = processedGeo.SelectMany(Function(x) x).ToList()
         End If
@@ -83,7 +101,7 @@ Public Class FillProcessor : Implements IProcessor
     End Function
 
 
-    Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double, cfg As ProcessorConfiguration) As List(Of List(Of GeoLine))
+    Private Shared Function GenerateFill(outline As List(Of GeoLine), spacingScaled As Double, fillType As FillType, angle As Double, cfg As ProcessorConfiguration, separateOutline As Boolean) As List(Of List(Of GeoLine))
         Dim result As New List(Of List(Of GeoLine))
 
         Select Case fillType
@@ -92,7 +110,7 @@ Public Class FillProcessor : Implements IProcessor
             Case FillType.Radial
                 result.AddRange(RadialFillGenerator.Generate(outline, spacingScaled, angle))
             Case FillType.Contour
-                result.AddRange(ContourFillGenerator.Generate(outline, spacingScaled))
+                result.AddRange(ContourFillGenerator.Generate(outline, spacingScaled, separateOutline))
 
             Case FillType.CrossHatch
                 result.AddRange(HatchFillGenerator.GenerateHatch(outline, spacingScaled, angle))

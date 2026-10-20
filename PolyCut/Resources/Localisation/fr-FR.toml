@@ -6,6 +6,8 @@
 # Translations
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "Une imprimante portant le nom « {0} » existe déjà. Voulez-vous l’écraser ?"
+"Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." # LOC:TODO
+"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." # LOC:TODO
 "Adaptive Sampling" = "Échantillonnage adaptatif"
 "Adaptive Sampling Sensitivity" = "Sensibilité de l’échantillonnage adaptatif"
 "Adaptive Sampling Window" = "Fenêtre d’échantillonnage adaptatif"
@@ -30,6 +32,7 @@
 "Close" = "Fermer"
 "Combine" = "Combiner"
 "Combine Shapes" = "Combiner les formes"
+"Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Copy" = "Copier"
 "Creating a new project will clear the current workspace. Continue?" = "La création d’un nouveau projet effacera l’espace de travail actuel. Continuer ?"
 "Cursor Colour" = "Couleur du curseur"
@@ -44,6 +47,7 @@
 "Drawing Group is already empty" = "Le groupe de dessin est déjà vide"
 "Drawing Line Colour" = "Couleur des lignes de dessin"
 "Drawing Settings" = "Paramètres de dessin"
+"Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
 "Enter Printer Name" = "Saisir le nom de l’imprimante"
 "Enter URL or IP Address" = "Saisir l’URL ou l’adresse IP"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Saisir une couleur hexadécimale (p. ex. #FFFF0000 ou #FF0000)"
@@ -58,7 +62,9 @@
 "File Saved" = "Fichier enregistré"
 "File name: " = "Nom du fichier : "
 "Fill" = "Remplissage"
+"Fill / Outline Overlap" = "Fill / Outline Overlap" # LOC:TODO
 "Fill Colour" = "Fill Colour" # LOC:TODO
+"Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "Style de remplissage"
 "Finish Import" = "Terminer l’importation"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Seuil de luminosité fixe (0 à 255) utilisé en mode Noir et blanc. Les pixels plus sombres que cette valeur deviennent le premier plan (noir) ; les pixels égaux ou supérieurs deviennent l’arrière-plan (blanc). Ignoré lorsque l’échantillonnage adaptatif est activé."
@@ -99,6 +105,7 @@
 "Overwrite Printer?" = "Écraser l’imprimante ?"
 "Path Precision" = "Précision des tracés"
 "Path Simplification" = "Simplification des tracés"
+"Pen Width" = "Pen Width" # LOC:TODO
 "Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "Pourcentage sous la luminosité moyenne locale qu’un pixel doit atteindre pour être considéré comme premier plan (15 % par défaut). Une sensibilité élevée détecte des variations de contraste plus subtiles ; une sensibilité faible exige un contraste local plus fort avant qu’une limite soit détectée."
 "Preview Page Settings" = "Paramètres de la page d’aperçu"
 "Printer Configuration" = "Configuration de l’imprimante"
@@ -125,7 +132,6 @@
 "Send to 3D Printer" = "Envoyer vers l’imprimante 3D"
 "Sends just the bounding box to the printer for preview, which runs in the travel height." = "Envoie uniquement le rectangle englobant à l’imprimante pour l’aperçu, exécuté à la hauteur de déplacement."
 "Sent to Printer" = "Envoyé à l’imprimante"
-"Shading Settings" = "Paramètres d’ombrage"
 "Shading Threshold" = "Seuil d’ombrage"
 "Shading angle" = "Angle d’ombrage"
 "Show Grid" = "Afficher la grille"
@@ -384,6 +390,7 @@
 
 [obsolete]
 "Printer: " = "Imprimante : "
+"Shading Settings" = "Paramètres d’ombrage"
 
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "GCode de fin d’aperçu (?)"

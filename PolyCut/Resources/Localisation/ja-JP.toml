@@ -6,6 +6,8 @@
 # Translations
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "「{0}」という名前のプリンターは既に存在します。上書きしますか？"
+"Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." # LOC:TODO
+"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." # LOC:TODO
 "Adaptive Sampling" = "適応サンプリング"
 "Adaptive Sampling Sensitivity" = "適応サンプリング感度"
 "Adaptive Sampling Window" = "適応サンプリング範囲"
@@ -30,6 +32,7 @@
 "Close" = "閉じる"
 "Combine" = "結合"
 "Combine Shapes" = "形状を結合"
+"Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Copy" = "コピー"
 "Creating a new project will clear the current workspace. Continue?" = "新しいプロジェクトを作成すると、現在のワークスペースが消去されます。続行しますか？"
 "Cursor Colour" = "カーソル色"
@@ -44,6 +47,7 @@
 "Drawing Group is already empty" = "描画グループは既に空です"
 "Drawing Line Colour" = "描画線の色"
 "Drawing Settings" = "描画設定"
+"Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
 "Enter Printer Name" = "プリンター名を入力"
 "Enter URL or IP Address" = "URL または IP アドレスを入力"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "16 進カラーを入力（例: #FFFF0000 または #FF0000）"
@@ -58,7 +62,9 @@
 "File Saved" = "ファイルを保存しました"
 "File name: " = "ファイル名: "
 "Fill" = "塗りつぶし"
+"Fill / Outline Overlap" = "Fill / Outline Overlap" # LOC:TODO
 "Fill Colour" = "Fill Colour" # LOC:TODO
+"Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "塗りつぶしスタイル"
 "Finish Import" = "インポートを完了"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "白黒モードで使用する固定輝度しきい値（0～255）。この値より暗いピクセルは前景（黒）になり、この値以上のピクセルは背景（白）になります。適応サンプリングが有効な場合は無視されます。"
@@ -99,6 +105,7 @@
 "Overwrite Printer?" = "プリンターを上書きしますか？"
 "Path Precision" = "パス精度"
 "Path Simplification" = "パス簡略化"
+"Pen Width" = "Pen Width" # LOC:TODO
 "Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "ピクセルを前景と判定するために必要な、局所平均輝度からの低下率（既定 15%）。感度を高くすると微妙なコントラスト変化を検出しやすくなり、低くすると境界検出により強い局所コントラストが必要になります。"
 "Preview Page Settings" = "プレビューページ設定"
 "Printer Configuration" = "プリンター設定"
@@ -125,7 +132,6 @@
 "Send to 3D Printer" = "3D プリンターへ送信"
 "Sends just the bounding box to the printer for preview, which runs in the travel height." = "プレビュー用に外接矩形のみをプリンターへ送信し、移動高さで実行します。"
 "Sent to Printer" = "プリンターへ送信しました"
-"Shading Settings" = "シェーディング設定"
 "Shading Threshold" = "シェーディングしきい値"
 "Shading angle" = "シェーディング角度"
 "Show Grid" = "グリッドを表示"
@@ -384,6 +390,7 @@
 
 [obsolete]
 "Printer: " = "プリンター: "
+"Shading Settings" = "シェーディング設定"
 
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "プレビュー終了 GCode (?)"

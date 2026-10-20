@@ -6,6 +6,8 @@
 # Translations
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "Ein Drucker mit dem Namen „{0}“ existiert bereits. Möchten Sie ihn überschreiben?"
+"Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." # LOC:TODO
+"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." # LOC:TODO
 "Adaptive Sampling" = "Adaptive Abtastung"
 "Adaptive Sampling Sensitivity" = "Empfindlichkeit der adaptiven Abtastung"
 "Adaptive Sampling Window" = "Fenster der adaptiven Abtastung"
@@ -30,6 +32,7 @@
 "Close" = "Schließen"
 "Combine" = "Kombinieren"
 "Combine Shapes" = "Formen kombinieren"
+"Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Copy" = "Kopieren"
 "Creating a new project will clear the current workspace. Continue?" = "Beim Erstellen eines neuen Projekts wird der aktuelle Arbeitsbereich geleert. Fortfahren?"
 "Cursor Colour" = "Cursorfarbe"
@@ -44,6 +47,7 @@
 "Drawing Group is already empty" = "Die Zeichnungsgruppe ist bereits leer"
 "Drawing Line Colour" = "Farbe der Zeichenlinien"
 "Drawing Settings" = "Zeichnungseinstellungen"
+"Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
 "Enter Printer Name" = "Druckernamen eingeben"
 "Enter URL or IP Address" = "URL oder IP-Adresse eingeben"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Hex-Farbe eingeben (z. B. #FFFF0000 oder #FF0000)"
@@ -58,7 +62,9 @@
 "File Saved" = "Datei gespeichert"
 "File name: " = "Dateiname: "
 "Fill" = "Füllung"
+"Fill / Outline Overlap" = "Fill / Outline Overlap" # LOC:TODO
 "Fill Colour" = "Fill Colour" # LOC:TODO
+"Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "Füllstil"
 "Finish Import" = "Import abschließen"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Fester Helligkeitsgrenzwert (0–255) für den Schwarzweißmodus. Pixel, die dunkler als dieser Wert sind, werden zum Vordergrund (schwarz); Pixel mit diesem oder einem höheren Wert werden zum Hintergrund (weiß). Wird ignoriert, wenn die adaptive Abtastung aktiviert ist."
@@ -99,6 +105,7 @@
 "Overwrite Printer?" = "Drucker überschreiben?"
 "Path Precision" = "Pfadgenauigkeit"
 "Path Simplification" = "Pfadvereinfachung"
+"Pen Width" = "Pen Width" # LOC:TODO
 "Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "Prozentsatz unterhalb der lokalen mittleren Helligkeit, den ein Pixel unterschreiten muss, um als Vordergrund zu gelten (Standard 15 %). Eine höhere Empfindlichkeit erfasst feinere Kontraständerungen; eine niedrigere Empfindlichkeit erfordert stärkeren lokalen Kontrast, bevor eine Grenze erkannt wird."
 "Preview Page Settings" = "Einstellungen der Vorschauseite"
 "Printer Configuration" = "Druckerkonfiguration"
@@ -125,7 +132,6 @@
 "Send to 3D Printer" = "An 3D-Drucker senden"
 "Sends just the bounding box to the printer for preview, which runs in the travel height." = "Sendet für die Vorschau nur den Begrenzungsrahmen an den Drucker; dieser wird auf Verfahrhöhe abgefahren."
 "Sent to Printer" = "An Drucker gesendet"
-"Shading Settings" = "Schattierungseinstellungen"
 "Shading Threshold" = "Schattierungsgrenzwert"
 "Shading angle" = "Schattierungswinkel"
 "Show Grid" = "Raster anzeigen"
@@ -384,6 +390,7 @@
 
 [obsolete]
 "Printer: " = "Drucker: "
+"Shading Settings" = "Schattierungseinstellungen"
 
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "Vorschau-End-GCode (?)"

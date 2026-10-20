@@ -6,14 +6,16 @@ Imports LazyTranslate
 Partial Public Class SettingsPageViewModel : Inherits ObservableObject
 
     <ObservableProperty> Private _MainVM As MainViewModel
+    Public ReadOnly Property UIConfiguration As UIConfiguration
 
     <ObservableProperty> Private _LanguageItems As New List(Of LanguageItem)
 
     Private _GridConfig As GridConfiguration
 
-    Sub New(viewmodel As MainViewModel)
+    Sub New(viewmodel As MainViewModel, uiConfiguration As UIConfiguration)
         Me.MainVM = viewmodel
-        Me._GridConfig = MainVM.UIConfiguration.GridConfig
+        Me.UIConfiguration = uiConfiguration
+        Me._GridConfig = UIConfiguration.GridConfig
         Me.LanguageItems = LazyTranslate.GetAvailableLanguages()
 
         AddHandler MainVM.Printer.PropertyChanged, Sub(sender, e)
@@ -96,7 +98,7 @@ Partial Public Class SettingsPageViewModel : Inherits ObservableObject
     <RelayCommand>
     Public Async Sub CheckForLanguageUpdates()
         If Await LocalisationService.CheckForLanguageUpdate() Then
-            Await LocalisationService.LoadLanguage(Application.GetService(Of MainViewModel)().UIConfiguration.Language)
+            Await LocalisationService.LoadLanguage(UIConfiguration.Language)
         End If
     End Sub
 

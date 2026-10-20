@@ -17,13 +17,13 @@ Class SettingsPage
         _viewModel = viewmodel
         InitializeComponent()
 
-        UiLanguageComboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.MainVM.UIConfiguration.Language)
+        UiLanguageComboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.UIConfiguration.Language)
 
         If WineDetection.IsRunningUnderWine Then
             AddToStartMenuCheckBox.Visibility = Visibility.Collapsed
         End If
 
-        Select Case _viewModel.MainVM.UIConfiguration.CanvasThemeColour
+        Select Case _viewModel.UIConfiguration.CanvasThemeColour
             Case "#FFFFFFFF"
                 CanvasColourSelection.SelectedIndex = 0
             Case "#FF16181D"
@@ -35,40 +35,40 @@ Class SettingsPage
     End Sub
 
     Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        _viewModel.MainVM.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.UIConfiguration.GridConfig.GridBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub PreviewPage_DrawingBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        _viewModel.MainVM.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.UIConfiguration.PreviewDrawingBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub PreviewPage_TravelBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        _viewModel.MainVM.UIConfiguration.PreviewTravelBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.UIConfiguration.PreviewTravelBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub PreviewPage_CursorBrushColorSelector_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        _viewModel.MainVM.UIConfiguration.PreviewCursorBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
+        _viewModel.UIConfiguration.PreviewCursorBrush = (New BrushConverter()).ConvertToString(e.SelectedBrush)
     End Sub
 
     Private Sub AddToStartMenuCheckBox_Checked(sender As Object, e As RoutedEventArgs)
         _viewModel.AddToStartMenu()
-        _viewModel.MainVM.UIConfiguration.AddToStartMenu = True
+        _viewModel.UIConfiguration.AddToStartMenu = True
     End Sub
 
     Private Sub AddToStartMenuCheckBox_Unchecked(sender As Object, e As RoutedEventArgs)
         _viewModel.RemoveFromStartMenu()
-        _viewModel.MainVM.UIConfiguration.AddToStartMenu = False
+        _viewModel.UIConfiguration.AddToStartMenu = False
     End Sub
 
     Private Sub ComboBox_SelectionChanged(sender As Object, e As SelectionChangedEventArgs)
         Dim selection As ComboBoxItem = TryCast(sender.SelectedItem, ComboBoxItem)
 
         If selection.Content.ToString() = "Light" Then
-            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#FFFFFFFF"
+            _viewModel.UIConfiguration.CanvasThemeColour = "#FFFFFFFF"
         ElseIf selection.Content.ToString() = "Dark" Then
-            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#FF16181D"
+            _viewModel.UIConfiguration.CanvasThemeColour = "#FF16181D"
         Else
-            _viewModel.MainVM.UIConfiguration.CanvasThemeColour = "#40646464"
+            _viewModel.UIConfiguration.CanvasThemeColour = "#40646464"
 
         End If
 
@@ -81,7 +81,7 @@ Class SettingsPage
             Dim languageCode As String = CStr(selectedLanguage.CultureCode)
 
             If Not Await LocalisationService.LoadLanguage(languageCode) Then
-                comboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.MainVM.UIConfiguration.Language)
+                comboBox.SelectedItem = _viewModel.LanguageItems.FirstOrDefault(Function(x) x.CultureCode = _viewModel.UIConfiguration.Language)
             End If
         End If
     End Sub

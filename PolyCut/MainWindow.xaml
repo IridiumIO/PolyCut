@@ -137,7 +137,7 @@
                                     <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=ViewMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
                                 </ui:MenuItem.Resources>
                                 <StackPanel Orientation="Horizontal">
-                                    <ToggleButton IsChecked="{Binding IsGridVisible, Mode=TwoWay}">
+                                    <ToggleButton IsChecked="{Binding UIConfiguration.ShowGrid, Mode=TwoWay}">
                                         <ToggleButton.Template>
                                             <ControlTemplate>
                                                 <ContentControl>
@@ -175,7 +175,7 @@
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal">
-                                    <ToggleButton IsChecked="{Binding WorkingAreaVisibility, Mode=TwoWay}">
+                                    <ToggleButton IsChecked="{Binding UIConfiguration.ShowWorkArea, Mode=TwoWay}">
                                         <ToggleButton.Template>
                                             <ControlTemplate>
                                                 <ContentControl>

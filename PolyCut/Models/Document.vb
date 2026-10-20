@@ -1,11 +1,12 @@
 Option Strict On 'do not remove, slowly migrate to strict mode to help catch issues
 Imports System.Collections.ObjectModel
+Imports System.ComponentModel
 
 Imports CodingNinja.Wpf.ObjectModel
 
 Imports PolyCut.[Shared]
 
-Public Class Document : Implements IDrawableManager 'do not use <ObservableProperty> as that fires notifications we do not want
+Public Class Document : Implements IDrawableManager, INotifyPropertyChanged 'do not use <ObservableProperty> as that fires notifications we do not want
 
     Public Const DrawingGroupName As String = "Drawing Group"
 
@@ -16,6 +17,7 @@ Public Class Document : Implements IDrawableManager 'do not use <ObservablePrope
     Private _notifyQueued As Boolean
 
     Public Event Changed As EventHandler
+    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
 
     Public Sub NotifyChanged() Implements IDrawableManager.NotifyChanged
         If _notifyQueued Then Return
@@ -31,8 +33,15 @@ Public Class Document : Implements IDrawableManager 'do not use <ObservablePrope
 
     Private Sub RaiseChanged()
         _notifyQueued = False
+        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(NameOf(HasDrawables)))
         RaiseEvent Changed(Me, EventArgs.Empty)
     End Sub
+
+    Public ReadOnly Property HasDrawables As Boolean
+        Get
+            Return _drawables.Any(Function(d) TypeOf d IsNot DrawableGroup)
+        End Get
+    End Property
 
     Public ReadOnly Property Drawables As ObservableCollection(Of IDrawable) Implements IDrawableManager.DrawableCollection
         Get

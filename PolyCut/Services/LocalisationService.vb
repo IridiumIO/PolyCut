@@ -6,7 +6,7 @@ Public Class LocalisationService
     Public Shared Async Function InitializeAsync() As Task
         Await LazyTranslate.InitialiseAsync(New LocalisationOptions With {
             .SourceCulture = "en-AU",
-            .InitialCulture = SettingsHandler.GetUIConfiguration().Language,
+            .InitialCulture = Application.GetService(Of UIConfiguration)().Language,
             .CatalogueDirectory = IO.Path.Combine(SettingsHandler.DataFolder.FullName, "Localisation"),
             .ResourceAssembly = GetType(Application).Assembly,
             .ApplicationName = "PolyCut",
@@ -19,7 +19,7 @@ Public Class LocalisationService
         Dim success = L.TryLoadLanguage(languageCode)
 
         If success Then
-            Dim configuration = Application.GetService(Of MainViewModel)().UIConfiguration
+            Dim configuration = Application.GetService(Of UIConfiguration)()
             configuration.Language = languageCode
             Await SettingsHandler.WriteUIConfiguration(configuration)
         Else
@@ -30,7 +30,7 @@ Public Class LocalisationService
     End Function
 
     Public Shared Function CheckForLanguageUpdate() As Task(Of Boolean)
-        Dim languageCode = Application.GetService(Of MainViewModel)().UIConfiguration.Language
+        Dim languageCode = Application.GetService(Of UIConfiguration)().Language
         Return LazyTranslate.CheckForLanguageUpdateAsync(languageCode, LocalisationBaseUri)
     End Function
 End Class

@@ -84,14 +84,14 @@
                 <ui:ToggleSwitch x:Name="AddToStartMenuCheckBox"
                                  Margin="10 0 0 0"
                                  Checked="AddToStartMenuCheckBox_Checked"
-                                 IsChecked="{Binding MainVM.UIConfiguration.AddToStartMenu, Mode=OneWay}"
+                                 IsChecked="{Binding UIConfiguration.AddToStartMenu, Mode=OneWay}"
                                  Unchecked="AddToStartMenuCheckBox_Unchecked" />
             </StackPanel>
 
             <StackPanel Margin="10" Orientation="Horizontal" ToolTip="Uses the experimental rasterised rendering engine. Can significantly improve canvas performance for complex documents at the expense of visual fidelity while zooming/panning.">
                 <Label MinWidth="170" VerticalAlignment="Center" loc:L.Value="Experimental Renderer" />
 
-                <ui:ToggleSwitch Margin="10 0 0 0" IsChecked="{Binding MainVM.UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
+                <ui:ToggleSwitch Margin="10 0 0 0" IsChecked="{Binding UIConfiguration.UseRasterisedRendering, Mode=TwoWay}" />
 
             </StackPanel>
 
@@ -109,7 +109,7 @@
                 <StackPanel HorizontalAlignment="Left">
                     <local:LabeledNumberBoxControl Margin="10 0 0 0"
                                                    LabelText="{loc:T Spacing}"
-                                                   Text="{Binding MainVM.UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
+                                                   Text="{Binding UIConfiguration.GridConfig.Spacing, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
                                                    TextBoxWidth="100" UnitText="mm" />
                     <Grid Margin="10 0 0 0" Grid.IsSharedSizeScope="True">
                         <Grid.ColumnDefinitions>
@@ -118,11 +118,11 @@
                         </Grid.ColumnDefinitions>
                         <local:LabeledNumberBoxControl Margin="0 0 15 0"
                                                        LabelText="{loc:T 'Inset (Left)'}"
-                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetLeft, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       Text="{Binding UIConfiguration.GridConfig.InsetLeft, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                         <local:LabeledNumberBoxControl Grid.Column="1"
                                                        LabelText="{loc:T 'Inset (Right)'}"
-                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       Text="{Binding UIConfiguration.GridConfig.InsetRight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
                     <Grid Margin="10 0 0 0">
@@ -132,17 +132,17 @@
                         </Grid.ColumnDefinitions>
                         <local:LabeledNumberBoxControl Margin="0 0 15 0"
                                                        LabelText="{loc:T 'Inset (Top)'}"
-                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetTop, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       Text="{Binding UIConfiguration.GridConfig.InsetTop, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                         <local:LabeledNumberBoxControl Grid.Column="1"
                                                        LabelText="{loc:T 'Inset (Bottom)'}"
-                                                       Text="{Binding MainVM.UIConfiguration.GridConfig.InsetBottom, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
+                                                       Text="{Binding UIConfiguration.GridConfig.InsetBottom, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter='allownegative'}"
                                                        TextBoxWidth="100" UnitText="mm" />
                     </Grid>
 
                     <local:ColorPickerControl Margin="10 5 0 5"
                                               ColorSelected="ColorPickerControl_ColorSelected"
-                                              CurrentColor="{Binding MainVM.UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                              CurrentColor="{Binding UIConfiguration.GridConfig.GridBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                               Foreground="{DynamicResource CardForeground}"
                                               LabelText="{loc:T 'Gridline Colour'}" />
                     <Separator Margin="0 10" />
@@ -165,7 +165,7 @@
                          SnapsToDevicePixels="True" Stretch="Uniform" StretchDirection="Both" UseLayoutRounding="True">
                     <Grid>
                         <Border Margin="-1" Panel.ZIndex="1"
-                                Background="{Binding MainVM.UIConfiguration.CanvasThemeColour}"
+                                Background="{Binding UIConfiguration.CanvasThemeColour}"
                                 BorderBrush="DimGray" BorderThickness="1" CornerRadius="5" />
                         <Border Width="{Binding MainVM.Printer.BedWidth}"
                                 Height="{Binding MainVM.Printer.BedHeight}"
@@ -186,7 +186,7 @@
                                                 </GeometryGroup>
                                             </GeometryDrawing.Geometry>
                                             <GeometryDrawing.Pen>
-                                                <Pen Brush="{Binding MainVM.UIConfiguration.GridConfig.GridBrush}" Thickness="0.3" />
+                                                <Pen Brush="{Binding UIConfiguration.GridConfig.GridBrush}" Thickness="0.3" />
                                             </GeometryDrawing.Pen>
                                         </GeometryDrawing>
                                     </DrawingBrush.Drawing>
@@ -206,20 +206,20 @@
                 <local:ColorPickerControl x:Name="PreviewPage_DrawingBrushColorSelector"
                                           Margin="0 5"
                                           ColorSelected="PreviewPage_DrawingBrushColorSelector_ColorSelected"
-                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewDrawingBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          CurrentColor="{Binding UIConfiguration.PreviewDrawingBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
                                           LabelText="{loc:T 'Drawing Line Colour'}" />
                 <local:ColorPickerControl x:Name="PreviewPage_TravelBrushColorSelector"
                                           Margin="0 5"
                                           ColorSelected="PreviewPage_TravelBrushColorSelector_ColorSelected"
-                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          CurrentColor="{Binding UIConfiguration.PreviewTravelBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
                                           LabelText="{loc:T 'Travel Line Colour'}" />
 
                 <local:ColorPickerControl x:Name="PreviewPage_CursorBrushColorSelector"
                                           Margin="0 5"
                                           ColorSelected="PreviewPage_CursorBrushColorSelector_ColorSelected"
-                                          CurrentColor="{Binding MainVM.UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
+                                          CurrentColor="{Binding UIConfiguration.PreviewCursorBrush, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
                                           Foreground="{DynamicResource CardForeground}"
                                           LabelText="{loc:T 'Cursor Colour'}" />
 

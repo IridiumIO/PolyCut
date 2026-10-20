@@ -2,6 +2,8 @@
 
 Public Class Tab_Configure
 
+    Private ReadOnly _document As Document
+
     Private _thresholdPreviewActive As Boolean = False
 
     Private _previewTextChangedHandler As RoutedEventHandler
@@ -9,6 +11,7 @@ Public Class Tab_Configure
     Public Property MainVM As MainViewModel
 
     Public Sub New()
+        _document = Application.GetService(Of Document)()
         InitializeComponent()
         _previewTextChangedHandler = AddressOf LabeledNumberBoxControl_TextChanged
         MainVM = Application.GetService(Of MainViewModel)()
@@ -40,7 +43,7 @@ Public Class Tab_Configure
     Private Sub RefreshThresholdPreview()
         If Not _thresholdPreviewActive Then Return
 
-        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next
@@ -59,7 +62,7 @@ Public Class Tab_Configure
         Dim t As Double
         If Not Double.TryParse(ShadingThresholdControl.Text, t) Then Return
 
-        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
             Dim brightness = GetBrightness01(d)
             If brightness < t Then
                 Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
@@ -72,7 +75,7 @@ Public Class Tab_Configure
         If Not _thresholdPreviewActive Then Return
         _thresholdPreviewActive = False
 
-        For Each d In EnumerateDrawablesForPreview(MainVM.DrawableCollection)
+        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
             Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
             If cc IsNot Nothing Then cc.Opacity = 1.0
         Next

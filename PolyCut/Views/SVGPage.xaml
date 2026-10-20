@@ -205,7 +205,7 @@
                                            Width="50"
                                            Padding="0 5"
                                            Appearance="Transparent" BorderThickness="0" Click="ContextSelectAllButton_Click"
-                                           IsEnabled="{Binding MainVM.HasDrawables}">
+                                           IsEnabled="{Binding Document.HasDrawables}">
                                     <StackPanel>
                                         <ui:SymbolIcon Symbol="CopySelect20" />
                                         <TextBlock Margin="0 5 0 0" loc:L.Value="Select All" FontSize="11" />
@@ -578,7 +578,7 @@
                                    Margin="0 0 0 0" Panel.ZIndex="1"
                                    Background="Transparent"
                                    SelectionManager="{Binding SelectionManager}"
-                                   ChildrenCollection="{Binding MainVM.DrawableCollection}"
+                                   ChildrenCollection="{Binding Document.Drawables}"
                                    ClipToBounds="False" />
 
 
@@ -586,7 +586,7 @@
                             Width="{Binding MainVM.Printer.BedWidth, Mode=TwoWay}"
                             Height="{Binding MainVM.Printer.BedHeight, Mode=TwoWay}"
                             Panel.ZIndex="-3"
-                            Background="{Binding MainVM.UIConfiguration.CanvasThemeColour}"
+                            Background="{Binding UIConfiguration.CanvasThemeColour}"
                             BorderBrush="White" BorderThickness="0.4" CornerRadius="5">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="10" Direction="0" Opacity="0.78" ShadowDepth="0"
@@ -615,9 +615,9 @@
                         <local:GridPreviewControl Width="{Binding MainVM.Printer.BedWidth, Mode=OneWay}"
                                                   Height="{Binding MainVM.Printer.BedHeight, Mode=OneWay}"
                                                   Panel.ZIndex="-1"
-                                                  GridConfig="{Binding MainVM.UIConfiguration.GridConfig}"
+                                                  GridConfig="{Binding UIConfiguration.GridConfig}"
                                                   IsHitTestVisible="False"
-                                                  Visibility="{Binding MainVM.UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                  Visibility="{Binding UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
 
 
@@ -628,7 +628,7 @@
                     <!--  Fill the offset outside space  -->
                     <Path Canvas.Left="0" Canvas.Bottom="0"
                           ClipToBounds="True" IsHitTestVisible="False" StrokeThickness="0.5"
-                          Visibility="{Binding MainVM.WorkingAreaVisibility, Converter={StaticResource BoolToVisibilityConverter}}">
+                          Visibility="{Binding UIConfiguration.ShowWorkArea, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Path.Data>
                             <CombinedGeometry GeometryCombineMode="Xor">
                                 <CombinedGeometry.Geometry1>

@@ -11,6 +11,8 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     Public ReadOnly Property MainVM As MainViewModel
     Public ReadOnly Property SelectionManager As SelectionManager
+    Public ReadOnly Property Document As Document
+    Public ReadOnly Property UIConfiguration As UIConfiguration
     Private ReadOnly _undoRedoService As UndoRedoService
 
     <ObservableProperty> Private _DrawingStroke As Brush = Brushes.Black
@@ -26,8 +28,8 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
     Private Sub OnCanvasToolModeChanged(value As CanvasMode)
         If value <> CanvasMode.Selection Then
-            SelectionManager.ApplySelection(Nothing, MainVM.DrawableCollection)
-            MainVM.Document.NotifyChanged()
+            SelectionManager.ApplySelection(Nothing, Document.Drawables)
+            Document.NotifyChanged()
         End If
     End Sub
 
@@ -144,31 +146,14 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
         End Try
     End Sub
 
-    Private _UIConfiguration As UIConfiguration
-
-    Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService, selectionManager As SelectionManager)
+    Public Sub New(mainvm As MainViewModel, undoRedoService As UndoRedoService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration)
         Me.MainVM = mainvm
         Me.SelectionManager = selectionManager
+        Me.Document = document
+        Me.UIConfiguration = uiConfiguration
         Me._undoRedoService = undoRedoService
-        _UIConfiguration = mainvm.UIConfiguration
-
-        AddHandler _UIConfiguration.GridConfig.PropertyChanged, AddressOf NotifyPropertyChangedForGrid
-        AddHandler _UIConfiguration.PropertyChanged, AddressOf NotifyPropertyChangedForGrid
-        AddHandler mainvm.Printer.PropertyChanged, Sub(sender, e)
-                                                       If e.PropertyName = NameOf(Printer.BedWidth) OrElse e.PropertyName = NameOf(Printer.BedHeight) Then
-                                                           NotifyPropertyChangedForGrid()
-                                                       End If
-                                                   End Sub
-
-        Dim gd As New PolyCut.RichCanvas.GridDefinition With {
-            .Spacing = _UIConfiguration.GridConfig.Spacing,
-            .InsetLeft = _UIConfiguration.GridConfig.InsetLeft,
-            .InsetTop = _UIConfiguration.GridConfig.InsetTop,
-            .InsetRight = _UIConfiguration.GridConfig.InsetRight,
-            .InsetBottom = _UIConfiguration.GridConfig.InsetBottom
-            }
-
-        PolyCanvas.UpdateGridDefinition(gd)
+        AddHandler uiConfiguration.GridConfig.PropertyChanged, AddressOf UpdateGridDefinition
+        UpdateGridDefinition()
 
     End Sub
 
@@ -254,7 +239,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
                        previousThickness As IDictionary(Of IDrawable, Double))
 
         Dim raw = SelectionManager.SelectedItems.ToList()
-        If raw.Count <1 Then Return
+        If raw.Count < 1 Then Return
 
         Dim items As New List(Of IDrawable)()
         For Each d In raw
@@ -274,7 +259,7 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
         If items.Count = 0 Then Return
 
-        Dim action As New StyleAction(MainVM.Document, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
+        Dim action As New StyleAction(Document, items, fill, stroke, thickness, previousThickness, previousFill, previousStroke)
         If action.Execute() Then _undoRedoService.Push(action)
     End Sub
 
@@ -286,57 +271,15 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
 
 
-    <ObservableProperty>
-    Private _GridLineThickness As Single = 0.3
-
-    <ObservableProperty>
-    Private _GridLineBrush As Brush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
-
-
-    Public ReadOnly Property PrinterGridPreviewViewport As Rect
-        Get
-            Return New Rect(_UIConfiguration.GridConfig.InsetLeft, _UIConfiguration.GridConfig.InsetTop, _UIConfiguration.GridConfig.Spacing, _UIConfiguration.GridConfig.Spacing) : End Get
-    End Property
-
-    Public ReadOnly Property GridLineVerticalEnd As Point
-        Get
-            Return New Point(0, _UIConfiguration.GridConfig.Spacing + 1)
-        End Get
-    End Property
-
-    Public ReadOnly Property GridLineHorizontalEnd As Point
-        Get
-            Return New Point(_UIConfiguration.GridConfig.Spacing + 1, 0)
-        End Get
-    End Property
-
-    Public ReadOnly Property GridClipRect As Rect
-        Get
-            Dim left = Math.Max(_UIConfiguration.GridConfig.InsetLeft, 0)
-            Dim top = Math.Max(_UIConfiguration.GridConfig.InsetTop, 0)
-            Dim right = Math.Max(MainVM.Printer.BedWidth - _UIConfiguration.GridConfig.InsetRight, 0)
-            Dim bottom = Math.Max(MainVM.Printer.BedHeight - _UIConfiguration.GridConfig.InsetBottom, 0)
-            Return New Rect(left, top, right - left + GridLineThickness / 2, bottom - top + GridLineThickness / 2) ' extra 0.05 to avoid clipping last line 
-        End Get
-    End Property
-
-
-    Public Sub NotifyPropertyChangedForGrid()
-        OnPropertyChanged(NameOf(GridClipRect))
-        OnPropertyChanged(NameOf(PrinterGridPreviewViewport))
-        OnPropertyChanged(NameOf(GridLineVerticalEnd))
-        OnPropertyChanged(NameOf(GridLineHorizontalEnd))
-        OnPropertyChanged(NameOf(GridLineBrush))
-
-        Dim gd As New PolyCut.RichCanvas.GridDefinition With {
-            .Spacing = _UIConfiguration.GridConfig.Spacing,
-            .InsetLeft = _UIConfiguration.GridConfig.InsetLeft,
-            .InsetTop = _UIConfiguration.GridConfig.InsetTop,
-            .InsetRight = _UIConfiguration.GridConfig.InsetRight,
-            .InsetBottom = _UIConfiguration.GridConfig.InsetBottom
-            }
-        PolyCanvas.UpdateGridDefinition(gd)
-
+    Private Sub UpdateGridDefinition()
+        Dim grid = UIConfiguration.GridConfig
+        PolyCanvas.UpdateGridDefinition(New GridDefinition With {
+            .Spacing = grid.Spacing,
+            .InsetLeft = grid.InsetLeft,
+            .InsetTop = grid.InsetTop,
+            .InsetRight = grid.InsetRight,
+            .InsetBottom = grid.InsetBottom
+        })
     End Sub
 
 End Class

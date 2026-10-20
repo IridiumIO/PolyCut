@@ -135,7 +135,7 @@
 
                                 <Label Margin="0 4 10 0" loc:L.Value="Working Area" />
 
-                                <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding MainVM.WorkingAreaVisibility}">
+                                <ToggleButton x:Name="WorkingAreaVisibilityToggle" IsChecked="{Binding UIConfiguration.ShowWorkArea}">
                                     <ToggleButton.Template>
                                         <ControlTemplate>
                                             <ContentControl>

@@ -32,32 +32,14 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     <ObservableProperty> Private _Printers As ObservableCollection(Of Printer)
     <ObservableProperty> Private _Printer As Printer
     <ObservableProperty> Private _Configuration As ProcessorConfiguration
-    <ObservableProperty> Private _UIConfiguration As UIConfiguration
+    Public ReadOnly Property UIConfiguration As UIConfiguration
 
     <ObservableProperty> Private _GCode As String = Nothing
     <ObservableProperty> Private _GCodeGeometry As GCodeGeometry
     <ObservableProperty> Private _GCodePaths As ObservableCollection(Of Line) = New ObservableCollection(Of Line)()
     <ObservableProperty> Private _GeneratedGCode As List(Of GCode)
 
-    Private ReadOnly _document As New Document()
-
     Public ReadOnly Property Document As Document
-        Get
-            Return _document
-        End Get
-    End Property
-
-    Public ReadOnly Property DrawableCollection As ObservableCollection(Of IDrawable)
-        Get
-            Return _document.Drawables
-        End Get
-    End Property
-
-    Public ReadOnly Property ImportedGroups As ObservableCollection(Of DrawableGroup)
-        Get
-            Return _document.ImportRoots
-        End Get
-    End Property
 
     <ObservableProperty>
     Private _FlatSidebarItems As New ObservableCollection(Of SidebarItemVM)
@@ -78,15 +60,15 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         _sidebarRebuildQueued = False
         FlatSidebarItems.Clear()
 
-        For i = ImportedGroups.Count - 1 To 0 Step -1
-            Dim grp = ImportedGroups(i)
+        For i = Document.ImportRoots.Count - 1 To 0 Step -1
+            Dim grp = Document.ImportRoots(i)
             If grp Is Nothing Then Continue For
 
             Dim children = grp.DisplayChildren
             If children Is Nothing Then Continue For
 
             ' Hide Drawing Group if empty
-            If _document.IsDrawingGroup(grp) AndAlso children.Count = 0 Then Continue For
+            If Document.IsDrawingGroup(grp) AndAlso children.Count = 0 Then Continue For
 
             For j = children.Count - 1 To 0 Step -1
                 Dim ch = children(j)
@@ -96,15 +78,6 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             Next
         Next
     End Sub
-
-    Friend Property DrawingGroup As DrawableGroup
-        Get
-            Return _document.DrawingGroup
-        End Get
-        Set(value As DrawableGroup)
-            _document.DrawingGroup = value
-        End Set
-    End Property
 
     ' Suspension flag for transform message handling
     Private _suspendTransformMessageHandling As Boolean = False
@@ -123,16 +96,10 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' Convenience / computed properties
     Public ReadOnly Property SelectionManager As SelectionManager
 
-    Public ReadOnly Property HasDrawables As Boolean
-        Get
-            Return DrawableCollection.Any(Function(d) TypeOf (d) IsNot DrawableGroup)
-        End Get
-    End Property
-
     Public ReadOnly Property PolyCutDocumentName As String
         Get
-            If ImportedGroups.Count <> 0 AndAlso Not _document.IsDrawingGroup(ImportedGroups.First) Then
-                Return ImportedGroups.First.Name.Replace(".svg", ".gcode")
+            If Document.ImportRoots.Count <> 0 AndAlso Not Document.IsDrawingGroup(Document.ImportRoots.First) Then
+                Return Document.ImportRoots.First.Name.Replace(".svg", ".gcode")
             Else
                 Return "PolyCut1.gcode"
             End If
@@ -226,7 +193,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     Private Sub ReorderSelectedItems(items As IEnumerable(Of IDrawable), direction As Integer)
-        Dim actions = ReorderPlanner.Move(_document, items, direction, AddressOf GetParentGroup)
+        Dim actions = ReorderPlanner.Move(Document, items, direction, Function(d) TryCast(Document.ParentGroupOf(d), DrawableGroup))
         If actions.Count > 0 Then
             _undoRedoService.Push(New CompositeAction(actions))
         End If
@@ -235,11 +202,11 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Public Sub ReorderSelectedItems(sidebarOrder As IEnumerable(Of IDrawable))
         Using ModelBatch.Begin()
             Dim actions As New List(Of IUndoableAction)
-            For Each siblings In sidebarOrder.GroupBy(AddressOf GetParentGroup)
+            For Each siblings In sidebarOrder.GroupBy(Function(d) TryCast(Document.ParentGroupOf(d), DrawableGroup))
                 If siblings.Key Is Nothing Then Continue For
                 Dim target = siblings.Key.GroupChildren.Count - 1
                 For Each item In siblings
-                    actions.AddRange(ReorderPlanner.Move(_document, {item}, target - siblings.Key.GroupChildren.IndexOf(item), AddressOf GetParentGroup))
+                    actions.AddRange(ReorderPlanner.Move(Document, {item}, target - siblings.Key.GroupChildren.IndexOf(item), Function(d) TryCast(Document.ParentGroupOf(d), DrawableGroup)))
                     target -= 1
                 Next
             Next
@@ -249,7 +216,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     ' Constructor & initialization
-    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration)
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
@@ -257,10 +224,12 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         _undoRedoService = undoRedoService
         _projectService = projectService
         Me.SelectionManager = selectionManager
+        Me.Document = document
+        Me.UIConfiguration = uiConfiguration
 
 
         EventAggregator.Subscribe(Of TransformCompletedMessage)(AddressOf OnTransformCompleted)
-        AddHandler _document.Changed, AddressOf OnDocumentChanged
+        AddHandler document.Changed, AddressOf OnDocumentChanged
         Initialise()
         WireFlatSidebarInvalidation()
     End Sub
@@ -270,10 +239,10 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     Private Sub WireFlatSidebarInvalidation()
-        AddHandler ImportedGroups.CollectionChanged, AddressOf ImportedGroups_CollectionChanged
+        AddHandler Document.ImportRoots.CollectionChanged, AddressOf ImportedGroups_CollectionChanged
 
         ' existing
-        For Each g In ImportedGroups
+        For Each g In Document.ImportRoots
             If g Is Nothing Then Continue For
             AddHandler g.DisplayChildren.CollectionChanged, AddressOf AnyDisplayChildrenChanged
         Next
@@ -310,20 +279,19 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
         Printer = Printers.First
         Configuration = (SettingsHandler.GetConfigurations).First
-        UIConfiguration = SettingsHandler.GetUIConfiguration()
         ApplyRasterisedRenderingSetting()
         AddHandler UIConfiguration.PropertyChanged, AddressOf OnUIConfigurationChanged
 
-        If DrawingGroup Is Nothing Then
-            DrawingGroup = New DrawableGroup(Document.DrawingGroupName)
-            DrawableCollection.Add(DrawingGroup)
-            ImportedGroups.Add(DrawingGroup)
+        If Document.DrawingGroup Is Nothing Then
+            Document.DrawingGroup = New DrawableGroup(Document.DrawingGroupName)
+            Document.Drawables.Add(Document.DrawingGroup)
+            Document.ImportRoots.Add(Document.DrawingGroup)
         End If
 
-        For Each grp In DrawableCollection.OfType(Of DrawableGroup)().ToList()
-            If Not _document.IsDrawingGroup(grp) Then
-                DrawableCollection.Remove(grp)
-                If Not ImportedGroups.Contains(grp) Then ImportedGroups.Add(grp)
+        For Each grp In Document.Drawables.OfType(Of DrawableGroup)().ToList()
+            If Not Document.IsDrawingGroup(grp) Then
+                Document.Drawables.Remove(grp)
+                If Not Document.ImportRoots.Contains(grp) Then Document.ImportRoots.Add(grp)
             End If
         Next
     End Sub
@@ -347,7 +315,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Sub SelectAll()
-        SelectionManager.ApplySelection(DrawableCollection.Where(Function(f) TypeOf f IsNot DrawableGroup))
+        SelectionManager.ApplySelection(Document.Drawables.Where(Function(f) TypeOf f IsNot DrawableGroup))
     End Sub
 
 
@@ -473,7 +441,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
                 End If
 
 
-                Dim action As New ImportSVGAction(_document, _svgImportService, fl)
+                Dim action As New ImportSVGAction(Document, _svgImportService, fl)
                 If action.Execute() Then
                     actions.Add(action)
                 End If
@@ -491,7 +459,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         For Each file In x
             Dim finfo As New FileInfo(file)
             If finfo.Exists AndAlso finfo.Extension = ".svg" Then
-                Dim action As New ImportSVGAction(_document, _svgImportService, file)
+                Dim action As New ImportSVGAction(Document, _svgImportService, file)
                 If action.Execute() Then
                     actions.Add(action)
                 End If
@@ -509,16 +477,13 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' -----------------
 
     Public Sub AddDrawableElement(element As FrameworkElement)
-        Dim action As New AddDrawableAction(_document, element)
+        Dim action As New AddDrawableAction(Document, element)
         If action.Execute() Then
             _undoRedoService.Push(action)
         End If
     End Sub
 
     Private Sub OnDocumentChanged(sender As Object, e As EventArgs)
-        OnPropertyChanged(NameOf(ImportedGroups))
-        OnPropertyChanged(NameOf(DrawableCollection))
-        OnPropertyChanged(NameOf(HasDrawables))
         OnPropertyChanged(NameOf(FlatSidebarItems))
     End Sub
 
@@ -532,34 +497,34 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     Private Sub PerformRemoveDrawables(drawables As List(Of IDrawable))
         Dim actions As New List(Of IUndoableAction)()
-        Dim parentGroups = New HashSet(Of DrawableGroup)(drawables.Select(Function(d) GetParentGroup(d)).Where(Function(pg) pg IsNot Nothing))
+        Dim parentGroups = New HashSet(Of DrawableGroup)(drawables.Select(Function(d) TryCast(Document.ParentGroupOf(d), DrawableGroup)).Where(Function(pg) pg IsNot Nothing))
 
         _suspendTransformMessageHandling = True
 
         Dim removed As New List(Of IDrawable)
 
         Dim batch = ModelBatch.Begin()
-        _document.BeginRemovalDeferral()
+        Document.BeginRemovalDeferral()
         Try
             For Each drawable In drawables
-                Dim action As New RemoveDrawableAction(_document, drawable, SelectionManager)
+                Dim action As New RemoveDrawableAction(Document, drawable, SelectionManager)
                 If action.Execute() Then
                     actions.Add(action)
                     removed.Add(drawable)
                 End If
             Next
         Finally
-            _document.EndRemovalDeferral()
+            Document.EndRemovalDeferral()
             batch.Dispose()
         End Try
 
         If removed.Count > 0 Then
-            _document.RemoveDrawablesFromCollection(removed)
-            _document.NotifyChanged()
+            Document.RemoveDrawablesFromCollection(removed)
+            Document.NotifyChanged()
         End If
 
-        For Each grp In parentGroups.Where(Function(g) Not _document.IsDrawingGroup(g) AndAlso Not g.GroupChildren.Any())
-            Dim removeGroupAction As New RemoveGroupAction(_document, grp, SelectionManager)
+        For Each grp In parentGroups.Where(Function(g) Not Document.IsDrawingGroup(g) AndAlso Not g.GroupChildren.Any())
+            Dim removeGroupAction As New RemoveGroupAction(Document, grp, SelectionManager)
             If removeGroupAction.Execute() Then actions.Add(removeGroupAction)
         Next
 
@@ -574,7 +539,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Private Sub RemoveGroup(group As DrawableGroup)
         If group Is Nothing Then Return
 
-        If _document.IsDrawingGroup(group) Then
+        If Document.IsDrawingGroup(group) Then
             Dim children = group.GroupChildren.ToList()
             If children.Count = 0 Then
                 _snackbarService.GenerateError("Error".LT(), "Drawing Group is already empty".LT(), 3)
@@ -582,16 +547,13 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             End If
             PerformRemoveDrawables(children)
         Else
-            Dim action As New RemoveGroupAction(_document, group, SelectionManager)
+            Dim action As New RemoveGroupAction(Document, group, SelectionManager)
             If action.Execute() Then
                 _undoRedoService.Push(action)
             End If
         End If
     End Sub
 
-    Friend Function GetParentGroup(drawable As IDrawable) As DrawableGroup
-        Return TryCast(_document.ParentGroupOf(drawable), DrawableGroup)
-    End Function
 
     Private Function ValidateShapesForBoolean(shapes As List(Of IDrawable)) As (isValid As Boolean, errorMessage As String)
         For Each drawable In shapes
@@ -637,7 +599,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
             Configuration.SoftwareVersion = SettingsHandler.Version
 
-            Dim generator As IGenerator = New PolyCutGenerator(Configuration, Printer, DrawableCollection.
+            Dim generator As IGenerator = New PolyCutGenerator(Configuration, Printer, Document.Drawables.
                                                                Where(Function(d) Not d.IsHidden).
                                                                ToList(), PolyCanvas.ActiveInstance)
 
@@ -687,7 +649,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             .ViewBox = New Svg.SvgViewBox(0, 0, Printer.BedWidth, Printer.BedHeight)
         }
 
-        For Each drawableL In DrawableCollection
+        For Each drawableL In Document.Drawables
             If TypeOf (drawableL) Is DrawableGroup Then Continue For
             Debug.WriteLine(drawableL.Name)
             Dim finalElement = drawableL?.GetTransformedSVGElement
@@ -724,7 +686,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         End If
 
         _suspendTransformMessageHandling = True
-        Dim action As New BooleanOperationAction(_document, selectedItems, combineMode, SelectionManager)
+        Dim action As New BooleanOperationAction(Document, selectedItems, combineMode, SelectionManager)
         If action.Execute() Then
             _undoRedoService.Push(action)
         Else
@@ -761,18 +723,18 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             Return
         End If
 
-        ExecuteGroupingAction(New GroupAction(_document, selectedItems, SelectionManager))
+        ExecuteGroupingAction(New GroupAction(Document, selectedItems, SelectionManager))
     End Sub
 
     <RelayCommand>
     Private Sub UngroupSelected()
         Dim selectedItems = SelectionManager.SelectedItems.ToList()
-        If Not selectedItems.OfType(Of NestedDrawableGroup)().Any(Function(g) DrawableCollection.Contains(g)) Then
+        If Not selectedItems.OfType(Of NestedDrawableGroup)().Any(Function(g) Document.Drawables.Contains(g)) Then
             _snackbarService.GenerateError("Error".LT(), "No groups selected to ungroup".LT(), 3)
             Return
         End If
 
-        ExecuteGroupingAction(New UngroupAction(_document, selectedItems, SelectionManager))
+        ExecuteGroupingAction(New UngroupAction(Document, selectedItems, SelectionManager))
     End Sub
 
     Private Sub ExecuteGroupingAction(action As IUndoableAction)
@@ -798,7 +760,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         If String.IsNullOrEmpty(CurrentProjectPath) Then
             SaveProjectAs()
         Else
-            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
+            If _projectService.SaveProject(CurrentProjectPath, Document.Drawables, Document.ImportRoots, Configuration) Then
                 _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
@@ -815,7 +777,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
         If saveDialog.ShowDialog() = True Then
             CurrentProjectPath = saveDialog.FileName
-            If _projectService.SaveProject(CurrentProjectPath, DrawableCollection, ImportedGroups, Configuration) Then
+            If _projectService.SaveProject(CurrentProjectPath, Document.Drawables, Document.ImportRoots, Configuration) Then
                 _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
@@ -826,7 +788,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     <RelayCommand>
     Private Async Sub LoadProject()
         ' Warn if unsaved changes
-        If DrawableCollection.Count > 1 Then
+        If Document.Drawables.Count > 1 Then
 
             Dim nx As New Wpf.Ui.Controls.MessageBox With {
                 .Title = "Load Project".LT(),
@@ -849,13 +811,13 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         }
 
         If openDialog.ShowDialog() = True Then
-            Dim action As New LoadProjectAction(_document, _projectService, openDialog.FileName, SelectionManager)
+            Dim action As New LoadProjectAction(Document, _projectService, openDialog.FileName, SelectionManager)
             If action.Execute() Then
                 If action.LoadedConfiguration IsNot Nothing Then Configuration = action.LoadedConfiguration
                 _undoRedoService.Clear()
                 CurrentProjectPath = openDialog.FileName
                 _snackbarService.GenerateSuccess("Project Loaded".LT(), IO.Path.GetFileName(CurrentProjectPath))
-                _document.NotifyChanged()
+                Document.NotifyChanged()
             Else
                 _snackbarService.GenerateError("Error".LT(), "Failed to load project".LT(), 3)
             End If
@@ -864,7 +826,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Async Sub NewProject()
-        If DrawableCollection.Count > 1 Then
+        If Document.Drawables.Count > 1 Then
             Dim nx As New Wpf.Ui.Controls.MessageBox With {
                 .Title = "New Project".LT(),
                 .Content = "Creating a new project will clear the current workspace. Continue?".LT(),
@@ -882,64 +844,31 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         ' Clear everything
         _suspendTransformMessageHandling = True
 
-        ' Clear DrawingGroup children
-        If DrawingGroup IsNot Nothing Then
-            DrawingGroup.GroupChildren.Clear()
+        ' Clear Document.DrawingGroup children
+        If Document.DrawingGroup IsNot Nothing Then
+            Document.DrawingGroup.GroupChildren.Clear()
         End If
 
         ' Clear imported groups
-        ImportedGroups.Clear()
+        Document.ImportRoots.Clear()
 
         ' Remove all drawables
-        Dim drawablesToRemove = DrawableCollection.ToList()
+        Dim drawablesToRemove = Document.Drawables.ToList()
         For Each drawable In drawablesToRemove
-            _document.RemoveDrawableFromCollection(drawable)
+            Document.RemoveDrawableFromCollection(drawable)
         Next
 
         _suspendTransformMessageHandling = False
         CurrentProjectPath = Nothing
 
         ' Reinitialize drawing group
-        DrawingGroup = New DrawableGroup(Document.DrawingGroupName)
-        DrawableCollection.Add(DrawingGroup)
-        ImportedGroups.Add(DrawingGroup)
+        Document.DrawingGroup = New DrawableGroup(Document.DrawingGroupName)
+        Document.Drawables.Add(Document.DrawingGroup)
+        Document.ImportRoots.Add(Document.DrawingGroup)
 
-        _document.NotifyChanged()
+        Document.NotifyChanged()
         _snackbarService.GenerateSuccess("New Project".LT(), "Workspace cleared".LT())
     End Sub
-
-
-    Public Property WorkingAreaVisibility As Boolean
-        Get
-            Return UIConfiguration.ShowWorkArea
-        End Get
-        Set(value As Boolean)
-            UIConfiguration.ShowWorkArea = value
-            OnPropertyChanged(NameOf(WorkingAreaVisibility))
-        End Set
-    End Property
-
-
-    Public Property IsGridVisible As Boolean
-        Get
-            If UIConfiguration.ShowGrid Then
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
-            Else
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
-            End If
-            Return UIConfiguration.ShowGrid
-        End Get
-        Set(value As Boolean)
-            UIConfiguration.ShowGrid = value
-            If value Then
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = New SolidColorBrush(Color.FromArgb(&H80, &HFF, &HFF, &HFF))
-            Else
-                Application.GetService(Of SVGPageViewModel).GridLineBrush = Brushes.Transparent
-            End If
-            Application.GetService(Of SVGPageViewModel).NotifyPropertyChangedForGrid()
-            OnPropertyChanged(NameOf(IsGridVisible))
-        End Set
-    End Property
 
 
 End Class

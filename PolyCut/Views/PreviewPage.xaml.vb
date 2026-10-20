@@ -10,15 +10,17 @@ Imports WPF.Ui.Abstractions.Controls
 Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
+    Public ReadOnly Property UIConfiguration As UIConfiguration
     Private cancellationTokenSource As CancellationTokenSource = New CancellationTokenSource
 
     Private _subscribedPrinter As Printer
 
     Private _hasLoaded As Boolean = False
 
-    Sub New(viewmodel As MainViewModel)
+    Sub New(viewmodel As MainViewModel, uiConfiguration As UIConfiguration)
 
         Me.ViewModel = viewmodel
+        Me.UIConfiguration = uiConfiguration
         DataContext = viewmodel
         InitializeComponent()
 
@@ -38,7 +40,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
             DrawToolPaths()
         End If
 
-        AddHandler viewmodel.UIConfiguration.PropertyChanged, AddressOf UIConfigChangedHandler
+        AddHandler UIConfiguration.PropertyChanged, AddressOf UIConfigChangedHandler
     End Sub
 
     Sub OnLoaded() Handles Me.Loaded
@@ -48,17 +50,17 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
     Private Sub UIConfigChangedHandler(sender As Object, e As PropertyChangedEventArgs)
         If e.PropertyName = NameOf(UIConfiguration.PreviewDrawingBrush) Then
-            _RenderPen = CreatePenWithBrush(_RenderPen, ViewModel.UIConfiguration.PreviewDrawingBrush)
+            _RenderPen = CreatePenWithBrush(_RenderPen, UIConfiguration.PreviewDrawingBrush)
             cancellationTokenSource.Cancel()
             ViewModel.GCodePaths.Clear()
             DrawToolPaths()
         ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewTravelBrush) Then
-            _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
+            _TravelPen = CreatePenWithBrush(_TravelPen, UIConfiguration.PreviewTravelBrush)
             cancellationTokenSource.Cancel()
             ViewModel.GCodePaths.Clear()
             DrawToolPaths()
         ElseIf e.PropertyName = NameOf(UIConfiguration.PreviewCursorBrush) Then
-            _CursorPen = CreatePenWithBrush(_CursorPen, ViewModel.UIConfiguration.PreviewCursorBrush)
+            _CursorPen = CreatePenWithBrush(_CursorPen, UIConfiguration.PreviewCursorBrush)
         End If
     End Sub
 
@@ -386,17 +388,17 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
         ' Ensure _RenderPen has a brush
         If _RenderPen.Brush Is Nothing Then
-            _RenderPen = CreatePenWithBrush(_RenderPen, ViewModel.UIConfiguration.PreviewDrawingBrush)
+            _RenderPen = CreatePenWithBrush(_RenderPen, UIConfiguration.PreviewDrawingBrush)
         End If
 
         ' Ensure _TravelPen has a brush
         If _TravelPen.Brush Is Nothing Then
-            _TravelPen = CreatePenWithBrush(_TravelPen, ViewModel.UIConfiguration.PreviewTravelBrush)
+            _TravelPen = CreatePenWithBrush(_TravelPen, UIConfiguration.PreviewTravelBrush)
         End If
 
         ' Ensure _CursorPen has a brush
         If _CursorPen.Brush Is Nothing Then
-            _CursorPen = CreatePenWithBrush(_CursorPen, ViewModel.UIConfiguration.PreviewCursorBrush)
+            _CursorPen = CreatePenWithBrush(_CursorPen, UIConfiguration.PreviewCursorBrush)
         End If
 
         visualHost.ClearVisuals()

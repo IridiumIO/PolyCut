@@ -1,4 +1,5 @@
 ﻿<Page x:Class="PreviewPage"
+      x:Name="PreviewView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:beh="clr-namespace:PolyCut"
@@ -75,9 +76,9 @@
 
                             <local:GridPreviewControl Width="{Binding Printer.BedWidth, Mode=OneWay}"
                                                       Height="{Binding Printer.BedHeight, Mode=OneWay}"
-                                                      GridConfig="{Binding UIConfiguration.GridConfig}"
+                                                      GridConfig="{Binding UIConfiguration.GridConfig, ElementName=PreviewView}"
                                                       IsHitTestVisible="False"
-                                                      Visibility="{Binding UIConfiguration.ShowGrid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                      Visibility="{Binding UIConfiguration.ShowGrid, ElementName=PreviewView, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </Grid>
 
 
@@ -194,7 +195,7 @@
 
                         <StackPanel Grid.Column="0" Margin="0 0 10 0" Orientation="Horizontal">
 
-                            <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="{Binding IsGridVisible, Mode=TwoWay}">
+                            <ToggleButton x:Name="CuttingMatVisibilityToggle" IsChecked="{Binding UIConfiguration.ShowGrid, ElementName=PreviewView, Mode=TwoWay}">
                                 <ToggleButton.Template>
                                     <ControlTemplate>
                                         <ContentControl>

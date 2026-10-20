@@ -9,6 +9,7 @@ Class SVGPage
     Public ReadOnly Property MainViewModel As MainViewModel
     Public ReadOnly Property SVGPageViewModel As SVGPageViewModel
     Public ReadOnly Property SelectionManager As SelectionManager
+    Public ReadOnly Property Document As Document
 
     Private _subscribedPrinter As Printer
 
@@ -16,8 +17,9 @@ Class SVGPage
     Private _overlayTextBox As Controls.TextBox
     Private _overlayEffectiveFontSize As Double = Double.NaN
 
-    Sub New(viewmodel As SVGPageViewModel, selectionManager As SelectionManager)
+    Sub New(viewmodel As SVGPageViewModel, selectionManager As SelectionManager, document As Document)
         Me.SelectionManager = selectionManager
+        Me.Document = document
         Me.SVGPageViewModel = viewmodel
         Me.MainViewModel = viewmodel.MainVM
         Me.DataContext = viewmodel
@@ -35,7 +37,7 @@ Class SVGPage
         AddHandler zoomPanControl.DrawingManager.TextEditor.TextEdited, AddressOf OnTextEdited
         AddHandler zoomPanControl.ContextMenuOpening, AddressOf OnCanvasContextMenuOpening
         AddHandler zoomPanControl.ContextMenu.Opened, AddressOf OnCanvasContextMenuOpened
-        AddHandler SelectionManager.SelectionChanged, AddressOf OnSelectionCountChanged
+        AddHandler selectionManager.SelectionChanged, AddressOf OnSelectionCountChanged
 
     End Sub
 
@@ -136,7 +138,7 @@ Class SVGPage
 
         If SVGPageViewModel.CanvasToolMode <> CanvasMode.Selection Then
             SelectionManager.ClearSelection()
-            SelectionManager.ApplySelection(Nothing, MainViewModel.DrawableCollection)
+            SelectionManager.ApplySelection(Nothing, Document.Drawables)
         End If
     End Sub
 
@@ -145,7 +147,7 @@ Class SVGPage
 
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
-        SelectionManager.ApplySelection(Nothing, MainViewModel.DrawableCollection)
+        SelectionManager.ApplySelection(Nothing, Document.Drawables)
         mainCanvas.RaiseEvent(New MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) With {
             .RoutedEvent = Mouse.MouseDownEvent,
             .Source = mainCanvas

@@ -36,6 +36,8 @@ Partial Public Class Application
                                services.AddSingleton(Of ISvgImportService, SVGImportService)()
                                services.AddSingleton(Of UndoRedoService)()
                                services.AddSingleton(Of PolyCut.RichCanvas.SelectionManager)()
+                               services.AddSingleton(Of Document)()
+                               services.AddSingleton(Of UIConfiguration)(Function(provider) SettingsHandler.GetUIConfiguration())
                                services.AddSingleton(Of ProjectSerializationService)()
                                services.AddSingleton(Of ClipboardService)()
                                services.AddSingleton(Of VTracerService)()

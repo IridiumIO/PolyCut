@@ -5,9 +5,11 @@ Imports GongSolutions.Wpf.DragDrop
 Public Class Tab_Elements
 
     Private ReadOnly _selectionManager As SelectionManager
+    Private ReadOnly _document As Document
 
     Sub New()
         _selectionManager = Application.GetService(Of SelectionManager)()
+        _document = Application.GetService(Of Document)()
 
         ' This call is required by the designer.
         InitializeComponent()
@@ -122,7 +124,7 @@ Public Class Tab_Elements
         _selectionManager.ApplySelection(added, removed, Not isShiftPressed AndAlso Not isCtrlPressed)
 
         If mainViewModel IsNot Nothing Then
-            SelectionHelper.SyncSelectionStates(mainViewModel.DrawableCollection)
+            SelectionHelper.SyncSelectionStates(_document.Drawables)
         End If
     End Sub
 

@@ -134,14 +134,11 @@ Public Class ColorPickerControl
         Next
 
         Dim additions As New List(Of Color)
-        Dim mainVM = Application.GetService(Of MainViewModel)()
-
-        If mainVM IsNot Nothing AndAlso mainVM.DrawableCollection IsNot Nothing Then
-            For Each drawable In FlattenDrawables(mainVM.DrawableCollection)
-                CollectColor(additions, known, drawable.Stroke)
-                CollectColor(additions, known, drawable.Fill)
-            Next
-        End If
+        Dim document = Application.GetService(Of Document)()
+        For Each drawable In FlattenDrawables(document.Drawables)
+            CollectColor(additions, known, drawable.Stroke)
+            CollectColor(additions, known, drawable.Fill)
+        Next
 
         For i = additions.Count - 1 To 0 Step -1
             Dim brush As New SolidColorBrush(additions(i))

@@ -9,6 +9,7 @@ Public Class ClipboardService
 
 
     Private ReadOnly _selectionManager As SelectionManager
+    Private ReadOnly _document As Document
     Private ReadOnly _mainVM As MainViewModel
     Private ReadOnly _undoRedo As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
@@ -18,8 +19,9 @@ Public Class ClipboardService
         .WriteIndented = False
     }
 
-    Public Sub New(mainVM As MainViewModel, undoRedo As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager)
+    Public Sub New(mainVM As MainViewModel, undoRedo As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document)
         _selectionManager = selectionManager
+        _document = document
         _mainVM = mainVM
         _undoRedo = undoRedo
         _projectService = projectService
@@ -30,7 +32,7 @@ Public Class ClipboardService
         Dim selectedDrawables = _selectionManager.SelectedItems
         If selectedDrawables.Count = 0 Then Return
 
-        Dim ret = _projectService.CreateProjectDataForClipboard(selectedDrawables, _mainVM.DrawingGroup)
+        Dim ret = _projectService.CreateProjectDataForClipboard(selectedDrawables, _document.DrawingGroup)
 
         Dim json As String = JsonSerializer.Serialize(ret, _jsonOpts)
         Dim data As New DataObject()
@@ -69,7 +71,7 @@ Public Class ClipboardService
             offset = 10
         End If
 
-        Dim act As New PasteDrawablesAction(_mainVM.Document, _projectService, pd, designerStyle, _selectionManager)
+        Dim act As New PasteDrawablesAction(_document, _projectService, pd, designerStyle, _selectionManager)
 
 
         If act.Execute() Then

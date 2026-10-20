@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Data/Klipper Setup.md" />
+    <File Path="Data/version.json" />
+    <File Path="Data/version.test.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="PolyCut.Core/PolyCut.Core.vbproj" />
+  <Project Path="PolyCut.RichCanvas/PolyCut.RichCanvas.vbproj" />
+  <Project Path="PolyCut.Shared/PolyCut.Shared.vbproj" />
+  <Project Path="PolyCut/PolyCut.vbproj" />
+</Solution>

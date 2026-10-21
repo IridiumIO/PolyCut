@@ -7,7 +7,6 @@
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "A printer with the name '{0}' already exists. Do you want to overwrite it?"
 "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged."
-"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing."
 "Adaptive Sampling" = "Adaptive Sampling"
 "Adaptive Sampling Sensitivity" = "Adaptive Sampling Sensitivity"
 "Adaptive Sampling Window" = "Adaptive Sampling Window"
@@ -30,6 +29,7 @@
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas"
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas"
 "Close" = "Close"
+"Colour" = "Colour"
 "Combine" = "Combine"
 "Combine Shapes" = "Combine Shapes"
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines."
@@ -41,13 +41,16 @@
 "Cut" = "Cut"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions."
 "Darkest shading spacing" = "Darkest shading spacing"
+"Default: {0}" = "Default: {0}"
 "Delete" = "Delete"
+"Disabled" = "Disabled"
 "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail."
 "Draw Outlines Before Fill" = "Draw Outlines Before Fill"
 "Drawing Group is already empty" = "Drawing Group is already empty"
 "Drawing Line Colour" = "Drawing Line Colour"
 "Drawing Settings" = "Drawing Settings"
 "Enable Pen Width Compensation" = "Enable Pen Width Compensation"
+"Enabled" = "Enabled"
 "Enter Printer Name" = "Enter Printer Name"
 "Enter URL or IP Address" = "Enter URL or IP Address"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Enter hex color (e.g., #FFFF0000 or #FF0000)"
@@ -119,6 +122,7 @@
 "Region Detection" = "Region Detection"
 "Region Detection Settings" = "Region Detection Settings"
 "Reload Languages. Checks online for updated language definitions" = "Reload Languages. Checks online for updated language definitions"
+"Requires: {0}" = "Requires: {0}"
 "Rotation" = "Rotation"
 "SVG Exported" = "SVG Exported"
 "S_ave As..." = "S_ave As..."
@@ -166,6 +170,8 @@
 "Update Available ▸ Version {0}" = "Update Available ▸ Version {0}"
 "Update Preview" = "Update Preview"
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally."
+"Work" = "Work"
+"Work Speed" = "Work Speed"
 "Working Area" = "Working Area"
 "Workspace cleared" = "Workspace cleared"
 "XOR operation resulted in an empty geometry. The shapes may be identical." = "XOR operation resulted in an empty geometry. The shapes may be identical."
@@ -245,10 +251,6 @@
 "Tool Off GCode" = "Tool Off GCode"
 "Tool On GCode" = "Tool On GCode"
 
-[context."Cut/Draw tool work"]
-"Work" = "Work"
-"Work Speed" = "Work Speed"
-
 [context."Darkest Shading Spacing Tooltip"]
 "How far apart drawn lines should be when shading the darkest parts of the image." = "How far apart drawn lines should be when shading the darkest parts of the image."
 
@@ -283,7 +285,6 @@
 
 [context."Merge Angle Tooltip"]
 "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing."
-"Default = 0.1" = "Default = 0.1"
 
 [context."Monitor Tab"]
 "Monitor" = "Monitor"

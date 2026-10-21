@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="AnnotatedControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:PolyCut" x:Name="root">
+    <UserControl.Content>
+        <Grid Margin="0 5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="LabelBlock" Margin="1 0 8 0" VerticalAlignment="Center" Text="{Binding LabelText, ElementName=root}" TextWrapping="Wrap" />
+            <ContentControl x:Name="EditorHost" Grid.Column="1" MinHeight="32" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" />
+            <Grid x:Name="ChildHost" Grid.Row="2" Grid.ColumnSpan="2" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="25" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <local:AnnotatedChildPanel x:Name="ChildPanel" Grid.Column="1" />
+            </Grid>
+        </Grid>
+    </UserControl.Content>
+</UserControl>

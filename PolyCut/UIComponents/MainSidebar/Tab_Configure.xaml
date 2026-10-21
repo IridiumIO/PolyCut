@@ -1,42 +1,77 @@
 ﻿<UserControl x:Class="Tab_Configure"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:c="clr-namespace:ValueConverters;assembly=ValueConverters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
              xmlns:local="clr-namespace:PolyCut"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pc="clr-namespace:PolyCut.Core;assembly=PolyCut.Core"
-             xmlns:polycutShared="clr-namespace:PolyCut.Shared;assembly=PolyCut.Shared"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
-             d:DesignHeight="1200"
-             d:DesignWidth="380"
-             mc:Ignorable="d">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto" />
-            <RowDefinition />
-        </Grid.RowDefinitions>
-        <Separator Grid.Row="0" Margin="5" />
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <UserControl.Resources>
+        <ObjectDataProvider x:Key="FillTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="pc:FillType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <DataTemplate x:Key="ZHeightTooltip">
+            <TextBlock loc:L.Context="Z Height Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                <Run loc:L.Value="How high above the workpiece the toolhead should be positioned when travelling or drawing." />
+                <LineBreak /><LineBreak />
+                <Run loc:L.Value="Positive values are offset above the bed surface." />
+                <LineBreak /><LineBreak />
+                <Run loc:L.Value="This value is affected by your printer's Z-Offset." />
+            </TextBlock>
+        </DataTemplate>
+        <DataTemplate x:Key="PassHeightDeltaTooltip">
+            <TextBlock loc:L.Context="Z Offset Per Pass Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                <Run loc:L.Value="The distance in Z that the tool should move after each pass when multiple passes are enabled." />
+                <LineBreak /><LineBreak />
+                <Run loc:L.Value="Positive values move the tool up after each pass, while negative values move the tool down after each pass." />
+                <LineBreak /><LineBreak />
+                <Run loc:L.Value="For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." />
+            </TextBlock>
+        </DataTemplate>
+        <DataTemplate x:Key="ToolDiameterTooltip">
+            <TextBlock loc:L.Context="Tool Diameter Tooltip" TextAlignment="Left" TextWrapping="Wrap">
+                <Run loc:L.Value="of the swivelling part of the cutting blade." />
+                <LineBreak />
+                <Run loc:L.Value="Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge." />
+                <LineBreak />
+                <LineBreak />
+                <Run loc:L.Value="Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features." />
+            </TextBlock>
+        </DataTemplate>
+    </UserControl.Resources>
+
+
+    <Grid RowDefinitions="Auto *">
+
+        <Separator Margin="5" />
         <ScrollViewer Grid.Row="1"
                       Margin="-14 10 -14 0" Padding="25 0 25 0"
-                      IsDeferredScrollingEnabled="False" VerticalScrollBarVisibility="Visible">
+                      VerticalScrollBarVisibility="Visible">
 
             <StackPanel>
-                <Grid HorizontalAlignment="Center" Grid.IsSharedSizeScope="True">
+
+                <!--
+                    ====================
+                    TOOL MODE SELECTION
+                    ====================
+                -->
+
+                <Grid HorizontalAlignment="Center" DataContext="{Binding MainVM.Configuration}" Grid.IsSharedSizeScope="True">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" MinWidth="80" SharedSizeGroup="Tools" />
+                        <ColumnDefinition Width="*" MinWidth="90" SharedSizeGroup="Tools" />
                         <ColumnDefinition Width="15" />
-                        <ColumnDefinition Width="*" MinWidth="80" SharedSizeGroup="Tools" />
+                        <ColumnDefinition Width="*" MinWidth="90" SharedSizeGroup="Tools" />
                     </Grid.ColumnDefinitions>
                     <RadioButton x:Name="modeCut"
                                  Grid.Column="0"
-                                 Height="60"
-                                 HorizontalAlignment="Stretch"
-                                 IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
+                                 Height="55"
+                                 Padding="0" HorizontalAlignment="Stretch"
+                                 IsChecked="{Binding SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Cut}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
                         <StackPanel>
                             <Canvas Width="16" Height="16" Margin="0 6 0 0">
@@ -61,10 +96,9 @@
 
                     <RadioButton x:Name="modeDraw"
                                  Grid.Column="2"
-                                 Height="60"
-                                 HorizontalAlignment="Stretch"
-                                 d:IsChecked="True"
-                                 IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
+                                 Height="55"
+                                 Padding="0" HorizontalAlignment="Stretch"
+                                 IsChecked="{Binding SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Draw}}"
                                  Style="{StaticResource {x:Type ToggleButton}}">
                         <StackPanel>
                             <ui:SymbolIcon Margin="0 6 0 0" Symbol="Pen20" />
@@ -79,470 +113,228 @@
 
                 </Grid>
 
+                <!--
+                    ====================
+                    TRAVEL AND Z HEIGHT
+                    ====================
+                -->
 
+                <StackPanel DataContext="{Binding MainVM.Configuration}">
+                    <local:AnnotatedSlider LabelText="{loc:T 'Travel Speed'}"
+                                           Maximum="100" Minimum="10"
+                                           ToolTipMain="{loc:T 'Speed of the toolhead when the tool is raised and not actively cutting/drawing.',
+                                                               Context='Travel Speed ToolTip'}"
+                                           UnitText="mm/s"
+                                           Value="{Binding TravelSpeed}" />
+                    <local:AnnotatedSlider LabelText="{loc:T 'Work Speed'}"
+                                           Maximum="60" Minimum="5"
+                                           ToolTipMain="{loc:T 'Speed of the toolhead when the tool is down and cutting/drawing.',
+                                                               Context='Tool Speed Tooltip'}"
+                                           ToolTipSub="{loc:T 'Slower is usually better',
+                                                              Context='Tool Speed Tooltip'}"
+                                           UnitText="mm/s"
+                                           Value="{Binding WorkSpeed}" />
+                    <Label Margin="0 10 0 0" loc:L.Value="Z Height" />
+                    <Grid ColumnDefinitions="* 20 *">
 
-
-                <!--<RadioButton x:Name="modeFoil"
-                                 Width="80" Height="60"
-                                 d:IsChecked="True"
-                                 IsChecked="{Binding MainVM.Configuration.SelectedToolMode, Mode=TwoWay, Converter={StaticResource RadioButtonConverter}, ConverterParameter={x:Static pc:ProcessorConfiguration+ToolMode.Foil}}"
-                                 Style="{StaticResource {x:Type ToggleButton}}">
-                        <StackPanel>
-
-                            <ui:SymbolIcon Margin="0 6 0 0" Symbol="CalligraphyPen20" />
-                            <TextBlock Margin="0 4 0 0" HorizontalAlignment="Center"
-                                       FontWeight="SemiBold" Text="Foil" />
-
-                        </StackPanel>
-                        <RadioButton.ToolTip>
-                            <TextBlock TextAlignment="Left" TextWrapping="Wrap">
-                                Settings designed for using a foil quill.
-                            </TextBlock>
-                        </RadioButton.ToolTip>
-                    </RadioButton>-->
-
-
-
-                <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="{loc:T Travel Speed}"
-                                            Maximum="100" Minimum="10" TickFrequency="1"
-                                            ToolTip="{loc:T 'Speed of the toolhead when the tool is raised and not actively cutting/drawing.',
-                                                            Context='Travel Speed ToolTip'}"
-                                            UnitText="mm/s"
-                                            Value="{Binding MainVM.Configuration.TravelSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <local:LabeledSliderControl Margin="0 0 0 0"
-                                            LabelText="{loc:T Work Speed,
-                                                              Context='Cut/Draw tool work'}"
-                                            Maximum="60" Minimum="5" TickFrequency="1" UnitText="mm/s"
-                                            Value="{Binding MainVM.Configuration.WorkSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                    <local:LabeledSliderControl.ToolTip>
-                        <TextBlock loc:L.Context="Tool Speed Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                            <Run loc:L.Value="Speed of the toolhead when the tool is down and cutting/drawing." />
-                            <LineBreak /><LineBreak />
-                            <Run loc:L.Value="Slower is usually better" />
-                        </TextBlock>
-                    </local:LabeledSliderControl.ToolTip>
-                </local:LabeledSliderControl>
-
-                <Label Margin="0 10 0 0" loc:L.Value="Z Height" />
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="20" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-
-                    <local:LabeledNumberBoxControl LabelText="{loc:T Work,
-                                                                     Context='Cut/Draw tool work'}"
-                                                   Text="{Binding MainVM.Configuration.WorkZ, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                   TextBoxWidth="95" UnitText="mm" />
-
-                    <local:LabeledNumberBoxControl Grid.Column="2"
-                                                   LabelText="{loc:T Travel}"
-                                                   Text="{Binding MainVM.Configuration.TravelZ, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                   TextBoxWidth="95" UnitText="mm" />
-                    <Grid.ToolTip>
-                        <TextBlock loc:L.Context="Z Height Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                            <Run loc:L.Value="How high above the workpiece the toolhead should be positioned when travelling or drawing." />
-                            <LineBreak /><LineBreak />
-                            <Run loc:L.Value="Positive values are offset above the bed surface." />
-                            <LineBreak /><LineBreak />
-                            <Run loc:L.Value="This value is affected by your printer's Z-Offset." />
-                        </TextBlock>
-                    </Grid.ToolTip>
-                </Grid>
+                        <local:AnnotatedNumberBox Grid.Column="0"
+                                                  AllowNegative="True" EditorWidth="95"
+                                                  LabelText="{loc:T 'Work'}"
+                                                  ToolTipTemplate="{StaticResource ZHeightTooltip}"
+                                                  UnitText="mm"
+                                                  Value="{Binding WorkZ}" />
+                        <local:AnnotatedNumberBox Grid.Column="2"
+                                                  AllowNegative="True" EditorWidth="95"
+                                                  LabelText="{loc:T 'Travel'}"
+                                                  ToolTipTemplate="{StaticResource ZHeightTooltip}"
+                                                  UnitText="mm"
+                                                  Value="{Binding TravelZ}" />
+                    </Grid>
+                </StackPanel>
 
                 <Separator Margin="0 10 0 0" />
 
-                <StackPanel>
-
-                    <ui:CardExpander Margin="-15 0"
-                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
-                                     Style="{StaticResource CustomCardExpanderStyle}">
-                        <ui:CardExpander.Header>
-                            <Label Margin="10 0" loc:L.Value="Processing Settings" FlowDirection="LeftToRight" />
-
-                        </ui:CardExpander.Header>
-
-                        <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
-
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Curve-fitting Precision}"
-                                                           Text="{Binding MainVM.Configuration.Tolerance, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                           TextBoxWidth="120" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Curve-fitting Precision Tooltip" loc:L.Value="Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time." TextAlignment="Left" TextWrapping="Wrap" />
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
-
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Number of Passes}" Text="{Binding MainVM.Configuration.Passes, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}" TextBoxWidth="120">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Number of Passes Tooltip" loc:L.Value="How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times." TextAlignment="Left" TextWrapping="Wrap" />
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Z Offset Per Pass}"
-                                                           Text="{Binding MainVM.Configuration.PassHeightDelta, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allownegative}"
-                                                           TextBoxWidth="120" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Z Offset Per Pass Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="The distance in Z that the tool should move after each pass when multiple passes are enabled." />
-                                        <LineBreak /><LineBreak />
-                                        <Run loc:L.Value="Positive values move the tool up after each pass, while negative values move the tool down after each pass." />
-                                        <LineBreak /><LineBreak />
-                                        <Run loc:L.Value="For cutting or engraving thicker materials, a slightly negative value can be used to gradually cut deeper with each pass, which can improve quality and reduce the chance of blade breakage." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
-
-                            <local:LabeledControl Margin="0 12 0 0" LabelText="{loc:T 'Simplify Toolpaths'}" ToolTip="{loc:T 'Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments.'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.SimplifyToolPaths}" />
-                                </local:LabeledControl.ValueContent>
-                            </local:LabeledControl>
-
-                            <Grid ColumnDefinitions="25, *" Visibility="{Binding MainVM.Configuration.SimplifyToolPaths, Converter={StaticResource BooleanToVisibilityConverter}}">
-
-                                <TextBlock Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Text="∟" />
-
-                                <local:LabeledNumberBoxControl Grid.Column="1"
-                                                               Margin="0 0 0 0"
-                                                               LabelText="{loc:T Merge Angle}"
-                                                               Text="{Binding MainVM.Configuration.SimplifyMergeAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                               TextBoxWidth="120" UnitText="°">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock loc:L.Context="Merge Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." />
-                                            <LineBreak /><LineBreak />
-                                            <Run loc:L.Value="Default = 0.1" />
-                                        </TextBlock>
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-                            </Grid>
-
-
-
-                            <local:LabeledControl Height="36" Margin="0 12 0 0" LabelText="{loc:T 'Extract One Colour'}">
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Extract One Colour Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Processes only objects with the specified colour, and ignores all others." />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
-                                <local:LabeledControl.ValueContent>
-
-                                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                                        <local:ColorPickerControl Grid.Column="1"
-                                                                  Margin="0 0 22 0"
-                                                                  ColorSelected="ColorPickerControl_ColorSelected"
-                                                                  CurrentColor="{Binding MainVM.Configuration.ExtractionColor, Mode=TwoWay, Converter={local:BrushToHexStringConverter}}"
-                                                                  LabelText=""
-                                                                  Visibility="{Binding MainVM.Configuration.ExtractOneColour, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                        <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.ExtractOneColour}" />
-                                    </StackPanel>
-
-                                </local:LabeledControl.ValueContent>
-                            </local:LabeledControl>
-
-
-
-
-
-
-                        </StackPanel>
-
-                    </ui:CardExpander>
-
-                    <Separator />
-
-                    <!--
-                        ===================
-                        CUTTING MODE CONFIG
-                        ===================
-                    -->
-                    <ui:CardExpander Margin="-15 0"
-                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
-                                     Style="{StaticResource CustomCardExpanderStyle}"
-                                     Visibility="{Binding ElementName=modeCut, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:CardExpander.Header>
-                            <Label Margin="10 0" loc:L.Value="Blade Settings" FlowDirection="LeftToRight" />
-
-                        </ui:CardExpander.Header>
-
-                        <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
-
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Tool Diameter}"
-                                                           Text="{Binding MainVM.Configuration.CuttingConfig.ToolDiameter, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                           TextBoxWidth="120" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Tool Diameter Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="of the swivelling part of the cutting blade." />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Most blades are ~1mm in diameter, however the point of the blade may not be at the very edge." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Setting the tool diameter correctly adds a compensatory swivel for blade rotation to align with the next move. This is most noticeable on tiny features." />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
-
-                            <local:LabeledNumberBoxControl LabelText="{loc:T Overcut}"
-                                                           Text="{Binding MainVM.Configuration.CuttingConfig.Overcut, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                           TextBoxWidth="120" UnitText="mm">
-                                <local:LabeledNumberBoxControl.ToolTip>
-                                    <TextBlock loc:L.Context="Overcut Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Extends cuts by the specified amount to compensate for cutting moves ending slightly too early." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Recommended value ~1mm" />
-                                    </TextBlock>
-                                </local:LabeledNumberBoxControl.ToolTip>
-                            </local:LabeledNumberBoxControl>
-
-
-                        </StackPanel>
-                    </ui:CardExpander>
-
-
-                    <!--
-                        ===================
-                        DRAWING MODE CONFIG
-                        ===================
-                    -->
-                    <ui:CardExpander Margin="-15 0"
-                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
-                                     Style="{StaticResource CustomCardExpanderStyle}"
-                                     Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ui:CardExpander.Header>
-                            <Label Margin="10 0" loc:L.Value="Drawing Settings" FlowDirection="LeftToRight" />
-
-                        </ui:CardExpander.Header>
-
-                        <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
-
-
-
-
-                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Optimise Drawing Paths'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.OptimisedToolPath, Mode=TwoWay}" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Optimise Drawing Paths Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Optimises the order in which lines are drawn to minimise travel time." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Particularly useful for ordering lines when filling shapes." />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
-                            </local:LabeledControl>
-
-
-
-                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Allow Travel in Outlines'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right"
-                                                     IsChecked="{Binding MainVM.Configuration.DrawingConfig.AllowDrawingOverOutlines, Mode=TwoWay}"
-                                                     IsEnabled="{Binding MainVM.Configuration.OptimisedToolPath}"
-                                                     ToolTipService.ShowOnDisabled="True" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Allow Travel in Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Allows the pen to travel through shape outlines without lifting the pen up to start the next line." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Requires &quot;Optimise Drawing Paths&quot; to be enabled. Can massively improve overall speed" />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
-                            </local:LabeledControl>
-
-                            <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Keep Outlines'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines, Mode=TwoWay}" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Keep Outlines Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="Whether shape outlines should be drawn, or ignored." />
-                                        <LineBreak />
-                                        <LineBreak />
-                                        <Run loc:L.Value="Disable this if you want to shade in an area without the area being outlined." />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
-
-                            </local:LabeledControl>
-
-
-
-                            <local:LabeledControl Height="36" Margin="0 5 0 -7" LabelText="{loc:T 'Enable Pen Width Compensation'}">
-                                <local:LabeledControl.ValueContent>
-                                    <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.PenWidthCompensation, Mode=TwoWay}" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock MaxWidth="320" loc:L.Value="Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." TextWrapping="Wrap" />
-                                </local:LabeledControl.ToolTip>
-
-                            </local:LabeledControl>
-
-                            <Grid Margin="0 5"
-                                  ColumnDefinitions="25, *" RowDefinitions="auto auto"
-                                  Visibility="{Binding MainVM.Configuration.DrawingConfig.PenWidthCompensation, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <TextBlock Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Text="∟" />
-                                <TextBlock Grid.Row="1"
-                                           Margin="0 -6 5 0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Text="∟" />
-
-                                <local:LabeledNumberBoxControl Grid.Column="1"
-                                                               LabelText="{loc:T Pen Width}"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.PenWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}, ConverterParameter=allowzero}"
-                                                               TextBoxWidth="120" UnitText="mm">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock MaxWidth="320" loc:L.Value="Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." TextWrapping="Wrap" />
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-                                <local:LabeledNumberBoxControl Grid.Row="1" Grid.Column="1"
-                                                               IsEnabled="{Binding MainVM.Configuration.DrawingConfig.KeepOutlines}"
-                                                               LabelText="{loc:T Fill / Outline Overlap}"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.FillOutlineOverlap, Mode=TwoWay}"
-                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="%">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock MaxWidth="320" loc:L.Value="Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." TextWrapping="Wrap" />
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-                            </Grid>
-
-
-                        </StackPanel>
-                    </ui:CardExpander>
-
-                    <Separator Margin="0 0 0 0" Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                    <ui:CardExpander Margin="-15 0"
-                                     Background="Transparent" BorderBrush="Transparent" ContentPadding="0" FlowDirection="RightToLeft" IsExpanded="True"
-                                     Style="{StaticResource CustomCardExpanderStyle}"
-                                     Visibility="{Binding ElementName=modeDraw, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
-
-                        <ui:CardExpander.Header>
-                            <Label Margin="10 0" loc:L.Value="Fill Settings" FlowDirection="LeftToRight" />
-
-                        </ui:CardExpander.Header>
-
-                        <StackPanel Margin="15 0 15 10" FlowDirection="LeftToRight">
-                            <StackPanel.Resources>
-                                <ObjectDataProvider x:Key="dataFromEnum" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                                    <ObjectDataProvider.MethodParameters>
-                                        <x:Type TypeName="pc:FillType" />
-                                    </ObjectDataProvider.MethodParameters>
-                                </ObjectDataProvider>
-                            </StackPanel.Resources>
-
-
-                            <local:LabeledControl Margin="0 5" LabelText="{loc:T Fill Style}" ToolTipService.ShowOnDisabled="True">
-                                <local:LabeledControl.ValueContent>
-                                    <ComboBox Grid.Row="0" Grid.Column="1"
-                                              Width="120"
-                                              HorizontalAlignment="Right"
-                                              ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
-                                              SelectedItem="{Binding MainVM.Configuration.DrawingConfig.FillType}" />
-                                </local:LabeledControl.ValueContent>
-                                <local:LabeledControl.ToolTip>
-                                    <TextBlock loc:L.Context="Fill Style Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                        <Run loc:L.Value="The method used to fill shapes" />
-                                    </TextBlock>
-                                </local:LabeledControl.ToolTip>
-                            </local:LabeledControl>
-
-                            <StackPanel>
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding MainVM.Configuration.DrawingConfig.FillType}" Value="{x:Static pc:FillType.None}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-
-
-                                <local:LabeledNumberBoxControl x:Name="ShadingThresholdControl"
-                                                               Background="Transparent"
-                                                               LabelText="{loc:T Shading Threshold}"
-                                                               MouseEnter="LabeledNumberBoxControl_MouseEnter" MouseLeave="LabeledNumberBoxControl_MouseLeave"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.ShadingThreshold, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock loc:L.Context="Shading Threshold Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="Range = 0 to 1" />
-                                            <LineBreak />
-                                            <LineBreak />
-                                            <Run loc:L.Value="How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects." />
-                                        </TextBlock>
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-                                <local:LabeledNumberBoxControl LabelText="{loc:T Lightest shading spacing}"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.MaxStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock loc:L.Context="Lightest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="How far apart drawn lines should be when shading the lightest parts of the image." />
-                                        </TextBlock>
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-                                <local:LabeledNumberBoxControl LabelText="{loc:T Darkest shading spacing}"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.MinStrokeWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource UnitConverter}}"
-                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="mm">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock loc:L.Context="Darkest Shading Spacing Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="How far apart drawn lines should be when shading the darkest parts of the image." />
-                                        </TextBlock>
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-                                <local:LabeledNumberBoxControl LabelText="{loc:T Shading angle}"
-                                                               Text="{Binding MainVM.Configuration.DrawingConfig.ShadingAngle, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                                                               TextBoxWidth="120" ToolTipService.ShowOnDisabled="True" UnitText="°">
-                                    <local:LabeledNumberBoxControl.ToolTip>
-                                        <TextBlock loc:L.Context="Shading Angle Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="Which Direction to draw when shading objects." />
-                                            <LineBreak />
-                                            <LineBreak />
-                                            <Run loc:L.Value="0° represents East, with positive values rotating counterclockwise." />
-                                        </TextBlock>
-                                    </local:LabeledNumberBoxControl.ToolTip>
-                                </local:LabeledNumberBoxControl>
-
-
-                                <local:LabeledControl Height="36" Margin="0 5" LabelText="{loc:T 'Draw Outlines Before Fill'}">
-                                    <local:LabeledControl.ValueContent>
-                                        <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding MainVM.Configuration.DrawingConfig.OutlinesBeforeFill, Mode=TwoWay}" />
-                                    </local:LabeledControl.ValueContent>
-                                    <local:LabeledControl.ToolTip>
-                                        <TextBlock loc:L.Context="Outlines Before Fill Tooltip" TextAlignment="Left" TextWrapping="Wrap">
-                                            <Run loc:L.Value="Draws the outlines of shapes before filling them in." />
-                                            <LineBreak />
-                                            <LineBreak />
-                                            <Run loc:L.Value="Usually you want to draw outlines after filling." />
-                                        </TextBlock>
-                                    </local:LabeledControl.ToolTip>
-
-                                </local:LabeledControl>
-
-                            </StackPanel>
-
-
-                        </StackPanel>
-                    </ui:CardExpander>
-
-                </StackPanel>
-
+                <!--
+                    ====================
+                    PROCESSING SETTINGS
+                    ====================
+                -->
+                <local:AnnotatedSection DataContext="{Binding MainVM.Configuration}" LabelText="{loc:T 'Processing Settings'}">
+                    <local:AnnotatedNumberBox AllowZero="False"
+                                              LabelText="{loc:T 'Curve-fitting Precision'}"
+                                              ToolTipMain="{loc:T 'Curved lines are approximated as straight lines when converted to GCode. This sets the effective smallest length that each segment of the curve should be. Smaller values increase accuracy, but massively increase processing time.',
+                                                                  Context='Curve-fitting Precision Tooltip'}"
+                                              UnitText="mm"
+                                              Value="{Binding Tolerance}" />
+                    <local:AnnotatedNumberBox AllowZero="False"
+                                              LabelText="{loc:T 'Number of Passes'}"
+                                              ToolTipMain="{loc:T 'How many times the tool should pass over the same area. Multiple passes can be used to cut/draw deeper or darker, or to improve quality by going over the same path multiple times.',
+                                                                  Context='Number of Passes Tooltip'}"
+                                              Value="{Binding Passes}" />
+                    <local:AnnotatedNumberBox AllowNegative="True"
+                                              LabelText="{loc:T 'Z Offset Per Pass'}"
+                                              ToolTipTemplate="{StaticResource PassHeightDeltaTooltip}"
+                                              UnitText="mm"
+                                              Value="{Binding PassHeightDelta}" />
+                    <local:AnnotatedToggleSwitch IsChecked="{Binding SimplifyToolPaths}" LabelText="{loc:T 'Simplify Toolpaths'}" ToolTipMain="{loc:T 'Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments.'}">
+                        <local:AnnotatedNumberBox AllowNegative="True"
+                                                  LabelText="{loc:T 'Merge Angle'}"
+                                                  ToolTipMain="{loc:T 'Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing.',
+                                                                      Context='Merge Angle Tooltip'}"
+                                                  UnitText="&#176;"
+                                                  Value="{Binding SimplifyMergeAngle}" />
+                    </local:AnnotatedToggleSwitch>
+                    <local:AnnotatedToggleSwitch IsChecked="{Binding ExtractOneColour}" LabelText="{loc:T 'Extract One Colour'}" ToolTipMain="{loc:T 'Processes only objects with the specified colour, and ignores all others.', Context='Extract One Colour Tooltip'}">
+                        <local:AnnotatedColourPicker LabelText="{loc:T 'Colour'}" ToolTipMain="{loc:T 'Processes only objects with the specified colour, and ignores all others.', Context='Extract One Colour Tooltip'}" Value="{Binding ExtractionColor}" />
+                    </local:AnnotatedToggleSwitch>
+                </local:AnnotatedSection>
+                <Separator />
+
+                <!--
+                    ====================
+                    CUTTING SETTINGS
+                    ====================
+                -->
+
+                <local:AnnotatedSection DataContext="{Binding MainVM.Configuration.CuttingConfig}" LabelText="{loc:T 'Blade Settings'}" Visibility="{Binding IsChecked, ElementName=modeCut, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    <local:AnnotatedNumberBox AllowZero="False"
+                                              LabelText="{loc:T 'Tool Diameter'}"
+                                              ToolTipTemplate="{StaticResource ToolDiameterTooltip}"
+                                              UnitText="mm"
+                                              Value="{Binding ToolDiameter}" />
+
+                    <local:AnnotatedNumberBox AllowZero="False"
+                                              LabelText="{loc:T 'Overcut'}"
+                                              ToolTipMain="{loc:T 'Extends cuts by the specified amount to compensate for cutting moves ending slightly too early.',
+                                                                  Context='Overcut Tooltip'}"
+                                              ToolTipSub="{loc:T 'Recommended value ~1mm',
+                                                                 Context='Overcut Tooltip'}"
+                                              UnitText="mm"
+                                              Value="{Binding Overcut}" />
+                </local:AnnotatedSection>
+
+                <!--
+                    ====================
+                    DRAWING SETTINGS
+                    ====================
+                -->
+
+                <local:AnnotatedSection DataContext="{Binding MainVM.Configuration}" LabelText="{loc:T 'Drawing Settings'}" Visibility="{Binding IsChecked, ElementName=modeDraw, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    <local:AnnotatedToggleSwitch IsChecked="{Binding OptimisedToolPath}"
+                                                 LabelText="{loc:T 'Optimise Drawing Paths'}"
+                                                 ToolTipMain="{loc:T 'Optimises the order in which lines are drawn to minimise travel time.',
+                                                                     Context='Optimise Drawing Paths Tooltip'}"
+                                                 ToolTipSub="{loc:T 'Particularly useful for ordering lines when filling shapes.',
+                                                                    Context='Optimise Drawing Paths Tooltip'}" />
+
+                    <StackPanel DataContext="{Binding DrawingConfig}">
+
+                        <local:AnnotatedToggleSwitch IsChecked="{Binding AllowDrawingOverOutlines}"
+                                                     IsEnabled="{Binding DataContext.MainVM.Configuration.OptimisedToolPath, RelativeSource={RelativeSource AncestorType=local:Tab_Configure}}"
+                                                     LabelText="{loc:T 'Allow Travel in Outlines'}"
+                                                     ToolTipMain="{loc:T 'Allows the pen to travel through shape outlines without lifting the pen up to start the next line.',
+                                                                         Context='Allow Travel in Outlines Tooltip'}"
+                                                     ToolTipRequirements="{loc:T 'Optimise Drawing Paths'}"
+                                                     ToolTipSub="{loc:T 'Requires &quot;Optimise Drawing Paths&quot; to be enabled. Can massively improve overall speed',
+                                                                        Context='Allow Travel in Outlines Tooltip'}" />
+
+                        <local:AnnotatedToggleSwitch IsChecked="{Binding KeepOutlines}"
+                                                     LabelText="{loc:T 'Keep Outlines'}"
+                                                     ToolTipMain="{loc:T 'Whether shape outlines should be drawn, or ignored.',
+                                                                         Context='Keep Outlines Tooltip'}"
+                                                     ToolTipSub="{loc:T 'Disable this if you want to shade in an area without the area being outlined.',
+                                                                        Context='Keep Outlines Tooltip'}" />
+
+                        <local:AnnotatedToggleSwitch IsChecked="{Binding PenWidthCompensation}" LabelText="{loc:T 'Enable Pen Width Compensation'}" ToolTipMain="{loc:T 'Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged.'}">
+
+                            <local:AnnotatedNumberBox LabelText="{loc:T 'Pen Width'}"
+                                                      ToolTipMain="{loc:T 'Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged.'}"
+                                                      UnitText="mm"
+                                                      Value="{Binding PenWidth}" />
+
+                            <local:AnnotatedNumberBox AllowNegative="True"
+                                                      IsEnabled="{Binding KeepOutlines}"
+                                                      LabelText="{loc:T 'Fill / Outline Overlap'}"
+                                                      ToolTipMain="{loc:T 'Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines.'}"
+                                                      ToolTipRequirements="{loc:T 'Keep Outlines'}"
+                                                      UnitText="%"
+                                                      Value="{Binding FillOutlineOverlap}" />
+                        </local:AnnotatedToggleSwitch>
+                    </StackPanel>
+                </local:AnnotatedSection>
+
+
+                <Separator Visibility="{Binding IsChecked, ElementName=modeDraw, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <!--
+                    ====================
+                    FILL SETTINGS
+                    ====================
+                -->
+
+                <local:AnnotatedSection DataContext="{Binding MainVM.Configuration.DrawingConfig}" LabelText="{loc:T 'Fill Settings'}" Visibility="{Binding IsChecked, ElementName=modeDraw, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <local:AnnotatedComboBox ItemsSource="{Binding Source={StaticResource FillTypes}}"
+                                             LabelText="{loc:T 'Fill Style'}"
+                                             SelectedItem="{Binding FillType}"
+                                             ToolTipMain="{loc:T 'The method used to fill shapes',
+                                                                 Context='Fill Style Tooltip'}" />
+                    <StackPanel>
+
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FillType}" Value="{x:Static pc:FillType.None}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <local:AnnotatedNumberBox x:Name="ShadingThresholdControl"
+                                                  AllowNegative="True"
+                                                  LabelText="{loc:T 'Shading Threshold'}"
+                                                  MouseEnter="ShadingThreshold_MouseEnter" MouseLeave="ShadingThreshold_MouseLeave" TextChanged="ShadingThreshold_TextChanged"
+                                                  ToolTipMain="{loc:T 'Range = 0 to 1',
+                                                                      Context='Shading Threshold Tooltip'}"
+                                                  ToolTipSub="{loc:T 'How bright an object should be in order to be shaded. 0 = shade all objects, 1 = shade only fully bright objects.',
+                                                                     Context='Shading Threshold Tooltip'}"
+                                                  Unloaded="ShadingThreshold_Unloaded"
+                                                  Value="{Binding ShadingThreshold}" />
+
+                        <local:AnnotatedNumberBox AllowZero="False"
+                                                  LabelText="{loc:T 'Lightest shading spacing'}"
+                                                  ToolTipMain="{loc:T 'How far apart drawn lines should be when shading the lightest parts of the image.',
+                                                                      Context='Lightest Shading Spacing Tooltip'}"
+                                                  UnitText="mm"
+                                                  Value="{Binding MaxStrokeWidth}" />
+
+                        <local:AnnotatedNumberBox AllowZero="False"
+                                                  LabelText="{loc:T 'Darkest shading spacing'}"
+                                                  ToolTipMain="{loc:T 'How far apart drawn lines should be when shading the darkest parts of the image.',
+                                                                      Context='Darkest Shading Spacing Tooltip'}"
+                                                  UnitText="mm"
+                                                  Value="{Binding MinStrokeWidth}" />
+
+                        <local:AnnotatedNumberBox AllowNegative="True"
+                                                  LabelText="{loc:T 'Shading angle'}"
+                                                  ToolTipMain="{loc:T 'Which Direction to draw when shading objects.',
+                                                                      Context='Shading Angle Tooltip'}"
+                                                  ToolTipSub="{loc:T '0° represents East, with positive values rotating counterclockwise.',
+                                                                     Context='Shading Angle Tooltip'}"
+                                                  UnitText="&#176;"
+                                                  Value="{Binding ShadingAngle}" />
+
+                        <local:AnnotatedToggleSwitch IsChecked="{Binding OutlinesBeforeFill}"
+                                                     LabelText="{loc:T 'Draw Outlines Before Fill'}"
+                                                     ToolTipMain="{loc:T 'Draws the outlines of shapes before filling them in.',
+                                                                         Context='Outlines Before Fill Tooltip'}"
+                                                     ToolTipSub="{loc:T 'Usually you want to draw outlines after filling.',
+                                                                        Context='Outlines Before Fill Tooltip'}" />
+                    </StackPanel>
+                </local:AnnotatedSection>
             </StackPanel>
-
         </ScrollViewer>
     </Grid>
 </UserControl>

@@ -7,7 +7,6 @@
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "「{0}」という名前のプリンターは既に存在します。上書きしますか？"
 "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." # LOC:TODO
-"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." # LOC:TODO
 "Adaptive Sampling" = "適応サンプリング"
 "Adaptive Sampling Sensitivity" = "適応サンプリング感度"
 "Adaptive Sampling Window" = "適応サンプリング範囲"
@@ -30,6 +29,7 @@
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas" # LOC:TODO
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas" # LOC:TODO
 "Close" = "閉じる"
+"Colour" = "Colour" # LOC:TODO
 "Combine" = "結合"
 "Combine Shapes" = "形状を結合"
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
@@ -41,13 +41,16 @@
 "Cut" = "切断"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "階層型 Watershed アルゴリズムのカットレベル（0～255）。値を高くすると領域階層をより細かく分割し、内容の細部に沿う小さな領域が多く生成されます。値を低くすると領域が統合され、より少数の大きな領域になります。"
 "Darkest shading spacing" = "最暗部のシェーディング間隔"
+"Default: {0}" = "Default: {0}" # LOC:TODO
 "Delete" = "削除"
+"Disabled" = "Disabled" # LOC:TODO
 "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "検出されたパッチのうち、このピクセル数未満のものを破棄します（0～128）。値を大きくするとトレース後に残る小さな点やノイズを除去しやすくなり、値を小さくすると細部を保持できます。"
 "Draw Outlines Before Fill" = "塗りつぶし前に輪郭を描画"
 "Drawing Group is already empty" = "描画グループは既に空です"
 "Drawing Line Colour" = "描画線の色"
 "Drawing Settings" = "描画設定"
 "Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
+"Enabled" = "Enabled" # LOC:TODO
 "Enter Printer Name" = "プリンター名を入力"
 "Enter URL or IP Address" = "URL または IP アドレスを入力"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "16 進カラーを入力（例: #FFFF0000 または #FF0000）"
@@ -119,6 +122,7 @@
 "Region Detection" = "領域検出"
 "Region Detection Settings" = "領域検出設定"
 "Reload Languages. Checks online for updated language definitions" = "言語を再読み込みします。更新された言語定義がオンラインにあるか確認します"
+"Requires: {0}" = "Requires: {0}" # LOC:TODO
 "Rotation" = "回転"
 "SVG Exported" = "SVG をエクスポートしました"
 "S_ave As..." = "名前を付けて保_存..."
@@ -166,6 +170,8 @@
 "Update Available ▸ Version {0}" = "更新があります ▸ バージョン {0}"
 "Update Preview" = "プレビューを更新"
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "単一の固定しきい値ではなく適応しきい値処理を使用します。画像全体ではなく局所的にしきい値を再計算するため、照明ムラのあるスキャン画像や写真に適しています。"
+"Work" = "Work" # LOC:TODO
+"Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "作業領域"
 "Workspace cleared" = "ワークスペースを消去しました"
 "XOR operation resulted in an empty geometry. The shapes may be identical." = "XOR 演算の結果が空のジオメトリになりました。形状が同一である可能性があります。"
@@ -245,10 +251,6 @@
 "Tool Off GCode" = "Tool Off GCode" # LOC:TODO
 "Tool On GCode" = "Tool On GCode" # LOC:TODO
 
-[context."Cut/Draw tool work"]
-"Work" = "作業"
-"Work Speed" = "作業速度"
-
 [context."Darkest Shading Spacing Tooltip"]
 "How far apart drawn lines should be when shading the darkest parts of the image." = "画像の最も暗い部分をシェーディングするときの描画線の間隔。"
 
@@ -283,7 +285,6 @@
 
 [context."Merge Angle Tooltip"]
 "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." # LOC:TODO
-"Default = 0.1" = "Default = 0.1" # LOC:TODO
 
 [context."Monitor Tab"]
 "Monitor" = "モニター"
@@ -395,3 +396,7 @@
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "プレビュー終了 GCode (?)"
 "Preview Start GCode (?)" = "プレビュー開始 GCode (?)"
+
+[obsolete.context."Cut/Draw tool work"]
+"Work" = "作業"
+"Work Speed" = "作業速度"

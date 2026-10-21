@@ -7,7 +7,6 @@
 
 "A printer with the name '{0}' already exists. Do you want to overwrite it?" = "Ein Drucker mit dem Namen „{0}“ existiert bereits. Möchten Sie ihn überschreiben?"
 "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." = "Accounts for pen width to keep enclosed shapes dimensionally accurate. Narrow features may disappear; open and unfilled paths are unchanged." # LOC:TODO
-"Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." = "Actual width of the mark left by the pen, in millimetres. Does not change shading spacing." # LOC:TODO
 "Adaptive Sampling" = "Adaptive Abtastung"
 "Adaptive Sampling Sensitivity" = "Empfindlichkeit der adaptiven Abtastung"
 "Adaptive Sampling Window" = "Fenster der adaptiven Abtastung"
@@ -30,6 +29,7 @@
 "Clip Geometry to Canvas" = "Clip Geometry to Canvas" # LOC:TODO
 "Clips the geometry to the bounds of the canvas" = "Clips the geometry to the bounds of the canvas" # LOC:TODO
 "Close" = "Schließen"
+"Colour" = "Colour" # LOC:TODO
 "Combine" = "Kombinieren"
 "Combine Shapes" = "Formen kombinieren"
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
@@ -41,13 +41,16 @@
 "Cut" = "Schneiden"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "Schnittebene des hierarchischen Watershed-Algorithmus, 0–255. Höhere Werte schneiden die Regionshierarchie feiner und erzeugen mehr, kleinere Regionen, die den Inhaltsdetails genauer folgen; niedrigere Werte führen Bereiche zu weniger, größeren Regionen zusammen."
 "Darkest shading spacing" = "Abstand der dunkelsten Schraffur"
+"Default: {0}" = "Default: {0}" # LOC:TODO
 "Delete" = "Löschen"
+"Disabled" = "Disabled" # LOC:TODO
 "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "Verwirft erkannte Bereiche, die kleiner als diese Pixelanzahl sind, 0–128. Erhöhen Sie den Wert, um kleine vereinzelte Flecken und nach dem Nachzeichnen verbleibendes Rauschen zu entfernen; verringern Sie ihn, um feine Details zu erhalten."
 "Draw Outlines Before Fill" = "Konturen vor der Füllung zeichnen"
 "Drawing Group is already empty" = "Die Zeichnungsgruppe ist bereits leer"
 "Drawing Line Colour" = "Farbe der Zeichenlinien"
 "Drawing Settings" = "Zeichnungseinstellungen"
 "Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
+"Enabled" = "Enabled" # LOC:TODO
 "Enter Printer Name" = "Druckernamen eingeben"
 "Enter URL or IP Address" = "URL oder IP-Adresse eingeben"
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Hex-Farbe eingeben (z. B. #FFFF0000 oder #FF0000)"
@@ -119,6 +122,7 @@
 "Region Detection" = "Regionserkennung"
 "Region Detection Settings" = "Einstellungen der Regionserkennung"
 "Reload Languages. Checks online for updated language definitions" = "Reload Languages. Checks online for updated language definitions" # LOC:TODO
+"Requires: {0}" = "Requires: {0}" # LOC:TODO
 "Rotation" = "Drehung"
 "SVG Exported" = "SVG exportiert"
 "S_ave As..." = "Speichern _unter..."
@@ -166,6 +170,8 @@
 "Update Available ▸ Version {0}" = "Update verfügbar ▸ Version {0}"
 "Update Preview" = "Vorschau aktualisieren"
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Verwendet adaptive Schwellenwertbildung anstelle eines einzelnen festen Grenzwerts. Ideal für Scans oder Fotos mit ungleichmäßiger Beleuchtung, da der Grenzwert lokal im Bild neu berechnet statt global angewendet wird."
+"Work" = "Work" # LOC:TODO
+"Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "Arbeitsbereich"
 "Workspace cleared" = "Arbeitsbereich geleert"
 "XOR operation resulted in an empty geometry. The shapes may be identical." = "Die XOR-Operation hat eine leere Geometrie ergeben. Die Formen sind möglicherweise identisch."
@@ -245,10 +251,6 @@
 "Tool Off GCode" = "Tool Off GCode" # LOC:TODO
 "Tool On GCode" = "Tool On GCode" # LOC:TODO
 
-[context."Cut/Draw tool work"]
-"Work" = "Arbeit"
-"Work Speed" = "Arbeitsgeschwindigkeit"
-
 [context."Darkest Shading Spacing Tooltip"]
 "How far apart drawn lines should be when shading the darkest parts of the image." = "Abstand zwischen den gezeichneten Linien beim Schattieren der dunkelsten Bildbereiche."
 
@@ -283,7 +285,6 @@
 
 [context."Merge Angle Tooltip"]
 "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." = "Angle (in degrees) between two lines, below which we merge them into a single straight line. Increasing this value (~1-5) can help when using a cutter, as it reduces the frequency of corrective swivels being made that could cause tearing." # LOC:TODO
-"Default = 0.1" = "Default = 0.1" # LOC:TODO
 
 [context."Monitor Tab"]
 "Monitor" = "Monitor"
@@ -395,3 +396,7 @@
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "Vorschau-End-GCode (?)"
 "Preview Start GCode (?)" = "Vorschau-Start-GCode (?)"
+
+[obsolete.context."Cut/Draw tool work"]
+"Work" = "Arbeit"
+"Work Speed" = "Arbeitsgeschwindigkeit"

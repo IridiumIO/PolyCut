@@ -47,13 +47,13 @@
 
                                         <!--  Top level controls always visible  -->
                                         <Border x:Name="ToggleButtonBorder"
-                                                Grid.Row="0"
+                                                Grid.Row="0" 
                                                 Background="{TemplateBinding Background}"
                                                 BorderBrush="{TemplateBinding BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="{TemplateBinding CornerRadius}">
                                             <ToggleButton x:Name="ExpanderToggleButton"
-                                                          Margin="0"
+                                                          Margin="0 -5 0 -5"
                                                           Padding="{TemplateBinding Padding}"
                                                           HorizontalAlignment="Stretch"
                                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -72,7 +72,7 @@
                                                         </Grid.ColumnDefinitions>
 
                                                         <ContentControl x:Name="ControlIcon"
-                                                                        Grid.Column="0"
+                                                                        Grid.Column="0" 
                                                                         Margin="{StaticResource CardExpanderIconMargin}"
                                                                         VerticalAlignment="Center"
                                                                         Content="{TemplateBinding Icon}"
@@ -83,6 +83,7 @@
 
                                                         <ContentPresenter x:Name="HeaderContentPresenter"
                                                                           Grid.Column="1"
+                                                                          Margin="0"
                                                                           Content="{TemplateBinding Header}"
                                                                           TextElement.Foreground="{TemplateBinding Foreground}" />
                                                     </Grid>

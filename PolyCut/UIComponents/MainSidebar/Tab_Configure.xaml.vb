@@ -1,133 +1,68 @@
-﻿Imports PolyCut.Shared
+Imports PolyCut.Shared
 
 Public Class Tab_Configure
-
     Private ReadOnly _document As Document
+    Private ReadOnly _preview As New List(Of (Wrapper As ContentControl, Brightness As Double, Opacity As Double))
 
-    Private _thresholdPreviewActive As Boolean = False
-
-    Private _previewTextChangedHandler As RoutedEventHandler
-
-    Public Property MainVM As MainViewModel
+    Public ReadOnly Property MainVM As MainViewModel
 
     Public Sub New()
-        _document = Application.GetService(Of Document)()
-        InitializeComponent()
-        _previewTextChangedHandler = AddressOf LabeledNumberBoxControl_TextChanged
-        MainVM = Application.GetService(Of MainViewModel)()
         DataContext = Me
+        InitializeComponent()
+        _document = Application.GetService(Of Document)()
+        MainVM = Application.GetService(Of MainViewModel)()
     End Sub
 
-    Private Sub LabeledNumberBoxControl_MouseEnter(sender As Object, e As MouseEventArgs)
-
-        AttachPreviewHandlers()
-        BeginThresholdPreview()
-        RefreshThresholdPreview()
-    End Sub
-
-    Private Sub LabeledNumberBoxControl_TextChanged(sender As Object, e As RoutedEventArgs)
-        If Not _thresholdPreviewActive Then Return
-        RefreshThresholdPreview()
-    End Sub
-
-    Private Sub LabeledNumberBoxControl_MouseLeave(sender As Object, e As MouseEventArgs)
-        DetachPreviewHandlers()
-        EndThresholdPreview()
-    End Sub
-
-    Private Sub LabeledNumberBoxControl_Unloaded(sender As Object, e As RoutedEventArgs)
-        DetachPreviewHandlers()
-        EndThresholdPreview()
-    End Sub
-
-    Private Sub RefreshThresholdPreview()
-        If Not _thresholdPreviewActive Then Return
-
-        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
-            Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
-            If cc IsNot Nothing Then cc.Opacity = 1.0
+    Private Sub ShadingThreshold_MouseEnter(sender As Object, e As MouseEventArgs)
+        RestorePreview()
+        For Each drawable In EnumerateDrawables(_document.Drawables)
+            Dim wrapper = TryCast(drawable.DrawableElement?.Parent, ContentControl)
+            If wrapper Is Nothing Then Continue For
+            Dim brush = TryCast(drawable.Fill, SolidColorBrush)
+            Dim color = If(brush Is Nothing, Colors.Black, brush.Color)
+            Dim brightness = Math.Round((0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B) / 255, 3)
+            _preview.Add((wrapper, brightness, wrapper.Opacity))
         Next
-
-        ApplyThresholdPreview()
+        RefreshPreview()
     End Sub
 
-    Private Sub BeginThresholdPreview()
-        If _thresholdPreviewActive Then Return
-        _thresholdPreviewActive = True
-
-        ApplyThresholdPreview()
+    Private Sub ShadingThreshold_TextChanged(sender As Object, e As RoutedEventArgs)
+        If _preview.Count > 0 Then RefreshPreview()
     End Sub
 
-    Private Sub ApplyThresholdPreview()
-        Dim t As Double
-        If Not Double.TryParse(ShadingThresholdControl.Text, t) Then Return
+    Private Sub ShadingThreshold_MouseLeave(sender As Object, e As MouseEventArgs)
+        RestorePreview()
+    End Sub
 
-        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
-            Dim brightness = GetBrightness01(d)
-            If brightness < t Then
-                Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
-                If cc IsNot Nothing Then cc.Opacity = 0.2
-            End If
+    Private Sub ShadingThreshold_Unloaded(sender As Object, e As RoutedEventArgs)
+        RestorePreview()
+    End Sub
+
+    Private Sub RefreshPreview()
+        Dim threshold As Double
+        If Not Double.TryParse(ShadingThresholdControl.Text, threshold) Then Return
+        For Each item In _preview
+            item.Wrapper.Opacity = If(item.Brightness < threshold, item.Opacity * 0.2, item.Opacity)
         Next
     End Sub
 
-    Private Sub EndThresholdPreview()
-        If Not _thresholdPreviewActive Then Return
-        _thresholdPreviewActive = False
-
-        For Each d In EnumerateDrawablesForPreview(_document.Drawables)
-            Dim cc = TryCast(d.DrawableElement.Parent, ContentControl)
-            If cc IsNot Nothing Then cc.Opacity = 1.0
+    Private Sub RestorePreview()
+        For Each item In _preview
+            item.Wrapper.Opacity = item.Opacity
         Next
+        _preview.Clear()
     End Sub
 
-    Private Function GetBrightness01(d As IDrawable) As Double
-
-        Dim color As Color = Colors.Black
-
-        Dim brush = d.Fill
-        If TypeOf brush Is SolidColorBrush Then
-            color = DirectCast(brush, SolidColorBrush)?.Color
-        End If
-        Dim brightness = (0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B) / 255.0
-        brightness = Math.Round(brightness, 3)
-
-        Return brightness
-    End Function
-
-    Private Sub AttachPreviewHandlers()
-
-        AddHandler ShadingThresholdControl.TextChanged, _previewTextChangedHandler
-
-        ' Optional extra safety hooks
-
-        AddHandler ShadingThresholdControl.Unloaded, AddressOf LabeledNumberBoxControl_Unloaded
-    End Sub
-
-    Private Sub DetachPreviewHandlers()
-        If ShadingThresholdControl Is Nothing Then Return
-
-        RemoveHandler ShadingThresholdControl.TextChanged, _previewTextChangedHandler
-        RemoveHandler ShadingThresholdControl.Unloaded, AddressOf LabeledNumberBoxControl_Unloaded
-
-    End Sub
-
-    Private Sub ColorPickerControl_ColorSelected(sender As Object, e As ColorSelectedEventArgs)
-        MainVM.Configuration.ExtractionColor = (New BrushConverter()).ConvertToString(e.SelectedBrush)
-    End Sub
-
-    Private Iterator Function EnumerateDrawablesForPreview(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)
-        For Each d In items
-            Dim g = TryCast(d, NestedDrawableGroup)
-            If g IsNot Nothing Then
-                ' flattened children
-                For Each ch In g.DisplayChildren
-                    Yield ch
-                Next
+    Private Iterator Function EnumerateDrawables(items As IEnumerable(Of IDrawable)) As IEnumerable(Of IDrawable)
+        For Each drawable In items
+            Dim group = TryCast(drawable, NestedDrawableGroup)
+            If group Is Nothing Then
+                Yield drawable
             Else
-                Yield d
+                For Each child In group.DisplayChildren
+                    Yield child
+                Next
             End If
         Next
     End Function
-
 End Class

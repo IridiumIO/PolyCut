@@ -415,7 +415,8 @@ Public NotInheritable Class MicaBackdrop
     Private Shared Sub Attach(st As State)
         If st.Window IsNot Nothing Then Detach(st)
 
-        st.Window = Window.GetWindow(st.Element)
+        Dim tooltip = TryCast(st.Element, ToolTip)
+        st.Window = Window.GetWindow(If(tooltip Is Nothing, st.Element, tooltip.PlacementTarget))
         If st.Window Is Nothing Then Return
 
         Dim ws As WindowState = Nothing

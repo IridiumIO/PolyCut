@@ -7,10 +7,10 @@ Public Class Tab_Configure
     Public ReadOnly Property MainVM As MainViewModel
 
     Public Sub New()
-        DataContext = Me
-        InitializeComponent()
         _document = Application.GetService(Of Document)()
         MainVM = Application.GetService(Of MainViewModel)()
+        InitializeComponent()
+        DataContext = Me
     End Sub
 
     Private Sub ShadingThreshold_MouseEnter(sender As Object, e As MouseEventArgs)

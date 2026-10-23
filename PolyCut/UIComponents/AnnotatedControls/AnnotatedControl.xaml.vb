@@ -7,6 +7,8 @@ Public Class AnnotatedControl
         InitializeComponent()
         ToolTip = New ToolTip()
         ToolTipService.SetShowOnDisabled(Me, True)
+        ToolTipService.SetInitialShowDelay(Me, 300)
+        ToolTipService.SetBetweenShowDelay(Me, 0)
         AddHandler Loaded, Sub() RefreshChildren()
     End Sub
 
@@ -47,6 +49,7 @@ Public Class AnnotatedControl
 
     Protected Overrides Sub OnToolTipOpening(e As ToolTipEventArgs)
         Dim content As New StackPanel With {.MaxWidth = 320}
+        content.SetBinding(TextElement.FontSizeProperty, New Binding(NameOf(FontSize)) With {.Source = ToolTip})
         AddParagraph(content, ToolTipMain)
         AddParagraph(content, ToolTipSub, 0.75)
         If ToolTipTemplate IsNot Nothing Then content.Children.Add(New ContentPresenter With {.Content = DataContext, .ContentTemplate = ToolTipTemplate})
@@ -54,13 +57,14 @@ Public Class AnnotatedControl
         Dim value = ConfigurationDefaults.Read(ValueBinding())
         If value IsNot DependencyProperty.UnsetValue Then AddParagraph(content, "Default: {0}".LTF(FormatDefault(value)))
         DirectCast(ToolTip, ToolTip).Content = content
+
         e.Handled = content.Children.Count = 0
         MyBase.OnToolTipOpening(e)
     End Sub
 
     Private Shared Sub AddParagraph(panel As Panel, text As String, Optional opacity As Double = 1)
         If String.IsNullOrWhiteSpace(text) Then Return
-        panel.Children.Add(New TextBlock With {.Text = text, .TextWrapping = TextWrapping.Wrap, .Opacity = opacity, .Margin = New Thickness(0, If(panel.Children.Count = 0, 0, 8), 0, 0)})
+        panel.Children.Add(New TextBlock With {.Text = text, .TextAlignment = TextAlignment.Left, .TextWrapping = TextWrapping.Wrap, .Opacity = opacity, .Margin = New Thickness(0, If(panel.Children.Count = 0, 0, 8), 0, 0)})
     End Sub
 
     Private Function FormatDefault(value As Object) As String

@@ -47,7 +47,7 @@
 
                                         <!--  Top level controls always visible  -->
                                         <Border x:Name="ToggleButtonBorder"
-                                                Grid.Row="0" 
+                                                Grid.Row="0"
                                                 Background="{TemplateBinding Background}"
                                                 BorderBrush="{TemplateBinding BorderBrush}"
                                                 BorderThickness="1"
@@ -72,7 +72,7 @@
                                                         </Grid.ColumnDefinitions>
 
                                                         <ContentControl x:Name="ControlIcon"
-                                                                        Grid.Column="0" 
+                                                                        Grid.Column="0"
                                                                         Margin="{StaticResource CardExpanderIconMargin}"
                                                                         VerticalAlignment="Center"
                                                                         Content="{TemplateBinding Icon}"
@@ -284,6 +284,21 @@ To="#00FFFFFF" Duration="0:0:0.3" />
 
 
             </ResourceDictionary.MergedDictionaries>
+            <Style BasedOn="{StaticResource DefaultToolTipStyle}" TargetType="{x:Type ToolTip}">
+                <Setter Property="local:MicaBackdrop.IsEnabled" Value="True" />
+                <Setter Property="local:MicaBackdrop.TintColor" Value="#23FFFFFF" />
+                <Setter Property="FontSize" Value="12" />
+               
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <Binding FallbackValue="{StaticResource ApplicationBackgroundBrush}"
+                                 Path="(local:MicaBackdrop.SurfaceBrush)"
+                                 RelativeSource="{RelativeSource Self}"
+                                 TargetNullValue="{StaticResource ApplicationBackgroundBrush}" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <FontFamily x:Key="TextEditMenuFontFamily">Segoe UI</FontFamily>
             <system:Double x:Key="TextEditMenuFontSize">14</system:Double>
 

@@ -19,11 +19,11 @@ Public Class ImportSVGAction : Implements IUndoableAction
         _allImportedDrawables = New List(Of IDrawable)()
     End Sub
 
-    Public Sub New(manager As IDrawableManager, svgService As IVectorImportService, svgdata As Svg.SvgDocument)
+    Public Sub New(manager As IDrawableManager, svgService As IVectorImportService, svgdata As Svg.SvgDocument, filePath As String)
         _manager = manager
         _svgService = svgService
-        _filePath = Nothing
         _svgData = svgdata
+        _filePath = filePath 'we use the data from the doc but still want the filename for the group naming
         _allImportedDrawables = New List(Of IDrawable)()
     End Sub
 

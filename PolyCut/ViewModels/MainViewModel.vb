@@ -440,7 +440,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
                         Continue For
                     End If
 
-                    Dim act As New ImportSVGAction(Document, _svgImportService, svgdoc)
+                    Dim act As New ImportSVGAction(Document, _svgImportService, svgdoc, fl)
                     If act.Execute() Then actions.Add(act)
                     Continue For
 

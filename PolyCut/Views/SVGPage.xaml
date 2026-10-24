@@ -310,13 +310,13 @@
 
                     <MenuItem x:Name="GroupMenuItem"
                               Command="{Binding MainVM.GroupSelectedCommand}"
-                              Header="{loc:T 'Group'}"
+                              Header="{loc:T 'Group'}" local:MenuItemHelper.Footer="Ctrl+G"
                               Icon="{ui:SymbolIcon Symbol=ShapeUnion16}"
                               Visibility="Collapsed" />
 
                     <MenuItem x:Name="UngroupMenuItem"
                               Command="{Binding MainVM.UngroupSelectedCommand}"
-                              Header="{loc:T 'Ungroup'}"
+                              Header="{loc:T 'Ungroup'}" local:MenuItemHelper.Footer="Ctrl+Shift+G"
                               Icon="{ui:SymbolIcon Symbol=ShapeIntersect16}"
                               Visibility="Collapsed" />
 

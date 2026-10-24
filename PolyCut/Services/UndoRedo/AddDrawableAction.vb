@@ -48,11 +48,7 @@ Public Class AddDrawableAction : Implements IUndoableAction
         If TypeOf element Is Shape Then
             drawable = BaseDrawable.DrawableFactory(element)
         ElseIf TypeOf element Is TextBox Then
-            drawable = New DrawableText(DirectCast(element, TextBox)) With {.StrokeThickness = 0}
-            If element.ReadLocalValue(DrawingManager.StrokeProperty) IsNot DependencyProperty.UnsetValue Then
-                drawable.Stroke = DrawingManager.GetStroke(element)
-                drawable.StrokeThickness = If(DrawingManager.HasPaint(drawable.Stroke), 0.5, 0)
-            End If
+            drawable = New DrawableText(DirectCast(element, TextBox))
         End If
 
         If drawable IsNot Nothing Then

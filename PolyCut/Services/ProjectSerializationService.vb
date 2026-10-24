@@ -85,6 +85,11 @@ Public Class ProjectSerializationService
             Canvas.SetTop(fe, dd.Top)
 
             Dim d As IDrawable = BaseDrawable.DrawableFactory(fe)
+            If TypeOf d Is DrawableText Then
+                d.Fill = If(String.IsNullOrEmpty(dd.FillColor), Nothing, ColorAndBrushHelpers.DeserializeBrush(dd.FillColor))
+                d.Stroke = If(String.IsNullOrEmpty(dd.StrokeColor), Nothing, ColorAndBrushHelpers.DeserializeBrush(dd.StrokeColor))
+                d.StrokeThickness = dd.StrokeThickness
+            End If
             d.Name = dd.Name
             d.IsHidden = dd.IsHidden
 

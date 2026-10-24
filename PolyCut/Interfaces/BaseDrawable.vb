@@ -180,7 +180,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
             shape.StrokeThickness = _strokeThickness
         Else
             Dim textBox = TryCast(_drawableElement, TextBox)
-            If textBox IsNot Nothing AndAlso _fill IsNot Nothing Then textBox.Foreground = _fill
+            If textBox IsNot Nothing Then textBox.Foreground = If(_fill, Brushes.Transparent)
         End If
     End Sub
 

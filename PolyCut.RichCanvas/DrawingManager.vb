@@ -40,10 +40,6 @@ Public Class DrawingManager
     End Sub
 
     Private Sub OnTextSessionFinished(element As UIElement)
-        Dim textBox = TryCast(element, TextBox)
-        If textBox IsNot Nothing AndAlso textBox.ReadLocalValue(FillProperty) IsNot DependencyProperty.UnsetValue Then
-            textBox.Foreground = GetFill(textBox)
-        End If
         RaiseEvent DrawingFinished(Me, element)
     End Sub
 
@@ -94,14 +90,9 @@ Public Class DrawingManager
     Public Sub FinishDrawing(mode As CanvasMode, pCanvas As PolyCanvas, ctextbox As TextBox)
 
         If mode = CanvasMode.Text Then
+            If TextEditor.ActiveTextBox IsNot Nothing Then Return
             TextEditor.StartNewText(_startPos, TextCharacteristics.FromTextBox(ctextbox), pCanvas)
-            Dim textBox = TextEditor.ActiveTextBox
-            If textBox IsNot Nothing Then
-                SetStroke(textBox, _drawingStroke)
-                SetFill(textBox, _drawingFill)
-                ' Keep outline-only text readable while the new text is being entered.
-                textBox.Foreground = If(HasPaint(_drawingFill), _drawingFill, _drawingStroke)
-            End If
+            If HasPaint(_drawingFill) Then TextEditor.ActiveTextBox.Foreground = _drawingFill
             Return
         End If
 

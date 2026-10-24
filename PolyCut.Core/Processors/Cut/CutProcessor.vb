@@ -1,4 +1,4 @@
-﻿Imports System.Windows
+Imports System.Windows
 Imports System.Windows.Documents
 
 Public Class CutProcessor : Implements IProcessor
@@ -12,7 +12,8 @@ Public Class CutProcessor : Implements IProcessor
         Dim workElements = If(cfg.OptimisedToolPath, elements.ReorderFiguresGreedy(), elements)
 
         ' Flatten all loops from all elements for global optimization
-        Dim unprocessedLoops = workElements.SelectMany(Function(elem) GetClosedPaths(elem.FlattenedLines)).ToList()
+        Dim unprocessedLoops = workElements.SelectMany(Function(elem) elem.Figures).Where(Function(figure) figure.Count > 0).
+            Select(Function(figure) figure.ToList()).ToList()
 
         Dim processedLoops As New List(Of List(Of GeoLine))
         Dim lastBladeDir As Vector? = Nothing
@@ -26,7 +27,8 @@ Public Class CutProcessor : Implements IProcessor
             unprocessedLoops.RemoveAt(bestIndex)
 
             ' Step 2: Pre-offset blade alignment within loop
-            Dim alignedLoop = OffsetGenerator.ReorderLoopForBladeAlignment(selectedLoop, lastBladeDir)
+            Dim alignedLoop = If(selectedLoop(0).StartPoint = selectedLoop.Last().EndPoint,
+                                 OffsetGenerator.ReorderLoopForBladeAlignment(selectedLoop, lastBladeDir), selectedLoop)
 
             ' Step 3: Generate offset arcs for tool radius
             Dim offsetLoop = OffsetGenerator.CreateOffsetArcs(alignedLoop, cfg.CuttingConfig.ToolRadius)
@@ -59,39 +61,4 @@ Public Class CutProcessor : Implements IProcessor
     End Function
 
 
-    Private Shared Function GetClosedPaths(figures As List(Of GeoLine)) As List(Of List(Of GeoLine))
-        If figures Is Nothing OrElse figures.Count = 0 Then
-            Return New List(Of List(Of GeoLine))
-        End If
-
-        Dim closedPaths As New List(Of List(Of GeoLine))
-        Dim workingPath As New List(Of GeoLine)
-
-        Dim currentLoopStart = figures.First.StartPoint.ToPoint
-        Dim workingEnd = figures.First.EndPoint.ToPoint
-
-        workingPath.Add(figures(0))
-
-        For Each line In figures
-            If line.StartPoint.X = workingEnd.X AndAlso line.StartPoint.Y = workingEnd.Y Then
-                workingPath.Add(line)
-                workingEnd = line.EndPoint.ToPoint
-            Else
-                If workingEnd.X = currentLoopStart.X AndAlso workingEnd.Y = currentLoopStart.Y Then
-                    closedPaths.Add(workingPath)
-                    workingPath = New List(Of GeoLine)
-                    currentLoopStart = line.StartPoint.ToPoint
-                    workingEnd = line.EndPoint.ToPoint
-                    workingPath.Add(line)
-                End If
-            End If
-        Next
-
-        If workingPath.Count > 0 Then
-            closedPaths.Add(workingPath)
-        End If
-
-        Return closedPaths
-    End Function
-    
 End Class

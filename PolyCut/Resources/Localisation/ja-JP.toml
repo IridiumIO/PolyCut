@@ -11,6 +11,7 @@
 "Adaptive Sampling Sensitivity" = "適応サンプリング感度"
 "Adaptive Sampling Window" = "適応サンプリング範囲"
 "Add Printer" = "プリンターを追加"
+"Add Weeding Boxes" = "Add Weeding Boxes" # LOC:TODO
 "Added Preset" = "プリセットを追加しました"
 "Alignment" = "配置"
 "Allow Travel in Outlines" = "輪郭内の移動を許可"
@@ -184,6 +185,7 @@
 "_Load Project" = "プロジェクトを読_み込む"
 "_Paste" = "貼り付け(_P)"
 "_Save" = "保_存"
+"_Tools" = "_Tools" # LOC:TODO
 "_View" = "表_示"
 "version" = "バージョン"
 

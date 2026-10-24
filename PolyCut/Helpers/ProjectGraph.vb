@@ -5,6 +5,14 @@ Imports PolyCut.[Shared]
 Friend Module ProjectGraph
 
     <Extension>
+    Friend Iterator Function AncestorsAndSelf(item As IDrawable) As IEnumerable(Of IDrawable)
+        While item IsNot Nothing
+            Yield item
+            item = item.ParentGroup
+        End While
+    End Function
+
+    <Extension>
     Friend Function IsAnyGroup(d As IDrawable) As Boolean
         Return TypeOf d Is DrawableGroup OrElse TypeOf d Is NestedDrawableGroup
     End Function

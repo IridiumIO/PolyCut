@@ -161,14 +161,7 @@ Public Class Document : Implements IDrawableManager, INotifyPropertyChanged 'do 
     End Function
 
     Public Function IsAncestorOf(ancestor As IDrawable, node As IDrawable) As Boolean Implements IDrawableManager.IsAncestorOf
-        If ancestor Is Nothing OrElse node Is Nothing Then Return False
-
-        Dim current = node
-        While current IsNot Nothing
-            If current Is ancestor Then Return True
-            current = current.ParentGroup
-        End While
-        Return False
+        Return node.AncestorsAndSelf().Contains(ancestor)
     End Function
 
     Public Sub RemoveImportRoot(root As IDrawable) Implements IDrawableManager.RemoveImportRoot

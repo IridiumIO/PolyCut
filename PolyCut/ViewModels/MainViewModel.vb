@@ -142,6 +142,18 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         BooleanOperation(GeometryCombineMode.Xor)
     End Sub
 
+    <RelayCommand>
+    Private Sub AddWeedBoxes()
+        Dim canvas = PolyCanvas.ActiveInstance
+        If canvas Is Nothing Then Return
+        canvas.CommitActiveText()
+        canvas.UpdateLayout()
+        Dim targets = If(SelectionManager.HasSelection, SelectionManager.SelectedItems.ToList(), Document.Drawables.ToList())
+        Dim boxes = New WeedingBoxGenerator().Generate(targets, canvas, sceneItems:=Document.Drawables)
+        Dim action As New AddWeedingBoxesAction(Document, boxes)
+        If action.Execute() Then _undoRedoService.Push(action)
+    End Sub
+
     <RelayCommand> Public Sub Undo()
         PolyCanvas.ActiveInstance?.CommitActiveText()
         _undoRedoService.Undo()

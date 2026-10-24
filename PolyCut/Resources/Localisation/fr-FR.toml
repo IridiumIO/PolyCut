@@ -11,6 +11,7 @@
 "Adaptive Sampling Sensitivity" = "Sensibilité de l’échantillonnage adaptatif"
 "Adaptive Sampling Window" = "Fenêtre d’échantillonnage adaptatif"
 "Add Printer" = "Ajouter une imprimante"
+"Add Weeding Boxes" = "Add Weeding Boxes" # LOC:TODO
 "Added Preset" = "Préréglage ajouté"
 "Alignment" = "Alignement"
 "Allow Travel in Outlines" = "Autoriser les déplacements dans les contours"
@@ -184,6 +185,7 @@
 "_Load Project" = "_Charger le projet"
 "_Paste" = "_Coller"
 "_Save" = "_Enregistrer"
+"_Tools" = "_Tools" # LOC:TODO
 "_View" = "_Affichage"
 "version" = "version"
 

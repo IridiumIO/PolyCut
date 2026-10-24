@@ -214,6 +214,16 @@
 
 
                             </ui:MenuItem>
+
+                            <ui:MenuItem x:Name="ToolsMenu"
+                                         loc:L.Value="_Tools" local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.SamplePadding="0,0,140,260" local:MicaBackdrop.TintColor="#23FFFFFF"
+                                         Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
+
+                                <ui:MenuItem Command="{Binding AddWeedBoxesCommand}" Header="{loc:T Add Weeding Boxes}" />
+
+
+                            </ui:MenuItem>
+
                             <Separator />
                             <ui:MenuItem x:Name="UndoButtonGlobal"
                                          Background="Transparent" BorderThickness="0"

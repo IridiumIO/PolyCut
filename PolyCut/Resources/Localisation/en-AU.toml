@@ -11,6 +11,7 @@
 "Adaptive Sampling Sensitivity" = "Adaptive Sampling Sensitivity"
 "Adaptive Sampling Window" = "Adaptive Sampling Window"
 "Add Printer" = "Add Printer"
+"Add Weeding Boxes" = "Add Weeding Boxes"
 "Added Preset" = "Added Preset"
 "Alignment" = "Alignment"
 "Allow Travel in Outlines" = "Allow Travel in Outlines"
@@ -184,6 +185,7 @@
 "_Load Project" = "_Load Project"
 "_Paste" = "_Paste"
 "_Save" = "_Save"
+"_Tools" = "_Tools"
 "_View" = "_View"
 "version" = "version"
 

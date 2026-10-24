@@ -20,6 +20,8 @@ End Class
 
 
 Public Class DrawableData
+
+    Public Property GeometricBounds As Boolean  ' Persistence marker only: missing/false records are upgraded on load.
     Public Property Id As Guid = Guid.NewGuid()
     Public Property Name As String
     Public Property Type As String ' "Path", "Rectangle", "Ellipse", "Text", "Line"
@@ -44,6 +46,7 @@ Public Class DrawableData
 
     ' Type-specific data
     Public Property PathData As String ' For Path elements
+    Public Property PathTransform As String ' Optional transform on the source geometry
     Public Property TextContent As String ' For TextBox
     Public Property FontFamily As String
     Public Property FontSize As Double

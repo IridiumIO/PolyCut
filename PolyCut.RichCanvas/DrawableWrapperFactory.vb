@@ -1,4 +1,4 @@
-﻿Imports PolyCut.Shared
+Imports PolyCut.Shared
 
 
 'TODO: Single source for wrapper creation to avoid split jobs between the canvas project and the main drawables. 
@@ -22,6 +22,11 @@ Public Module DrawableWrapperFactory
 
         Dim w As Double = If(Not Double.IsNaN(child.Width) AndAlso child.Width > 0, child.Width, child.ActualWidth)
         Dim h As Double = If(Not Double.IsNaN(child.Height) AndAlso child.Height > 0, child.Height, child.ActualHeight)
+        Dim geometric = TryCast(child, GeometricShape)
+        If geometric IsNot Nothing Then
+            w = If(Double.IsNaN(child.Width), geometric.Data.Bounds.Width, child.Width)
+            h = If(Double.IsNaN(child.Height), geometric.Data.Bounds.Height, child.Height)
+        End If
 
         Dim wrapper As New ContentControl With {
             .Content = child,
@@ -36,16 +41,9 @@ Public Module DrawableWrapperFactory
 
         If TypeOf child Is Canvas Then DirectCast(child, Canvas).ClipToBounds = True
 
-        If TypeOf child Is Line Then
-
-            Dim line = DirectCast(child, Line)
-            wrapper.Width = Math.Abs(line.X2 - line.X1) + line.StrokeThickness
-            wrapper.Height = Math.Abs(line.Y2 - line.Y1) + line.StrokeThickness
-            FitLineToWrapper(line, wrapper, line.StrokeThickness)
-            MetadataHelper.SetOriginalEndPoint(wrapper, New Point(line.X2, line.Y2))
-
-        ElseIf TypeOf child Is Path Then
-            DirectCast(child, Path).Stretch = Stretch.Fill
+        If TypeOf child Is GeometricShape OrElse TypeOf child Is Viewbox Then
+            wrapper.MinWidth = 0
+            wrapper.MinHeight = 0
         End If
 
         MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
@@ -55,6 +53,9 @@ Public Module DrawableWrapperFactory
         'EVERY TIME YOU TRY YOU GET STUCK WONDERING WHY THE STROKE ENDS UP DEFORMED WHEN SCALING AND THET RANSFORM GIZMO STOPS BEING ALIGNED PROPERLY
         'Child stretches to the wrapper size (Stretch=Fill layout) so strokes are drawn at constant width
         child.HorizontalAlignment = HorizontalAlignment.Stretch
+        ' Geometric shapes start top-aligned for bare canvas placement. Once hosted,
+        ' both axes must fill the wrapper after their explicit dimensions are cleared.
+        If TypeOf child Is GeometricShape Then child.VerticalAlignment = VerticalAlignment.Stretch
         child.Width = Double.NaN
         child.Height = Double.NaN
 
@@ -63,7 +64,7 @@ Public Module DrawableWrapperFactory
 
         If parentIDrawable IsNot Nothing Then MetadataHelper.SetDrawableReference(wrapper, parentIDrawable)
 
-        If TypeOf child Is Path OrElse
+        If TypeOf child Is GeometricShape OrElse TypeOf child Is Path OrElse
            TypeOf child Is Polyline OrElse
            TypeOf child Is Polygon Then
             PerformantRasteriser.SetCacheEligible(wrapper, True)
@@ -71,31 +72,5 @@ Public Module DrawableWrapperFactory
 
         Return wrapper
     End Function
-
-
-    Public Sub FitLineToWrapper(line As Line, wrapper As ContentControl, strokeThickness As Double)
-        If line Is Nothing OrElse wrapper Is Nothing Then Return
-
-        Dim w As Double = If(Double.IsNaN(wrapper.Width), wrapper.ActualWidth, wrapper.Width)
-        Dim h As Double = If(Double.IsNaN(wrapper.Height), wrapper.ActualHeight, wrapper.Height)
-        If w <= 0 OrElse h <= 0 Then Return
-
-        Dim half As Double = Math.Max(0.0, strokeThickness) * 0.5
-
-        ' Clamp so we don't go negative when wrapper is tiny
-        Dim xMin As Double = Math.Min(w * 0.5, half)
-        Dim yMin As Double = Math.Min(h * 0.5, half)
-        Dim xMax As Double = Math.Max(xMin, w - half)
-        Dim yMax As Double = Math.Max(yMin, h - half)
-
-        ' Preserve direction (so reverse lines don't flip)
-        Dim leftToRight As Boolean = (line.X2 >= line.X1)
-        Dim topToBottom As Boolean = (line.Y2 >= line.Y1)
-
-        line.X1 = If(leftToRight, xMin, xMax)
-        line.Y1 = If(topToBottom, yMin, yMax)
-        line.X2 = If(leftToRight, xMax, xMin)
-        line.Y2 = If(topToBottom, yMax, yMin)
-    End Sub
 
 End Module

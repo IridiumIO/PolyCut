@@ -1,60 +1,12 @@
-﻿Imports PolyCut.Shared
+Imports PolyCut.Shared
 Imports IxMilia.Converters
 Imports IxMilia.Dxf
 Imports IxMilia.Dxf.Entities
 Imports System.Globalization
 
-Public Class DXFImportService : Implements IVectorImportService
+Public Class DXFImportService
 
     Private Const OutlineWidthMm As Double = 0.25
-
-    Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements IVectorImportService.ParseFromFile
-        Throw New NotSupportedException("Convert the DXF asynchronously before importing its SVG document.")
-    End Function
-
-    Public Function ParseFromDocument(svgDoc As Svg.SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable) Implements IVectorImportService.ParseFromDocument
-        ' Size DXF wrappers from the toolpath itself. Restore the visual pen only after the ordinary importer has constructed all shapes and groups.
-        Dim copy As Svg.SvgDocument
-        Using buffer As New IO.MemoryStream()
-            svgDoc.Write(buffer)
-            buffer.Position = 0
-            copy = Svg.SvgDocument.Open(Of Svg.SvgDocument)(buffer)
-        End Using
-        For Each element In copy.Descendants().OfType(Of Svg.SvgVisualElement)()
-            element.StrokeWidth = New Svg.SvgUnit(0)
-        Next
-        Dim drawables = New SVGImportService().ParseFromDocument(copy, sourceName).ToArray()
-        For Each drawable In drawables
-            RestoreOutline(drawable, OutlineWidthMm)
-        Next
-        Return drawables
-    End Function
-
-    Private Shared Sub RestoreOutline(drawable As IDrawable, width As Double)
-        Dim group = TryCast(drawable, NestedDrawableGroup)
-        If group IsNot Nothing Then
-            For Each child In group.GroupChildren
-                RestoreOutline(child, width)
-            Next
-        Else
-            ' Keep a zero-extent DXF centerline free of minimum layout padding.
-            drawable.DrawableElement.MinWidth = 0
-            drawable.DrawableElement.MinHeight = 0
-            Dim path = TryCast(drawable.DrawableElement, Shapes.Path)
-            If path IsNot Nothing AndAlso (path.Data.Bounds.Width < 0.000001 OrElse path.Data.Bounds.Height < 0.000001) Then
-                path.Stretch = Stretch.None
-                ' An explicit zero Width/Height creates an empty WPF layout clip even with ClipToBounds=False.
-                ' Force the path to be measured at its natural size so it can be drawn at its native coordinates because I can't math. 
-                path.Width = Double.NaN
-                path.Height = Double.NaN
-                path.MinWidth = 0.001
-                path.MinHeight = 0.001
-                path.HorizontalAlignment = HorizontalAlignment.Left
-                path.VerticalAlignment = VerticalAlignment.Top
-            End If
-            drawable.StrokeThickness = width
-        End If
-    End Sub
 
     Public Async Function ConvertDXFToSVG(filepath As String) As Task(Of Svg.SvgDocument)
 
@@ -95,18 +47,6 @@ Public Class DXFImportService : Implements IVectorImportService
                     element.SetAttributeValue("stroke-width", (OutlineWidthMm / mmPerUnit).ToString("R", CultureInfo.InvariantCulture))
                 End If
                 element.Attribute("vector-effect")?.Remove()
-                ' Keep straight DXF segments as paths, too. Still buggy as hell on the canvas but better than lines getting broken as well
-                If element.Name.LocalName = "line" Then
-                    Dim data = String.Format(CultureInfo.InvariantCulture, "M {0} {1} L {2} {3}",
-                                             element.Attribute("x1").Value, element.Attribute("y1").Value,
-                                             element.Attribute("x2").Value, element.Attribute("y2").Value)
-                    element.Name = element.Name.Namespace + "path"
-                    element.SetAttributeValue("d", data)
-                    For Each attributeName In {"x1", "y1", "x2", "y2"}
-                        element.Attribute(attributeName).Remove()
-                    Next
-                    element.SetAttributeValue("fill", "none")
-                End If
             Next
 
             Using reader = svgxml.CreateReader()

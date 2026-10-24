@@ -6,26 +6,26 @@ Public Class DrawableEllipse : Inherits BaseDrawable : Implements IDrawable
 
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
-    Public Sub New(element As Ellipse)
-        DrawableElement = element
+    Public Sub New(element As Shape)
+        DrawableElement = GeometricShape.FromShape(element)
         VisualName = "Ellipse"
         Name = VisualName
     End Sub
 
     Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
 
-        Dim rt = CType(DrawableElement, Ellipse)
+        Dim rt = DrawableElement
 
         Dim fillServer As SvgColourServer = CreateSvgFillServer()
         Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
-        Dim strokeW As Single = 0.001F
+        Dim strokeW As Single = CSng(Me.StrokeThickness)
 
         Dim ellipse As New SvgEllipse With {
             .CenterX = rt.ActualWidth / 2,
             .CenterY = rt.ActualHeight / 2,
             .RadiusX = DrawableElement.ActualWidth / 2,
             .RadiusY = DrawableElement.ActualHeight / 2,
-            .FillOpacity = 0.001,
+            .FillOpacity = 1.0F,
             .Fill = If(fillServer, SvgPaintServer.None),
             .StrokeLineCap = SvgStrokeLineCap.Round,
             .Stroke = SvgPaintServer.None

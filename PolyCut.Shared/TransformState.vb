@@ -86,8 +86,8 @@ Public Class TransformState
 
         Canvas.SetLeft(wrapper, Translation.X)
         Canvas.SetTop(wrapper, Translation.Y)
-        If Not Double.IsNaN(Width) AndAlso Width > 0 Then wrapper.Width = Width
-        If Not Double.IsNaN(Height) AndAlso Height > 0 Then wrapper.Height = Height
+        If Not Double.IsNaN(Width) AndAlso Width >= 0 Then wrapper.Width = Width
+        If Not Double.IsNaN(Height) AndAlso Height >= 0 Then wrapper.Height = Height
 
         wrapper.RenderTransformOrigin = TransformOrigin
         wrapper.RenderTransform = CreateRenderTransform(AffineTransform, Rotation)

@@ -37,7 +37,7 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         VisualName = "Group"
 
         ' Viewbox scales the inner canvas when wrapper is resized
-        Dim vb As New Viewbox With {
+        Dim vb As New GroupViewbox With {
             .Stretch = Stretch.Fill,
             .StretchDirection = StretchDirection.Both,
             .Child = _innerCanvas
@@ -59,14 +59,13 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         If items Is Nothing OrElse items.Count = 0 Then Return grp
 
         Dim style As Style = TryCast(Application.Current?.TryFindResource("GroupChildItemStyle"), Style)
-        Dim groupChildPathStyle As Style = TryCast(Application.Current?.TryFindResource("GroupChildPathStyle"), Style)
 
         Dim wrappers As New List(Of (drawable As IDrawable, element As FrameworkElement))
 
         grp.BeginBulkChildUpdate()
         Try
             For Each d In items
-                Dim element = CreateChildElement(d, style, groupChildPathStyle)
+                Dim element = CreateChildElement(d, style)
                 If element Is Nothing Then Continue For
 
                 wrappers.Add((d, element))
@@ -262,17 +261,19 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Dim inner = GetInnerCanvas()
         If inner Is Nothing Then Return
 
-        If w > 0 AndAlso Not Double.IsNaN(w) Then inner.Width = w
-        If h > 0 AndAlso Not Double.IsNaN(h) Then inner.Height = h
+        If w >= 0 AndAlso Not Double.IsNaN(w) Then inner.Width = w
+        If h >= 0 AndAlso Not Double.IsNaN(h) Then inner.Height = h
     End Sub
 
     Public Function GetNativeSize() As (Double, Double)
         Dim inner = GetInnerCanvas()
         If inner Is Nothing Then Return (0, 0)
-        Return (inner.Width, inner.Height)
+        Dim host = TryCast(DrawableElement, GroupViewbox)
+        Return (If(host IsNot Nothing AndAlso host.ZeroWidth, 0, inner.Width),
+                If(host IsNot Nothing AndAlso host.ZeroHeight, 0, inner.Height))
     End Function
 
-    Public Sub RebuildGroupVisualFromChildren(designerItemStyle As Style)
+    Public Sub RebuildGroupVisualFromChildren(designerItemStyle As Style, Optional preserveLocalCoordinates As Boolean = False)
         Dim vb = TryCast(Me.DrawableElement, Viewbox)
         If vb Is Nothing Then Return
 
@@ -297,11 +298,12 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         If (vbe.Height <= 0 OrElse Double.IsNaN(vbe.Height)) AndAlso bounds.Height > 0 Then vbe.Height = bounds.Height
 
         ' World position for the group element (PolyCanvas wrappering reads this)
-        Canvas.SetLeft(vbe, bounds.Left)
-        Canvas.SetTop(vbe, bounds.Top)
+        If Not preserveLocalCoordinates Then
+            Canvas.SetLeft(vbe, bounds.Left)
+            Canvas.SetTop(vbe, bounds.Top)
+        End If
 
         ' Create child wrappers and place them in LOCAL space
-        Dim pathStyle As Style = TryCast(Application.Current?.TryFindResource("GroupChildPathStyle"), Style)
 
         Dim rebuilt As New List(Of FrameworkElement)
         For Each child In GroupChildren
@@ -309,15 +311,16 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
 
             Dim fe = child.DrawableElement
 
-            Dim left = GetLeftSafe(fe)
-            Dim top = GetTopSafe(fe)
+            Dim positioned = If(TryCast(fe.Parent, ContentControl), fe)
+            Dim left = GetLeftSafe(positioned)
+            Dim top = GetTopSafe(positioned)
 
-            Dim element = CreateChildElement(child, designerItemStyle, pathStyle)
+            Dim element = CreateChildElement(child, designerItemStyle)
             If element Is Nothing Then Continue For
 
             ' Localize into group space
-            Canvas.SetLeft(element, left - bounds.Left)
-            Canvas.SetTop(element, top - bounds.Top)
+            Canvas.SetLeft(element, left - If(preserveLocalCoordinates, 0, bounds.Left))
+            Canvas.SetTop(element, top - If(preserveLocalCoordinates, 0, bounds.Top))
 
             rebuilt.Add(element)
 
@@ -385,9 +388,8 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
         Return New Rect(minX, minY, Math.Max(0, maxX - minX), Math.Max(0, maxY - minY))
     End Function
 
-    'One rule for how a nested group's child appears in its inner canvas, shared by the import factory and the visual rebuild:
-    'paths stay as bare elements (styled, cache-eligible) so a group of thousands does not pay for a wrapper each, and everything else is wrapped so it can be interacted with individually.
-    Private Shared Function CreateChildElement(child As IDrawable, designerItemStyle As Style, pathStyle As Style) As FrameworkElement
+    ' Plain geometric leaves stay bare so large groups avoid a wrapper per shape.
+    Private Shared Function CreateChildElement(child As IDrawable, designerItemStyle As Style) As FrameworkElement
         Dim fe = child?.DrawableElement
         If fe Is Nothing Then Return Nothing
 
@@ -400,13 +402,9 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             Return existingWrapper
         End If
 
-        If TypeOf fe Is Shapes.Path Then
-            Dim p = DirectCast(fe, Shapes.Path)
-            'Stretch stays a local value: ConvertPath assigns Stretch=None locally, which a Style setter cannot override.
-            p.Stretch = Stretch.Fill
-            p.Style = pathStyle
-            PerformantRasteriser.SetCacheEligible(p, True)
-            Return p
+        If TypeOf fe Is GeometricShape Then
+            PerformantRasteriser.SetCacheEligible(fe, True)
+            Return fe
         End If
 
         Dim wrapper = DrawableWrapperFactory.CreateWrapper(fe, child, designerItemStyle)
@@ -562,6 +560,35 @@ Public Class NestedDrawableGroup : Inherits BaseDrawable : Implements IDrawable
             OnPropertyChanged(NameOf(StrokeThickness))
         End Set
     End Property
+
+    ' Viewbox treats a zero native axis as a zero scale and erases the pen,so let's fudge it to 1 and then report back as 0 so the wrapper can still size correctly.
+    Private Class GroupViewbox
+        Inherits Viewbox
+        Public Property ZeroWidth As Boolean
+        Public Property ZeroHeight As Boolean
+
+        Protected Overrides Function MeasureOverride(availableSize As Size) As Size
+            Dim content = TryCast(Child, FrameworkElement)
+            If content IsNot Nothing Then
+                ZeroWidth = content.Width = 0 OrElse (ZeroWidth AndAlso content.Width = 1)
+                ZeroHeight = content.Height = 0 OrElse (ZeroHeight AndAlso content.Height = 1)
+                If ZeroWidth Then content.Width = 1
+                If ZeroHeight Then content.Height = 1
+            End If
+            Dim measured = MyBase.MeasureOverride(New Size(If(ZeroWidth, 1, availableSize.Width), If(ZeroHeight, 1, availableSize.Height)))
+            Return New Size(If(ZeroWidth, 0, measured.Width), If(ZeroHeight, 0, measured.Height))
+        End Function
+
+        Protected Overrides Function ArrangeOverride(finalSize As Size) As Size
+            MyBase.ArrangeOverride(New Size(If(ZeroWidth AndAlso finalSize.Width = 0, 1, finalSize.Width),
+                                           If(ZeroHeight AndAlso finalSize.Height = 0, 1, finalSize.Height)))
+            Return finalSize
+        End Function
+
+        Protected Overrides Function GetLayoutClip(layoutSlotSize As Size) As Geometry
+            Return Nothing
+        End Function
+    End Class
 
     Public Class StyleState
         Public Fill As System.Windows.Media.Brush

@@ -6,29 +6,30 @@ Public Class DrawableLine : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
-    Public Sub New(element As Line)
-        DrawableElement = element
+    Public Sub New(element As Shape)
+        DrawableElement = GeometricShape.FromShape(element)
         VisualName = "Line"
         Name = VisualName
     End Sub
 
     Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
 
-        Dim ln = CType(DrawableElement, Line)
+        Dim geometric = TryCast(DrawableElement, GeometricShape)
+        Dim points = DirectCast(geometric.LocalGeometry(), LineGeometry)
 
         ' Lines must have a stroke to be visible - fall back to black when the drawable
         ' stroke can't be converted (transparent/none/thickness 0).
         Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
-        Dim strokeW As Single = CSng(If(Me.StrokeThickness > 0, Me.StrokeThickness, 0.001))
+        Dim strokeW As Single = CSng(Me.StrokeThickness)
         If strokeServer Is Nothing Then
             strokeServer = New SvgColourServer(System.Drawing.Color.Black)
         End If
 
         Dim svgLine As New SvgLine With {
-            .StartX = ln.X1,
-            .StartY = ln.Y1,
-            .EndX = ln.X2,
-            .EndY = ln.Y2,
+            .StartX = points.Transform.Transform(points.StartPoint).X,
+            .StartY = points.Transform.Transform(points.StartPoint).Y,
+            .EndX = points.Transform.Transform(points.EndPoint).X,
+            .EndY = points.Transform.Transform(points.EndPoint).Y,
             .Stroke = strokeServer,
             .StrokeWidth = strokeW
         }

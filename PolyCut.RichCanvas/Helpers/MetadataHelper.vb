@@ -13,17 +13,6 @@ Public Class MetadataHelper
         Return CType(element.GetValue(OriginalDimensionsProperty), (Width As Double, Height As Double)?)
     End Function
 
-    Public Shared ReadOnly OriginalEndPointProperty As DependencyProperty = DependencyProperty.RegisterAttached(
-        "OriginalEndPoint", GetType(Point?), GetType(MetadataHelper))
-
-    Public Shared Sub SetOriginalEndPoint(element As DependencyObject, value As Point?)
-        element.SetValue(OriginalEndPointProperty, value)
-    End Sub
-
-    Public Shared Function GetOriginalEndPoint(element As DependencyObject) As Point?
-        Return CType(element.GetValue(OriginalEndPointProperty), Point?)
-    End Function
-
     ' DrawableReference property to link wrapper to IDrawable
     Public Shared ReadOnly DrawableReferenceProperty As DependencyProperty = DependencyProperty.RegisterAttached(
         "DrawableReference", GetType(IDrawable), GetType(MetadataHelper))

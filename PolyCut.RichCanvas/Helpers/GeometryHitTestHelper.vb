@@ -1,4 +1,4 @@
-﻿Imports System.Globalization
+Imports System.Globalization
 Imports System.Windows
 Imports System.Windows.Controls
 Imports System.Windows.Media
@@ -70,35 +70,21 @@ Public Class GeometryHitTestHelper
         Dim canvas = TryCast(wrapper.Parent, UIElement)
         If canvas Is Nothing Then Return geometry
 
-        geometry.Transform = New MatrixTransform(TransformMath.GetAccumulatedMatrix(element, canvas))
+        Dim transform = TransformMath.GetAccumulatedMatrix(element, canvas)
+        If TypeOf element Is GeometricShape Then
+            Dim local = If(geometry.Transform?.Value, Matrix.Identity)
+            local.Append(transform)
+            transform = local
+        End If
+        geometry.Transform = New MatrixTransform(transform)
         Return geometry
     End Function
 
     Private Shared Function BuildLocalGeometry(element As FrameworkElement) As Geometry
         Dim geometry As Geometry = Nothing
 
-        If TypeOf element Is Rectangle Then
-            Dim rect = CType(element, Rectangle)
-            geometry = New RectangleGeometry(New Rect(0, 0, rect.ActualWidth, rect.ActualHeight))
-
-        ElseIf TypeOf element Is Ellipse Then
-            Dim ellipse = CType(element, Ellipse)
-            Dim radiusX = ellipse.ActualWidth / 2
-            Dim radiusY = ellipse.ActualHeight / 2
-            geometry = New EllipseGeometry(New Point(radiusX, radiusY), radiusX, radiusY)
-
-        ElseIf TypeOf element Is Line Then
-            Dim line = CType(element, Line)
-            Dim lineGeometry As New LineGeometry(New Point(line.X1, line.Y1), New Point(line.X2, line.Y2))
-            Dim thickness = If(line.StrokeThickness > 0, line.StrokeThickness, 1.0)
-            geometry = lineGeometry.GetWidenedPathGeometry(New Pen(Brushes.Black, thickness))
-
-        ElseIf TypeOf element Is Path Then
-            Dim path = CType(element, Path)
-            If path.Data IsNot Nothing Then
-                geometry = path.Data.Clone()
-            End If
-
+        If TypeOf element Is GeometricShape Then
+            geometry = DirectCast(element, GeometricShape).LocalGeometry()
         ElseIf TypeOf element Is TextBox Then
             Dim textBox = CType(element, TextBox)
             If Not String.IsNullOrEmpty(textBox.Text) Then
@@ -118,11 +104,8 @@ Public Class GeometryHitTestHelper
         Dim geometry = GetTransformedGeometry(drawable)
         If geometry Is Nothing Then Return False
 
-        ' Lines are widened into a filled body, so their "fill" is the stroke region.
-        If TypeOf drawable.DrawableElement Is Line Then
-            Dim padded = geometry.GetWidenedPathGeometry(New Pen(Brushes.Black, STROKE_HIT_PAD))
-            Return padded.FillContains(point, ToleranceType.Absolute, 0.5)
-        ElseIf drawable.Fill IsNot Nothing Then
+
+        If drawable.Fill IsNot Nothing Then
             Dim solid = TryCast(drawable.Fill, SolidColorBrush)
             If solid Is Nothing OrElse solid.Color.A > 0 Then
                 If geometry.FillContains(point, ToleranceType.Absolute, 0.5) Then Return True
@@ -156,7 +139,7 @@ Public Class GeometryHitTestHelper
 
             ' Only untransformed wrappers fit the simple bounds check; rotation/shear can extend beyond it.
             Dim rotate = TryCast(wrapper.RenderTransform, RotateTransform)
-            If (rotate IsNot Nothing AndAlso rotate.Angle = 0) OrElse wrapper.RenderTransform Is Nothing Then
+            If Not TypeOf d.DrawableElement Is GeometricShape AndAlso ((rotate IsNot Nothing AndAlso rotate.Angle = 0) OrElse wrapper.RenderTransform Is Nothing) Then
                 Dim left = Canvas.GetLeft(wrapper)
                 Dim top = Canvas.GetTop(wrapper)
                 If Double.IsNaN(left) Then left = 0

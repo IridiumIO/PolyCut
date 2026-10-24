@@ -6,16 +6,16 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
 
 
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
-    Public Sub New(element As Path)
-        DrawableElement = element
+    Public Sub New(element As Shape)
+        DrawableElement = GeometricShape.FromShape(element)
         VisualName = "Path"
         Name = VisualName
     End Sub
 
     Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
-        Dim ln = CType(DrawableElement, Path)
+        Dim data = DirectCast(DrawableElement, GeometricShape).Data
 
-        Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(ln.Data.ToString())
+        Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(data.ToString())
 
         Dim fillServer As SvgColourServer = CreateSvgFillServer()
         Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
@@ -27,7 +27,7 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
             .Fill = If(fillServer, SvgPaintServer.None)
         }
 
-        Dim d As String = ln.Data.ToString()
+        Dim d As String = data.ToString()
         If svgPath.Fill IsNot SvgPaintServer.None Then
             d = CloseSvgPathData(d)
         End If

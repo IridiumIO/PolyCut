@@ -22,7 +22,6 @@
 "Blade Settings" = "Blade Settings"
 "Boolean operation failed." = "Boolean operation failed."
 "Cancel Preview" = "Cancel Preview"
-"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Cannot perform boolean operations on open paths (Lines). All shapes must be closed."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Cannot perform boolean operations on open paths. All shapes must be closed."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments."
 "Click to view release notes and download" = "Click to view release notes and download"

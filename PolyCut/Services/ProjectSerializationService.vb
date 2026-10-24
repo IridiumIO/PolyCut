@@ -70,14 +70,16 @@ Public Class ProjectSerializationService
         Dim drawableById As New Dictionary(Of Guid, IDrawable)
         Dim groupById As New Dictionary(Of Guid, IDrawable)
 
+        ProjectGeometryMigration.Upgrade(projectData)
+
         ' 1) Create leaf drawables
         For Each dd In projectData.Drawables
             Dim fe = DrawableCodec.DeserializeDrawable(dd)
             If fe Is Nothing Then Continue For
 
             ' IMPORTANT: seed size for group-bound calculations BEFORE anything is measured
-            If dd.Width > 0 AndAlso Not Double.IsNaN(dd.Width) Then fe.Width = dd.Width
-            If dd.Height > 0 AndAlso Not Double.IsNaN(dd.Height) Then fe.Height = dd.Height
+            If dd.Width >= 0 Then fe.Width = dd.Width
+            If dd.Height >= 0 Then fe.Height = dd.Height
 
             Canvas.SetLeft(fe, dd.Left)
             Canvas.SetTop(fe, dd.Top)
@@ -137,12 +139,32 @@ Public Class ProjectSerializationService
         Next
 
         ' 5) Rebuild nested visuals (deepest-first)
+        For Each dd In projectData.Drawables
+            Dim leaf As IDrawable = Nothing
+            If Not drawableById.TryGetValue(dd.Id, leaf) Then Continue For
+            If Not TypeOf leaf.ParentGroup Is NestedDrawableGroup Then Continue For
+            RestoreNestedWrapper(leaf, New TransformState With {
+                .Translation = New Point(dd.Left, dd.Top), .Width = dd.Width, .Height = dd.Height,
+                .Rotation = dd.RotationAngle, .TransformOrigin = New Point(dd.TransformOriginX, dd.TransformOriginY),
+                .AffineTransform = If(String.IsNullOrWhiteSpace(dd.AffineTransform), Matrix.Identity, Matrix.Parse(dd.AffineTransform))
+            }, designerItemStyle, False)
+        Next
+
         Dim nestedGroups = groupById.Values.OfType(Of NestedDrawableGroup)().
                             OrderByDescending(Function(g) GetNestedDepth(g)).
                             ToList()
 
         For Each ng In nestedGroups
-            ng.RebuildGroupVisualFromChildren(designerItemStyle)
+            ng.RebuildGroupVisualFromChildren(designerItemStyle, preserveLocalCoordinates:=True)
+            If TypeOf ng.ParentGroup Is NestedDrawableGroup Then
+                Dim gd = projectData.Groups.First(Function(g) Object.ReferenceEquals(groupById(g.Id), ng))
+                RestoreNestedWrapper(ng, New TransformState With {
+                    .Translation = New Point(gd.Left, gd.Top), .Width = gd.Width, .Height = gd.Height,
+                    .Rotation = gd.RotationAngle, .TransformOrigin = New Point(gd.TransformOriginX, gd.TransformOriginY),
+                    .Scale = New Point(gd.ScaleX, gd.ScaleY),
+                    .AffineTransform = If(String.IsNullOrWhiteSpace(gd.AffineTransform), Matrix.Identity, Matrix.Parse(gd.AffineTransform))
+                }, designerItemStyle, True)
+            End If
         Next
 
         Return New RuntimeProjectModel With {
@@ -153,13 +175,26 @@ Public Class ProjectSerializationService
         }
     End Function
 
+    Private Shared Sub RestoreNestedWrapper(drawable As IDrawable, state As TransformState, style As Style, applyScale As Boolean)
+        ' Plain group leaves stay clean
+        If state.Rotation = 0 AndAlso state.AffineTransform.IsIdentity AndAlso
+           (Not applyScale OrElse state.Scale = New Point(1, 1)) Then Return
+        Dim wrapper = RichCanvas.DrawableWrapperFactory.CreateWrapper(drawable.DrawableElement, drawable, style)
+        state.ApplyToWrapper(wrapper, applyScale)
+    End Sub
+
     Public Shared Function CanvasItemsInDocumentOrder(projectData As ProjectData, built As RuntimeProjectModel) As List(Of IDrawable)
         Dim result As New List(Of IDrawable)()
         If projectData Is Nothing OrElse built Is Nothing Then Return result
 
         Dim groupDataById = projectData.Groups.ToDictionary(Function(g) g.Id)
         For Each root In projectData.Groups.Where(Function(g) Not g.ParentGroupId.HasValue)
-            CollectCanvasItems(root, groupDataById, built, result)
+            Dim rootGroup As IDrawable = Nothing
+            If built.GroupById.TryGetValue(root.Id, rootGroup) AndAlso TypeOf rootGroup Is NestedDrawableGroup Then
+                result.Add(rootGroup)
+            Else
+                CollectCanvasItems(root, groupDataById, built, result)
+            End If
         Next
 
         ' Clipboard data carries a loose drawable with no group ancestor at all, because the Drawing Group is
@@ -386,7 +421,16 @@ Friend NotInheritable Class DrawableCodec
         If element Is Nothing Then Return New TransformState()
 
         Dim wrapper = TryCast(element.Parent, ContentControl)
-        If wrapper IsNot Nothing Then Return TransformState.FromWrapper(wrapper)
+        If wrapper IsNot Nothing Then
+            Dim wrappedState = TransformState.FromWrapper(wrapper)
+            Dim nested = TryCast(drawable.ParentGroup, NestedDrawableGroup)
+            Dim parent = TryCast(wrapper.Parent, FrameworkElement)
+            If nested IsNot Nothing AndAlso parent IsNot Nothing Then
+                Dim offset = parent.TransformToVisual(nested.InnerCanvas).Transform(New Point())
+                wrappedState.Translation += CType(offset, Vector)
+            End If
+            Return wrappedState
+        End If
 
         Dim state As New TransformState()
         Dim left = CanvasUtil.GetLeftSafe(element)
@@ -395,7 +439,9 @@ Friend NotInheritable Class DrawableCodec
         Dim parentNested = TryCast(drawable.ParentGroup, NestedDrawableGroup)
         If parentNested IsNot Nothing AndAlso parentNested.InnerCanvas IsNot Nothing Then
             Try
-                Dim origin = element.TransformToVisual(parentNested.InnerCanvas).Transform(New Point(0, 0))
+
+                Dim parent = TryCast(element.Parent, FrameworkElement)
+                Dim origin = parent.TransformToVisual(parentNested.InnerCanvas).Transform(New Point(left, top))
                 left = origin.X
                 top = origin.Y
             Catch
@@ -449,26 +495,24 @@ Friend NotInheritable Class DrawableCodec
         data.FillColor = ColorAndBrushHelpers.SerializeBrush(drawable.Fill)
 
         ' Type-specific serialization
-        If TypeOf element Is Shapes.Path Then
-            data.Type = "Path"
-            Dim path = CType(element, Shapes.Path)
-            data.PathData = path.Data?.ToString()
-
-        ElseIf TypeOf element Is Rectangle Then
-            data.Type = "Rectangle"
+        If TypeOf element Is GeometricShape Then
+            Dim geometric = DirectCast(element, GeometricShape)
+            data.GeometricBounds = True
+            data.Type = geometric.Kind
             data.IsRegistrationMark = RegistrationMarkHelper.IsRegistrationMark(element)
-
-        ElseIf TypeOf element Is Ellipse Then
-            data.Type = "Ellipse"
-
-        ElseIf TypeOf element Is Line Then
-            data.Type = "Line"
-            Dim line = CType(element, Line)
-            data.LineX1 = line.X1
-            data.LineY1 = line.Y1
-            data.LineX2 = line.X2
-            data.LineY2 = line.Y2
-
+            If geometric.Kind = "Path" Then
+                data.PathData = geometric.Data?.ToString()
+                If geometric.Data?.Transform IsNot Nothing AndAlso Not geometric.Data.Transform.Value.IsIdentity Then
+                    data.PathTransform = geometric.Data.Transform.Value.ToString(Globalization.CultureInfo.InvariantCulture)
+                End If
+            End If
+            If geometric.Kind = "Line" Then
+                Dim line = DirectCast(geometric.Data, LineGeometry)
+                data.LineX1 = line.StartPoint.X
+                data.LineY1 = line.StartPoint.Y
+                data.LineX2 = line.EndPoint.X
+                data.LineY2 = line.EndPoint.Y
+            End If
         ElseIf TypeOf element Is TextBox Then
             data.Type = "Text"
             Dim textBox = CType(element, TextBox)
@@ -488,17 +532,7 @@ Friend NotInheritable Class DrawableCodec
             Dim element = TryCast(group.DrawableElement, FrameworkElement)
             If element Is Nothing Then Return
 
-            Dim wrapper = TryCast(element.Parent, ContentControl)
-            If wrapper Is Nothing Then
-                ' Not on canvas yet; fall back to element's Canvas position/size
-                groupData.Left = CanvasUtil.GetLeftSafe(element)
-                groupData.Top = CanvasUtil.GetTopSafe(element)
-                groupData.Width = CanvasUtil.GetWidthSafe(element)
-                groupData.Height = CanvasUtil.GetHeightSafe(element)
-                Return
-            End If
-
-            Dim state = TransformState.FromWrapper(wrapper)
+            Dim state = CaptureDrawableState(group)
 
             groupData.Left = state.Translation.X
             groupData.Top = state.Translation.Y
@@ -530,6 +564,10 @@ Friend NotInheritable Class DrawableCodec
                                 Geometry.Parse(data.PathData),
                                 Nothing)
                 }
+                If Not String.IsNullOrWhiteSpace(data.PathTransform) AndAlso path.Data IsNot Nothing Then
+                    path.Data = path.Data.Clone()
+                    path.Data.Transform = New MatrixTransform(Matrix.Parse(data.PathTransform))
+                End If
                 element = path
 
             Case "Rectangle"

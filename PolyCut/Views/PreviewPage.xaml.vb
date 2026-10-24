@@ -70,6 +70,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
         brsh.Freeze()
         Dim newPen = basePen.Clone()
         newPen.Brush = brsh
+        newPen.LineJoin = PenLineJoin.Round
         newPen.Freeze()
         Return newPen
     End Function

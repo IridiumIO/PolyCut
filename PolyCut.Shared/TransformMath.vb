@@ -5,6 +5,17 @@ Imports System.Windows.Media
 
 Public Module TransformMath
 
+    ' SVG geometry -> geometric wrapper. Fit axes independently; a zero extent
+    ' stays a line and never needs artificial sizing segments or pen padding.
+    Public Function GeometryBoundsTransform(bounds As Rect, size As Size) As Matrix
+        If bounds.IsEmpty Then Return Matrix.Identity
+        Dim fit = Matrix.Identity
+        fit.Translate(-bounds.X, -bounds.Y)
+        fit.Scale(If(bounds.Width > 0, size.Width / bounds.Width, 1),
+                     If(bounds.Height > 0, size.Height / bounds.Height, 1))
+        Return fit
+    End Function
+
     'This is how GeometryExtractor flattens TransformToVisual results
     Public Function GeneralTransformToMatrix(gt As GeneralTransform) As Matrix
         If gt Is Nothing Then Return Matrix.Identity

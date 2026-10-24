@@ -1,4 +1,4 @@
-﻿
+
 Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.ComponentModel
@@ -491,7 +491,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         If TransformAction.HandleTextBoxSizeChanged(wrapper, e) Then Return
 
         Dim originalDimensions = MetadataHelper.GetOriginalDimensions(wrapper)
-        Dim originalEndPoint = MetadataHelper.GetOriginalEndPoint(wrapper)
         If originalDimensions Is Nothing Then Return
 
         Dim scaleX As Double = e.NewSize.Width / originalDimensions.Value.Width
@@ -501,11 +500,7 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
         'layout pass with an identity scale. Invalidating measure there re-dirties the whole canvas mid-pass.
         If Math.Abs(scaleX - 1.0) < 1.0E-09 AndAlso Math.Abs(scaleY - 1.0) < 1.0E-09 Then Return
 
-        If TypeOf content Is Line Then
-            Dim line As Line = CType(content, Line)
-            DrawableWrapperFactory.FitLineToWrapper(line, wrapper, line.StrokeThickness)
-            Return
-        End If
+
 
         InvalidateMeasure()
 

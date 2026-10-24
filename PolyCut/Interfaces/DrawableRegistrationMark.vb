@@ -1,11 +1,14 @@
 ﻿Imports System.Windows.Media.Animation
 
+Imports PolyCut.Shared
+
 Public Class DrawableRegistrationMark : Inherits DrawableRectangle
 
     'Animated because why not?
 
-    Public Sub New(element As Rectangle)
+    Public Sub New(element As Shape)
         MyBase.New(element)
+        RegistrationMarkHelper.SetIsRegistrationMark(DrawableElement, True)
         Name = "Registration Mark"
         StartRainbowAnimation()
     End Sub
@@ -17,7 +20,7 @@ Public Class DrawableRegistrationMark : Inherits DrawableRectangle
         If _animationStarted Then Return
         _animationStarted = True
 
-        Dim rect = TryCast(DrawableElement, Rectangle)
+        Dim rect = TryCast(DrawableElement, Shape)
         If rect Is Nothing Then Return
 
         Dim group As New DrawingGroup()
@@ -76,7 +79,7 @@ Public Class DrawableRegistrationMark : Inherits DrawableRectangle
         MyBase.ApplyVisualStyle()
 
         If _animationStarted Then
-            Dim rect = TryCast(DrawableElement, Rectangle)
+            Dim rect = TryCast(DrawableElement, Shape)
             If rect IsNot Nothing Then rect.Fill = _rainbowBrush
         End If
     End Sub

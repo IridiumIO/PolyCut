@@ -1,4 +1,4 @@
-﻿Option Strict On
+Option Strict On
 Imports System.Collections.ObjectModel
 Imports System.Collections.Specialized
 Imports System.IO
@@ -440,7 +440,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
                         Continue For
                     End If
 
-                    Dim act As New ImportSVGAction(Document, dxfImportService, svgdoc)
+                    Dim act As New ImportSVGAction(Document, _svgImportService, svgdoc)
                     If act.Execute() Then actions.Add(act)
                     Continue For
 
@@ -573,22 +573,15 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Private Function ValidateShapesForBoolean(shapes As List(Of IDrawable)) As (isValid As Boolean, errorMessage As String)
         For Each drawable In shapes
             Dim element = drawable.DrawableElement
+            Dim geometric = TryCast(element, GeometricShape)
 
-            If TypeOf element Is Line Then
-                Return (False, "Cannot perform boolean operations on open paths (Lines). All shapes must be closed.".LT())
-            End If
-
-            If TypeOf element Is System.Windows.Shapes.Path Then
-                Dim path = CType(element, System.Windows.Shapes.Path)
-                Dim pathGeo = TryCast(path.Data, PathGeometry)
-                If pathGeo IsNot Nothing Then
-                    For Each figure In pathGeo.Figures
-                        If Not figure.IsClosed Then
-                            Return (False, "Cannot perform boolean operations on open paths. All shapes must be closed.".LT())
-                        End If
-                    Next
+            If geometric IsNot Nothing Then
+                If geometric.Kind = "Line" OrElse (geometric.Kind = "Path" AndAlso
+                    PathGeometry.CreateFromGeometry(geometric.Data).Figures.Any(Function(figure) Not figure.IsClosed)) Then
+                    Return (False, "Cannot perform boolean operations on open paths. All shapes must be closed.".LT())
                 End If
             End If
+
         Next
         Return (True, Nothing)
     End Function

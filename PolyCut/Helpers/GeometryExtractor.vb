@@ -58,10 +58,19 @@ Public Class GeometryExtractor
             Return New List(Of GeometrySnapshot)
         End Try
 
+        Dim world = TransformMath.GeneralTransformToMatrix(gt)
+        If TypeOf element Is GeometricShape Then
+            ' Flatten geometric objects in document units, so tolerance is not
+            ' affected by their local size or a group's nonuniform scale.
+            Dim local = If(geometry.Transform?.Value, Matrix.Identity)
+            local.Append(world)
+            geometry.Transform = New MatrixTransform(local)
+            world = Matrix.Identity
+        End If
         geometry.Freeze()
         Return New List(Of GeometrySnapshot) From {New GeometrySnapshot With {
             .Geometry = geometry,
-            .Transform = TransformMath.GeneralTransformToMatrix(gt),
+            .Transform = world,
             .FillColor = GetFillColor(drawable),
             .IsFilled = IsFillEnabled(drawable)
         }}
@@ -195,46 +204,8 @@ Public Class GeometryExtractor
     Private Shared Function GetGeometryFromElement(element As FrameworkElement) As Geometry
 
         Select Case True
-            Case TypeOf element Is Rectangle
-                Dim r = DirectCast(element, Rectangle)
-                Return New RectangleGeometry(New Rect(0, 0, r.ActualWidth, r.ActualHeight))
-
-            Case TypeOf element Is Ellipse
-                Dim e = DirectCast(element, Ellipse)
-                Dim cx = e.ActualWidth / 2
-                Dim cy = e.ActualHeight / 2
-                Return New EllipseGeometry(New Point(cx, cy), cx, cy)
-
-            Case TypeOf element Is Line
-                Dim ln = DirectCast(element, Line)
-                Return New LineGeometry(New Point(ln.X1, ln.Y1), New Point(ln.X2, ln.Y2))
-
-            Case TypeOf element Is Path
-                Dim p = DirectCast(element, Path)
-
-                Dim g As Geometry = If(p.Data?.Clone(), Nothing)
-                If g Is Nothing Then Return Nothing
-
-                ' If Path is stretched by wrapper, apply  stretch explicitly
-                If p.Stretch = Stretch.Fill Then
-                    Dim wrapper = TryCast(p.Parent, ContentControl)
-                    If wrapper IsNot Nothing Then
-                        Dim b = g.Bounds
-                        Dim w = wrapper.ActualWidth
-                        Dim h = wrapper.ActualHeight
-
-                        If b.Width > 0 AndAlso b.Height > 0 AndAlso w > 0 AndAlso h > 0 Then
-                            Dim m As Matrix = Matrix.Identity
-                            m.Translate(-b.X, -b.Y)
-                            m.Scale(w / b.Width, h / b.Height)
-                            g.Transform = New MatrixTransform(m)
-                        End If
-                    End If
-                End If
-
-                Return g
-
-
+            Case TypeOf element Is GeometricShape
+                Return DirectCast(element, GeometricShape).LocalGeometry()
             Case TypeOf element Is TextBox
                 Return GetTextBoxGeometry(DirectCast(element, TextBox))
         End Select

@@ -58,14 +58,4 @@
         </Setter>
     </Style>
 
-    <Style x:Key="GroupChildPathStyle" TargetType="{x:Type Path}">
-        <Setter Property="MinWidth" Value="0.001" />
-        <Setter Property="MinHeight" Value="0.001" />
-        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-        <Setter Property="SnapsToDevicePixels" Value="true" />
-        <Setter Property="ClipToBounds" Value="False" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="IsHitTestVisible" Value="False" />
-    </Style>
-
 </ResourceDictionary>

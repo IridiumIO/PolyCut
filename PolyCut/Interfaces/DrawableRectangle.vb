@@ -7,26 +7,26 @@ Public Class DrawableRectangle : Inherits BaseDrawable : Implements IDrawable
 
     Public Overloads ReadOnly Property VisualName As String Implements IDrawable.VisualName
 
-    Public Sub New(element As Rectangle)
-        DrawableElement = element
+    Public Sub New(element As Shape)
+        DrawableElement = GeometricShape.FromShape(element)
         VisualName = "Rectangle"
         Name = VisualName
     End Sub
 
     Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
 
-        Dim rt = CType(DrawableElement, Rectangle)
+        Dim rt = DrawableElement
 
         Dim fillServer As SvgColourServer = CreateSvgFillServer()
         Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
-        Dim strokeW As Single = 0.001F
+        Dim strokeW As Single = CSng(Me.StrokeThickness)
 
         Dim rect As New SvgRectangle With {
             .X = 0,
             .Y = 0,
             .Width = rt.ActualWidth,
             .Height = rt.ActualHeight,
-            .FillOpacity = 0.01,
+            .FillOpacity = 1.0F,
             .Fill = If(fillServer, SvgPaintServer.None),
             .StrokeLineCap = SvgStrokeLineCap.Round,
             .Stroke = SvgPaintServer.None

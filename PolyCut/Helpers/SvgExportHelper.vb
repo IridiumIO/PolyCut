@@ -6,12 +6,12 @@ Imports Svg.Transforms
 
 
 'Unified SVG export helper. The WPF visual tree (TransformToVisual) is the single accumulator for geometry.
-'Groups stay as organizational SvgGroups; the manual wrapper-transform and
+'Groups stay as organizational SvgGroups.
 Public Module SvgExportHelper
 
 
     'Bakes the leaf's local SVG geometry to document-root space.
-    Public Function BakeToRoot(localSvg As SvgVisualElement, element As FrameworkElement, Optional root As UIElement = Nothing, Optional stretchAsWrapper As Boolean = True) As SvgVisualElement
+    Public Function BakeToRoot(localSvg As SvgVisualElement, element As FrameworkElement, Optional root As UIElement = Nothing) As SvgVisualElement
 
         Dim component As SvgVisualElement = If(localSvg IsNot Nothing, localSvg.DeepCopy(), Nothing)
         If component Is Nothing OrElse element Is Nothing Then Return component
@@ -19,43 +19,15 @@ Public Module SvgExportHelper
         If root Is Nothing Then root = FindDocumentRoot(element)
         If root Is Nothing Then Return component
 
-        Dim wrapper = TryCast(element.Parent, ContentControl)
-
         Dim m As Matrix = Matrix.Identity
 
-        '1) Un-stretch local geometry to the wrapper size (Path Stretch=Fill).
+        '1) Fit source path geometry to its geometric layout size.
         'FUTURE ME - always use the WPF geometry bounds (Path.Data.Bounds), NOT the SVG library's component.Bounds which pads by half the stroke width!!! You always get tripped up by this!!!! IT DOES NOT WORK DON'T WASTE TIME CHANGING IT AGAIN
-        If stretchAsWrapper AndAlso wrapper IsNot Nothing Then
-            Dim bW As Double
-            Dim bH As Double
-            Dim bX As Double
-            Dim bY As Double
-
-            Dim path = TryCast(element, Path)
-            If path?.Data IsNot Nothing Then
-                Dim gb = path.Data.Bounds
-                bX = gb.X
-                bY = gb.Y
-                bW = gb.Width
-                bH = gb.Height
-            Else
-                Dim b As System.Drawing.RectangleF
-                Try
-                    b = component.Bounds
-                Catch
-                    b = New System.Drawing.RectangleF(0, 0, 0, 0)
-                End Try
-                bX = b.X
-                bY = b.Y
-                bW = b.Width
-                bH = b.Height
-            End If
-
-            Dim w = wrapper.ActualWidth
-            Dim h = wrapper.ActualHeight
-            If bW > 0 AndAlso bH > 0 AndAlso w > 0 AndAlso h > 0 Then
-                m.Translate(-bX, -bY)
-                m.Scale(w / bW, h / bH)
+        Dim geometric = TryCast(element, GeometricShape)
+        If geometric IsNot Nothing Then
+            If geometric.Kind = "Path" Then
+                m = If(geometric.Data.Transform?.Value, Matrix.Identity)
+                m.Append(geometric.BoundsTransform)
             End If
         End If
 

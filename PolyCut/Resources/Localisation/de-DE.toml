@@ -22,7 +22,6 @@
 "Blade Settings" = "Klingeneinstellungen"
 "Boolean operation failed." = "Boolesche Operation fehlgeschlagen."
 "Cancel Preview" = "Vorschau abbrechen"
-"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Boolesche Operationen können nicht auf offenen Pfaden (Linien) ausgeführt werden. Alle Formen müssen geschlossen sein."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Boolesche Operationen können nicht auf offenen Pfaden ausgeführt werden. Alle Formen müssen geschlossen sein."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "Klicken, um Versionshinweise anzuzeigen und herunterzuladen"
@@ -390,6 +389,7 @@
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "Die Strecke in Z-Richtung, die das Werkzeug nach jedem Durchgang zurücklegen soll, wenn mehrere Durchgänge aktiviert sind."
 
 [obsolete]
+"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Boolesche Operationen können nicht auf offenen Pfaden (Linien) ausgeführt werden. Alle Formen müssen geschlossen sein."
 "Printer: " = "Drucker: "
 "Shading Settings" = "Schattierungseinstellungen"
 

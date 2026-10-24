@@ -45,22 +45,14 @@ Public Class AddDrawableAction : Implements IUndoableAction
     Private Function CreateDrawableFromElement(element As FrameworkElement) As IDrawable
         Dim drawable As IDrawable = Nothing
 
-        If TypeOf element Is Rectangle AndAlso RegistrationMarkHelper.IsRegistrationMark(element) Then
-            drawable = New DrawableRegistrationMark(DirectCast(element, Rectangle))
-        ElseIf TypeOf element Is Line Then
-            drawable = New DrawableLine(DirectCast(element, Line))
-        ElseIf TypeOf element Is Rectangle Then
-            drawable = New DrawableRectangle(DirectCast(element, Rectangle))
-        ElseIf TypeOf element Is Ellipse Then
-            drawable = New DrawableEllipse(DirectCast(element, Ellipse))
+        If TypeOf element Is Shape Then
+            drawable = BaseDrawable.DrawableFactory(element)
         ElseIf TypeOf element Is TextBox Then
             drawable = New DrawableText(DirectCast(element, TextBox)) With {.StrokeThickness = 0}
             If element.ReadLocalValue(DrawingManager.StrokeProperty) IsNot DependencyProperty.UnsetValue Then
                 drawable.Stroke = DrawingManager.GetStroke(element)
                 drawable.StrokeThickness = If(DrawingManager.HasPaint(drawable.Stroke), 0.5, 0)
             End If
-        ElseIf TypeOf element Is Shapes.Path Then
-            drawable = New DrawablePath(DirectCast(element, Shapes.Path))
         End If
 
         If drawable IsNot Nothing Then

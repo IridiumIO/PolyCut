@@ -20,8 +20,6 @@ Public Class SVGImportService : Implements IVectorImportService
 
     Private Const SUPPORT_NESTED_GROUPS_FLAG As Boolean = True
 
-    Private Const DEGENERATE_EXTENT As Double = 0.0001
-
     Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements IVectorImportService.ParseFromFile
         Dim doc = SvgDocument.Open(path)
         Return ParseFromDocument(doc, path)
@@ -131,10 +129,10 @@ Public Class SVGImportService : Implements IVectorImportService
     End Sub
 
 
-    Private Function CalculateStrokeDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double)
+    Private Function CalculateDimensions(bounds As Rect, strokeWidth As Single, matrix As Matrix) As (totalWidth As Double, totalHeight As Double, transformedStroke As Double)
         Dim matrixScale As Double = StrokeScale(matrix)
         Dim strokeThickness As Double = If(strokeWidth > 0, strokeWidth * matrixScale, 0)
-        Return (bounds.Width + strokeThickness, bounds.Height + strokeThickness, strokeThickness / 2.0, strokeThickness)
+        Return (bounds.Width, bounds.Height, strokeThickness)
     End Function
 
     Private Sub AssignDrawableName(drawable As IDrawable, elementId As String)
@@ -445,13 +443,13 @@ Public Class SVGImportService : Implements IVectorImportService
         If Not IsValidBounds(boundsWorld, requireNonZero:=False) Then Return Nothing
 
         Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgVisual)
-        Dim dims = CalculateStrokeDimensions(boundsWorld, strokeWidthValue, matrixForStroke)
+        Dim dims = CalculateDimensions(boundsWorld, strokeWidthValue, matrixForStroke)
 
         Return FinaliseDrawableElement(fe, boundsWorld, svgVisual, elementId, dims)
 
     End Function
 
-    Private Function FinaliseDrawableElement(ByRef fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, elementId As String, dims As (totalWidth As Double, totalHeight As Double, strokeOffset As Double, transformedStroke As Double), Optional SkipApplyVisualStyle As Boolean = False) As IDrawable
+    Private Function FinaliseDrawableElement(ByRef fe As FrameworkElement, boundsWorld As Rect, svgVisual As SvgVisualElement, elementId As String, dims As (totalWidth As Double, totalHeight As Double, transformedStroke As Double), Optional SkipApplyVisualStyle As Boolean = False) As IDrawable
         Dim shp As Shape = TryCast(fe, Shape)
         If shp IsNot Nothing AndAlso Not SkipApplyVisualStyle Then
             ApplyStrokeAndFill(shp, svgVisual, dims.transformedStroke)
@@ -459,8 +457,8 @@ Public Class SVGImportService : Implements IVectorImportService
 
         fe.Width = dims.totalWidth
         fe.Height = dims.totalHeight
-        Canvas.SetLeft(fe, boundsWorld.X - dims.strokeOffset)
-        Canvas.SetTop(fe, boundsWorld.Y - dims.strokeOffset)
+        Canvas.SetLeft(fe, boundsWorld.X)
+        Canvas.SetTop(fe, boundsWorld.Y)
 
         Dim drawable As IDrawable = BaseDrawable.DrawableFactory(fe)
         AssignDrawableName(drawable, elementId)
@@ -614,8 +612,7 @@ Public Class SVGImportService : Implements IVectorImportService
             ' DeepCopy loses the path's inherited group styles, so it cannot be used here! 
             Dim originalStrokeWidth As Single = GetStrokeWidthOrZero(svgPath)
 
-            ' Geometry.Parse reads only path data. Keep the stroke width so finalisation
-            ' reserves its padding; otherwise Stretch.Fill shrinks each curve separately.
+
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
             Dim wasClipped As Boolean = BakeClipGeometry(geometry, svgPath, svgDoc)
 
@@ -635,20 +632,6 @@ Public Class SVGImportService : Implements IVectorImportService
             Dim t As Matrix = Matrix.Identity
             t.Translate(-bounds.X, -bounds.Y)
             Dim normalized As PathGeometry = TransformPathGeometryPreserveOpenClosed(transformed, t)
-
-            Dim strokeWorld As Double = originalStrokeWidth * StrokeScale(matrix)
-            Dim padX As Double = If(originalStrokeWidth > 0 AndAlso bounds.Width < DEGENERATE_EXTENT, strokeWorld, 0)
-            Dim padY As Double = If(originalStrokeWidth > 0 AndAlso bounds.Height < DEGENERATE_EXTENT, strokeWorld, 0)
-            If padX > 0 OrElse padY > 0 Then
-                Dim track As New PathFigure With {
-                    .StartPoint = New Point(-padX / 2, -padY / 2),
-                    .IsClosed = False,
-                    .IsFilled = False
-                }
-                track.Segments.Add(New LineSegment(New Point(bounds.Width + padX / 2, bounds.Height + padY / 2), False))
-                normalized.Figures.Add(track)
-                bounds = New Rect(bounds.X - padX / 2, bounds.Y - padY / 2, bounds.Width + padX, bounds.Height + padY)
-            End If
 
             Dim wpfPath As New Shapes.Path With {
                 .Data = normalized,
@@ -807,7 +790,7 @@ Public Class SVGImportService : Implements IVectorImportService
                 wpfPath.Stroke = Nothing
                 wpfPath.StrokeThickness = 0.0
 
-                Dim clipDims = (totalWidth:=bounds.Width, totalHeight:=bounds.Height, strokeOffset:=0.0, transformedStroke:=0.0)
+                Dim clipDims = (totalWidth:=bounds.Width, totalHeight:=bounds.Height, transformedStroke:=0.0)
 
 
                 Return FinaliseDrawableElement(wpfPath, bounds, svgLine, svgLine.ID, clipDims, True)
@@ -831,12 +814,11 @@ Public Class SVGImportService : Implements IVectorImportService
             If Not IsValidBounds(boundsWorld, requireNonZero:=False) Then Return Nothing
 
             Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgLine)
-            Dim dims = CalculateStrokeDimensions(boundsWorld, strokeWidthValue, matrix)
-            Dim strokeOffset As Double = dims.strokeOffset
+            Dim dims = CalculateDimensions(boundsWorld, strokeWidthValue, matrix)
 
             ' Normalize endpoints into LOCAL wrapper space
-            Dim localP1 As New Point((p1.X - boundsWorld.X) + strokeOffset, (p1.Y - boundsWorld.Y) + strokeOffset)
-            Dim localP2 As New Point((p2.X - boundsWorld.X) + strokeOffset, (p2.Y - boundsWorld.Y) + strokeOffset)
+            Dim localP1 As New Point(p1.X - boundsWorld.X, p1.Y - boundsWorld.Y)
+            Dim localP2 As New Point(p2.X - boundsWorld.X, p2.Y - boundsWorld.Y)
 
             Dim wpfLine As New Line With {
             .X1 = localP1.X,

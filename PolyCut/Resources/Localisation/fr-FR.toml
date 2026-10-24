@@ -22,7 +22,6 @@
 "Blade Settings" = "Paramètres de la lame"
 "Boolean operation failed." = "L’opération booléenne a échoué."
 "Cancel Preview" = "Annuler l’aperçu"
-"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "Cliquer pour afficher les notes de version et télécharger"
@@ -390,6 +389,7 @@
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "Distance en Z que l’outil doit parcourir après chaque passe lorsque plusieurs passes sont activées."
 
 [obsolete]
+"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
 "Printer: " = "Imprimante : "
 "Shading Settings" = "Paramètres d’ombrage"
 

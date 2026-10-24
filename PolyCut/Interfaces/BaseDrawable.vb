@@ -33,9 +33,17 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
 
     Public Shared Function DrawableFactory(element As FrameworkElement) As IDrawable
-        If TypeOf element Is Rectangle AndAlso RegistrationMarkHelper.IsRegistrationMark(element) Then
-            Return New DrawableRegistrationMark(element)
-        ElseIf TypeOf element Is Rectangle Then
+        If RegistrationMarkHelper.IsRegistrationMark(element) Then Return New DrawableRegistrationMark(DirectCast(element, Shape))
+        Dim geometric = TryCast(element, GeometricShape)
+        If geometric IsNot Nothing Then
+            Select Case geometric.Kind
+                Case "Rectangle" : Return New DrawableRectangle(geometric)
+                Case "Ellipse" : Return New DrawableEllipse(geometric)
+                Case "Line" : Return New DrawableLine(geometric)
+                Case Else : Return New DrawablePath(geometric)
+            End Select
+        End If
+        If TypeOf element Is Rectangle Then
             Return New DrawableRectangle(element)
         ElseIf TypeOf element Is Ellipse Then
             Return New DrawableEllipse(element)
@@ -88,20 +96,12 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
     Public Event SelectionChanged(sender As Object, e As EventArgs) Implements IDrawable.SelectionChanged
 
-    ' Whether the leaf SVG geometry should be un-stretched to the wrapper size before baking.
-    ' True for shapes that fill their wrapper (Rectangle/Ellipse/Path), False for Line/TextBox
-    Protected Overridable ReadOnly Property BakeStretchAsWrapper As Boolean
-        Get
-            Return TypeOf DrawableElement Is System.Windows.Shapes.Shape AndAlso Not TypeOf DrawableElement Is Line
-        End Get
-    End Property
-
     Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
         Dim component = DrawingToSVG()
         If component Is Nothing Then Return Nothing
         Dim copy = component.DeepCopy()
         If copy Is Nothing Then Return Nothing
-        Return SvgExportHelper.BakeToRoot(copy, DrawableElement, stretchAsWrapper:=BakeStretchAsWrapper)
+        Return SvgExportHelper.BakeToRoot(copy, DrawableElement)
     End Function
 
     Public Overridable Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
@@ -186,14 +186,6 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
                 s.StrokeThickness = _strokeThickness
                 s.InvalidateVisual()
 
-                Dim line = TryCast(s, Line)
-                If line IsNot Nothing Then
-                    Dim wrapper = TryCast(line.Parent, ContentControl)
-                    If wrapper IsNot Nothing Then
-                        DrawableWrapperFactory.FitLineToWrapper(line, wrapper, s.StrokeThickness)
-                    End If
-                End If
-
                 Return
             End If
 
@@ -205,11 +197,6 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
                     contentShape.Fill = _fill
                     contentShape.StrokeThickness = _strokeThickness
                     contentShape.InvalidateVisual()
-                    Dim line = TryCast(contentShape, Line)
-                    If line IsNot Nothing Then
-                        DrawableWrapperFactory.FitLineToWrapper(line, cc, contentShape.StrokeThickness)
-                    End If
-
                 Else
                     Dim tb = TryCast(cc.Content, TextBox)
                     If tb IsNot Nothing Then

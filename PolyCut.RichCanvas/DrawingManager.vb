@@ -140,9 +140,8 @@ Public Class DrawingManager
         End If
 
 
-        RaiseEvent DrawingFinished(Me, _currentShape)
-
         pCanvas.Children.Remove(_currentShape)
+        RaiseEvent DrawingFinished(Me, _currentShape)
         _currentShape = Nothing
     End Sub
 
@@ -235,7 +234,7 @@ Public Class DrawingManager
         Canvas.SetLeft(shape, startPoint.X)
         Canvas.SetTop(shape, startPoint.Y)
 
-        Return shape
+        Return If(isRegistrationMark, shape, GeometricShape.FromShape(shape))
     End Function
 
 
@@ -323,8 +322,8 @@ Public Class DrawingManager
 
         End If
 
-        Dim offsetX As Double = l.X1 - l.StrokeThickness / 2
-        Dim offsetY As Double = Math.Min(l.Y1, l.Y2) - l.StrokeThickness / 2
+        Dim offsetX As Double = l.X1
+        Dim offsetY As Double = Math.Min(l.Y1, l.Y2)
 
         l.X1 -= offsetX
         l.X2 -= offsetX
@@ -351,8 +350,8 @@ Public Class DrawingManager
         Dim minX As Double = polyline.Points.Min(Function(p) p.X)
         Dim minY As Double = polyline.Points.Min(Function(p) p.Y)
 
-        Dim offsetX As Double = minX - polyline.StrokeThickness / 2
-        Dim offsetY As Double = minY - polyline.StrokeThickness / 2
+        Dim offsetX As Double = minX
+        Dim offsetY As Double = minY
         For i As Integer = 0 To polyline.Points.Count - 1
             Dim point As Point = polyline.Points(i)
             polyline.Points(i) = New Point(point.X - offsetX, point.Y - offsetY)
@@ -363,11 +362,11 @@ Public Class DrawingManager
         path.Fill = polyline.Fill
 
         Dim bounds As Rect = path.Data.Bounds
-        path.Width = bounds.Width + polyline.StrokeThickness
-        path.Height = bounds.Height + polyline.StrokeThickness
+        path.Width = bounds.Width
+        path.Height = bounds.Height
 
-        Canvas.SetLeft(path, offsetX)
-        Canvas.SetTop(path, offsetY)
+        Canvas.SetLeft(path, offsetX + bounds.X)
+        Canvas.SetTop(path, offsetY + bounds.Y)
 
         Return path
 

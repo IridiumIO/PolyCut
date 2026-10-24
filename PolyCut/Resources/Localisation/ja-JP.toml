@@ -22,7 +22,6 @@
 "Blade Settings" = "ブレード設定"
 "Boolean operation failed." = "ブール演算に失敗しました。"
 "Cancel Preview" = "プレビューをキャンセル"
-"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "開いたパス（線）にはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "開いたパスにはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "クリックしてリリースノートを表示し、ダウンロード"
@@ -390,6 +389,7 @@
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "複数パスが有効な場合に、各パスの後でツールを Z 方向に移動する距離。"
 
 [obsolete]
+"Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "開いたパス（線）にはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Printer: " = "プリンター: "
 "Shading Settings" = "シェーディング設定"
 

@@ -1,4 +1,5 @@
 Imports System.Windows.Media
+Imports PolyCut.Shared
 
 Public NotInheritable Class PerformantRasteriser
 
@@ -502,8 +503,9 @@ Public NotInheritable Class PerformantRasteriser
         If polygon IsNot Nothing Then Return Math.Max(1, polygon.Points.Count)
 
         Dim path = TryCast(content, Path)
-        If path IsNot Nothing Then
-            Dim geometry = path.Data
+        Dim geometric = TryCast(content, GeometricShape)
+        If path IsNot Nothing OrElse geometric IsNot Nothing Then
+            Dim geometry = If(geometric?.Data, path?.Data)
             If geometry IsNot Nothing Then
 
                 Dim weight As Integer

@@ -1,6 +1,4 @@
 
-Imports System.Numerics
-
 Imports PolyCut.Core
 Imports PolyCut.[Shared]
 
@@ -8,7 +6,6 @@ Public Class GeometryExtractor
 
     Friend NotInheritable Class GeometrySnapshot
         Public Geometry As Geometry
-        Public Transform As Matrix
         Public FillColor As String
         Public IsFilled As Boolean
     End Class
@@ -42,81 +39,40 @@ Public Class GeometryExtractor
 
         End If
 
-        ' Handle simple (non-group) drawable
-        Dim element = TryCast(drawable.DrawableElement, FrameworkElement)
-        If element Is Nothing Then Return New List(Of GeometrySnapshot)
-
-        ' 1. Get geometry in element's local coordinate space
-        Dim geometry = GetGeometryFromElement(element)
+        Dim geometry = DrawableGeometry.GetTransformedGeometry(drawable.DrawableElement, mainCanvas)
         If geometry Is Nothing Then Return New List(Of GeometrySnapshot)
-
-        ' 2. Get accumulated transform from element to main canvas. WHY THE FUCK DID I NOT JUST DO THIS MONTHS AGO
-        Dim gt As GeneralTransform
-        Try
-            gt = element.TransformToVisual(mainCanvas)
-        Catch
-            Return New List(Of GeometrySnapshot)
-        End Try
-
-        Dim world = TransformMath.GeneralTransformToMatrix(gt)
-        If TypeOf element Is GeometricShape Then
-            ' Flatten geometric objects in document units, so tolerance is not
-            ' affected by their local size or a group's nonuniform scale.
-            Dim local = If(geometry.Transform?.Value, Matrix.Identity)
-            local.Append(world)
-            geometry.Transform = New MatrixTransform(local)
-            world = Matrix.Identity
-        End If
         geometry.Freeze()
         Return New List(Of GeometrySnapshot) From {New GeometrySnapshot With {
             .Geometry = geometry,
-            .Transform = world,
             .FillColor = GetFillColor(drawable),
             .IsFilled = IsFillEnabled(drawable)
         }}
     End Function
 
     Friend Shared Function ProcessSnapshot(item As GeometrySnapshot, cfg As ProcessorConfiguration) As List(Of PathBasedElement)
-        ' 3. Flatten in local space first
+
         Dim flattened As PathGeometry = item.Geometry.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
-
-        ' 4. Apply transform
-        Dim transformed As PathGeometry = flattened.Clone()
-        transformed.Transform = New MatrixTransform(item.Transform)
-
-        ' 5. Flatten again after transform
-        transformed = transformed.GetFlattenedPathGeometry(cfg.Tolerance, ToleranceType.Absolute)
-
-        Dim wasClipped As Boolean = False
-
-        ' now build lines from transformed
-        Dim isFilled = item.IsFilled
-
-        Dim figures = PolyCut.Core.BuildLinesFromGeometry(transformed, cfg.Tolerance)
+        Dim figures = BuildLinesFromGeometry(flattened, cfg.Tolerance)
 
         If cfg.ClipToBounds Then
             figures = ClipFiguresToWorkArea(figures, cfg.WorkAreaWidth, cfg.WorkAreaHeight)
-            wasClipped = True
         End If
-
-        'trim trash
 
         If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle)
 
 
-        figures = NormalizeFiguresForCut(figures, cfg.Tolerance, isFilled)
+        figures = NormalizeFiguresForCut(figures, cfg.Tolerance, item.IsFilled)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of PathBasedElement)
 
         ' Nothing to check once clipped: the clip rectangle already guarantees containment
-        If Not wasClipped AndAlso Not cfg.SkipBoundsCheck AndAlso Not IsFullyOnCanvas(figures.ComputeBounds(), cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
+        If Not cfg.ClipToBounds AndAlso Not cfg.SkipBoundsCheck AndAlso Not IsFullyOnCanvas(figures.ComputeBounds(), cfg.WorkAreaWidth, cfg.WorkAreaHeight) Then
             Return New List(Of PathBasedElement)
         End If
 
-        ' 6. Create PathBasedElement
         Dim pathElement = New PathBasedElement With {
             .Figures = figures,
             .FillColor = item.FillColor,
-            .IsFilled = isFilled
+            .IsFilled = item.IsFilled
         }
 
         Return New List(Of PathBasedElement) From {pathElement}
@@ -200,37 +156,6 @@ Public Class GeometryExtractor
 
         Return result
     End Function
-
-    Private Shared Function GetGeometryFromElement(element As FrameworkElement) As Geometry
-
-        Select Case True
-            Case TypeOf element Is GeometricShape
-                Return DirectCast(element, GeometricShape).LocalGeometry()
-            Case TypeOf element Is TextBox
-                Return GetTextBoxGeometry(DirectCast(element, TextBox))
-        End Select
-
-        Return Nothing
-    End Function
-
-
-    Private Shared Function GetTextBoxGeometry(tb As TextBox) As Geometry
-        If tb Is Nothing OrElse tb.ActualWidth <= 0 OrElse tb.ActualHeight <= 0 Then
-            Return Nothing
-        End If
-
-        Dim textToDraw As String = If(String.IsNullOrEmpty(tb.Text), " ", tb.Text)
-        Return TextGeometryHelper.BuildTextGeometry(tb, textToDraw, TextGeometryHelper.GetContentOrigin(tb, New Point(0, 0)), , TextTrimming.None, tb.TextAlignment)
-    End Function
-
-
-    Private Shared Function CreatePathBasedElement(figures As List(Of List(Of GeoLine))) As PathBasedElement
-        If figures Is Nothing OrElse figures.Count = 0 Then Return Nothing
-
-        Return New PathBasedElement With {.Figures = figures}
-
-    End Function
-
 
     Private Shared Function GetFillColor(drawable As IDrawable, Optional includeAlpha As Boolean = False) As String
         If drawable Is Nothing Then Return Nothing

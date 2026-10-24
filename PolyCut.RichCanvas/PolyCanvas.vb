@@ -268,6 +268,8 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 AddHandler textBox.GotFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.LostFocus, AddressOf OnTextBoxFocusChanged
                 AddHandler textBox.KeyDown, AddressOf OnTextBoxKeyDown
+                RemoveHandler wrapper.SizeChanged, AddressOf OnTextWrapperSizeChanged
+                AddHandler wrapper.SizeChanged, AddressOf OnTextWrapperSizeChanged
             End If
 
             If insertIndex >= 0 AndAlso insertIndex <= Me.Children.Count Then
@@ -275,8 +277,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
             Else
                 Me.Children.Add(wrapper)
             End If
-            RemoveHandler wrapper.SizeChanged, AddressOf DesignerItem_SizeChanged
-            AddHandler wrapper.SizeChanged, AddressOf DesignerItem_SizeChanged
         End If
     End Sub
 
@@ -364,9 +364,6 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
                 Canvas.SetLeft(wrapper, centerX - wrapper.Width / 2)
                 Canvas.SetTop(wrapper, centerY - wrapper.Height / 2)
             End If
-
-            ' Update stored original dimensions
-            MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.Width, wrapper.Height))
         End If
 
         If _transformOverlay IsNot Nothing Then
@@ -482,29 +479,10 @@ New PropertyMetadata(New ObservableCollection(Of IDrawable), AddressOf OnChildre
 
 
 
-    Private Sub DesignerItem_SizeChanged(sender As Object, e As SizeChangedEventArgs)
-
-        Dim wrapper As ContentControl = CType(sender, ContentControl)
-        Dim content As FrameworkElement = CType(wrapper.Content, FrameworkElement)
-        If TextEditHelper.GetIsRestoring(content) Then Return
-
-        If TransformAction.HandleTextBoxSizeChanged(wrapper, e) Then Return
-
-        Dim originalDimensions = MetadataHelper.GetOriginalDimensions(wrapper)
-        If originalDimensions Is Nothing Then Return
-
-        Dim scaleX As Double = e.NewSize.Width / originalDimensions.Value.Width
-        Dim scaleY As Double = e.NewSize.Height / originalDimensions.Value.Height
-
-        'At creation the wrapper is already at its original size, so every one of them raises this during the first
-        'layout pass with an identity scale. Invalidating measure there re-dirties the whole canvas mid-pass.
-        If Math.Abs(scaleX - 1.0) < 1.0E-09 AndAlso Math.Abs(scaleY - 1.0) < 1.0E-09 Then Return
-
-
-
-        InvalidateMeasure()
-
-
+    Private Sub OnTextWrapperSizeChanged(sender As Object, e As SizeChangedEventArgs)
+        Dim wrapper = DirectCast(sender, ContentControl)
+        If TextEditHelper.GetIsRestoring(DirectCast(wrapper.Content, TextBox)) Then Return
+        TransformAction.HandleTextBoxSizeChanged(wrapper, e)
     End Sub
 
 

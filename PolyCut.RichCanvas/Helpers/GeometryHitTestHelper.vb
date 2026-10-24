@@ -31,7 +31,7 @@ Public Class GeometryHitTestHelper
             End If
             Dim pen = If(drawable IsNot Nothing AndAlso drawable.StrokeThickness > 0, New Pen(drawable.Stroke, drawable.StrokeThickness), Nothing)
             drawing = New DrawingGroup()
-            drawing.Children.Add(New GeometryDrawing(textBox.Foreground, pen, TextGeometryHelper.BuildTextGeometry(textBox)))
+            drawing.Children.Add(New GeometryDrawing(textBox.Foreground, pen, DrawableGeometry.GetLocalGeometry(textBox)))
         End If
 
         If drawing IsNot Nothing Then
@@ -64,36 +64,8 @@ Public Class GeometryHitTestHelper
         Dim wrapper = TryCast(element.Parent, ContentControl)
         If wrapper Is Nothing Then Return Nothing
 
-        Dim geometry = BuildLocalGeometry(element)
-        If geometry Is Nothing Then Return Nothing
-
         Dim canvas = TryCast(wrapper.Parent, UIElement)
-        If canvas Is Nothing Then Return geometry
-
-        Dim transform = TransformMath.GetAccumulatedMatrix(element, canvas)
-        If TypeOf element Is GeometricShape Then
-            Dim local = If(geometry.Transform?.Value, Matrix.Identity)
-            local.Append(transform)
-            transform = local
-        End If
-        geometry.Transform = New MatrixTransform(transform)
-        Return geometry
-    End Function
-
-    Private Shared Function BuildLocalGeometry(element As FrameworkElement) As Geometry
-        Dim geometry As Geometry = Nothing
-
-        If TypeOf element Is GeometricShape Then
-            geometry = DirectCast(element, GeometricShape).LocalGeometry()
-        ElseIf TypeOf element Is TextBox Then
-            Dim textBox = CType(element, TextBox)
-            If Not String.IsNullOrEmpty(textBox.Text) Then
-                'TODO: Fix the need for manual 3,1 offsets
-                geometry = TextGeometryHelper.BuildTextGeometry(textBox, , TextGeometryHelper.GetContentOrigin(textBox, New Point(3, 1)))
-            End If
-        End If
-
-        Return geometry
+        Return If(canvas Is Nothing, DrawableGeometry.GetLocalGeometry(element), DrawableGeometry.GetTransformedGeometry(element, canvas))
     End Function
 
     Private Const STROKE_HIT_PAD As Double = 2.0

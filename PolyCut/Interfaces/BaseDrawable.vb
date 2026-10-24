@@ -1,6 +1,5 @@
 ﻿Imports CommunityToolkit.Mvvm.ComponentModel
 
-Imports PolyCut.RichCanvas
 Imports PolyCut.Shared
 
 Imports Svg
@@ -99,9 +98,7 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
     Public Function GetTransformedSVGElement() As SvgVisualElement Implements IDrawable.GetTransformedSVGElement
         Dim component = DrawingToSVG()
         If component Is Nothing Then Return Nothing
-        Dim copy = component.DeepCopy()
-        If copy Is Nothing Then Return Nothing
-        Return SvgExportHelper.BakeToRoot(copy, DrawableElement)
+        Return SvgExportHelper.BakeToRoot(component, DrawableElement)
     End Function
 
     Public Overridable Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
@@ -167,78 +164,24 @@ Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDraw
 
     Overridable Sub ApplyVisualStyle()
         If _drawableElement Is Nothing Then Return
+        Dim effectiveStroke = _stroke
+        ' Default to black if no stroke is set
+        If _strokeThickness <= 0.001 Then
+            effectiveStroke = Nothing
+        ElseIf _stroke Is Nothing OrElse _stroke Is Brushes.Transparent Then
+            effectiveStroke = Brushes.Black
+            _stroke = Brushes.Black
+        End If
 
-        Try
-            Dim effectiveStroke As System.Windows.Media.Brush = _stroke
-
-            ' If thickness is 0, remove stroke entirely (Nothing = no stroke). If positive and stroke is none/transparent, enable with default black
-            If _strokeThickness <= 0.001 Then
-                effectiveStroke = Nothing
-            ElseIf _strokeThickness > 0.001 AndAlso (_stroke Is Nothing OrElse _stroke Is Brushes.Transparent) Then
-                effectiveStroke = Brushes.Black
-                _stroke = Brushes.Black
-            End If
-
-            If TypeOf _drawableElement Is System.Windows.Shapes.Shape Then
-                Dim s = CType(_drawableElement, System.Windows.Shapes.Shape)
-                s.Stroke = effectiveStroke
-                s.Fill = _fill
-                s.StrokeThickness = _strokeThickness
-                s.InvalidateVisual()
-
-                Return
-            End If
-
-            Dim cc = TryCast(_drawableElement, ContentControl)
-            If cc IsNot Nothing Then
-                Dim contentShape = TryCast(cc.Content, System.Windows.Shapes.Shape)
-                If contentShape IsNot Nothing Then
-                    contentShape.Stroke = effectiveStroke
-                    contentShape.Fill = _fill
-                    contentShape.StrokeThickness = _strokeThickness
-                    contentShape.InvalidateVisual()
-                Else
-                    Dim tb = TryCast(cc.Content, TextBox)
-                    If tb IsNot Nothing Then
-                        tb.Foreground = If(TypeOf _fill Is System.Windows.Media.Brush, CType(_fill, System.Windows.Media.Brush), tb.Foreground)
-                    End If
-                End If
-                cc.InvalidateVisual()
-                Return
-            End If
-
-            Dim tbDirect = TryCast(_drawableElement, TextBox)
-            If tbDirect IsNot Nothing Then
-                tbDirect.Foreground = If(TypeOf _fill Is System.Windows.Media.Brush, CType(_fill, System.Windows.Media.Brush), tbDirect.Foreground)
-                tbDirect.InvalidateVisual()
-                Return
-            End If
-
-            'Dim nestedDrawable = TryCast(Me, NestedDrawableGroup)
-            'If nestedDrawable IsNot Nothing AndAlso _drawableElement IsNot Nothing Then
-            '    For Each childDrawable In nestedDrawable.Children
-            '        childDrawable.Stroke = _stroke
-            '        childDrawable.Fill = _fill
-            '        childDrawable.StrokeThickness = _strokeThickness
-            '    Next
-            '    _drawableElement.InvalidateVisual()
-            '    Return
-            'End If
-
-            Dim childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(_drawableElement)
-            For i = 0 To childCount - 1
-                Dim child = System.Windows.Media.VisualTreeHelper.GetChild(_drawableElement, i)
-                Dim s = TryCast(child, System.Windows.Shapes.Shape)
-                If s IsNot Nothing Then
-                    s.Stroke = effectiveStroke
-                    s.Fill = _fill
-                    s.StrokeThickness = _strokeThickness
-                    s.InvalidateVisual()
-                    Exit For
-                End If
-            Next
-        Catch
-        End Try
+        Dim shape = TryCast(_drawableElement, GeometricShape)
+        If shape IsNot Nothing Then
+            shape.Stroke = effectiveStroke
+            shape.Fill = _fill
+            shape.StrokeThickness = _strokeThickness
+        Else
+            Dim textBox = TryCast(_drawableElement, TextBox)
+            If textBox IsNot Nothing AndAlso _fill IsNot Nothing Then textBox.Foreground = _fill
+        End If
     End Sub
 
 

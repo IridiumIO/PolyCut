@@ -249,7 +249,6 @@ Friend NotInheritable Class ProjectApplyHelper
                 .Scale = New Point(If(gd.ScaleX = 0, 1.0, gd.ScaleX), If(gd.ScaleY = 0, 1.0, gd.ScaleY))
             }
             groupState.ApplyToWrapper(wrapper, applyScale:=True)
-            MetadataHelper.SetOriginalDimensions(wrapper, (gd.Width, gd.Height))
 
         Next
 
@@ -275,7 +274,6 @@ Friend NotInheritable Class ProjectApplyHelper
                 .TransformOrigin = New Point(dd.TransformOriginX, dd.TransformOriginY)
             }
             drawState.ApplyToWrapper(wrapper, applyScale:=False)
-            MetadataHelper.SetOriginalDimensions(wrapper, (dd.Width, dd.Height))
 
         Next
         If selectRestoredItems Then selectionManager.ApplySelection(toSelect, Nothing, True)

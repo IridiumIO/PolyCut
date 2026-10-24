@@ -40,7 +40,8 @@ Public Class BooleanOperationAction : Implements IUndoableAction
 
         Dim geometries As New List(Of Geometry)
         For Each drawable In _selectedItems
-            Dim geometry = GeometryHitTestHelper.GetTransformedGeometry(drawable)
+            Dim element = drawable.DrawableElement
+            Dim geometry = DrawableGeometry.GetTransformedGeometry(element, SvgExportHelper.FindDocumentRoot(element))
             If geometry IsNot Nothing Then
                 geometries.Add(geometry)
             End If

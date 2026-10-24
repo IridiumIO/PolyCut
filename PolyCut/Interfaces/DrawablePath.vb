@@ -15,24 +15,17 @@ Public Class DrawablePath : Inherits BaseDrawable : Implements IDrawable
     Public Overrides Function DrawingToSVG() As SvgVisualElement Implements IDrawable.DrawingToSVG
         Dim data = DirectCast(DrawableElement, GeometricShape).Data
 
-        Dim paths As Pathing.SvgPathSegmentList = SvgPathBuilder.Parse(data.ToString())
-
         Dim fillServer As SvgColourServer = CreateSvgFillServer()
         Dim strokeServer As SvgColourServer = CreateSvgStrokeServer()
         Dim strokeW As Single = If(strokeServer IsNot Nothing, CSng(Me.StrokeThickness), 0.001F)
+        Dim d As String = data.ToString()
+        If fillServer IsNot Nothing Then d = CloseSvgPathData(d)
 
         Dim svgPath As New SvgPath With {
-            .PathData = paths,
+            .PathData = SvgPathBuilder.Parse(d),
             .Stroke = SvgPaintServer.None,
             .Fill = If(fillServer, SvgPaintServer.None)
         }
-
-        Dim d As String = data.ToString()
-        If svgPath.Fill IsNot SvgPaintServer.None Then
-            d = CloseSvgPathData(d)
-        End If
-        svgPath.PathData = SvgPathBuilder.Parse(d)
-
 
         ' Only set stroke properties if we have a stroke
         If strokeServer IsNot Nothing Then

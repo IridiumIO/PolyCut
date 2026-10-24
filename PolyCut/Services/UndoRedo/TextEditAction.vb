@@ -36,7 +36,6 @@ Public Class TextEditAction : Implements IUndoableAction
         If _textBox Is Nothing OrElse state Is Nothing Then Return
         state.ApplyTo(_textBox)
         Dim wrapper = TryCast(_textBox.Parent, System.Windows.Controls.ContentControl)
-        If wrapper IsNot Nothing Then MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.ActualWidth, wrapper.ActualHeight))
         PolyCanvas.ActiveInstance?.RefreshTextWrapper(wrapper)
     End Sub
 End Class

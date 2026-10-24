@@ -162,13 +162,11 @@ Public Class TextEditingController
             wrapper.Height = wrapper.ActualHeight
             If textBox.IsKeyboardFocusWithin Then wrapper.Focus()
             wrapper.UpdateLayout()
-            MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.ActualWidth, wrapper.ActualHeight))
             Dim after As New TextEditState(textBox)
             If _sessionStart.HasChanges(after) Then
                 RaiseEvent TextEdited(Me, textBox, _sessionStart, after)
             Else
                 _sessionStart.ApplyTo(textBox)
-                MetadataHelper.SetOriginalDimensions(wrapper, (wrapper.ActualWidth, wrapper.ActualHeight))
             End If
         End If
         _sessionStart = Nothing

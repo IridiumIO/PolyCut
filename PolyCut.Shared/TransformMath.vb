@@ -94,8 +94,6 @@ Public Module TransformMath
         Dim size = GetWrapperSize(wrapper)
         Dim width = size.Width
         Dim height = size.Height
-        If width <= 0 OrElse height <= 0 Then Return New Rect(left, top, width, height)
-
         Dim parentCanvas = TryCast(wrapper.Parent, UIElement)
         Dim m = GetAccumulatedMatrix(wrapper, parentCanvas)
 

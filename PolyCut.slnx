@@ -1,4 +1,19 @@
 <Solution>
+  <Folder Name="/Extern/" />
+  <Folder Name="/Extern/IxMilia.Converters/" />
+  <Folder Name="/Extern/IxMilia.Converters/src/" />
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Dwg/" />
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Dwg/src/">
+    <Project Path="Extern/IxMilia.Converters/src/IxMilia.Dwg/src/IxMilia.Dwg/IxMilia.Dwg.csproj" />
+  </Folder>
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Dxf/" />
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Dxf/src/">
+    <Project Path="Extern/IxMilia.Converters/src/IxMilia.Dxf/src/IxMilia.Dxf/IxMilia.Dxf.csproj" />
+  </Folder>
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Pdf/" />
+  <Folder Name="/Extern/IxMilia.Converters/src/IxMilia.Pdf/src/">
+    <Project Path="Extern/IxMilia.Converters/src/IxMilia.Pdf/src/IxMilia.Pdf/IxMilia.Pdf.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
@@ -7,6 +22,7 @@
     <File Path="Data/version.test.json" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="Extern/IxMilia.Converters/src/IxMilia.Converters/IxMilia.Converters.csproj" />
   <Project Path="PolyCut.Core/PolyCut.Core.vbproj" />
   <Project Path="PolyCut.RichCanvas/PolyCut.RichCanvas.vbproj" />
   <Project Path="PolyCut.Shared/PolyCut.Shared.vbproj" />

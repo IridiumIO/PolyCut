@@ -9,12 +9,12 @@ Imports PolyCut.[Shared]
 Imports Svg
 Imports Svg.Transforms
 
-Public Interface ISvgImportService
+Public Interface IVectorImportService
     Function ParseFromFile(path As String) As IEnumerable(Of IDrawable)
     Function ParseFromDocument(svgDoc As Svg.SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable)
 End Interface
 
-Public Class SVGImportService : Implements ISvgImportService
+Public Class SVGImportService : Implements IVectorImportService
 
     Private Const FLATTENING_TOLERANCE As Double = 0.05
 
@@ -22,12 +22,12 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Const DEGENERATE_EXTENT As Double = 0.0001
 
-    Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromFile
+    Public Function ParseFromFile(path As String) As IEnumerable(Of IDrawable) Implements IVectorImportService.ParseFromFile
         Dim doc = SvgDocument.Open(path)
         Return ParseFromDocument(doc, path)
     End Function
 
-    Public Function ParseFromDocument(svgDoc As SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable) Implements ISvgImportService.ParseFromDocument
+    Public Function ParseFromDocument(svgDoc As SvgDocument, Optional sourceName As String = Nothing) As IEnumerable(Of IDrawable) Implements IVectorImportService.ParseFromDocument
         Dim rootMatrix As Matrix = CalculateDocumentTransform(svgDoc)
 
         Dim results As New List(Of IDrawable)
@@ -614,7 +614,8 @@ Public Class SVGImportService : Implements ISvgImportService
             ' DeepCopy loses the path's inherited group styles, so it cannot be used here! 
             Dim originalStrokeWidth As Single = GetStrokeWidthOrZero(svgPath)
 
-            svgPath.StrokeWidth = New SvgUnit(0)
+            ' Geometry.Parse reads only path data. Keep the stroke width so finalisation
+            ' reserves its padding; otherwise Stretch.Fill shrinks each curve separately.
             Dim geometry As Geometry = Geometry.Parse(svgPath.PathData.ToString())
             Dim wasClipped As Boolean = BakeClipGeometry(geometry, svgPath, svgDoc)
 
@@ -825,7 +826,9 @@ Public Class SVGImportService : Implements ISvgImportService
             Dim maxY As Double = Math.Max(p1.Y, p2.Y)
 
             Dim boundsWorld As New Rect(minX, minY, maxX - minX, maxY - minY)
-            If Not IsValidBounds(boundsWorld) Then Return Nothing
+            ' Horizontal and vertical lines have one zero geometric extent;
+            ' their stroke supplies the visible width/height during finalisation.
+            If Not IsValidBounds(boundsWorld, requireNonZero:=False) Then Return Nothing
 
             Dim strokeWidthValue As Single = GetStrokeWidthOrZero(svgLine)
             Dim dims = CalculateStrokeDimensions(boundsWorld, strokeWidthValue, matrix)
@@ -949,11 +952,11 @@ Public Class SVGImportService : Implements ISvgImportService
 
     Private Sub ApplyStrokeAndFill(shape As Shape, svgElement As SvgVisualElement, transformedStrokeThickness As Double)
         If svgElement.Fill IsNot Nothing Then
-            If svgElement.Fill.ToString() = "none" OrElse svgElement.Fill.GetType().Name.Contains("None") Then
+            If svgElement.FillOpacity <= 0 OrElse svgElement.Fill.ToString() = "none" OrElse svgElement.Fill.GetType().Name.Contains("None") Then
                 shape.Fill = Nothing
             ElseIf TypeOf svgElement.Fill Is SvgColourServer Then
                 Dim color = CType(svgElement.Fill, SvgColourServer).Colour
-                shape.Fill = New SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B))
+                shape.Fill = New SolidColorBrush(System.Windows.Media.Color.FromArgb(CByte(Math.Round(color.A * svgElement.FillOpacity)), color.R, color.G, color.B))
             Else
                 shape.Fill = Brushes.Transparent
             End If

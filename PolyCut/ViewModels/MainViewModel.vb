@@ -21,7 +21,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Private ReadOnly _snackbarService As SnackbarService
     Private ReadOnly _navigationService As INavigationService
     Private ReadOnly _argsService As CommandLineArgsService
-    Private ReadOnly _svgImportService As ISvgImportService
+    Private ReadOnly _svgImportService As IVectorImportService
     Private ReadOnly _undoRedoService As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
 
@@ -216,7 +216,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     ' Constructor & initialization
-    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As ISvgImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As IVectorImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration)
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
@@ -420,9 +420,9 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' Import / SVG handling
     ' -----------------
     <RelayCommand>
-    Private Sub BrowseSVG()
+    Private Async Sub BrowseSVG()
         Dim fs As New Microsoft.Win32.OpenFileDialog With {
-            .Filter = "Image Files (*.svg;*.png;*.bmp;*.jpg;*.jpeg)|*.svg;*.png;*.bmp;*.jpg;*.jpeg|All Files (*.*)|*.*",
+            .Filter = "Image Files (*.svg;*.png;*.bmp;*.jpg;*.jpeg)|*.svg;*.png;*.bmp;*.jpg;*.jpeg|DXF Files (*.dxf)|*.dxf|All Files (*.*)|*.*",
             .Multiselect = True
         }
         If fs.ShowDialog Then
@@ -432,7 +432,22 @@ Partial Public Class MainViewModel : Inherits ObservableObject
 
             For Each fl In fs.FileNames
 
-                If IO.Path.GetExtension(fl).ToLower() <> ".svg" Then
+
+                If Path.GetExtension(fl).Equals(".dxf", StringComparison.CurrentCultureIgnoreCase) Then
+                    Dim dxfImportService = New DXFImportService()
+                    Dim svgdoc = Await dxfImportService.ConvertDXFToSVG(fl)
+                    If svgdoc Is Nothing Then
+                        Continue For
+                    End If
+
+                    Dim act As New ImportSVGAction(Document, dxfImportService, svgdoc)
+                    If act.Execute() Then actions.Add(act)
+                    Continue For
+
+                End If
+
+
+                If Not Path.GetExtension(fl).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) Then
                     Dim svgPath = vtracer.ConvertRasterToSVG(fl)
                     If svgPath Is Nothing Then
                         Continue For

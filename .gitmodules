@@ -1,0 +1,3 @@
+[submodule "Extern/IxMilia.Converters"]
+	path = Extern/IxMilia.Converters
+	url = https://github.com/ixmilia/converters.git

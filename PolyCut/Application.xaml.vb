@@ -33,7 +33,7 @@ Partial Public Class Application
                                services.AddSingleton(Of INavigationService, NavigationService)()
                                services.AddSingleton(Of SnackbarService)()
                                services.AddSingleton(Of IContentDialogService, ContentDialogService)()
-                               services.AddSingleton(Of ISvgImportService, SVGImportService)()
+                               services.AddSingleton(Of IVectorImportService, SVGImportService)()
                                services.AddSingleton(Of UndoRedoService)()
                                services.AddSingleton(Of PolyCut.RichCanvas.SelectionManager)()
                                services.AddSingleton(Of Document)()

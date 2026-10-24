@@ -4,31 +4,40 @@ Imports PolyCut.[Shared]
 Public Class ImportSVGAction : Implements IUndoableAction
 
     Private ReadOnly _manager As IDrawableManager
-    Private ReadOnly _svgService As ISvgImportService
+    Private ReadOnly _svgService As IVectorImportService
     Private ReadOnly _filePath As String
+    Private ReadOnly _svgData As Svg.SvgDocument
     Private _importedGroup As DrawableGroup
     Private _allImportedDrawables As List(Of IDrawable)
     Private _indexInImportedGroups As Integer
     Private _parentMap As New Dictionary(Of IDrawable, DrawableGroup)()
 
-    Public Sub New(manager As IDrawableManager, svgService As ISvgImportService, filePath As String)
+    Public Sub New(manager As IDrawableManager, svgService As IVectorImportService, filePath As String)
         _manager = manager
         _svgService = svgService
         _filePath = filePath
         _allImportedDrawables = New List(Of IDrawable)()
     End Sub
 
+    Public Sub New(manager As IDrawableManager, svgService As IVectorImportService, svgdata As Svg.SvgDocument)
+        _manager = manager
+        _svgService = svgService
+        _filePath = Nothing
+        _svgData = svgdata
+        _allImportedDrawables = New List(Of IDrawable)()
+    End Sub
+
     Public ReadOnly Property Description As String Implements IUndoableAction.Description
         Get
-            Return $"Import SVG: {System.IO.Path.GetFileName(_filePath)}"
+            Return $"Import SVG: {IO.Path.GetFileName(_filePath)}"
         End Get
     End Property
 
     Public Function Execute() As Boolean Implements IUndoableAction.Execute
-        If String.IsNullOrEmpty(_filePath) Then Return False
-        If Not System.IO.File.Exists(_filePath) Then Return False
+        If String.IsNullOrEmpty(_filePath) AndAlso _svgData Is Nothing Then Return False
+        If Not String.IsNullOrEmpty(_filePath) AndAlso Not System.IO.File.Exists(_filePath) Then Return False
 
-        Dim imported = _svgService.ParseFromFile(_filePath)
+        Dim imported = If(_svgData IsNot Nothing, _svgService.ParseFromDocument(_svgData), _svgService.ParseFromFile(_filePath))
         If imported Is Nothing OrElse Not imported.Any() Then Return False
 
         Using ModelBatch.Begin()

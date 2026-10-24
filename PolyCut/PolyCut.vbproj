@@ -77,6 +77,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Extern\IxMilia.Converters\src\IxMilia.Converters\IxMilia.Converters.csproj" />
+    <ProjectReference Include="..\Extern\IxMilia.Converters\src\IxMilia.Dxf\src\IxMilia.Dxf\IxMilia.Dxf.csproj" />
     <ProjectReference Include="..\PolyCut.Core\PolyCut.Core.vbproj" />
     <ProjectReference Include="..\PolyCut.RichCanvas\PolyCut.RichCanvas.vbproj" />
     <ProjectReference Include="..\PolyCut.Shared\PolyCut.Shared.vbproj" />

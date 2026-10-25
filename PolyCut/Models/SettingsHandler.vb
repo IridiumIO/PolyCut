@@ -27,6 +27,7 @@ Public Class SettingsHandler : Inherits ObservableObject
     Public Shared Property ConfigurationSettings As ConfigurationsSettings = New ConfigurationsSettings
     Public Shared Property PrinterSettings As PrinterSettings = New PrinterSettings
     Public Shared Property UISettings As UISettings = New UISettings
+    Public Shared Property WeedingBoxConfiguration As New WeedingBoxConfiguration()
 
     Shared Async Function InitialiseSettings(truePortable As Boolean) As Task
 
@@ -37,6 +38,7 @@ Public Class SettingsHandler : Inherits ObservableObject
         Await PrinterSettings.InitialiseSettings(Of Printer)("PolyCut", $"{NameOf(Printer)}s")
         Await ConfigurationSettings.InitialiseSettings(Of ProcessorConfiguration)("PolyCut", $"{NameOf(ProcessorConfiguration)}s")
         Await UISettings.InitialiseSettings(Of UIConfiguration)("PolyCut", $"UIConfiguration")
+        WeedingBoxConfiguration = Await LoadToolConfiguration(Of WeedingBoxConfiguration)()
 
         SettingsJSONFile = New IO.FileInfo(IO.Path.Combine(DataFolder.FullName, "settings.json"))
 
@@ -49,6 +51,16 @@ Public Class SettingsHandler : Inherits ObservableObject
 
         GenerateEV()
 
+    End Function
+
+    Public Shared Async Function LoadToolConfiguration(Of T As {SettingsBase, ISaveable, New})() As Task(Of T)
+        Dim defaults As New T()
+        defaults.SettingsFolder = Directory.CreateDirectory(IO.Path.Combine(DataFolder.FullName, "ToolsConfiguration"))
+        Dim path = IO.Path.Combine(defaults.SettingsFolder.FullName, defaults.Name & ".json")
+        Dim configuration = If(File.Exists(path), defaults.GetValue(Of T)(path), defaults)
+        configuration.SettingsFolder = defaults.SettingsFolder
+        Await configuration.SetValue(configuration.Name, configuration)
+        Return configuration
     End Function
 
     Public Shared Function ToFriendlyVersion(semVer As NuGet.Versioning.NuGetVersion) As String

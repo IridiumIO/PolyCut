@@ -31,6 +31,7 @@ Public Class LoadProjectAction
     End Function
 
     Private Sub ClearCurrentProject()
+        WeedingBoxGenerator.ClearSources()
         Dim drawablesToRemove = _manager.DrawableCollection.ToList()
 
         _manager.RemoveDrawablesFromCollection(drawablesToRemove)

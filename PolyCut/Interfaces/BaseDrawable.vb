@@ -6,6 +6,8 @@ Imports Svg
 
 Partial Public Class BaseDrawable : Inherits ObservableObject : Implements IDrawable
 
+    Public ReadOnly Property Id As Guid = Guid.NewGuid() Implements IDrawable.Id
+
     <ImplementsProperty(GetType(IDrawable), NameOf(IDrawable.Name))>
     <ObservableProperty> Private _name As String
 

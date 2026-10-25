@@ -2,26 +2,43 @@ Option Strict On
 Imports PolyCut.Shared
 
 Public Class WeedingBoxGenerator
-    Public Const MERGE_CLEARANCE As Double = 2 'mm
     Public Const ROOT_NAME As String = "Weeding Boxes"
+
+    Private Shared ReadOnly Sources As New Dictionary(Of Guid, Guid())
+
 
     Private Const GeometryTolerance As Double = 0.001
     Private Const BoundaryThickness As Double = 0.002
     Private Const StrokeThickness As Double = 0.25
 
 
-    Public Function Generate(items As IEnumerable(Of IDrawable), relativeTo As UIElement, Optional margin As Double = 5, Optional sceneItems As IEnumerable(Of IDrawable) = Nothing) As List(Of Shape)
+    Private ReadOnly _exteriorMargin As Double
+    Private ReadOnly _minimumMargin As Double
+    Private ReadOnly _stroke As Brush
+
+    Public Sub New(Optional configuration As WeedingBoxConfiguration = Nothing)
+        Dim settings = If(configuration, New WeedingBoxConfiguration())
+        _exteriorMargin = settings.DesiredExteriorMargin
+        _minimumMargin = settings.MinimumInterObjectMargin
+        _stroke = ColorAndBrushHelpers.DeserializeBrush(settings.Colour)
+    End Sub
+
+    Public Function Generate(items As IEnumerable(Of IDrawable), relativeTo As UIElement, Optional sceneItems As IEnumerable(Of IDrawable) = Nothing, Optional skipExisting As Boolean = False) As List(Of Shape)
 
         Dim targets = items.Where(Function(item) item IsNot Nothing AndAlso TypeOf item IsNot DrawableGroup AndAlso Not IsWeedingItem(item)).ToHashSet()
 
         Dim artwork = CollectArtwork(If(sceneItems, targets), relativeTo)
+        Dim boxedSources As New HashSet(Of Guid)
+        If skipExisting Then
+            boxedSources.UnionWith(If(sceneItems, items).Where(AddressOf IsWeedingItem).
+                SelectMany(AddressOf GetSourceIds))
+        End If
 
-        Dim clusters = artwork.Where(Function(part) Not RegistrationMarkHelper.IsRegistrationMark(part.Owner) AndAlso
+        Dim clusters = artwork.Where(Function(part) Not boxedSources.Contains(part.Owner.Id) AndAlso Not RegistrationMarkHelper.IsRegistrationMark(part.Owner) AndAlso
                                          part.Owner.AncestorsAndSelf().Any(AddressOf targets.Contains)).
-                                            Select(Function(part) part.Bounds).Distinct().
-                                            Select(Function(bounds) New Cluster(bounds)).ToList()
+                                            Select(Function(part) New Cluster(part.Bounds, part.Owner)).ToList()
 
-        ResolveClusters(clusters, artwork, margin)
+        ResolveClusters(clusters, artwork, _exteriorMargin)
 
         Return clusters.Select(Function(cluster) CreateShape(cluster, artwork)).ToList()
     End Function
@@ -77,7 +94,7 @@ Public Class WeedingBoxGenerator
     Private Function FitCluster(cluster As Cluster, artwork As List(Of ArtworkPart), margin As Double) As Boolean
 
         Dim bounds = cluster.Bounds()
-        Dim minimum = Rect.Inflate(bounds, Math.Min(margin, MERGE_CLEARANCE), Math.Min(margin, MERGE_CLEARANCE))
+        Dim minimum = Rect.Inflate(bounds, Math.Min(margin, _minimumMargin * 2), Math.Min(margin, _minimumMargin * 2))
         Dim box = Rect.Inflate(bounds, margin, margin)
 
         Dim previous As Rect
@@ -86,7 +103,7 @@ Public Class WeedingBoxGenerator
             For Each obstacle In artwork
                 If cluster.Members.Contains(obstacle.Bounds) OrElse IsEnclosingHole(obstacle.Bounds, obstacle.Shape, box) Then Continue For
 
-                Dim blocked = Rect.Inflate(obstacle.Bounds, MERGE_CLEARANCE, MERGE_CLEARANCE)
+                Dim blocked = Rect.Inflate(obstacle.Bounds, _minimumMargin * 2, _minimumMargin * 2)
                 If Not Overlaps(box, blocked) OrElse box.Contains(blocked) Then Continue For
 
                 Dim smaller = Shrink(box, minimum, blocked)
@@ -110,9 +127,10 @@ Public Class WeedingBoxGenerator
             For j = 0 To i - 1
                 Dim a = clusters(i).Box
                 Dim b = clusters(j).Box
-                Dim nearby = Not a.Contains(b) AndAlso Not b.Contains(a) AndAlso Overlaps(Rect.Inflate(a, MERGE_CLEARANCE, MERGE_CLEARANCE), b)
+                Dim nearby = Not a.Contains(b) AndAlso Not b.Contains(a) AndAlso Overlaps(Rect.Inflate(a, _minimumMargin * 2, _minimumMargin * 2), b)
                 If Not (nearby OrElse clusters(i).Members.Overlaps(clusters(j).Members)) Then Continue For
                 clusters(j).Members.UnionWith(clusters(i).Members)
+                clusters(j).Sources.UnionWith(clusters(i).Sources)
                 clusters.RemoveAt(i)
                 changed = True
                 Exit For
@@ -141,11 +159,13 @@ Public Class WeedingBoxGenerator
         shape.Width = box.Width
         shape.Height = box.Height
         shape.Fill = Brushes.Transparent
-        shape.Stroke = Brushes.LimeGreen
+        shape.Stroke = _stroke
         shape.StrokeThickness = StrokeThickness
         shape.StrokeDashArray = New DoubleCollection({2, 2})
         Canvas.SetLeft(shape, box.X)
         Canvas.SetTop(shape, box.Y)
+        shape.Uid = String.Join("_", cluster.Sources.Select(Function(source) source.Name).Distinct())
+        shape.Tag = cluster.Sources.Select(Function(source) source.Id).ToArray()
         Return shape
     End Function
 
@@ -171,11 +191,11 @@ Public Class WeedingBoxGenerator
             Dim edge = If(vertical, sorted(0).Right, sorted(0).Bottom)
             For Each member In sorted.Skip(1)
                 Dim start = If(vertical, member.Left, member.Top)
-                If start - edge >= MERGE_CLEARANCE Then
+                If start - edge >= _minimumMargin * 2 Then
                     Dim middle = (edge + start) / 2
                     Dim divider = If(vertical, New LineGeometry(New Point(middle, box.Top), New Point(middle, box.Bottom)),
                                                New LineGeometry(New Point(box.Left, middle), New Point(box.Right, middle)))
-                    Dim clearance = divider.GetWidenedPathGeometry(New Pen(Brushes.Black, MERGE_CLEARANCE - BoundaryThickness * 2), GeometryTolerance, ToleranceType.Absolute)
+                    Dim clearance = divider.GetWidenedPathGeometry(New Pen(Brushes.Black, Math.Max(BoundaryThickness, _minimumMargin * 2 - BoundaryThickness * 2)), GeometryTolerance, ToleranceType.Absolute)
                     If Not artwork.Any(Function(obstacle) obstacle.Shape.Bounds.IntersectsWith(clearance.Bounds) AndAlso
                                            obstacle.Shape.FillContainsWithDetail(clearance, GeometryTolerance, ToleranceType.Absolute) <> IntersectionDetail.Empty) Then Return divider
                 End If
@@ -242,12 +262,26 @@ Public Class WeedingBoxGenerator
     End Function
 
 
+    Public Shared Function GetSourceIds(box As IDrawable) As Guid()
+        Dim ids As Guid() = Nothing
+        Return If(Sources.TryGetValue(box.Id, ids), ids, Array.Empty(Of Guid)())
+    End Function
+
+    Public Shared Sub TrackSources(box As IDrawable, ids As Guid())
+        Sources(box.Id) = ids
+    End Sub
+
+    Public Shared Sub ClearSources()
+        Sources.Clear()
+    End Sub
 
     Private Class Cluster
         Public ReadOnly Members As New HashSet(Of Rect)
+        Public ReadOnly Sources As New HashSet(Of IDrawable)
         Public Property Box As Rect
-        Public Sub New(seed As Rect)
+        Public Sub New(seed As Rect, owner As IDrawable)
             Members.Add(seed)
+            Sources.Add(owner)
         End Sub
 
         Public Function Bounds() As Rect

@@ -11,7 +11,7 @@
 "Adaptive Sampling Sensitivity" = "Sensibilité de l’échantillonnage adaptatif"
 "Adaptive Sampling Window" = "Fenêtre d’échantillonnage adaptatif"
 "Add Printer" = "Ajouter une imprimante"
-"Add Weeding Boxes" = "Add Weeding Boxes" # LOC:TODO
+"Add _Weeding Boxes" = "Add _Weeding Boxes" # LOC:TODO
 "Added Preset" = "Préréglage ajouté"
 "Alignment" = "Alignement"
 "Allow Travel in Outlines" = "Autoriser les déplacements dans les contours"
@@ -22,6 +22,7 @@
 "Bed Dimensions" = "Dimensions du plateau"
 "Blade Settings" = "Paramètres de la lame"
 "Boolean operation failed." = "L’opération booléenne a échoué."
+"Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "Annuler l’aperçu"
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
@@ -40,9 +41,11 @@
 "Curve-fitting Precision" = "Précision de l’ajustement des courbes"
 "Cut" = "Couper"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "Niveau de coupe de l’algorithme de watershed hiérarchique, de 0 à 255. Des valeurs élevées découpent la hiérarchie des régions plus finement, produisant davantage de petites régions qui suivent étroitement les détails du contenu ; des valeurs faibles fusionnent les zones en régions moins nombreuses et plus grandes."
+"Cut lines will be placed at minimum this close to objects." = "Cut lines will be placed at minimum this close to objects." # LOC:TODO
 "Darkest shading spacing" = "Espacement des hachures les plus sombres"
 "Default: {0}" = "Default: {0}" # LOC:TODO
 "Delete" = "Supprimer"
+"Desired Exterior Margin" = "Marge extérieure souhaitée"
 "Disabled" = "Disabled" # LOC:TODO
 "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "Ignore les zones détectées plus petites que ce nombre de pixels, de 0 à 128. Augmentez cette valeur pour supprimer les petites taches et le bruit résiduel après vectorisation ; diminuez-la pour préserver les détails fins."
 "Draw Outlines Before Fill" = "Tracer les contours avant le remplissage"
@@ -79,6 +82,7 @@
 "Gridline Colour" = "Couleur des lignes de la grille"
 "Group" = "Group" # LOC:TODO
 "Hardware" = "Hardware" # LOC:TODO
+"How far to place the weeding box from the edges of objects" = "How far to place the weeding box from the edges of objects" # LOC:TODO
 "Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
 "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "Importer comme SVG"
@@ -94,6 +98,7 @@
 "Loading a project will clear the current workspace. Continue?" = "Le chargement d’un projet effacera l’espace de travail actuel. Continuer ?"
 "Maximum Colours (0 = Unlimited)" = "Nombre maximal de couleurs (0 = illimité)"
 "Merge Angle" = "Merge Angle" # LOC:TODO
+"Minimum Inter-Object Margin" = "Espacement minimal entre les objets"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Différence minimale de couleur requise entre les couches de dégradé adjacentes, de 0 à 255. Des valeurs élevées fusionnent les teintes similaires en bandes de couleur moins nombreuses et plus uniformes ; des valeurs faibles préservent des dégradés plus lisses avec davantage de couches distinctes."
 "New Project" = "Nouveau projet"
 "No" = "Non"
@@ -119,6 +124,7 @@
 "Project Loaded" = "Projet chargé"
 "Project Saved" = "Projet enregistré"
 "Properties" = "Propriétés"
+"Regenerate Weeding Boxes" = "Régénérer les cadres d’échenillage"
 "Region Detection" = "Détection des régions"
 "Region Detection Settings" = "Paramètres de détection des régions"
 "Reload Languages. Checks online for updated language definitions" = "Sprachen neu laden. Prüft online auf aktualisierte Sprachdefinitionen"
@@ -126,6 +132,7 @@
 "Rotation" = "Rotation"
 "SVG Exported" = "SVG exporté"
 "S_ave As..." = "Enregistrer _sous..."
+"Save" = "Save" # LOC:TODO
 "Save GCode" = "Enregistrer le GCode"
 "Saved Preset" = "Préréglage enregistré"
 "Saved to: {0}" = "Enregistré dans : {0}"
@@ -169,7 +176,9 @@
 "Unknown SVG Unit Type: " = "Type d’unité SVG inconnu : "
 "Update Available ▸ Version {0}" = "Mise à jour disponible ▸ Version {0}"
 "Update Preview" = "Mettre à jour l’aperçu"
+"Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Utilise un seuillage adaptatif au lieu d’un seuil fixe unique. Idéal pour les scans ou les photos avec un éclairage inégal, car le seuil est recalculé localement dans l’image au lieu d’être appliqué globalement."
+"Weeding Box Options" = "Options des cadres d’échenillage"
 "Work" = "Work" # LOC:TODO
 "Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "Zone de travail"

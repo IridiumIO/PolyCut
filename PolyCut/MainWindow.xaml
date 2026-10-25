@@ -218,8 +218,58 @@
                             <ui:MenuItem x:Name="ToolsMenu"
                                          loc:L.Value="_Tools" local:MicaBackdrop.IsEnabled="True" local:MicaBackdrop.SamplePadding="0,0,140,260" local:MicaBackdrop.TintColor="#23FFFFFF"
                                          Background="{Binding RelativeSource={RelativeSource Self}, Path=(local:MicaBackdrop.SurfaceBrush), TargetNullValue={StaticResource ApplicationBackgroundBrush}, FallbackValue={StaticResource ApplicationBackgroundBrush}}">
+                                <ui:MenuItem.Resources>
+                                    <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=ViewMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
+                                </ui:MenuItem.Resources>
 
-                                <ui:MenuItem Command="{Binding AddWeedBoxesCommand}" Header="{loc:T Add Weeding Boxes}" />
+                                <ui:MenuItem Command="{Binding AddWeedBoxesCommand}">
+                                    <ui:MenuItem.Header>
+
+                                        <DockPanel VerticalAlignment="Center">
+                                            <AccessText Margin="0 0 20 0" VerticalAlignment="Center"
+                                                        loc:L.Value="Add _Weeding Boxes" DockPanel.Dock="Left" />
+
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Opacity" Value="0" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ui:MenuItem}}}" Value="True">
+                                                                <DataTrigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.EnterActions>
+                                                                <DataTrigger.ExitActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15" />
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.ExitActions>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <ui:Button Background="Transparent" BorderThickness="0"
+                                                           Command="{Binding RegenerateWeedBoxesCommand}"
+                                                           ToolTip="{loc:T 'Regenerate Weeding Boxes'}">
+                                                    <ui:SymbolIcon Symbol="ArrowClockwise16" />
+                                                </ui:Button>
+                                                <ui:Button Background="Transparent" BorderThickness="0" Command="{Binding OpenWeedBoxesConfigCommand}">
+                                                    <ui:SymbolIcon Symbol="Settings16" />
+                                                </ui:Button>
+                                            </StackPanel>
+
+
+                                        </DockPanel>
+
+
+                                    </ui:MenuItem.Header>
+
+                                </ui:MenuItem>
 
 
                             </ui:MenuItem>

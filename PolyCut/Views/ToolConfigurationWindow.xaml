@@ -1,0 +1,22 @@
+<ui:FluentWindow x:Class="ToolConfigurationWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Width="540" SizeToContent="Height" ResizeMode="NoResize"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <Grid Margin="20" RowDefinitions="Auto Auto *">
+        <ui:TitleBar Grid.Row="0" Margin="-20" ShowMinimize="False" ShowMaximize="False" />
+        <Label Grid.Row="0" Margin="10 10" IsHitTestVisible="False" FontSize="16" FontWeight="SemiBold"
+               Content="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <ContentPresenter x:Name="OptionsHost" Grid.Row="1" Margin="10 15 10 20" />
+        <StackPanel Grid.Row="2" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
+            <ui:Button MinWidth="85" Margin="0 0 10 0" loc:L.Value="Cancel" IsCancel="True"
+                       Background="{DynamicResource ControlFillColorDefaultBrush}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                       BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" />
+            <ui:Button MinWidth="85" loc:L.Value="Save" Appearance="Primary" IsDefault="True" Click="Save_Click" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

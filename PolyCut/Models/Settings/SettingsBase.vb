@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Text.Json
+Imports System.Text.Json.Serialization
 
 Imports CommunityToolkit.Mvvm.ComponentModel
 
@@ -7,8 +8,8 @@ Imports PolyCut.Core
 
 Public Class SettingsBase : Implements ISettingsService
 
-    Public Property SettingsFiles As New List(Of FileInfo) Implements ISettingsService.SettingsFiles
-    Public Property SettingsFolder As DirectoryInfo Implements ISettingsService.SettingsFolder
+    <JsonIgnore> Public Property SettingsFiles As New List(Of FileInfo) Implements ISettingsService.SettingsFiles
+    <JsonIgnore> Public Property SettingsFolder As DirectoryInfo Implements ISettingsService.SettingsFolder
 
     Public Async Function SetValue(settingName As String, setting As Object) As Task Implements ISettingsService.SetValue
         Dim fileN As String = settingName & ".json"

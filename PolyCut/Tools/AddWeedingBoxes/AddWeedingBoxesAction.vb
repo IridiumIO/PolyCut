@@ -1,5 +1,6 @@
 Option Strict On
 Imports PolyCut.Shared
+Imports PolyCut.RichCanvas
 
 Public Class AddWeedingBoxesAction
     Implements IUndoableAction
@@ -28,14 +29,46 @@ Public Class AddWeedingBoxesAction
         _createdRoot = _root Is Nothing
         If _createdRoot Then _root = New DrawableGroup(WeedingBoxGenerator.ROOT_NAME)
         Using ModelBatch.Begin()
+            Dim names = _manager.DrawableCollection.Select(Function(item) item.Name).ToHashSet()
             For Each shape In _shapes
                 Dim action As New AddDrawableAction(_manager, shape, _root)
-                If action.Execute() Then _actions.Add(action)
+                If Not action.Execute() Then Continue For
+                Dim drawable = _root.GroupChildren.Last()
+                WeedingBoxGenerator.TrackSources(drawable, DirectCast(shape.Tag, Guid()))
+                Dim prefix = shape.Uid & "_wb"
+                Dim index = 1
+                While names.Contains(prefix & index)
+                    index += 1
+                End While
+                drawable.Name = prefix & index
+                names.Add(drawable.Name)
+                _actions.Add(action)
             Next
             _rootIndex = _manager.IndexOfImportRoot(_root)
             _manager.NotifyChanged()
         End Using
         Return _actions.Count > 0
+    End Function
+
+    Public Shared Function Regenerate(document As Document, canvas As UIElement, selection As SelectionManager, configuration As WeedingBoxConfiguration) As IUndoableAction
+        Dim boxes = document.Drawables.Where(Function(item) WeedingBoxGenerator.IsWeedingItem(item) AndAlso
+            WeedingBoxGenerator.GetSourceIds(item).Length > 0).ToList()
+        Dim leaves = document.Drawables.Where(Function(item) TypeOf item IsNot DrawableGroup).
+            SelectMany(Function(item) If(item.IsAnyGroup(), item.GetLeafChildren(), New List(Of IDrawable) From {item})).ToHashSet()
+        Dim ids = boxes.SelectMany(AddressOf WeedingBoxGenerator.GetSourceIds).ToHashSet()
+        Dim sources = leaves.Where(Function(item) ids.Contains(item.Id)).ToList()
+        Dim shapes = New WeedingBoxGenerator(configuration).Generate(sources, canvas, sceneItems:=document.Drawables)
+        Dim actions As New List(Of IUndoableAction)
+        Using ModelBatch.Begin()
+            For Each box In boxes
+                Dim removal As New RemoveDrawableAction(document, box, selection)
+                If removal.Execute() Then actions.Add(removal)
+            Next
+            Dim addition As New AddWeedingBoxesAction(document, shapes)
+            If addition.Execute() Then actions.Add(addition)
+            document.NotifyChanged()
+        End Using
+        Return If(actions.Count > 0, New CompositeAction(actions), Nothing)
     End Function
 
     Public Sub Undo() Implements IUndoableAction.Undo

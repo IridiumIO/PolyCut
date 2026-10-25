@@ -4,6 +4,8 @@ Imports Svg
 
 Public Interface IDrawable
 
+    ReadOnly Property Id As Guid
+
     Property Name As String
 
     Property DrawableElement As FrameworkElement

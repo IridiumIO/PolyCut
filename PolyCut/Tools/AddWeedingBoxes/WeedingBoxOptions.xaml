@@ -1,0 +1,26 @@
+<UserControl x:Class="WeedingBoxOptions"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:LazyTranslate;assembly=LazyTranslate"
+             xmlns:local="clr-namespace:PolyCut"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <StackPanel>
+        <local:AnnotatedNumberBox x:Name="ExteriorMarginInput"
+                                  LabelText="{loc:T 'Desired Exterior Margin'}"
+                                  ToolTipMain="{loc:T 'How far to place the weeding box from the edges of objects'}"
+                                  UnitText="mm"
+                                  Value="{Binding DesiredExteriorMargin}" />
+        <local:AnnotatedNumberBox x:Name="InterObjectMarginInput"
+                                  LabelText="{loc:T 'Minimum Inter-Object Margin'}"
+                                  ToolTipMain="{loc:T 'Used when objects are close to each other and you want the generator to place a weeding cut between them.'}"
+                                  ToolTipSub="{loc:T 'Cut lines will be placed at minimum this close to objects.'}"
+                                  UnitText="mm"
+                                  Value="{Binding MinimumInterObjectMargin}" />
+        <local:AnnotatedColourPicker x:Name="ColourInput"
+                                     LabelText="{loc:T 'Colour'}"
+                                     Value="{Binding Colour}" />
+        <ui:Button x:Name="RegenerateButton"
+                   Margin="0 15 0 0" HorizontalAlignment="Left"
+                   loc:L.Value="Regenerate Weeding Boxes" Click="Regenerate_Click" />
+    </StackPanel>
+</UserControl>

@@ -11,7 +11,7 @@
 "Adaptive Sampling Sensitivity" = "適応サンプリング感度"
 "Adaptive Sampling Window" = "適応サンプリング範囲"
 "Add Printer" = "プリンターを追加"
-"Add Weeding Boxes" = "Add Weeding Boxes" # LOC:TODO
+"Add _Weeding Boxes" = "Add _Weeding Boxes" # LOC:TODO
 "Added Preset" = "プリセットを追加しました"
 "Alignment" = "配置"
 "Allow Travel in Outlines" = "輪郭内の移動を許可"
@@ -22,6 +22,7 @@
 "Bed Dimensions" = "ベッド寸法"
 "Blade Settings" = "ブレード設定"
 "Boolean operation failed." = "ブール演算に失敗しました。"
+"Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "プレビューをキャンセル"
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "開いたパスにはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
@@ -40,9 +41,11 @@
 "Curve-fitting Precision" = "曲線フィッティング精度"
 "Cut" = "切断"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "階層型 Watershed アルゴリズムのカットレベル（0～255）。値を高くすると領域階層をより細かく分割し、内容の細部に沿う小さな領域が多く生成されます。値を低くすると領域が統合され、より少数の大きな領域になります。"
+"Cut lines will be placed at minimum this close to objects." = "Cut lines will be placed at minimum this close to objects." # LOC:TODO
 "Darkest shading spacing" = "最暗部のシェーディング間隔"
 "Default: {0}" = "Default: {0}" # LOC:TODO
 "Delete" = "削除"
+"Desired Exterior Margin" = "外側の余白"
 "Disabled" = "Disabled" # LOC:TODO
 "Discards detected patches smaller than this many pixels, 0-128. Increase this to clean up small stray specks and noise left over from tracing; decrease it to preserve fine detail." = "検出されたパッチのうち、このピクセル数未満のものを破棄します（0～128）。値を大きくするとトレース後に残る小さな点やノイズを除去しやすくなり、値を小さくすると細部を保持できます。"
 "Draw Outlines Before Fill" = "塗りつぶし前に輪郭を描画"
@@ -79,6 +82,7 @@
 "Gridline Colour" = "グリッド線の色"
 "Group" = "Group" # LOC:TODO
 "Hardware" = "Hardware" # LOC:TODO
+"How far to place the weeding box from the edges of objects" = "How far to place the weeding box from the edges of objects" # LOC:TODO
 "Ignore Canvas Bounds" = "Ignore Canvas Bounds" # LOC:TODO
 "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" = "Ignores the bounds of the canvas when processing geometry. This can allow generation of negative GCode!" # LOC:TODO
 "Import as SVG" = "SVG としてインポート"
@@ -94,6 +98,7 @@
 "Loading a project will clear the current workspace. Continue?" = "プロジェクトを読み込むと、現在のワークスペースが消去されます。続行しますか？"
 "Maximum Colours (0 = Unlimited)" = "最大色数（0 = 無制限）"
 "Merge Angle" = "Merge Angle" # LOC:TODO
+"Minimum Inter-Object Margin" = "オブジェクト間の最小間隔"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "隣接するグラデーションレイヤー間に必要な最小色差（0～255）。値を高くすると似た色調が統合され、より少数で均一な色帯になります。値を低くすると、より多くの異なるレイヤーを使って滑らかなグラデーションを保持します。"
 "New Project" = "新しいプロジェクト"
 "No" = "いいえ"
@@ -119,6 +124,7 @@
 "Project Loaded" = "プロジェクトを読み込みました"
 "Project Saved" = "プロジェクトを保存しました"
 "Properties" = "プロパティ"
+"Regenerate Weeding Boxes" = "カス取り枠を再生成"
 "Region Detection" = "領域検出"
 "Region Detection Settings" = "領域検出設定"
 "Reload Languages. Checks online for updated language definitions" = "言語を再読み込みします。更新された言語定義がオンラインにあるか確認します"
@@ -126,6 +132,7 @@
 "Rotation" = "回転"
 "SVG Exported" = "SVG をエクスポートしました"
 "S_ave As..." = "名前を付けて保_存..."
+"Save" = "Save" # LOC:TODO
 "Save GCode" = "GCode を保存"
 "Saved Preset" = "プリセットを保存しました"
 "Saved to: {0}" = "保存先: {0}"
@@ -169,7 +176,9 @@
 "Unknown SVG Unit Type: " = "不明な SVG 単位タイプ: "
 "Update Available ▸ Version {0}" = "更新があります ▸ バージョン {0}"
 "Update Preview" = "プレビューを更新"
+"Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "単一の固定しきい値ではなく適応しきい値処理を使用します。画像全体ではなく局所的にしきい値を再計算するため、照明ムラのあるスキャン画像や写真に適しています。"
+"Weeding Box Options" = "カス取り枠の設定"
 "Work" = "Work" # LOC:TODO
 "Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "作業領域"

@@ -8,7 +8,7 @@ Public Class DXFImportService
 
     Private Const OutlineWidthMm As Double = 0.25
 
-    Public Async Function ConvertDXFToSVG(filepath As String) As Task(Of Svg.SvgDocument)
+    Public Shared Async Function ConvertDXFToSVG(filepath As String) As Task(Of Svg.SvgDocument)
 
         Try
             Dim dxf = DxfFile.Load(filepath)

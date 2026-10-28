@@ -440,69 +440,18 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' -----------------
     <RelayCommand>
     Private Async Sub BrowseSVG()
-        Dim fs As New Microsoft.Win32.OpenFileDialog With {
-            .Filter = "Image Files (*.svg;*.png;*.bmp;*.jpg;*.jpeg)|*.svg;*.png;*.bmp;*.jpg;*.jpeg|DXF Files (*.dxf)|*.dxf|All Files (*.*)|*.*",
-            .Multiselect = True
-        }
-        If fs.ShowDialog Then
-            Dim actions As New List(Of IUndoableAction)()
 
-            Dim vtracer = Application.GetService(Of VTracerService)
+        Dim files = ImportService.OpenFileImportDialog()
+        If files Is Nothing Then Return
 
-            For Each fl In fs.FileNames
+        Await ImportService.Import(_svgImportService, Document, _undoRedoService, files)
 
-
-                If Path.GetExtension(fl).Equals(".dxf", StringComparison.CurrentCultureIgnoreCase) Then
-                    Dim dxfImportService = New DXFImportService()
-                    Dim svgdoc = Await dxfImportService.ConvertDXFToSVG(fl)
-                    If svgdoc Is Nothing Then
-                        Continue For
-                    End If
-
-                    Dim act As New ImportSVGAction(Document, _svgImportService, svgdoc, fl)
-                    If act.Execute() Then actions.Add(act)
-                    Continue For
-
-                End If
-
-
-                If Not Path.GetExtension(fl).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) Then
-                    Dim svgPath = vtracer.ConvertRasterToSVG(fl)
-                    If svgPath Is Nothing Then
-                        Continue For
-                    End If
-                    fl = svgPath
-                End If
-
-
-                Dim action As New ImportSVGAction(Document, _svgImportService, fl)
-                If action.Execute() Then
-                    actions.Add(action)
-                End If
-            Next
-
-            If actions.Count > 0 Then
-                _undoRedoService.Push(New CompositeAction(actions))
-            End If
-        End If
     End Sub
 
     Public Sub DragSVGs(x As String())
-        Dim actions As New List(Of IUndoableAction)()
+        Dim legalFiles = x.Where(Function(f) IO.File.Exists(f)).Where(Function(f) ImportService.AllSupportedExtensions.Contains(New FileInfo(f).Extension, StringComparer.InvariantCultureIgnoreCase))
 
-        For Each file In x
-            Dim finfo As New FileInfo(file)
-            If finfo.Exists AndAlso finfo.Extension = ".svg" Then
-                Dim action As New ImportSVGAction(Document, _svgImportService, file)
-                If action.Execute() Then
-                    actions.Add(action)
-                End If
-            End If
-        Next
-
-        If actions.Count > 0 Then
-            _undoRedoService.Push(New CompositeAction(actions))
-        End If
+        ImportService.Import(_svgImportService, Document, _undoRedoService, legalFiles)
     End Sub
 
 

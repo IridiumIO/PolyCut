@@ -16,7 +16,7 @@
             <ui:Button MinWidth="85" Margin="0 0 10 0" loc:L.Value="Cancel" IsCancel="True"
                        Background="{DynamicResource ControlFillColorDefaultBrush}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" />
-            <ui:Button MinWidth="85" loc:L.Value="Save" Appearance="Primary" IsDefault="True" Click="Save_Click" />
+            <ui:Button x:Name="SaveButton" MinWidth="85" loc:L.Value="Save" Appearance="Primary" IsDefault="True" Click="Save_Click" />
         </StackPanel>
     </Grid>
 </ui:FluentWindow>

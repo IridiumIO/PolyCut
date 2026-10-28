@@ -5,6 +5,10 @@ Partial Public Class ToolConfigurationWindow
         OptionsHost.Content = options
     End Sub
 
+    Public Sub SetBusy(busy As Boolean)
+        SaveButton.IsEnabled = Not busy
+    End Sub
+
     Private Sub Save_Click(sender As Object, e As RoutedEventArgs)
         DirectCast(sender, UIElement).Focus()
         DialogResult = True

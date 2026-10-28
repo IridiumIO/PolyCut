@@ -43,6 +43,7 @@ Public Class SnackbarService : Inherits WPF.Ui.SnackbarService
         _snackbar.SetCurrentValue(Snackbar.AppearanceProperty, appearance)
         _snackbar.SetCurrentValue(Snackbar.IconProperty, icon)
         _snackbar.SetCurrentValue(Snackbar.TimeoutProperty, If(timeout = Nothing, DefaultTimeOut, timeout))
+        _snackbar.SetCurrentValue(Snackbar.IsCloseButtonEnabledProperty, True)
         BackdropSampler.SetIsEnabled(_snackbar, True)
         BackdropSampler.SetCorner(_snackbar, BackdropSampler.SampleCorner.Bottom)
         _snackbar.Cursor = Cursors.Hand

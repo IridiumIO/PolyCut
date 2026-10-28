@@ -386,11 +386,11 @@
                 </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
-        <ContentPresenter x:Name="RootContentDialog"
-                          Grid.Row="0" Grid.RowSpan="2"
-                          d:Visibility="Collapsed" ClipToBounds="True" />
+        <ui:ContentDialogHost x:Name="RootContentDialog"
+                              Grid.Row="0" Grid.RowSpan="2" Panel.ZIndex="200"
+                              d:Visibility="Collapsed" ClipToBounds="True" IsDisableSiblingsEnabled="True" />
         <ui:SnackbarPresenter x:Name="RootSnackbar"
-                              Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                              Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="201"
                               d:Visibility="Collapsed" />
 
     </Grid>

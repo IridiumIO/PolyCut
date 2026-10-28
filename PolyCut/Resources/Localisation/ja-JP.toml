@@ -24,6 +24,7 @@
 "Boolean operation failed." = "ブール演算に失敗しました。"
 "Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "プレビューをキャンセル"
+"Cancel regeneration" = "Cancel regeneration" # LOC:TODO
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "開いたパスにはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "クリックしてリリースノートを表示し、ダウンロード"
@@ -77,6 +78,7 @@
 "GCode" = "GCode"
 "Generate GCode" = "GCode を生成"
 "Generating ..." = "Generating ..." # LOC:TODO
+"Generating..." = "Generating..." # LOC:TODO
 "Global Settings" = "全般設定"
 "Grid Settings" = "グリッド設定"
 "Gridline Colour" = "グリッド線の色"
@@ -125,6 +127,7 @@
 "Project Saved" = "プロジェクトを保存しました"
 "Properties" = "プロパティ"
 "Regenerate Weeding Boxes" = "カス取り枠を再生成"
+"Regenerating..." = "Regenerating..." # LOC:TODO
 "Region Detection" = "領域検出"
 "Region Detection Settings" = "領域検出設定"
 "Reload Languages. Checks online for updated language definitions" = "言語を再読み込みします。更新された言語定義がオンラインにあるか確認します"
@@ -179,6 +182,7 @@
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "単一の固定しきい値ではなく適応しきい値処理を使用します。画像全体ではなく局所的にしきい値を再計算するため、照明ムラのあるスキャン画像や写真に適しています。"
 "Weeding Box Options" = "カス取り枠の設定"
+"Weeding Boxes" = "Weeding Boxes" # LOC:TODO
 "Work" = "Work" # LOC:TODO
 "Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "作業領域"

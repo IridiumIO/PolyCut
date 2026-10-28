@@ -51,13 +51,21 @@ Public Class AddWeedingBoxesAction
     End Function
 
     Public Shared Function Regenerate(document As Document, canvas As UIElement, selection As SelectionManager, configuration As WeedingBoxConfiguration) As IUndoableAction
-        Dim boxes = document.Drawables.Where(Function(item) WeedingBoxGenerator.IsWeedingItem(item) AndAlso
-            WeedingBoxGenerator.GetSourceIds(item).Length > 0).ToList()
+        Dim shapes = New WeedingBoxGenerator(configuration).Generate(GetSources(document), canvas, canvasItems:=document.Drawables)
+        Return Replace(document, selection, shapes)
+    End Function
+
+    Public Shared Function GetSources(document As Document) As List(Of IDrawable)
+        Dim ids = document.Drawables.Where(Function(item) WeedingBoxGenerator.IsWeedingItem(item)).
+            SelectMany(AddressOf WeedingBoxGenerator.GetSourceIds).ToHashSet()
         Dim leaves = document.Drawables.Where(Function(item) TypeOf item IsNot DrawableGroup).
             SelectMany(Function(item) If(item.IsAnyGroup(), item.GetLeafChildren(), New List(Of IDrawable) From {item})).ToHashSet()
-        Dim ids = boxes.SelectMany(AddressOf WeedingBoxGenerator.GetSourceIds).ToHashSet()
-        Dim sources = leaves.Where(Function(item) ids.Contains(item.Id)).ToList()
-        Dim shapes = New WeedingBoxGenerator(configuration).Generate(sources, canvas, sceneItems:=document.Drawables)
+        Return leaves.Where(Function(item) ids.Contains(item.Id)).ToList()
+    End Function
+
+    Public Shared Function Replace(document As Document, selection As SelectionManager, shapes As IEnumerable(Of Shape)) As IUndoableAction
+        Dim boxes = document.Drawables.Where(Function(item) WeedingBoxGenerator.IsWeedingItem(item) AndAlso
+            WeedingBoxGenerator.GetSourceIds(item).Length > 0).ToList()
         Dim actions As New List(Of IUndoableAction)
         Using ModelBatch.Begin()
             For Each box In boxes

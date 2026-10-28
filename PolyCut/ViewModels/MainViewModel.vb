@@ -24,6 +24,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Private ReadOnly _svgImportService As IVectorImportService
     Private ReadOnly _undoRedoService As UndoRedoService
     Private ReadOnly _projectService As ProjectSerializationService
+    Private ReadOnly _contentDialogService As IContentDialogService
 
     'Operating System detection
     <ObservableProperty> Private _IsWindows As Boolean = Not WineDetection.IsRunningUnderWine
@@ -143,70 +144,20 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     <RelayCommand>
-    Private Sub AddWeedBoxes()
-        Dim canvas = PolyCanvas.ActiveInstance
-        If canvas Is Nothing Then Return
-        canvas.CommitActiveText()
-        canvas.UpdateLayout()
-        Dim targets = If(SelectionManager.HasSelection, SelectionManager.SelectedItems.ToList(), Document.Drawables.ToList())
-        Dim boxes = New WeedingBoxGenerator(SettingsHandler.WeedingBoxConfiguration).Generate(targets, canvas, sceneItems:=Document.Drawables, skipExisting:=True)
-        Dim action As New AddWeedingBoxesAction(Document, boxes)
-        If action.Execute() Then _undoRedoService.Push(action)
-    End Sub
+    Private Async Function AddWeedBoxes() As Task
+        _undoRedoService.Push(Await WeedingBoxTool.AddAsync(
+            Document, PolyCanvas.ActiveInstance, SelectionManager, SettingsHandler.WeedingBoxConfiguration, _contentDialogService, _snackbarService))
+    End Function
 
     <RelayCommand>
-    Private Sub RegenerateWeedBoxes()
-        _undoRedoService.Push(RegenerateWeedingBoxes(SettingsHandler.WeedingBoxConfiguration))
-    End Sub
+    Private Async Function RegenerateWeedBoxes() As Task
+        _undoRedoService.Push(Await WeedingBoxTool.RegenerateAsync(
+            Document, PolyCanvas.ActiveInstance, SelectionManager, SettingsHandler.WeedingBoxConfiguration, _contentDialogService, _snackbarService))
+    End Function
 
     <RelayCommand>
     Private Async Function OpenWeedBoxesConfig() As Task
-        Dim current = SettingsHandler.WeedingBoxConfiguration
-        Dim draft As New WeedingBoxConfiguration With {
-            .DesiredExteriorMargin = current.DesiredExteriorMargin,
-            .MinimumInterObjectMargin = current.MinimumInterObjectMargin,
-            .Colour = current.Colour,
-            .SettingsFolder = current.SettingsFolder
-        }
-        Dim preview As IUndoableAction = Nothing
-        Dim undoPreview As Action =
-            Sub()
-                _undoRedoService.ExecuteWithoutRecording(
-                    Sub()
-                        Using ModelBatch.Begin()
-                            preview?.Undo()
-                        End Using
-                    End Sub)
-                preview = Nothing
-            End Sub
-        Dim options As New WeedingBoxOptions With {.DataContext = draft}
-        AddHandler options.RegenerateRequested,
-            Sub()
-                undoPreview()
-                _undoRedoService.ExecuteWithoutRecording(Sub() preview = RegenerateWeedingBoxes(draft))
-            End Sub
-        Dim dialog As New ToolConfigurationWindow("Weeding Box Options".LT(), options) With {
-            .Owner = Application.Current.MainWindow
-        }
-        Try
-            If dialog.ShowDialog() <> True Then Return
-            Await draft.SetValue(draft.Name, draft)
-            SettingsHandler.WeedingBoxConfiguration = draft
-            _undoRedoService.Push(preview)
-            preview = Nothing
-        Catch ex As IOException
-            _snackbarService.GenerateError("Error".LT(), ex.Message, 5)
-        Finally
-            undoPreview()
-        End Try
-    End Function
-
-    Private Function RegenerateWeedingBoxes(configuration As WeedingBoxConfiguration) As IUndoableAction
-        Dim canvas = PolyCanvas.ActiveInstance
-        If canvas Is Nothing Then Return Nothing
-        canvas.CommitActiveText()
-        canvas.UpdateLayout()
-        Return AddWeedingBoxesAction.Regenerate(Document, canvas, SelectionManager, configuration)
+        Await WeedingBoxTool.OpenOptionsAsync(Document, PolyCanvas.ActiveInstance, SelectionManager, _undoRedoService, _snackbarService)
     End Function
 
     <RelayCommand> Public Sub Undo()
@@ -283,13 +234,14 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     ' Constructor & initialization
-    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As IVectorImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration)
+    Public Sub New(snackbarService As SnackbarService, navigationService As INavigationService, argsService As CommandLineArgsService, svgImportService As IVectorImportService, undoRedoService As UndoRedoService, projectService As ProjectSerializationService, selectionManager As SelectionManager, document As Document, uiConfiguration As UIConfiguration, contentDialogService As IContentDialogService)
         _snackbarService = snackbarService
         _navigationService = navigationService
         _argsService = argsService
         _svgImportService = svgImportService
         _undoRedoService = undoRedoService
         _projectService = projectService
+        _contentDialogService = contentDialogService
         Me.SelectionManager = selectionManager
         Me.Document = document
         Me.UIConfiguration = uiConfiguration

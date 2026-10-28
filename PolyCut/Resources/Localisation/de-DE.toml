@@ -24,6 +24,7 @@
 "Boolean operation failed." = "Boolesche Operation fehlgeschlagen."
 "Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "Vorschau abbrechen"
+"Cancel regeneration" = "Cancel regeneration" # LOC:TODO
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Boolesche Operationen können nicht auf offenen Pfaden ausgeführt werden. Alle Formen müssen geschlossen sein."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "Klicken, um Versionshinweise anzuzeigen und herunterzuladen"
@@ -77,6 +78,7 @@
 "GCode" = "GCode"
 "Generate GCode" = "GCode erzeugen"
 "Generating ..." = "Generating ..." # LOC:TODO
+"Generating..." = "Generating..." # LOC:TODO
 "Global Settings" = "Allgemeine Einstellungen"
 "Grid Settings" = "Rastereinstellungen"
 "Gridline Colour" = "Rasterlinienfarbe"
@@ -125,6 +127,7 @@
 "Project Saved" = "Projekt gespeichert"
 "Properties" = "Eigenschaften"
 "Regenerate Weeding Boxes" = "Entgitterrahmen neu erstellen"
+"Regenerating..." = "Regenerating..." # LOC:TODO
 "Region Detection" = "Regionserkennung"
 "Region Detection Settings" = "Einstellungen der Regionserkennung"
 "Reload Languages. Checks online for updated language definitions" = "Reload Languages. Checks online for updated language definitions" # LOC:TODO
@@ -179,6 +182,7 @@
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Verwendet adaptive Schwellenwertbildung anstelle eines einzelnen festen Grenzwerts. Ideal für Scans oder Fotos mit ungleichmäßiger Beleuchtung, da der Grenzwert lokal im Bild neu berechnet statt global angewendet wird."
 "Weeding Box Options" = "Optionen für Entgitterrahmen"
+"Weeding Boxes" = "Weeding Boxes" # LOC:TODO
 "Work" = "Work" # LOC:TODO
 "Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "Arbeitsbereich"

@@ -8,7 +8,7 @@ Class MainWindow : Implements INavigationWindow
 
     'Public Property svgXML As XmlDocument
 
-    Public Sub New(navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As SnackbarService)
+    Public Sub New(navigationService As INavigationService, serviceProvider As IServiceProvider, snackbarService As SnackbarService, contentDialogService As IContentDialogService)
 
         DataContext = Application.GetService(Of MainViewModel)()
 
@@ -17,6 +17,7 @@ Class MainWindow : Implements INavigationWindow
         navigationService.SetNavigationControl(NavigationView)
         NavigationView.SetServiceProvider(serviceProvider)
         snackbarService.SetSnackbarPresenter(RootSnackbar)
+        contentDialogService.SetDialogHost(RootContentDialog)
 
         If WineDetection.IsRunningUnderWine Then
             MonitorPage_NavigationButton.Visibility = Visibility.Collapsed

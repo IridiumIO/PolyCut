@@ -24,6 +24,7 @@
 "Boolean operation failed." = "L’opération booléenne a échoué."
 "Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "Annuler l’aperçu"
+"Cancel regeneration" = "Cancel regeneration" # LOC:TODO
 "Cannot perform boolean operations on open paths. All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts. Toutes les formes doivent être fermées."
 "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." = "Cleans up toolpaths by merging extremely close vertices, fragments, and almost-collinear segments." # LOC:TODO
 "Click to view release notes and download" = "Cliquer pour afficher les notes de version et télécharger"
@@ -77,6 +78,7 @@
 "GCode" = "GCode"
 "Generate GCode" = "Générer le GCode"
 "Generating ..." = "Generating ..." # LOC:TODO
+"Generating..." = "Generating..." # LOC:TODO
 "Global Settings" = "Paramètres généraux"
 "Grid Settings" = "Paramètres de la grille"
 "Gridline Colour" = "Couleur des lignes de la grille"
@@ -125,6 +127,7 @@
 "Project Saved" = "Projet enregistré"
 "Properties" = "Propriétés"
 "Regenerate Weeding Boxes" = "Régénérer les cadres d’échenillage"
+"Regenerating..." = "Regenerating..." # LOC:TODO
 "Region Detection" = "Détection des régions"
 "Region Detection Settings" = "Paramètres de détection des régions"
 "Reload Languages. Checks online for updated language definitions" = "Sprachen neu laden. Prüft online auf aktualisierte Sprachdefinitionen"
@@ -179,6 +182,7 @@
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Utilise un seuillage adaptatif au lieu d’un seuil fixe unique. Idéal pour les scans ou les photos avec un éclairage inégal, car le seuil est recalculé localement dans l’image au lieu d’être appliqué globalement."
 "Weeding Box Options" = "Options des cadres d’échenillage"
+"Weeding Boxes" = "Weeding Boxes" # LOC:TODO
 "Work" = "Work" # LOC:TODO
 "Work Speed" = "Work Speed" # LOC:TODO
 "Working Area" = "Zone de travail"

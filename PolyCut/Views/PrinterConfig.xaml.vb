@@ -4,17 +4,13 @@
 
     Public Property MainVM As MainViewModel
 
-    Private _contentDialogHost As WPF.Ui.IContentDialogService
-
-    Public Sub New(SVGPageVM As SVGPageViewModel, contentDialogHost As WPF.Ui.IContentDialogService)
+    Public Sub New(SVGPageVM As SVGPageViewModel)
         ' This call is required by the designer.
         InitializeComponent()
 
-        _contentDialogHost = contentDialogHost
         Me.DataContext = SVGPageVM
         Me.MainVM = SVGPageVM.MainVM
 
-        contentDialogHost.SetDialogHost(RootContentDialog)
 
 
     End Sub
@@ -33,7 +29,7 @@
 
     Private Async Sub AddPrinterBtn_Click(sender As Object, e As RoutedEventArgs)
 
-        Dim newPrinterWindow As New AddPrinterDialog(_contentDialogHost.GetDialogHost())
+        Dim newPrinterWindow As New AddPrinterDialog(RootContentDialog)
         Dim result = Await newPrinterWindow.ShowAsync()
 
         If result = WPF.Ui.Controls.ContentDialogResult.Primary Then

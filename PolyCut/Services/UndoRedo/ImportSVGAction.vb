@@ -12,6 +12,8 @@ Public Class ImportSVGAction : Implements IUndoableAction
     Private _indexInImportedGroups As Integer
     Private _parentMap As New Dictionary(Of IDrawable, DrawableGroup)()
 
+    Public Property PlacementPosition As Point?
+
     Public Sub New(manager As IDrawableManager, svgService As IVectorImportService, filePath As String)
         _manager = manager
         _svgService = svgService
@@ -79,6 +81,16 @@ Public Class ImportSVGAction : Implements IUndoableAction
 
             _indexInImportedGroups = _manager.ImportRoots.Count()
             _manager.AddImportRoot(_importedGroup)
+
+            If PlacementPosition.HasValue Then
+                Dim elements = _allImportedDrawables.Select(Function(d) If(TryCast(d.DrawableElement.Parent, ContentControl), d.DrawableElement)).ToList()
+                Dim left = elements.Min(Function(el) Canvas.GetLeft(el))
+                Dim top = elements.Min(Function(el) Canvas.GetTop(el))
+                For Each element In elements
+                    Canvas.SetLeft(element, Canvas.GetLeft(element) + PlacementPosition.Value.X - left)
+                    Canvas.SetTop(element, Canvas.GetTop(element) + PlacementPosition.Value.Y - top)
+                Next
+            End If
         End Using
 
         Return True

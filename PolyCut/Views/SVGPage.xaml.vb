@@ -16,6 +16,12 @@ Class SVGPage
     Private _hasLoaded As Boolean = False
     Private _overlayTextBox As Controls.TextBox
     Private _overlayEffectiveFontSize As Double = Double.NaN
+    Private _importPlacement As TaskCompletionSource(Of Point?)
+    Private ReadOnly _importToolTip As New System.Windows.Controls.ToolTip With {
+        .Placement = Controls.Primitives.PlacementMode.Relative,
+        .StaysOpen = True,
+        .IsHitTestVisible = False
+    }
 
     Sub New(viewmodel As SVGPageViewModel, selectionManager As SelectionManager, document As Document)
         Me.SelectionManager = selectionManager
@@ -25,6 +31,7 @@ Class SVGPage
         Me.DataContext = viewmodel
 
         InitializeComponent()
+        MainViewModel.ImportPlacement = AddressOf RequestImportPlacement
 
         AddHandler MainViewModel.PropertyChanged, AddressOf MainViewModel_PropertyChanged
 
@@ -111,13 +118,94 @@ Class SVGPage
     End Sub
 
     Private Sub Page_Drop(sender As Object, e As DragEventArgs)
+        _importToolTip.IsOpen = False
         If Not e.Data.GetDataPresent(DataFormats.FileDrop) Then Return
-        SVGPageViewModel.ProcessDroppedFiles(TryCast(e.Data.GetData(DataFormats.FileDrop), String()))
+        Dim position As Point? = Nothing
+        If (e.KeyStates And DragDropKeyStates.ShiftKey) <> 0 Then position = e.GetPosition(mainCanvas)
+        SVGPageViewModel.ProcessDroppedFiles(TryCast(e.Data.GetData(DataFormats.FileDrop), String()), position)
+    End Sub
+
+    Private Sub Page_DragOver(sender As Object, e As DragEventArgs) Handles Me.DragOver
+        If Not e.Data.GetDataPresent(DataFormats.FileDrop) OrElse (e.KeyStates And DragDropKeyStates.ShiftKey) = 0 Then
+            _importToolTip.IsOpen = False
+            Return
+        End If
+
+        Dim files = DirectCast(e.Data.GetData(DataFormats.FileDrop), String())
+        Dim firstFile = files.FirstOrDefault(Function(f) ImportService.AllSupportedExtensions.Contains(IO.Path.GetExtension(f), StringComparer.InvariantCultureIgnoreCase))
+        If firstFile Is Nothing Then
+            _importToolTip.IsOpen = False
+            Return
+        End If
+
+        Dim stackp As New StackPanel
+        TextOptions.SetTextFormattingMode(stackp, TextFormattingMode.Display)
+
+        stackp.Children.Add(New TextBlock With {.Text = "Click to place", .FontWeight = FontWeights.SemiBold, .FontSize = 13, .Margin = New Thickness(0, 0, 0, 4)})
+        stackp.Children.Add(New TextBlock With {.Text = IO.Path.GetFileName(firstFile), .FontSize = 12})
+
+        _importToolTip.Content = stackp
+        UpdateImportToolTip(e.GetPosition(zoomPanControl))
+    End Sub
+
+    Private Sub Page_DragLeave(sender As Object, e As DragEventArgs) Handles Me.DragLeave
+        _importToolTip.IsOpen = False
     End Sub
 
 
-
     Private StartPos As Point
+
+    Private Function RequestImportPlacement(filename As String) As Task(Of Point?)
+        FinishImportPlacement(Nothing)
+        mainCanvas.CommitActiveText()
+        SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
+        SelectionManager.ClearSelection()
+        zoomPanControl.Focus()
+        _importPlacement = New TaskCompletionSource(Of Point?)(TaskCreationOptions.RunContinuationsAsynchronously)
+
+        Dim stackp As New StackPanel
+        TextOptions.SetTextFormattingMode(stackp, TextFormattingMode.Display)
+
+        stackp.Children.Add(New TextBlock With {.Text = "Click to place", .FontWeight = FontWeights.SemiBold, .FontSize = 13, .Margin = New Thickness(0, 0, 0, 4)})
+        stackp.Children.Add(New TextBlock With {.Text = filename, .FontSize = 12})
+
+        _importToolTip.Content = stackp
+
+        UpdateImportToolTip()
+        Return _importPlacement.Task
+    End Function
+
+    Private Sub PlaceImport(sender As Object, e As MouseButtonEventArgs) Handles Me.PreviewMouseDown
+        If _importPlacement Is Nothing OrElse e.ChangedButton <> MouseButton.Left OrElse Not zoomPanControl.IsMouseOver Then Return
+        e.Handled = True
+        SVGPageViewModel.CanvasToolMode = CanvasMode.Selection
+        FinishImportPlacement(e.GetPosition(mainCanvas))
+    End Sub
+
+    Private Sub CancelImport(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
+        If _importPlacement Is Nothing OrElse e.Key <> Key.Escape Then Return
+        e.Handled = True
+        FinishImportPlacement(Nothing)
+    End Sub
+
+    Private Sub FinishImportPlacement(position As Point?)
+        Dim pending = _importPlacement
+        _importPlacement = Nothing
+        _importToolTip.IsOpen = False
+        pending?.TrySetResult(position)
+    End Sub
+
+    Private Sub ImportCursorMoved(sender As Object, e As MouseEventArgs) Handles zoomPanControl.MouseMove, zoomPanControl.MouseLeave
+        UpdateImportToolTip()
+    End Sub
+
+    Private Sub UpdateImportToolTip(Optional dragPosition As Point? = Nothing)
+        Dim position = If(dragPosition, Mouse.GetPosition(zoomPanControl))
+        _importToolTip.PlacementTarget = zoomPanControl
+        _importToolTip.HorizontalOffset = position.X + 16
+        _importToolTip.VerticalOffset = position.Y + 20
+        _importToolTip.IsOpen = dragPosition.HasValue OrElse (_importPlacement IsNot Nothing AndAlso zoomPanControl.IsMouseOver)
+    End Sub
 
     Private Sub MainView_MouseDown(sender As Object, e As MouseButtonEventArgs) Handles zoomPanControl.MouseDown
         ' DON'T steal focus if a TextBox is currently in edit mode
@@ -147,6 +235,7 @@ Class SVGPage
 
 
     Private Sub SVGPageView_Unloaded(sender As Object, e As RoutedEventArgs)
+        FinishImportPlacement(Nothing)
         SelectionManager.ApplySelection(Nothing, Document.Drawables)
         mainCanvas.RaiseEvent(New MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) With {
             .RoutedEvent = Mouse.MouseDownEvent,

@@ -23,39 +23,40 @@ Public Class ImportService
     End Function
 
 
-    Public Shared Async Function Import(svgImportService As IVectorImportService, document As Document, undoRedoService As UndoRedoService, filepaths As IEnumerable(Of String)) As Task
-
-
-        Dim actions As New List(Of IUndoableAction)()
+    Public Shared Async Function Import(svgImportService As IVectorImportService, document As Document, undoRedoService As UndoRedoService, filepaths As IEnumerable(Of String), Optional requestPlacement As Func(Of String, Task(Of Point?)) = Nothing, Optional firstPosition As Point? = Nothing) As Task
         Dim vtracer = Application.GetService(Of VTracerService)
 
         For Each fl In filepaths
+            Dim filename = Path.GetFileName(fl)
+            Dim action As ImportSVGAction
 
             'DXF
             If Path.GetExtension(fl).Equals(".dxf", StringComparison.CurrentCultureIgnoreCase) Then
                 Dim svgdoc = Await DXFImportService.ConvertDXFToSVG(fl)
                 If svgdoc Is Nothing Then Continue For
 
-                Dim act As New ImportSVGAction(document, svgImportService, svgdoc, fl)
-                If act.Execute() Then actions.Add(act)
-                Continue For
-
+                action = New ImportSVGAction(document, svgImportService, svgdoc, fl)
+            Else
+                'Bitmap Images
+                If Not Path.GetExtension(fl).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) Then
+                    Dim svgPath = vtracer.ConvertRasterToSVG(fl)
+                    If svgPath Is Nothing Then Continue For
+                    fl = svgPath
+                End If
+                action = New ImportSVGAction(document, svgImportService, fl)
             End If
 
-            'Bitmap Images
-            If Not Path.GetExtension(fl).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) Then
-                Dim svgPath = vtracer.ConvertRasterToSVG(fl)
-                If svgPath Is Nothing Then Continue For
-                fl = svgPath
+            If firstPosition.HasValue Then
+                action.PlacementPosition = firstPosition
+                firstPosition = Nothing
+            ElseIf requestPlacement IsNot Nothing Then
+                Dim position = Await requestPlacement(filename)
+                If Not position.HasValue Then Exit For
+                action.PlacementPosition = position
             End If
-
-            'SVG
-            Dim action As New ImportSVGAction(document, svgImportService, fl)
-            If action.Execute() Then actions.Add(action)
+            If action.Execute() Then undoRedoService.Push(action)
 
         Next
-
-        If actions.Count > 0 Then undoRedoService.Push(New CompositeAction(actions))
 
     End Function
 

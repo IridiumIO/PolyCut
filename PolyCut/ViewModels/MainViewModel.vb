@@ -438,20 +438,25 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     ' -----------------
     ' Import / SVG handling
     ' -----------------
+    Public Property ImportPlacement As Func(Of String, Task(Of Point?))
+
     <RelayCommand>
     Private Async Sub BrowseSVG()
 
         Dim files = ImportService.OpenFileImportDialog()
         If files Is Nothing Then Return
+        Dim clickToPlace = (Keyboard.Modifiers And ModifierKeys.Shift) <> 0
 
-        Await ImportService.Import(_svgImportService, Document, _undoRedoService, files)
+        _navigationService.Navigate(GetType(SVGPage))
+        Await ImportService.Import(_svgImportService, Document, _undoRedoService, files, If(clickToPlace, ImportPlacement, Nothing))
 
     End Sub
 
-    Public Sub DragSVGs(x As String())
+    Public Async Sub DragSVGs(x As String(), Optional dropPosition As Point? = Nothing)
         Dim legalFiles = x.Where(Function(f) IO.File.Exists(f)).Where(Function(f) ImportService.AllSupportedExtensions.Contains(New FileInfo(f).Extension, StringComparer.InvariantCultureIgnoreCase))
 
-        ImportService.Import(_svgImportService, Document, _undoRedoService, legalFiles)
+        _navigationService.Navigate(GetType(SVGPage))
+        Await ImportService.Import(_svgImportService, Document, _undoRedoService, legalFiles, If(dropPosition.HasValue, ImportPlacement, Nothing), dropPosition)
     End Sub
 
 

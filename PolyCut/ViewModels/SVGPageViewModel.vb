@@ -191,9 +191,9 @@ Partial Public Class SVGPageViewModel : Inherits ObservableObject
 
 
 
-    Public Sub ProcessDroppedFiles(files() As String)
+    Public Sub ProcessDroppedFiles(files() As String, Optional dropPosition As Point? = Nothing)
 
-        MainVM.DragSVGs(files)
+        MainVM.DragSVGs(files, dropPosition)
 
     End Sub
 

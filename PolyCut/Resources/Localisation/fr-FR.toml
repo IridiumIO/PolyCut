@@ -22,6 +22,7 @@
 "Bed Dimensions" = "Dimensions du plateau"
 "Blade Settings" = "Paramètres de la lame"
 "Boolean operation failed." = "L’opération booléenne a échoué."
+"C_ut" = "C_ut" # LOC:TODO
 "Cancel" = "Cancel" # LOC:TODO
 "Cancel Preview" = "Annuler l’aperçu"
 "Cancel regeneration" = "Cancel regeneration" # LOC:TODO
@@ -35,12 +36,10 @@
 "Combine" = "Combiner"
 "Combine Shapes" = "Combiner les formes"
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
-"Copy" = "Copier"
 "Creating a new project will clear the current workspace. Continue?" = "La création d’un nouveau projet effacera l’espace de travail actuel. Continuer ?"
 "Cursor Colour" = "Couleur du curseur"
 "Curve simplification tolerance in pixels (try 0.5-2.5). Higher values simplify more aggressively at the cost of precision." = "Tolérance de simplification des courbes en pixels (essayez 0,5 à 2,5). Des valeurs plus élevées simplifient davantage, au détriment de la précision."
 "Curve-fitting Precision" = "Précision de l’ajustement des courbes"
-"Cut" = "Couper"
 "Cut level for the hierarchical watershed algorithm, 0-255. Higher values cut the region hierarchy at a finer level, producing more, smaller regions that follow content detail closely; lower values merge areas into fewer, larger regions." = "Niveau de coupe de l’algorithme de watershed hiérarchique, de 0 à 255. Des valeurs élevées découpent la hiérarchie des régions plus finement, produisant davantage de petites régions qui suivent étroitement les détails du contenu ; des valeurs faibles fusionnent les zones en régions moins nombreuses et plus grandes."
 "Cut lines will be placed at minimum this close to objects." = "Cut lines will be placed at minimum this close to objects." # LOC:TODO
 "Darkest shading spacing" = "Espacement des hachures les plus sombres"
@@ -62,6 +61,7 @@
 "Error Saving File" = "Erreur lors de l’enregistrement du fichier"
 "Error uploading to Moonraker" = "Erreur lors de l’envoi vers Moonraker"
 "Experimental Renderer" = "Experimental Renderer" # LOC:TODO
+"Export" = "Export" # LOC:TODO
 "Extract One Colour" = "Extraire une couleur" # LOC:CASE-CHANGED | LOC:TODO
 "Failed to load language: {0}" = "Échec du chargement de la langue : {0}"
 "Failed to load project" = "Échec du chargement du projet"
@@ -191,6 +191,7 @@
 "Yes" = "Oui"
 "Z Height" = "Hauteur Z"
 "Z Offset Per Pass" = "Décalage Z par passe"
+"_Copy" = "_Copy" # LOC:TODO
 "_Edit" = "É_dition"
 "_Export As SVG..." = "Exporter en _SVG..."
 "_File" = "_Fichier"
@@ -198,6 +199,7 @@
 "_Load Project" = "_Charger le projet"
 "_Paste" = "_Coller"
 "_Save" = "_Enregistrer"
+"_Select All" = "_Select All" # LOC:TODO
 "_Tools" = "_Tools" # LOC:TODO
 "_View" = "_Affichage"
 "version" = "version"
@@ -405,6 +407,8 @@
 
 [obsolete]
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
+"Copy" = "Copier"
+"Cut" = "Couper"
 "Printer: " = "Imprimante : "
 "Shading Settings" = "Paramètres d’ombrage"
 

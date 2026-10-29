@@ -107,7 +107,12 @@
                                 <Separator />
                                 <MenuItem loc:L.Value="_Save" local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" />
                                 <MenuItem loc:L.Value="S_ave As..." local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" />
-                                <MenuItem loc:L.Value="_Export As SVG..." local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" />
+
+                                <MenuItem loc:L.Value="Export">
+                                    <MenuItem loc:L.Value="_Export As SVG..." local:MenuItemHelper.Footer="Ctrl + E" Command="{Binding ExportSVGCommand}" />
+
+                                </MenuItem>
+
                             </ui:MenuItem>
 
                             <ui:MenuItem x:Name="EditMenu"
@@ -116,17 +121,25 @@
                                 <ui:MenuItem.Resources>
                                     <ImageBrush x:Key="FlyoutBackground" ImageSource="{Binding ElementName=EditMenu, Path=(local:MicaBackdrop.SurfaceImage)}" Stretch="Fill" />
                                 </ui:MenuItem.Resources>
-                                <ui:MenuItem loc:L.Value="Cut" local:MenuItemHelper.Footer="Ctrl + X"
+                                <ui:MenuItem loc:L.Value="C_ut" local:MenuItemHelper.Footer="Ctrl + X"
                                              Command="{Binding CutSelectionCommand}"
                                              Icon="{ui:SymbolIcon Symbol=Cut20}" />
 
-                                <ui:MenuItem loc:L.Value="Copy" local:MenuItemHelper.Footer="Ctrl + C"
+                                <ui:MenuItem loc:L.Value="_Copy" local:MenuItemHelper.Footer="Ctrl + C"
                                              Command="{Binding CopySelectionCommand}"
                                              Icon="{ui:SymbolIcon Copy20}" />
 
                                 <ui:MenuItem loc:L.Value="_Paste" local:MenuItemHelper.Footer="Ctrl + V"
                                              Command="{Binding PasteClipboardCommand}"
                                              Icon="{ui:SymbolIcon Symbol=ClipboardPaste20}" />
+
+                                <Separator />
+
+                                <ui:MenuItem loc:L.Value="_Select All" local:MenuItemHelper.Footer="Ctrl + A"
+                                             Command="{Binding SelectAllCommand}"
+                                             Icon="{ui:SymbolIcon Symbol=CopySelect20}"
+                                             IsEnabled="{Binding Document.HasDrawables, Mode=OneWay}" />
+
                             </ui:MenuItem>
 
 
@@ -387,10 +400,12 @@
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
         <ui:ContentDialogHost x:Name="RootContentDialog"
-                              Grid.Row="0" Grid.RowSpan="2" Panel.ZIndex="200"
+                              Grid.Row="0" Grid.RowSpan="2"
+                              Panel.ZIndex="200"
                               d:Visibility="Collapsed" ClipToBounds="True" IsDisableSiblingsEnabled="True" />
         <ui:SnackbarPresenter x:Name="RootSnackbar"
-                              Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="201"
+                              Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2"
+                              Panel.ZIndex="201"
                               d:Visibility="Collapsed" />
 
     </Grid>

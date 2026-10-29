@@ -19,6 +19,12 @@ Public Class Document : Implements IDrawableManager, INotifyPropertyChanged 'do 
     Public Event Changed As EventHandler
     Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
 
+    Public Sub New()
+        AddHandler _drawables.CollectionChanged, Sub()
+                                                     RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(NameOf(HasDrawables)))
+                                                 End Sub
+    End Sub
+
     Public Sub NotifyChanged() Implements IDrawableManager.NotifyChanged
         If _notifyQueued Then Return
         _notifyQueued = True

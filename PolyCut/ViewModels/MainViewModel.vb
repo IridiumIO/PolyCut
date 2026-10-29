@@ -441,6 +441,35 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     Public Property ImportPlacement As Func(Of String, Task(Of Point?))
 
     <RelayCommand>
+    Private Async Function OpenRecentItem(filePath As String) As Task
+        If Not IO.File.Exists(filePath) Then
+            UIConfiguration.RecentItems.Remove(filePath)
+            _snackbarService.GenerateCaution("Recent Items".LT(), "This file no longer exists and has been removed from the list".LT())
+            Return
+        End If
+
+        If Path.GetExtension(filePath).Equals(".polycut", StringComparison.OrdinalIgnoreCase) Then
+            Await OpenProject(filePath)
+        Else
+            Dim clickToPlace = (Keyboard.Modifiers And ModifierKeys.Shift) <> 0
+            _navigationService.Navigate(GetType(SVGPage))
+            Await ImportService.Import(_svgImportService, Document, _undoRedoService, {filePath}, If(clickToPlace, ImportPlacement, Nothing))
+        End If
+    End Function
+
+
+    Public Sub AddRecentItem(filePath As String)
+        filePath = IO.Path.GetFullPath(filePath)
+        Dim existing = UIConfiguration.RecentItems.FirstOrDefault(Function(item) String.Equals(item, filePath, StringComparison.OrdinalIgnoreCase))
+        If existing IsNot Nothing Then UIConfiguration.RecentItems.Remove(existing)
+        UIConfiguration.RecentItems.Insert(0, filePath)
+        While UIConfiguration.RecentItems.Count > 10
+            UIConfiguration.RecentItems.RemoveAt(UIConfiguration.RecentItems.Count - 1)
+        End While
+    End Sub
+
+
+    <RelayCommand>
     Private Async Sub BrowseSVG()
 
         Dim files = ImportService.OpenFileImportDialog()
@@ -742,6 +771,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             SaveProjectAs()
         Else
             If _projectService.SaveProject(CurrentProjectPath, Document.Drawables, Document.ImportRoots, Configuration) Then
+                AddRecentItem(CurrentProjectPath)
                 _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
@@ -759,6 +789,7 @@ Partial Public Class MainViewModel : Inherits ObservableObject
         If saveDialog.ShowDialog() = True Then
             CurrentProjectPath = saveDialog.FileName
             If _projectService.SaveProject(CurrentProjectPath, Document.Drawables, Document.ImportRoots, Configuration) Then
+                AddRecentItem(CurrentProjectPath)
                 _snackbarService.GenerateSuccess("Project Saved".LT(), IO.Path.GetFileName(CurrentProjectPath))
             Else
                 _snackbarService.GenerateError("Error".LT(), "Failed to save project".LT(), 3)
@@ -767,7 +798,11 @@ Partial Public Class MainViewModel : Inherits ObservableObject
     End Sub
 
     <RelayCommand>
-    Private Async Sub LoadProject()
+    Private Async Function LoadProject() As Task
+        Await OpenProject(Nothing)
+    End Function
+
+    Private Async Function OpenProject(filePath As String) As Task
         ' Warn if unsaved changes
         If Document.Drawables.Count > 1 Then
 
@@ -786,24 +821,27 @@ Partial Public Class MainViewModel : Inherits ObservableObject
             If res <> Wpf.Ui.Controls.MessageBoxResult.Primary Then Return
         End If
 
-        Dim openDialog As New Microsoft.Win32.OpenFileDialog With {
-            .Filter = "PolyCut Project (*.polycut)|*.polycut|All Files (*.*)|*.*",
-            .CheckFileExists = True
-        }
-
-        If openDialog.ShowDialog() = True Then
-            Dim action As New LoadProjectAction(Document, _projectService, openDialog.FileName, SelectionManager)
-            If action.Execute() Then
-                If action.LoadedConfiguration IsNot Nothing Then Configuration = action.LoadedConfiguration
-                _undoRedoService.Clear()
-                CurrentProjectPath = openDialog.FileName
-                _snackbarService.GenerateSuccess("Project Loaded".LT(), IO.Path.GetFileName(CurrentProjectPath))
-                Document.NotifyChanged()
-            Else
-                _snackbarService.GenerateError("Error".LT(), "Failed to load project".LT(), 3)
-            End If
+        If filePath Is Nothing Then
+            Dim openDialog As New Microsoft.Win32.OpenFileDialog With {
+                .Filter = "PolyCut Project (*.polycut)|*.polycut|All Files (*.*)|*.*",
+                .CheckFileExists = True
+            }
+            If openDialog.ShowDialog() <> True Then Return
+            filePath = openDialog.FileName
         End If
-    End Sub
+
+        Dim action As New LoadProjectAction(Document, _projectService, filePath, SelectionManager)
+        If action.Execute() Then
+            If action.LoadedConfiguration IsNot Nothing Then Configuration = action.LoadedConfiguration
+            _undoRedoService.Clear()
+            CurrentProjectPath = filePath
+            AddRecentItem(filePath)
+            _snackbarService.GenerateSuccess("Project Loaded".LT(), IO.Path.GetFileName(CurrentProjectPath))
+            Document.NotifyChanged()
+        Else
+            _snackbarService.GenerateError("Error".LT(), "Failed to load project".LT(), 3)
+        End If
+    End Function
 
     <RelayCommand>
     Private Async Sub NewProject()

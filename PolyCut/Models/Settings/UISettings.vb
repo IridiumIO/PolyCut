@@ -1,3 +1,5 @@
+Imports System.Collections.ObjectModel
+
 Imports CommunityToolkit.Mvvm.ComponentModel
 
 Imports PolyCut.Core
@@ -35,6 +37,8 @@ Partial Public Class UIConfiguration : Inherits ObservableObject : Implements IS
     <ObservableProperty> Private _CanvasThemeColour As String = "#16181D"
 
     <ObservableProperty> Private _UseRasterisedRendering As Boolean = True
+
+    <ObservableProperty> Private _RecentItems As New ObservableCollection(Of String)()
 
 End Class
 

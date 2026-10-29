@@ -126,6 +126,7 @@
 "Project Loaded" = "Projekt geladen"
 "Project Saved" = "Projekt gespeichert"
 "Properties" = "Eigenschaften"
+"Recent Items" = "Recent Items" # LOC:TODO
 "Regenerate Weeding Boxes" = "Entgitterrahmen neu erstellen"
 "Regenerating..." = "Regenerating..." # LOC:TODO
 "Region Detection" = "Regionserkennung"
@@ -164,6 +165,7 @@
 "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "Die Subtraktion hat eine leere Geometrie ergeben. Die Formen überlappen sich möglicherweise nicht oder das Ergebnis wurde vollständig subtrahiert."
 "Sucessfully uploaded {0} to Moonraker" = "{0} wurde erfolgreich zu Moonraker hochgeladen"
 "The host could not be found" = "Der Host konnte nicht gefunden werden"
+"This file no longer exists and has been removed from the list" = "This file no longer exists and has been removed from the list" # LOC:TODO
 "Threshold" = "Grenzwert"
 "Tool Config" = "Werkzeugkonfiguration"
 "Tool Diameter" = "Werkzeugdurchmesser"

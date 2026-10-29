@@ -27,6 +27,7 @@ Public Class ImportService
         Dim vtracer = Application.GetService(Of VTracerService)
 
         For Each fl In filepaths
+            Dim sourcePath = fl
             Dim filename = Path.GetFileName(fl)
             Dim action As ImportSVGAction
 
@@ -54,7 +55,10 @@ Public Class ImportService
                 If Not position.HasValue Then Exit For
                 action.PlacementPosition = position
             End If
-            If action.Execute() Then undoRedoService.Push(action)
+            If action.Execute() Then
+                undoRedoService.Push(action)
+                Application.GetService(Of MainViewModel)().AddRecentItem(sourcePath)
+            End If
 
         Next
 

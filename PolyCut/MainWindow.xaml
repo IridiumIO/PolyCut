@@ -104,6 +104,22 @@
                                 <Separator />
                                 <MenuItem loc:L.Value="_Import SVG/Image..." local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" />
                                 <MenuItem loc:L.Value="_Load Project" local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" />
+                                <MenuItem loc:L.Value="Recent Items" ItemsSource="{Binding UIConfiguration.RecentItems}"
+                                          IsEnabled="{Binding HasItems, RelativeSource={RelativeSource Self}}">
+                                    <MenuItem.ItemContainerStyle>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                            <Setter Property="Command" Value="{Binding DataContext.OpenRecentItemCommand, ElementName=MainWindowView}" />
+                                            <Setter Property="CommandParameter" Value="{Binding}" />
+                                            <Setter Property="HeaderTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" />
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </MenuItem.ItemContainerStyle>
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem loc:L.Value="_Save" local:MenuItemHelper.Footer="Ctrl + S" Command="{Binding SaveProjectCommand}" />
                                 <MenuItem loc:L.Value="S_ave As..." local:MenuItemHelper.Footer="Ctrl + Shift + S" Command="{Binding SaveProjectAsCommand}" />

@@ -126,6 +126,7 @@
 "Project Loaded" = "プロジェクトを読み込みました"
 "Project Saved" = "プロジェクトを保存しました"
 "Properties" = "プロパティ"
+"Recent Items" = "Recent Items" # LOC:TODO
 "Regenerate Weeding Boxes" = "カス取り枠を再生成"
 "Regenerating..." = "Regenerating..." # LOC:TODO
 "Region Detection" = "領域検出"
@@ -164,6 +165,7 @@
 "Subtraction resulted in an empty geometry. The shapes may not overlap or the result is fully subtracted." = "差分演算の結果が空のジオメトリになりました。形状が重なっていないか、結果が完全に差し引かれた可能性があります。"
 "Sucessfully uploaded {0} to Moonraker" = "{0} を Moonraker に正常にアップロードしました"
 "The host could not be found" = "ホストが見つかりませんでした"
+"This file no longer exists and has been removed from the list" = "This file no longer exists and has been removed from the list" # LOC:TODO
 "Threshold" = "しきい値"
 "Tool Config" = "ツール設定"
 "Tool Diameter" = "ツール直径"

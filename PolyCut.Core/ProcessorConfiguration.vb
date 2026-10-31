@@ -57,6 +57,7 @@ Partial Public Class ProcessorConfiguration : Inherits ObservableObject : Implem
     <ObservableProperty> Private _ClipToBounds As Boolean = False
     <ObservableProperty> Private _SimplifyToolPaths As Boolean = True
     <ObservableProperty> Private _SimplifyMergeAngle As Double = 0.1
+    <ObservableProperty> Private _SmallFeatureMergeThreshold As Double = 0.05
 
     Public ReadOnly Property Area As String
         Get
@@ -86,6 +87,7 @@ Partial Public Class CuttingConfiguration : Inherits ObservableObject
     <NotifyPropertyChangedFor(NameOf(ToolRadius))>
     <ObservableProperty> Private _ToolDiameter As Double = 0.9
     <ObservableProperty> Private _Overcut As Double = 0
+    <ObservableProperty> Private _BladePathNoiseTolerance As Double = 0.05
 
     Public ReadOnly Property ToolRadius
         Get

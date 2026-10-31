@@ -183,6 +183,12 @@
                                                                       Context='Merge Angle Tooltip'}"
                                                   UnitText="&#176;"
                                                   Value="{Binding SimplifyMergeAngle}" />
+                        <local:AnnotatedNumberBox AllowNegative="False"
+                                                  LabelText="{loc:T 'Merge Threshold'}"
+                                                  ToolTipMain="{loc:T 'Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup.'}"
+                                                  ToolTipSub="{loc:T 'Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality.'}"
+                                                  UnitText="mm"
+                                                  Value="{Binding SmallFeatureMergeThreshold}" />
                     </local:AnnotatedToggleSwitch>
                     <local:AnnotatedToggleSwitch IsChecked="{Binding ExtractOneColour}" LabelText="{loc:T 'Extract One Colour'}" ToolTipMain="{loc:T 'Processes only objects with the specified colour, and ignores all others.', Context='Extract One Colour Tooltip'}">
                         <local:AnnotatedColourPicker LabelText="{loc:T 'Colour'}" ToolTipMain="{loc:T 'Processes only objects with the specified colour, and ignores all others.', Context='Extract One Colour Tooltip'}" Value="{Binding ExtractionColor}" />
@@ -212,6 +218,12 @@
                                                                  Context='Overcut Tooltip'}"
                                               UnitText="mm"
                                               Value="{Binding Overcut}" />
+
+                    <local:AnnotatedNumberBox AllowNegative="False"
+                                              LabelText="{loc:T 'Noise Tolerance'}"
+                                              ToolTipMain="{loc:T 'Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable.'}"
+                                              UnitText="mm"
+                                              Value="{Binding BladePathNoiseTolerance}" />
                 </local:AnnotatedSection>
 
                 <!--

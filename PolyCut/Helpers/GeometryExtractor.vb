@@ -59,7 +59,7 @@ Public Class GeometryExtractor
         End If
 
         figures = NormalizeFiguresForCut(figures, cfg.Tolerance, item.IsFilled)
-        If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle)
+        If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle, cfg.SmallFeatureMergeThreshold)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of PathBasedElement)
 
         ' Nothing to check once clipped: the clip rectangle already guarantees containment
@@ -247,7 +247,7 @@ Public Class GeometryExtractor
         Return canvasRect.Contains(bounds) ' policy 2: fully inside
     End Function
 
-    Private Shared Function CleanupFigures(figures As List(Of List(Of GeoLine)), tolerance As Double, mergeAngle As Double) As List(Of List(Of GeoLine))
+    Private Shared Function CleanupFigures(figures As List(Of List(Of GeoLine)), tolerance As Double, mergeAngle As Double, smallFeatureThreshold As Double) As List(Of List(Of GeoLine))
         Dim output As New List(Of List(Of GeoLine))
         If figures Is Nothing Then Return output
 
@@ -306,6 +306,9 @@ Public Class GeometryExtractor
             End If
 
             Dim minimumCount = If(closed, 3, 1)
+            If IsFinite(smallFeatureThreshold) AndAlso smallFeatureThreshold > 0 Then
+                MergeSmallFeatures(cleaned, closed, minimumCount, eps2, rad, smallFeatureThreshold)
+            End If
             Dim mergedSeam As Boolean
             Do
                 Dim simplified As New List(Of GeoLine)(cleaned.Count)
@@ -337,8 +340,58 @@ Public Class GeometryExtractor
         Return output
     End Function
 
+    Private Shared Sub MergeSmallFeatures(lines As List(Of GeoLine), closed As Boolean, minimumCount As Integer, eps2 As Double, angle As Double, threshold As Double)
+        Dim merged As Boolean
+        Do
+            merged = False
+            If lines.Count - 2 < minimumCount Then Exit Do
+
+            For i = 0 To If(closed, lines.Count - 1, lines.Count - 3)
+                Dim a = lines(i)
+                Dim b = lines((i + 1) Mod lines.Count)
+                Dim c = lines((i + 2) Mod lines.Count)
+
+                If Dist2(a.X2, a.Y2, b.X1, b.Y1) > eps2 OrElse Dist2(b.X2, b.Y2, c.X1, c.Y1) > eps2 Then Continue For
+
+                ' The long edges must resume the same direction around the excursion.
+                If Not HaveSimilarDirection(a, c, angle) Then Continue For
+
+                Dim replacement As New GeoLine(a.StartPoint, c.EndPoint)
+                Dim dx = CDbl(replacement.X2) - replacement.X1
+                Dim dy = CDbl(replacement.Y2) - replacement.Y1
+                Dim length2 = dx * dx + dy * dy
+                If length2 <= eps2 Then Continue For
+
+                Dim firstProjection = ((CDbl(a.X2) - replacement.X1) * dx + (CDbl(a.Y2) - replacement.Y1) * dy) / length2
+                Dim secondProjection = ((CDbl(b.X2) - replacement.X1) * dx + (CDbl(b.Y2) - replacement.Y1) * dy) / length2
+
+                ' Preserve reversals and endpoints; both removed vertices must lie along the replacement.
+                If firstProjection < 0 OrElse secondProjection < firstProjection OrElse secondProjection > 1 Then Continue For
+                Dim firstDistance = Math.Abs(dx * (CDbl(a.Y2) - replacement.Y1) - dy * (CDbl(a.X2) - replacement.X1))
+                Dim secondDistance = Math.Abs(dx * (CDbl(b.Y2) - replacement.Y1) - dy * (CDbl(b.X2) - replacement.X1))
+                If Math.Max(firstDistance, secondDistance) > threshold * Math.Sqrt(length2) Then Continue For
+
+                ' Rotate only when the three segments straddle the closing seam.
+                If i + 2 >= lines.Count Then
+                    Dim prefix = lines.GetRange(0, i)
+                    lines.RemoveRange(0, i)
+                    lines.AddRange(prefix)
+                    i = 0
+                End If
+                lines(i) = replacement
+                lines.RemoveRange(i + 1, 2)
+                merged = True
+                Exit For
+            Next
+        Loop While merged
+    End Sub
+
     Private Shared Function CanMergeLines(a As GeoLine, b As GeoLine, eps2 As Double, angle As Double) As Boolean
         If Dist2(a.X2, a.Y2, b.X1, b.Y1) > eps2 Then Return False
+        Return HaveSimilarDirection(a, b, angle)
+    End Function
+
+    Private Shared Function HaveSimilarDirection(a As GeoLine, b As GeoLine, angle As Double) As Boolean
         Dim ax = CDbl(a.X2) - a.X1
         Dim ay = CDbl(a.Y2) - a.Y1
         Dim bx = CDbl(b.X2) - b.X1

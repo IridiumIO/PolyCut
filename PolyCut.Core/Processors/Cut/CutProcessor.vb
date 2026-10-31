@@ -31,7 +31,7 @@ Public Class CutProcessor : Implements IProcessor
                                  OffsetGenerator.ReorderLoopForBladeAlignment(selectedLoop, lastBladeDir), selectedLoop)
 
             ' Step 3: Generate offset arcs for tool radius
-            Dim offsetLoop = OffsetGenerator.CreateOffsetArcs(alignedLoop, cfg.CuttingConfig.ToolRadius)
+            Dim offsetLoop = OffsetGenerator.CreateOffsetArcs(alignedLoop, cfg.CuttingConfig.ToolRadius, cfg.CuttingConfig.BladePathNoiseTolerance)
 
             ' Step 4: Add overcut to close loop cleanly
             Dim overcutLoop = OvercutGenerator.CreateOvercuts(offsetLoop, cfg.CuttingConfig.Overcut)

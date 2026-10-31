@@ -11,9 +11,10 @@ Public Class CutProcessor : Implements IProcessor
         ' Reorder elements if optimization enabled TODO: Add this to the config sidebar for cutting options
         Dim workElements = If(cfg.OptimisedToolPath, elements.ReorderFiguresGreedy(), elements)
 
-        ' Flatten all loops from all elements for global optimization
-        Dim unprocessedLoops = workElements.SelectMany(Function(elem) elem.Figures).Where(Function(figure) figure.Count > 0).
-            Select(Function(figure) figure.ToList()).ToList()
+        ' Compensate each element's region before separating its loops, so holes offset correctly.
+        Dim unprocessedLoops = workElements.SelectMany(Function(elem) CutWidthCompensationProcessor.Process(
+            elem.Figures, cfg.CuttingConfig.CutWidthCompensation)).
+            Where(Function(figure) figure.Count > 0).ToList()
 
         Dim processedLoops As New List(Of List(Of GeoLine))
         Dim lastBladeDir As Vector? = Nothing

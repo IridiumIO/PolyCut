@@ -224,6 +224,12 @@
                                               ToolTipMain="{loc:T 'Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable.'}"
                                               UnitText="mm"
                                               Value="{Binding BladePathNoiseTolerance}" />
+
+                    <local:AnnotatedNumberBox AllowNegative="True"
+                                              LabelText="{loc:T 'Kerf Compensation'}"
+                                              ToolTipMain="{loc:T 'Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value.'}"
+                                              ToolTipSub="Positive values expand outer contours and shrink holes; negative values reverse this. Set to 0 to disable." UnitText="mm"
+                                              Value="{Binding CutWidthCompensation}" />
                 </local:AnnotatedSection>
 
                 <!--

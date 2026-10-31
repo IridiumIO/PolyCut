@@ -35,6 +35,7 @@
 "Colour" = "Colour" # LOC:TODO
 "Combine" = "Kombinieren"
 "Combine Shapes" = "Formen kombinieren"
+"Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." = "Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." # LOC:TODO
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Creating a new project will clear the current workspace. Continue?" = "Beim Erstellen eines neuen Projekts wird der aktuelle Arbeitsbereich geleert. Fortfahren?"
 "Cursor Colour" = "Cursorfarbe"
@@ -73,6 +74,7 @@
 "Fill Colour" = "Fill Colour" # LOC:TODO
 "Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "Füllstil"
+"Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." = "Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." # LOC:TODO
 "Finish Import" = "Import abschließen"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Fester Helligkeitsgrenzwert (0–255) für den Schwarzweißmodus. Pixel, die dunkler als dieser Wert sind, werden zum Vordergrund (schwarz); Pixel mit diesem oder einem höheren Wert werden zum Hintergrund (weiß). Wird ignoriert, wenn die adaptive Abtastung aktiviert ist."
 "GCode" = "GCode"
@@ -94,12 +96,15 @@
 "Inset (Right)" = "Einzug (rechts)"
 "Inset (Top)" = "Einzug (oben)"
 "Keep Outlines" = "Konturen beibehalten"
+"Kerf Compensation" = "Kerf Compensation" # LOC:TODO
 "Language Load Error" = "Fehler beim Laden der Sprache"
 "Lightest shading spacing" = "Abstand der hellsten Schraffur"
 "Load Project" = "Projekt laden"
 "Loading a project will clear the current workspace. Continue?" = "Beim Laden eines Projekts wird der aktuelle Arbeitsbereich geleert. Fortfahren?"
 "Maximum Colours (0 = Unlimited)" = "Maximale Farben (0 = unbegrenzt)"
+"Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." = "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." # LOC:TODO
 "Merge Angle" = "Merge Angle" # LOC:TODO
+"Merge Threshold" = "Merge Threshold" # LOC:TODO
 "Minimum Inter-Object Margin" = "Mindestabstand zwischen Objekten"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Erforderlicher Mindestfarbunterschied zwischen benachbarten Verlaufsebenen, 0–255. Höhere Werte führen ähnliche Farbtöne zu weniger, flacheren Farbbändern zusammen; niedrigere Werte erhalten weichere Verläufe mit mehr unterscheidbaren Ebenen."
 "New Project" = "Neues Projekt"
@@ -107,6 +112,7 @@
 "No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
 "No intersection found. The selected shapes do not overlap." = "Keine Schnittmenge gefunden. Die ausgewählten Formen überlappen sich nicht."
 "No paths on canvas" = "Keine Pfade auf der Zeichenfläche"
+"Noise Tolerance" = "Noise Tolerance" # LOC:TODO
 "Number of Passes" = "Anzahl der Durchgänge"
 "Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." = "Anzahl der Dezimalstellen beim Schreiben von Pfadkoordinaten. Eine höhere Genauigkeit erhält die Formtreue, verlängert jedoch die Verarbeitungszeit; eine niedrigere Genauigkeit ist schneller, kann aber gröber sein."
 "Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." = "Anzahl der beibehaltenen signifikanten Bits pro RGB-Kanal, 1–8. Höhere Präzision erhält feine Farbunterschiede und mehr unterschiedliche Cluster; niedrigere Präzision führt ähnliche Farben zu einer einfacheren, stärker posterisierten Palette zusammen."
@@ -182,6 +188,7 @@
 "Update Available ▸ Version {0}" = "Update verfügbar ▸ Version {0}"
 "Update Preview" = "Vorschau aktualisieren"
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
+"Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." = "Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Verwendet adaptive Schwellenwertbildung anstelle eines einzelnen festen Grenzwerts. Ideal für Scans oder Fotos mit ungleichmäßiger Beleuchtung, da der Grenzwert lokal im Bild neu berechnet statt global angewendet wird."
 "Weeding Box Options" = "Optionen für Entgitterrahmen"
 "Weeding Boxes" = "Weeding Boxes" # LOC:TODO

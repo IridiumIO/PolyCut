@@ -88,6 +88,7 @@ Partial Public Class CuttingConfiguration : Inherits ObservableObject
     <ObservableProperty> Private _ToolDiameter As Double = 0.9
     <ObservableProperty> Private _Overcut As Double = 0
     <ObservableProperty> Private _BladePathNoiseTolerance As Double = 0.05
+    <ObservableProperty> Private _CutWidthCompensation As Double = 0
 
     Public ReadOnly Property ToolRadius
         Get

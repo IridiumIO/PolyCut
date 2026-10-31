@@ -35,6 +35,7 @@
 "Colour" = "Colour" # LOC:TODO
 "Combine" = "Combiner"
 "Combine Shapes" = "Combiner les formes"
+"Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." = "Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." # LOC:TODO
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Creating a new project will clear the current workspace. Continue?" = "La création d’un nouveau projet effacera l’espace de travail actuel. Continuer ?"
 "Cursor Colour" = "Couleur du curseur"
@@ -73,6 +74,7 @@
 "Fill Colour" = "Fill Colour" # LOC:TODO
 "Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "Style de remplissage"
+"Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." = "Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." # LOC:TODO
 "Finish Import" = "Terminer l’importation"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "Seuil de luminosité fixe (0 à 255) utilisé en mode Noir et blanc. Les pixels plus sombres que cette valeur deviennent le premier plan (noir) ; les pixels égaux ou supérieurs deviennent l’arrière-plan (blanc). Ignoré lorsque l’échantillonnage adaptatif est activé."
 "GCode" = "GCode"
@@ -94,12 +96,15 @@
 "Inset (Right)" = "Marge intérieure (droite)"
 "Inset (Top)" = "Marge intérieure (haut)"
 "Keep Outlines" = "Conserver les contours"
+"Kerf Compensation" = "Kerf Compensation" # LOC:TODO
 "Language Load Error" = "Erreur de chargement de la langue"
 "Lightest shading spacing" = "Espacement des hachures les plus claires"
 "Load Project" = "Charger un projet"
 "Loading a project will clear the current workspace. Continue?" = "Le chargement d’un projet effacera l’espace de travail actuel. Continuer ?"
 "Maximum Colours (0 = Unlimited)" = "Nombre maximal de couleurs (0 = illimité)"
+"Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." = "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." # LOC:TODO
 "Merge Angle" = "Merge Angle" # LOC:TODO
+"Merge Threshold" = "Merge Threshold" # LOC:TODO
 "Minimum Inter-Object Margin" = "Espacement minimal entre les objets"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Différence minimale de couleur requise entre les couches de dégradé adjacentes, de 0 à 255. Des valeurs élevées fusionnent les teintes similaires en bandes de couleur moins nombreuses et plus uniformes ; des valeurs faibles préservent des dégradés plus lisses avec davantage de couches distinctes."
 "New Project" = "Nouveau projet"
@@ -107,6 +112,7 @@
 "No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
 "No intersection found. The selected shapes do not overlap." = "Aucune intersection trouvée. Les formes sélectionnées ne se chevauchent pas."
 "No paths on canvas" = "Aucun tracé sur le canevas"
+"Noise Tolerance" = "Noise Tolerance" # LOC:TODO
 "Number of Passes" = "Nombre de passes"
 "Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." = "Nombre de décimales utilisées lors de l’écriture des coordonnées des tracés. Une précision élevée préserve la fidélité des formes au prix d’un traitement plus long ; une précision faible est plus rapide mais peut être plus grossière."
 "Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." = "Nombre de bits significatifs conservés par canal RVB, de 1 à 8. Une précision élevée préserve les variations de couleur subtiles et davantage de groupes distincts ; une précision faible fusionne les couleurs similaires pour obtenir une palette plus simple et plus postérisée."
@@ -182,6 +188,7 @@
 "Update Available ▸ Version {0}" = "Mise à jour disponible ▸ Version {0}"
 "Update Preview" = "Mettre à jour l’aperçu"
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
+"Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." = "Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "Utilise un seuillage adaptatif au lieu d’un seuil fixe unique. Idéal pour les scans ou les photos avec un éclairage inégal, car le seuil est recalculé localement dans l’image au lieu d’être appliqué globalement."
 "Weeding Box Options" = "Options des cadres d’échenillage"
 "Weeding Boxes" = "Weeding Boxes" # LOC:TODO

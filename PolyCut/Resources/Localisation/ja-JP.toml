@@ -35,6 +35,7 @@
 "Colour" = "Colour" # LOC:TODO
 "Combine" = "結合"
 "Combine Shapes" = "形状を結合"
+"Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." = "Compensates for material removed by the thickness of the blade, ensuring that wanted regions do not end up smaller than they should be. Can be useful if working on extremely small objects (e.g. PCB traces) with a cutting knife, or if using a laser to compensate for the laser width. Contours are offset by half this value." # LOC:TODO
 "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." = "Controls how much the fill overlaps retained outlines. 0% touches their inner edge; 100% reaches their outer edge. Requires pen-width compensation and Keep Outlines." # LOC:TODO
 "Creating a new project will clear the current workspace. Continue?" = "新しいプロジェクトを作成すると、現在のワークスペースが消去されます。続行しますか？"
 "Cursor Colour" = "カーソル色"
@@ -73,6 +74,7 @@
 "Fill Colour" = "Fill Colour" # LOC:TODO
 "Fill Settings" = "Fill Settings" # LOC:TODO
 "Fill Style" = "塗りつぶしスタイル"
+"Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." = "Filters out and smooths blade traversal on noisy paths. This avoids overcompensating travel paths when a blade offset is set. Set to zero to disable." # LOC:TODO
 "Finish Import" = "インポートを完了"
 "Fixed brightness cutoff (0-255) used for Black & White mode. Pixels darker than this value become foreground (black); pixels at or above it become background (white). Ignored when Adaptive Sampling is enabled." = "白黒モードで使用する固定輝度しきい値（0～255）。この値より暗いピクセルは前景（黒）になり、この値以上のピクセルは背景（白）になります。適応サンプリングが有効な場合は無視されます。"
 "GCode" = "GCode"
@@ -94,12 +96,15 @@
 "Inset (Right)" = "内側余白（右）"
 "Inset (Top)" = "内側余白（上）"
 "Keep Outlines" = "輪郭を保持"
+"Kerf Compensation" = "Kerf Compensation" # LOC:TODO
 "Language Load Error" = "言語読み込みエラー"
 "Lightest shading spacing" = "最明部のシェーディング間隔"
 "Load Project" = "プロジェクトを読み込む"
 "Loading a project will clear the current workspace. Continue?" = "プロジェクトを読み込むと、現在のワークスペースが消去されます。続行しますか？"
 "Maximum Colours (0 = Unlimited)" = "最大色数（0 = 無制限）"
+"Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." = "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." # LOC:TODO
 "Merge Angle" = "Merge Angle" # LOC:TODO
+"Merge Threshold" = "Merge Threshold" # LOC:TODO
 "Minimum Inter-Object Margin" = "オブジェクト間の最小間隔"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "隣接するグラデーションレイヤー間に必要な最小色差（0～255）。値を高くすると似た色調が統合され、より少数で均一な色帯になります。値を低くすると、より多くの異なるレイヤーを使って滑らかなグラデーションを保持します。"
 "New Project" = "新しいプロジェクト"
@@ -107,6 +112,7 @@
 "No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
 "No intersection found. The selected shapes do not overlap." = "交差部分が見つかりません。選択した形状は重なっていません。"
 "No paths on canvas" = "キャンバス上にパスがありません"
+"Noise Tolerance" = "Noise Tolerance" # LOC:TODO
 "Number of Passes" = "パス回数"
 "Number of decimal places used when writing path coordinates. Higher precision preserves shape accuracy at the cost of a longer processing times; lower precision is faster but can be coarser." = "パス座標を書き出す際の小数点以下の桁数。精度を高くすると形状の正確さを保てますが処理時間が長くなります。精度を低くすると高速になりますが、形状が粗くなる場合があります。"
 "Number of significant bits kept per RGB channel, 1-8. Higher precision preserves subtle colour variation and more distinct clusters; lower precision merges similar colours together for a simpler, more posterised palette." = "RGB 各チャンネルで保持する有効ビット数（1～8）。精度を高くすると微妙な色差とより多くの異なるクラスタを保持できます。精度を低くすると似た色が統合され、より単純でポスタライズされたパレットになります。"
@@ -182,6 +188,7 @@
 "Update Available ▸ Version {0}" = "更新があります ▸ バージョン {0}"
 "Update Preview" = "プレビューを更新"
 "Used when objects are close to each other and you want the generator to place a weeding cut between them." = "Used when objects are close to each other and you want the generator to place a weeding cut between them." # LOC:TODO
+"Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." = "Useful to clean up tiny nodes extra nodes on otherwise straight lines that could introduce micro bends that affect quality." # LOC:TODO
 "Uses adaptive thresholding instead of a single fixed cutoff. Ideal for scans or photos with uneven lighting, since the threshold is recalculated locally across the image rather than applied globally." = "単一の固定しきい値ではなく適応しきい値処理を使用します。画像全体ではなく局所的にしきい値を再計算するため、照明ムラのあるスキャン画像や写真に適しています。"
 "Weeding Box Options" = "カス取り枠の設定"
 "Weeding Boxes" = "Weeding Boxes" # LOC:TODO

@@ -7,7 +7,6 @@ Public Class OffsetGenerator
 
     Public Shared Function CreateOffsetArcs(lines As List(Of GeoLine), toolRadius As Double, Optional noiseTolerance As Double = 0) As List(Of GeoLine)
         If lines Is Nothing Then Return New List(Of GeoLine)
-        If Not Double.IsFinite(toolRadius) Then Throw New ArgumentOutOfRangeException(NameOf(toolRadius))
         If toolRadius <= 0 Then Return lines.ToList()
 
         Dim source = lines.Where(Function(line) line.StartPoint <> line.EndPoint).ToList()
@@ -84,7 +83,7 @@ Public Class OffsetGenerator
                                           Dim predDir = loopLines(predIdx).Direction()
                                           Dim currDir = l.Direction()
 
-                                          ' prefer entries where the loop predecessor already points the same way.
+                                          ' Strongly prefer entries where the loop predecessor already points the same way.
                                           Dim hasFreeEntry As Boolean = Vector.Multiply(predDir, currDir) >= AlignmentThresholdCos
 
                                           ' Secondary score: alignment with the last known blade direction.

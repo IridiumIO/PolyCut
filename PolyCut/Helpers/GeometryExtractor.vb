@@ -58,10 +58,8 @@ Public Class GeometryExtractor
             figures = ClipFiguresToWorkArea(figures, cfg.WorkAreaWidth, cfg.WorkAreaHeight)
         End If
 
-        If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle)
-
-
         figures = NormalizeFiguresForCut(figures, cfg.Tolerance, item.IsFilled)
+        If cfg.SimplifyToolPaths Then figures = CleanupFigures(figures, cfg.Tolerance, cfg.SimplifyMergeAngle)
         If figures Is Nothing OrElse figures.Count = 0 Then Return New List(Of PathBasedElement)
 
         ' Nothing to check once clipped: the clip rectangle already guarantees containment
@@ -257,15 +255,12 @@ Public Class GeometryExtractor
         Dim eps As Double = Math.Max(0.000001, tolerance * 0.5)
         Dim eps2 As Double = eps * eps
 
-        ' Angle tolerance for collinearity merging (in radians).
-        Dim rad = Math.PI * mergeAngle / 180.0
-
-        Dim sinTol As Double = rad
-
+        Dim rad = Math.PI * Math.Clamp(mergeAngle, 0, 90) / 180.0
 
         For Each fig In figures
             If fig Is Nothing OrElse fig.Count = 0 Then Continue For
 
+            Dim closed = Dist2(fig.Last().X2, fig.Last().Y2, fig(0).X1, fig(0).Y1) <= eps2
             Dim cleaned As New List(Of GeoLine)
 
             For i = 0 To fig.Count - 1
@@ -300,19 +295,57 @@ Public Class GeometryExtractor
                     Continue For
                 End If
 
-                ' Optional: merge adjacent collinear segments (helps remove micro-vertices)
-                If Dist2(prev.X2, prev.Y2, ln.X1, ln.Y1) <= eps2 AndAlso prev.IsCollinearWith(ln, sinTol) Then
-                    cleaned(cleaned.Count - 1) = New GeoLine(prev.X1, prev.Y1, ln.X2, ln.Y2)
-                Else
-                    cleaned.Add(ln)
-                End If
+                cleaned.Add(ln)
             Next
+
+            ' Removing a tiny closing segment must not leave a gap at the seam.
+            If closed AndAlso cleaned.Count > 0 AndAlso
+                Dist2(cleaned.Last().X2, cleaned.Last().Y2, cleaned(0).X1, cleaned(0).Y1) <= eps2 Then
+                Dim last = cleaned.Last()
+                cleaned(cleaned.Count - 1) = New GeoLine(last.X1, last.Y1, cleaned(0).X1, cleaned(0).Y1)
+            End If
+
+            Dim minimumCount = If(closed, 3, 1)
+            Dim mergedSeam As Boolean
+            Do
+                Dim simplified As New List(Of GeoLine)(cleaned.Count)
+                For i = 0 To cleaned.Count - 1
+                    Dim current = cleaned(i)
+                    ' Recheck the preceding join whenever a merge changes the direction.
+                    While simplified.Count > 0 AndAlso simplified.Count + cleaned.Count - i > minimumCount
+                        Dim previous = simplified.Last()
+                        If Not CanMergeLines(previous, current, eps2, rad) Then Exit While
+                        current = New GeoLine(previous.X1, previous.Y1, current.X2, current.Y2)
+                        simplified.RemoveAt(simplified.Count - 1)
+                    End While
+                    simplified.Add(current)
+                Next
+                cleaned = simplified
+
+                mergedSeam = closed AndAlso cleaned.Count > minimumCount AndAlso
+                    CanMergeLines(cleaned.Last(), cleaned(0), eps2, rad)
+                If mergedSeam Then
+                    cleaned(0) = New GeoLine(cleaned.Last().X1, cleaned.Last().Y1, cleaned(0).X2, cleaned(0).Y2)
+                    cleaned.RemoveAt(cleaned.Count - 1)
+                End If
+            Loop While mergedSeam
 
             ' Drop figures that collapsed to nothing
             If cleaned.Count > 0 Then output.Add(cleaned)
         Next
 
         Return output
+    End Function
+
+    Private Shared Function CanMergeLines(a As GeoLine, b As GeoLine, eps2 As Double, angle As Double) As Boolean
+        If Dist2(a.X2, a.Y2, b.X1, b.Y1) > eps2 Then Return False
+        Dim ax = CDbl(a.X2) - a.X1
+        Dim ay = CDbl(a.Y2) - a.Y1
+        Dim bx = CDbl(b.X2) - b.X1
+        Dim by = CDbl(b.Y2) - b.Y1
+        Dim dot = ax * bx + ay * by
+        ' Only merge forward motion just in case we intentionally want to reverse cutting direction nearly collinenarly
+        Return dot > 0 AndAlso Math.Atan2(Math.Abs(ax * by - ay * bx), dot) <= angle
     End Function
 
     Private Shared Function Dist2(x1 As Double, y1 As Double, x2 As Double, y2 As Double) As Double

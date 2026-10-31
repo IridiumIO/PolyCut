@@ -220,7 +220,7 @@ Class PreviewPage : Implements INavigableView(Of MainViewModel)
 
 
     Private _RenderPen As New Pen() With {
-        .Thickness = 0.2,
+        .Thickness = 0.1,
         .StartLineCap = PenLineCap.Round,
         .EndLineCap = PenLineCap.Round
     }

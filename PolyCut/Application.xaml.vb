@@ -9,6 +9,8 @@ Imports Wpf.Ui
 Imports Wpf.Ui.DependencyInjection
 
 Partial Public Class Application
+    Public Shared Property Version As NuGet.Versioning.NuGetVersion = New NuGet.Versioning.NuGetVersion(0, 12, 0)
+
     Private Shared ReadOnly _host As IHost = Host.CreateDefaultBuilder() _
         .ConfigureAppConfiguration(Sub(context, configBuilder)
                                        ' Set base path using IConfigurationBuilder

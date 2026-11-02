@@ -22,7 +22,7 @@ Public Class UpdateService
 
             Dim newVersion = NuGetVersion.Parse(versionString)
 
-            Dim currentVersion = SettingsHandler.SemanticVersion
+            Dim currentVersion = Application.Version
 
             If newVersion > currentVersion Then
                 Application.GetService(Of SnackbarService).GenerateUpdate(SettingsHandler.ToFriendlyVersion(newVersion), updateURL)

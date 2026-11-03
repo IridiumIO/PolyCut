@@ -11,11 +11,13 @@ Public Class MoonrakerExporter : Implements INetworkExporter
     Public Property UploadEndpoint As String = "/server/files/upload" Implements INetworkExporter.UploadEndpoint
     Public Property AutoPrint As Boolean Implements INetworkExporter.AutoPrint
 
-    Public Sub New(config As ProcessorConfiguration)
+    Public Sub New(config As ProcessorConfiguration, printerExportConfig As ExportConfiguration)
         ProcessorConfiguration = config
-        DestinationHost = config.ExportConfig.DestinationIP
-        DestinationPort = config.ExportConfig.DestinationPort
         AutoPrint = config.ExportConfig.AutoPrint
+
+        'This is cursed separation here, TODO: Fix this so we're not splitting AutoPrint and DestinationHost/Port between ProcessorConfiguration and the printer config
+        DestinationHost = printerExportConfig.DestinationIP
+        DestinationPort = printerExportConfig.DestinationPort
 
     End Sub
 

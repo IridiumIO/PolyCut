@@ -720,7 +720,7 @@
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <Label Padding="1 2 0 0" VerticalAlignment="Center"
-                                   loc:L.Context="3D Printer/Machine" loc:L.Value="Printer" />
+                                   loc:L.Context="3D Printer/Machine" loc:L.Value="Machine" />
                             <Grid Grid.Column="2" Margin="10 0 0 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

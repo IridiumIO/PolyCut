@@ -153,16 +153,13 @@ Partial Public Class ExportConfiguration : Inherits ObservableObject
 
     <ObservableProperty> Private _Type As ExporterType = ExporterType.Network
     <ObservableProperty> Private _FileDestination As String = Nothing
-    Private _DestinationIP As String = "http://klipper.local"
-    Public Property DestinationIP As String
-        Get
-            Return _DestinationIP
-        End Get
-        Set(value As String)
-            SetProperty(_DestinationIP, BuildURI(value, Nothing).ToString(), NameOf(DestinationIP))
-        End Set
-    End Property
+
+    <ObservableProperty> Private _DestinationIP As String = "http://klipper.local"
     <ObservableProperty> Private _DestinationPort As Integer = 7125
+
+    <ObservableProperty> Private _MachineUIIP As String = "http://klipper.local"
+    <ObservableProperty> Private _MachineUIPort As Integer = 80
+
     <ObservableProperty> Private _AutoPrint As Boolean = True
 
     Public Function Clone() As ExportConfiguration

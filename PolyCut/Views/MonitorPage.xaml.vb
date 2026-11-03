@@ -52,7 +52,7 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
         End If
 
         ' Set binding
-        Dim binding As New Binding("Configuration.ExportConfig.DestinationIP")
+        Dim binding As New Binding("Printer.ExportConfig.MachineUIIP")
         binding.Source = Me.DataContext
         binding.Mode = BindingMode.OneWay
 

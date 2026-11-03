@@ -9,8 +9,12 @@
         If DestinationPort <> Nothing Then
             address &= ":" & DestinationPort.ToString
         End If
+        Try
 
-        Return New Uri(address)
+            Return New Uri(address)
+        Catch ex As Exception
+            Return Nothing
+        End Try
 
     End Function
 End Module

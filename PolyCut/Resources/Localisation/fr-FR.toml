@@ -1,6 +1,6 @@
 ﻿# PolyCut Localisation
 # @version 1
-# @programversion 0.11.0
+# @programversion 0.12.0
 
 # ===================
 # Translations
@@ -10,15 +10,15 @@
 "Adaptive Sampling" = "Échantillonnage adaptatif"
 "Adaptive Sampling Sensitivity" = "Sensibilité de l’échantillonnage adaptatif"
 "Adaptive Sampling Window" = "Fenêtre d’échantillonnage adaptatif"
-"Add Printer" = "Ajouter une imprimante"
+"Add Machine" = "Add Machine" # LOC:TODO
 "Add _Weeding Boxes" = "Add _Weeding Boxes" # LOC:TODO
 "Added Preset" = "Préréglage ajouté"
 "Alignment" = "Alignement"
 "Allow Travel in Outlines" = "Autoriser les déplacements dans les contours"
 "An unknown error occurred" = "Une erreur inconnue s’est produite"
 "Arrange" = "Organiser"
-"Automatically Begin Printing" = "Démarrer automatiquement l’impression"
 "Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used." = "Réduit automatiquement la palette à N couleurs au maximum. Définissez 0 pour ne pas limiter le nombre de couleurs, ou choisissez une valeur pour restreindre le nombre de couleurs utilisées."
+"Automatically start printing after upload" = "Automatically start printing after upload" # LOC:TODO
 "Bed Dimensions" = "Dimensions du plateau"
 "Blade Settings" = "Paramètres de la lame"
 "Boolean operation failed." = "L’opération booléenne a échoué."
@@ -55,8 +55,7 @@
 "Drawing Settings" = "Paramètres de dessin"
 "Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
 "Enabled" = "Enabled" # LOC:TODO
-"Enter Printer Name" = "Saisir le nom de l’imprimante"
-"Enter URL or IP Address" = "Saisir l’URL ou l’adresse IP"
+"Enter Machine Name" = "Enter Machine Name" # LOC:TODO
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "Saisir une couleur hexadécimale (p. ex. #FFFF0000 ou #FF0000)"
 "Error" = "Erreur"
 "Error Saving File" = "Erreur lors de l’enregistrement du fichier"
@@ -68,7 +67,6 @@
 "Failed to load project" = "Échec du chargement du projet"
 "Failed to save project" = "Échec de l’enregistrement du projet"
 "File Saved" = "Fichier enregistré"
-"File name: " = "Nom du fichier : "
 "Fill" = "Remplissage"
 "Fill / Outline Overlap" = "Fill / Outline Overlap" # LOC:TODO
 "Fill Colour" = "Fill Colour" # LOC:TODO
@@ -101,12 +99,15 @@
 "Lightest shading spacing" = "Espacement des hachures les plus claires"
 "Load Project" = "Charger un projet"
 "Loading a project will clear the current workspace. Continue?" = "Le chargement d’un projet effacera l’espace de travail actuel. Continuer ?"
+"Machine Configuration" = "Machine Configuration" # LOC:TODO
+"Machine Name:" = "Machine Name:" # LOC:TODO
 "Maximum Colours (0 = Unlimited)" = "Nombre maximal de couleurs (0 = illimité)"
 "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." = "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." # LOC:TODO
 "Merge Angle" = "Merge Angle" # LOC:TODO
 "Merge Threshold" = "Merge Threshold" # LOC:TODO
 "Minimum Inter-Object Margin" = "Espacement minimal entre les objets"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "Différence minimale de couleur requise entre les couches de dégradé adjacentes, de 0 à 255. Des valeurs élevées fusionnent les teintes similaires en bandes de couleur moins nombreuses et plus uniformes ; des valeurs faibles préservent des dégradés plus lisses avec davantage de couches distinctes."
+"Network" = "Network" # LOC:TODO
 "New Project" = "Nouveau projet"
 "No" = "Non"
 "No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
@@ -123,9 +124,8 @@
 "Path Simplification" = "Simplification des tracés"
 "Pen Width" = "Pen Width" # LOC:TODO
 "Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "Pourcentage sous la luminosité moyenne locale qu’un pixel doit atteindre pour être considéré comme premier plan (15 % par défaut). Une sensibilité élevée détecte des variations de contraste plus subtiles ; une sensibilité faible exige un contraste local plus fort avant qu’une limite soit détectée."
+"Port" = "Port" # LOC:TODO
 "Preview Page Settings" = "Paramètres de la page d’aperçu"
-"Printer Configuration" = "Configuration de l’imprimante"
-"Printer Name:" = "Nom de l’imprimante :"
 "Printer name is empty" = "Le nom de l’imprimante est vide"
 "Printer not saved. Name already exists." = "Imprimante non enregistrée. Ce nom existe déjà."
 "Processing Settings" = "Paramètres de traitement"
@@ -143,15 +143,16 @@
 "SVG Exported" = "SVG exporté"
 "S_ave As..." = "Enregistrer _sous..."
 "Save" = "Save" # LOC:TODO
-"Save GCode" = "Enregistrer le GCode"
+"Save GCode file or send it directly to your machine" = "Save GCode file or send it directly to your machine" # LOC:TODO
+"Save to file" = "Save to file" # LOC:TODO
 "Saved Preset" = "Préréglage enregistré"
 "Saved to: {0}" = "Enregistré dans : {0}"
 "Scaling may not be correct" = "L’échelle peut être incorrecte"
 "Select at least 2 shapes to combine" = "Sélectionnez au moins 2 formes à combiner"
 "Select at least 2 shapes to group" = "Select at least 2 shapes to group" # LOC:TODO
-"Send Preview" = "Envoyer l’aperçu"
-"Send to 3D Printer" = "Envoyer vers l’imprimante 3D"
-"Sends just the bounding box to the printer for preview, which runs in the travel height." = "Envoie uniquement le rectangle englobant à l’imprimante pour l’aperçu, exécuté à la hauteur de déplacement."
+"Select the type of device used in export configuration" = "Select the type of device used in export configuration" # LOC:TODO
+"Send Alignment Trace" = "Send Alignment Trace" # LOC:TODO
+"Send GCode" = "Send GCode" # LOC:TODO
 "Sent to Printer" = "Envoyé à l’imprimante"
 "Shading Threshold" = "Seuil d’ombrage"
 "Shading angle" = "Angle d’ombrage"
@@ -182,6 +183,9 @@
 "Travel Line Colour" = "Couleur des lignes de déplacement"
 "Travel Speed" = "Vitesse de déplacement"
 "UI Language" = "Langue de l’interface"
+"URL / IP Address" = "URL / IP Address" # LOC:TODO
+"URL to connect to for sending Gcode" = "URL to connect to for sending Gcode" # LOC:TODO
+"URL to connect to for the device UI. Leave blank to use the Host Address" = "URL to connect to for the device UI. Leave blank to use the Host Address" # LOC:TODO
 "Ungroup" = "Ungroup" # LOC:TODO
 "Union operation resulted in an empty geometry. This should not happen." = "L’union a produit une géométrie vide. Cela ne devrait pas se produire."
 "Unknown SVG Unit Type: " = "Type d’unité SVG inconnu : "
@@ -214,10 +218,11 @@
 "version" = "version"
 
 [context."3D Printer Host Type and address"]
+"Device UI Address" = "Device UI Address" # LOC:TODO
 "Host Address" = "Adresse de l’hôte"
-"Host Type" = "Type d’hôte"
 
 [context."3D Printer/Machine"]
+"Machine" = "Machine" # LOC:TODO
 "Printer" = "Imprimante"
 
 [context."Allow Travel in Outlines Tooltip"]
@@ -415,11 +420,25 @@
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "Distance en Z que l’outil doit parcourir après chaque passe lorsque plusieurs passes sont activées."
 
 [obsolete]
+"Add Printer" = "Ajouter une imprimante"
+"Automatically Begin Printing" = "Démarrer automatiquement l’impression"
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "Impossible d’effectuer des opérations booléennes sur des tracés ouverts (lignes). Toutes les formes doivent être fermées."
 "Copy" = "Copier"
 "Cut" = "Couper"
+"Enter Printer Name" = "Saisir le nom de l’imprimante"
+"Enter URL or IP Address" = "Saisir l’URL ou l’adresse IP"
+"File name: " = "Nom du fichier : "
+"Printer Configuration" = "Configuration de l’imprimante"
+"Printer Name:" = "Nom de l’imprimante :"
 "Printer: " = "Imprimante : "
+"Save GCode" = "Enregistrer le GCode"
+"Send Preview" = "Envoyer l’aperçu"
+"Send to 3D Printer" = "Envoyer vers l’imprimante 3D"
+"Sends just the bounding box to the printer for preview, which runs in the travel height." = "Envoie uniquement le rectangle englobant à l’imprimante pour l’aperçu, exécuté à la hauteur de déplacement."
 "Shading Settings" = "Paramètres d’ombrage"
+
+[obsolete.context."3D Printer Host Type and address"]
+"Host Type" = "Type d’hôte"
 
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "GCode de fin d’aperçu (?)"

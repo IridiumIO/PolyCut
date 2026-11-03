@@ -6,12 +6,12 @@
                   xmlns:local="clr-namespace:PolyCut"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                  Title="{loc:T Enter Printer Name}"
+                  Title="{loc:T Enter Machine Name}"
                   d:DesignHeight="450"
                   d:DesignWidth="800"
                   CloseButtonText="{loc:T Close}"
                   DialogMaxWidth="750"
-                  PrimaryButtonText="{loc:T Add Printer}"
+                  PrimaryButtonText="{loc:T Add Machine}"
                   mc:Ignorable="d">
 
     <ui:ContentDialog.Resources>
@@ -20,7 +20,7 @@
 
     <Grid>
         <StackPanel Orientation="Horizontal">
-            <Label Margin="0 0 10 0" VerticalAlignment="Center" loc:L.Value="Printer Name:" />
+            <Label Margin="0 0 10 0" VerticalAlignment="Center" loc:L.Value="Machine Name:" />
             <TextBox x:Name="PrinterNameTextBox"
                      Width="200"
                      VerticalAlignment="Center"

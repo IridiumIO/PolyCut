@@ -7,9 +7,9 @@
                  xmlns:local="clr-namespace:PolyCut"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 Title="{loc:T Printer Configuration}"
+                 Title="{loc:T Machine Configuration}"
                  Width="900"
-                 Height="600" 
+                 Height="600"
                  MinWidth="850"
                  d:DataContext="{d:DesignInstance Type=local:SVGPageViewModel}"
                  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -26,7 +26,7 @@
                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Panel.ZIndex="200"
                           d:Visibility="Collapsed" />
         <ui:TitleBar Grid.Row="0" Margin="-20" Panel.ZIndex="121" />
-        <Label Grid.Row="0" Margin="10 10" loc:L.Value="Printer Configuration" />
+        <Label Grid.Row="0" Margin="10 10" loc:L.Value="Machine Configuration" />
 
         <Grid Grid.Row="1" Margin="10 0 10 10" ColumnDefinitions="Auto * Auto Auto">
 
@@ -286,11 +286,12 @@
                                   CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                         <Grid Margin="14 0" ColumnDefinitions="* 20 *" RowDefinitions="auto 20 auto 20 auto">
 
-                            <StackPanel Grid.Row="0" Grid.Column="0" >
+                            <StackPanel Grid.Row="0" Grid.Column="0">
                                 <Label Margin="0 0 0 0" loc:L.Value="Start GCode" FontWeight="SemiBold" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="Before initial positioning at the start of the job" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="Before initial positioning at the start of the job" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="StartGCodeTextBox"
                                             Height="100"
@@ -300,10 +301,12 @@
                                             TextAlignment="Left" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="2">
-                                <Label Margin="0 0 0 0" FontWeight="SemiBold" VerticalAlignment="Center" loc:L.Value="End GCode" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="After the final lift to Travel Z at the end of the job" />
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center"
+                                       loc:L.Value="End GCode" FontWeight="SemiBold" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="After the final lift to Travel Z at the end of the job" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="EndGCodeTextBox"
                                             Height="100"
@@ -316,10 +319,11 @@
                                 <StackPanel.ToolTip>
                                     <ToolTip loc:L.Value="Optional commands to activate a tool after moving to the work Z height, before cutting or drawing. Can be used to activate a laser/spindle or issue a custom 'pen down' GCode" />
                                 </StackPanel.ToolTip>
-                                <Label Margin="0 0 0 0" FontWeight="SemiBold" loc:L.Value="Tool On GCode" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="After reaching Work Z, activates before the draw step" />
+                                <Label Margin="0 0 0 0" loc:L.Value="Tool On GCode" FontWeight="SemiBold" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="After reaching Work Z, activates before the draw step" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="ToolDownGCodeTextBox"
                                             Height="100"
@@ -332,10 +336,11 @@
                                 <StackPanel.ToolTip>
                                     <ToolTip loc:L.Value="Optional commands to deactivate a tool before lifting or travelling, including initial positioning and job completion." />
                                 </StackPanel.ToolTip>
-                                <Label Margin="0 0 0 0" FontWeight="SemiBold" loc:L.Value="Tool Off GCode" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="After the draw step, before lifting or travel. Also runs at job start/end" />
+                                <Label Margin="0 0 0 0" loc:L.Value="Tool Off GCode" FontWeight="SemiBold" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="After the draw step, before lifting or travel. Also runs at job start/end" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="ToolUpGCodeTextBox"
                                             Height="100"
@@ -348,10 +353,12 @@
                                 <StackPanel.ToolTip>
                                     <ToolTip loc:L.Value="Start GCode used when sending the bounding box preview to Klipper" />
                                 </StackPanel.ToolTip>
-                                <Label Margin="0 0 0 0" FontWeight="SemiBold" VerticalAlignment="Center" loc:L.Value="Preview Start GCode" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="Before the Klipper bounding-box preview runs" />
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center"
+                                       loc:L.Value="Preview Start GCode" FontWeight="SemiBold" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="Before the Klipper bounding-box preview runs" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="PreviewStartGCodeTextBox"
                                             Height="100"
@@ -364,10 +371,12 @@
                                 <StackPanel.ToolTip>
                                     <ToolTip loc:L.Value="End GCode used when sending the bounding box preview to Klipper" />
                                 </StackPanel.ToolTip>
-                                <Label Margin="0 0 0 0" FontWeight="SemiBold" VerticalAlignment="Center" loc:L.Value="Preview End GCode" />
-                                <TextBlock MinHeight="16" FontSize="12" LineHeight="16"
-                                           Foreground="{DynamicResource TextControlForegroundDisabled}" TextWrapping="Wrap"
-                                           loc:L.Value="After the Klipper bounding-box preview runs" />
+                                <Label Margin="0 0 0 0" VerticalAlignment="Center"
+                                       loc:L.Value="Preview End GCode" FontWeight="SemiBold" />
+                                <TextBlock MinHeight="16"
+                                           loc:L.Value="After the Klipper bounding-box preview runs" FontSize="12"
+                                           Foreground="{DynamicResource TextControlForegroundDisabled}"
+                                           LineHeight="16" TextWrapping="Wrap" />
 
                                 <ui:TextBox x:Name="PreviewEndGCodeTextBox"
                                             Height="100"
@@ -380,6 +389,94 @@
                     </ScrollViewer>
                 </Grid>
             </TabItem>
+
+            <TabItem x:Name="MachineExport_Section" Style="{StaticResource CustomTabStyle}">
+                <TabItem.Header>
+                    <StackPanel Margin="5 0" Orientation="Horizontal">
+                        <ui:SymbolIcon Margin="0 0 6 0" Symbol="Wifi120" />
+                        <TextBlock loc:L.Value="Network" />
+                    </StackPanel>
+                </TabItem.Header>
+
+                <Grid RowDefinitions="auto *">
+                    <Separator Grid.Row="0" Margin="5" />
+
+                    <StackPanel Grid.Row="1" Margin="25 10 25 0" TextOptions.TextFormattingMode="Display">
+
+                        <Grid Margin="0 0 0 15" ColumnDefinitions="* 250" RowDefinitions="auto auto">
+                            <Label Content="Host Type" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1"
+                                       loc:L.Value="Select the type of device used in export configuration" FontSize="12"
+                                       Foreground="{StaticResource TextControlForegroundDisabled}" />
+                            <ComboBox x:Name="ExportTypeComboBox"
+                                      Grid.RowSpan="2" Grid.Column="1"
+                                      HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                                      SelectedIndex="0">
+                                <ComboBoxItem Content="Klipper" />
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0 0 0 15" ColumnDefinitions="* 250" RowDefinitions="auto auto">
+                            <Label loc:L.Context="3D Printer Host Type and address" loc:L.Value="Host Address" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1"
+                                       loc:L.Value="URL to connect to for sending Gcode" FontSize="12"
+                                       Foreground="{StaticResource TextControlForegroundDisabled}" />
+                            <StackPanel Grid.RowSpan="2" Grid.Column="1" Orientation="Horizontal">
+                                <ui:TextBox x:Name="HostAddress"
+                                            Grid.RowSpan="2" Grid.Column="1"
+                                            Width="180" Height="37"
+                                            VerticalAlignment="Center"
+                                            ClearButtonEnabled="False"
+                                            PlaceholderText="{loc:T 'URL / IP Address'}"
+                                            Text="{Binding MainVM.Printer.ExportConfig.DestinationIP, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                                <ui:TextBox x:Name="HostPort"
+                                            Grid.RowSpan="2" Grid.Column="1"
+                                            Width="60" Height="37"
+                                            Margin="10 0 0 0" VerticalAlignment="Center"
+                                            ClearButtonEnabled="False"
+                                            PlaceholderText="{loc:T Port}"
+                                            Text="{Binding MainVM.Printer.ExportConfig.DestinationPort, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                            </StackPanel>
+
+                        </Grid>
+
+                        <Grid Margin="0 0 0 15" ColumnDefinitions="* 250" RowDefinitions="auto auto">
+                            <Label loc:L.Context="3D Printer Host Type and address" loc:L.Value="Device UI Address" FontWeight="SemiBold" />
+                            <TextBlock Grid.Row="1"
+                                       loc:L.Value="URL to connect to for the device UI. Leave blank to use the Host Address" FontSize="12"
+                                       Foreground="{StaticResource TextControlForegroundDisabled}" />
+                            <StackPanel Grid.RowSpan="2" Grid.Column="1" Orientation="Horizontal">
+                                <ui:TextBox x:Name="MonitoringAddress"
+                                            Grid.RowSpan="2" Grid.Column="1"
+                                            Width="180" Height="37"
+                                            VerticalAlignment="Center"
+                                            ClearButtonEnabled="False"
+                                            PlaceholderText="{loc:T 'URL / IP Address'}"
+                                            Text="{Binding MainVM.Printer.ExportConfig.MachineUIIP, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                                <ui:TextBox x:Name="MonitoringPort"
+                                            Grid.RowSpan="2" Grid.Column="1"
+                                            Width="60" Height="37"
+                                            Margin="10 0 0 0" VerticalAlignment="Center"
+                                            ClearButtonEnabled="False"
+                                            PlaceholderText="{loc:T Port}"
+                                            Text="{Binding MainVM.Printer.ExportConfig.MachineUIPort, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+                            </StackPanel>
+                        </Grid>
+
+
+
+
+                    </StackPanel>
+
+
+                </Grid>
+
+            </TabItem>
+
         </TabControl>
     </Grid>
 </ui:FluentWindow>

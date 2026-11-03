@@ -7,92 +7,158 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="ExportPage"
-      Margin="42"
+      Margin="0 5 0 0"
       d:DataContext="{d:DesignInstance Type=local:ExportViewModel}"
       d:DesignHeight="700"
       d:DesignWidth="800"
+      Background="{StaticResource ControlFillColorTertiaryBrush}"
       mc:Ignorable="d">
-    <Grid>
-        <StackPanel>
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Orientation="Horizontal">
 
-                <Button Width="220" Height="200" Command="{Binding SaveFileCommand}">
+    <Grid Width="800" MinWidth="200" MaxWidth="700"
+          Margin="42" HorizontalAlignment="Center"
+          ColumnDefinitions="* *" RowDefinitions="auto auto auto auto auto auto"
+          TextBlock.Foreground="{StaticResource TextControlForeground}"
+          TextOptions.TextFormattingMode="Display">
 
-                    <Grid Height="170">
+        <TextBlock loc:L.Value="Export" FontSize="20" FontWeight="SemiBold" />
+        <TextBlock Grid.Row="1"
+                   Margin="0 5 0 0"
+                   loc:L.Value="Save GCode file or send it directly to your machine"
+                   Foreground="{StaticResource TextControlForegroundDisabled}" />
 
-                        <ui:SymbolIcon Margin="0 0 0 40" FontSize="70" Symbol="Save20" />
-                        <TextBlock Grid.Row="1"
-                                   Margin="0 0 0 35" VerticalAlignment="Bottom"
-                                   loc:L.Value="Save GCode" SnapsToDevicePixels="True" />
+        <StackPanel Grid.RowSpan="2" Grid.Column="1"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Orientation="Horizontal" TextBlock.FontSize="16">
+            <ui:SymbolIcon VerticalAlignment="Center" Foreground="{DynamicResource AccentFillColorDefaultBrush}" Symbol="Print16" />
+            <TextBlock Margin="8 -3 0 0" VerticalAlignment="Center" Text="{Binding MainVM.Printer.Name}" />
+            <ui:Button Margin="15 0 0 0"
+                       Background="Transparent" BorderThickness="0"
+                       Command="{Binding MainVM.ConfigurePrinterCommand}">
+                <ui:SymbolIcon FontSize="16" Symbol="Settings16" />
+            </ui:Button>
+        </StackPanel>
 
-                    </Grid>
+        <Border Grid.Row="2" Grid.ColumnSpan="2"
+                Margin="0 20" Padding="20"
+                Background="{StaticResource CardBackgroundDisabled}"
+                CornerRadius="12">
+
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" TextBlock.FontSize="16">
+                    <ui:SymbolIcon VerticalAlignment="Center" Foreground="{DynamicResource AccentFillColorDefaultBrush}" Symbol="Document16" />
+                    <TextBlock Margin="10 -2 0 0" VerticalAlignment="Center" Text="Output File" />
+                </StackPanel>
+                <TextBlock Margin="0 10 0 5" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextControlForegroundDisabled}"
+                           Text="File Name" />
+                <ui:TextBox x:Name="OutputFileName"
+                            Grid.Column="1"
+                            Height="37"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                            Text="{Binding FilePath, Mode=TwoWay}" />
+
+                <Button Width="220" Height="37"
+                        Margin="0 10 0 0"
+                        Command="{Binding SaveFileCommand}">
+
+                    <StackPanel Orientation="Horizontal">
+
+                        <ui:SymbolIcon FontSize="16" Symbol="Save16" />
+                        <TextBlock Margin="10 0 0 0"
+                                   loc:L.Value="Save to file" FontWeight="SemiBold" SnapsToDevicePixels="True" />
+
+                    </StackPanel>
 
                 </Button>
-                <StackPanel Margin="50 0 0 0" Orientation="Vertical">
 
-                    <Button Width="220" Height="200"
-                            Padding="0"
-                            Command="{Binding NetworkUploadCommand}">
-
-                        <Grid Height="200">
-
-                            <ui:SymbolIcon Margin="0 0 0 40" FontSize="70" Symbol="Send20" />
-                            <TextBlock Margin="0 0 0 55" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                       loc:L.Value="Send to 3D Printer" />
-                            <Button Width="220" Height="50"
-                                    VerticalAlignment="Bottom"
-                                    Command="{Binding NetworkUploadPreviewCommand}">
-
-                                <Grid Height="40">
-
-                                    <ui:SymbolIcon HorizontalAlignment="Left" FontSize="30" Symbol="SendClock20" />
-                                    <TextBlock Margin="40 0 0 0" VerticalAlignment="Center" loc:L.Value="Send Preview" />
-
-                                </Grid>
-
-                                <Button.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock Width="200" loc:L.Value="Sends just the bounding box to the printer for preview, which runs in the travel height." TextWrapping="Wrap" />
-                                    </ToolTip>
-                                </Button.ToolTip>
-
-                            </Button>
-                        </Grid>
-
-                    </Button>
+            </StackPanel>
 
 
 
+
+        </Border>
+
+
+        <TextBlock Grid.Row="3"
+                   Margin="0 20 0 0"
+                   FontSize="16" FontWeight="SemiBold" Text="Send to machine" />
+
+        <Border Grid.Row="4"
+                Margin="0 15 10 15" Padding="20"
+                Background="{StaticResource CardBackgroundDisabled}"
+                CornerRadius="12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" TextBlock.FontSize="16">
+                    <ui:SymbolIcon VerticalAlignment="Center" Foreground="{DynamicResource AccentFillColorDefaultBrush}" Symbol="SubGrid20" />
+                    <TextBlock Margin="10 -2 0 0" VerticalAlignment="Center" Text="Trace Bounds" />
                 </StackPanel>
+                <TextBlock Height="38"
+                           Margin="0 10 0 0"
+                           FontSize="14"
+                           Foreground="{StaticResource TextControlForegroundDisabled}"
+                           Text="Upload only the design's bounding box for the tool to trace in the air, to verify alignment" TextWrapping="Wrap" />
+
+                <ui:Button Margin="0 20 0 0" HorizontalAlignment="Stretch"
+                           Background="Transparent"
+                           Command="{Binding NetworkUploadPreviewCommand}">
+                    <StackPanel Orientation="Horizontal">
+
+                        <ui:SymbolIcon Margin="0 2 0 0" FontSize="16" Symbol="Eye16" />
+                        <TextBlock Margin="10 0 0 0"
+                                   loc:L.Value="Send Alignment Trace" FontWeight="SemiBold" SnapsToDevicePixels="True" />
+
+                    </StackPanel>
+                </ui:Button>
+
+            </StackPanel>
+
+
+
+
+        </Border>
+
+        <Border Grid.Row="4" Grid.Column="1"
+                Margin="10 15 0 15" Padding="20"
+                Background="{StaticResource CardBackgroundDisabled}"
+                CornerRadius="12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" TextBlock.FontSize="16">
+                    <ui:SymbolIcon VerticalAlignment="Center" Foreground="{DynamicResource AccentFillColorDefaultBrush}" Symbol="Send16" />
+                    <TextBlock Margin="10 -2 0 0" VerticalAlignment="Center" Text="Send Job" />
+                </StackPanel>
+                <TextBlock Height="38"
+                           Margin="0 10 0 0"
+                           FontSize="14"
+                           Foreground="{StaticResource TextControlForegroundDisabled}"
+                           Text="Upload the generated GCode to the configured machine" TextWrapping="Wrap" />
+
+                <ui:Button Margin="0 20 0 0" HorizontalAlignment="Stretch"
+                           Background="Transparent"
+                           Command="{Binding NetworkUploadPreviewCommand}">
+                    <StackPanel Orientation="Horizontal">
+
+                        <ui:SymbolIcon Margin="0 2 0 0" FontSize="16" Symbol="Send16" />
+                        <TextBlock Margin="10 0 0 0"
+                                   loc:L.Value="Send GCode" FontWeight="SemiBold" SnapsToDevicePixels="True" />
+
+                    </StackPanel>
+                </ui:Button>
+
 
 
             </StackPanel>
 
-            <StackPanel Width="490"
-                        Margin="0 20 0 0" VerticalAlignment="Center"
-                        Orientation="horizontal">
-                <Label Width="80" VerticalAlignment="Center" loc:L.Value="File name: " />
-                <ui:TextBox x:Name="OutputFileName" Width="410" Text="{Binding FilePath, Mode=TwoWay}" />
-            </StackPanel>
 
-            <Separator Margin="0 20" />
 
-            <TextBlock Margin="0 -10 0 20"
-                       loc:L.Value="Printer Configuration" FontSize="20"
-                       Foreground="{StaticResource CardForeground}" />
 
-            <Label loc:L.Context="3D Printer Host Type and address" loc:L.Value="Host Type" />
+        </Border>
 
-            <ComboBox x:Name="Protocol" SelectedIndex="0">
-                <ComboBoxItem Content="Klipper" />
-            </ComboBox>
+        <CheckBox Grid.Row="6"
+                  Margin="0 0 0 0"
+                  loc:L.Value="Automatically start printing after upload"
+                  IsChecked="{Binding MainVM.Printer.ExportConfig.AutoPrint, Mode=TwoWay}" />
 
-            <Label Margin="0 10 0 0" loc:L.Context="3D Printer Host Type and address" loc:L.Value="Host Address" />
-            <ui:TextBox x:Name="HostAddress" PlaceholderText="{loc:T Enter URL or IP Address}" Text="{Binding MainVM.Configuration.ExportConfig.DestinationIP, Mode=TwoWay}" />
 
-            <CheckBox Margin="0 10 0 0" loc:L.Value="Automatically Begin Printing" IsChecked="{Binding MainVM.Configuration.ExportConfig.AutoPrint, Mode=TwoWay}" />
-
-        </StackPanel>
 
     </Grid>
 </Page>

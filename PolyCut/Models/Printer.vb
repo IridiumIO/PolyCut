@@ -92,6 +92,10 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
     <ObservableProperty> Private _ToolOffsetX As Decimal = 0
     <ObservableProperty> Private _ToolOffsetY As Decimal = 0
 
+
+    <ObservableProperty> Private _ExportConfig As New ExportConfiguration
+
+
     Public Function Clone() As Printer
         Dim p As New Printer With {
             .Version = Me.Version,
@@ -105,7 +109,8 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
             .StartGCode = Me.StartGCode,
             .EndGCode = Me.EndGCode,
             .ToolDownGCode = Me.ToolDownGCode,
-            .ToolUpGCode = Me.ToolUpGCode
+            .ToolUpGCode = Me.ToolUpGCode,
+            .ExportConfig = Me.ExportConfig
         }
         Return p
     End Function
@@ -125,6 +130,7 @@ Partial Public Class Printer : Inherits ObservableObject : Implements ISaveable
         Me.EndGCode = other.EndGCode
         Me.ToolDownGCode = other.ToolDownGCode
         Me.ToolUpGCode = other.ToolUpGCode
+        Me.ExportConfig = other.ExportConfig
     End Sub
 
 End Class

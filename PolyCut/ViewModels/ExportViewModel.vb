@@ -42,7 +42,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
 
     <RelayCommand>
     Private Async Sub NetworkUpload()
-        Dim moonraker As New MoonrakerExporter(MainVM.Configuration)
+        Dim moonraker As New MoonrakerExporter(MainVM.Configuration, MainVM.Printer.ExportConfig)
         Dim ret = Await moonraker.Export(MainVM.GCode, FilePath)
         ParseRet(ret)
     End Sub
@@ -51,7 +51,7 @@ Partial Public Class ExportViewModel : Inherits ObservableObject
     <RelayCommand>
     Private Async Sub NetworkUploadPreview()
         Dim gcodes = BuildBoundingBoxGCode(MainVM.GeneratedGCode)
-        Dim moonraker As New MoonrakerExporter(MainVM.Configuration)
+        Dim moonraker As New MoonrakerExporter(MainVM.Configuration, MainVM.Printer.ExportConfig)
         Dim ret = Await moonraker.Export(gcodes, "PolyCut_Preview.gcode")
         ParseRet(ret)
     End Sub

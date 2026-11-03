@@ -1,6 +1,6 @@
 ﻿# PolyCut Localisation
 # @version 1
-# @programversion 0.11.0
+# @programversion 0.12.0
 
 # ===================
 # Translations
@@ -10,15 +10,15 @@
 "Adaptive Sampling" = "適応サンプリング"
 "Adaptive Sampling Sensitivity" = "適応サンプリング感度"
 "Adaptive Sampling Window" = "適応サンプリング範囲"
-"Add Printer" = "プリンターを追加"
+"Add Machine" = "Add Machine" # LOC:TODO
 "Add _Weeding Boxes" = "Add _Weeding Boxes" # LOC:TODO
 "Added Preset" = "プリセットを追加しました"
 "Alignment" = "配置"
 "Allow Travel in Outlines" = "輪郭内の移動を許可"
 "An unknown error occurred" = "不明なエラーが発生しました"
 "Arrange" = "配置"
-"Automatically Begin Printing" = "印刷を自動開始"
 "Automatically quantizes the palette down to at most N colours. Set to 0 for no limit, or choose a value to restrict the number of colours used." = "パレットを最大 N 色まで自動的に減色します。制限しない場合は 0、使用する色数を制限する場合は値を指定します。"
+"Automatically start printing after upload" = "Automatically start printing after upload" # LOC:TODO
 "Bed Dimensions" = "ベッド寸法"
 "Blade Settings" = "ブレード設定"
 "Boolean operation failed." = "ブール演算に失敗しました。"
@@ -55,8 +55,7 @@
 "Drawing Settings" = "描画設定"
 "Enable Pen Width Compensation" = "Enable Pen Width Compensation" # LOC:TODO
 "Enabled" = "Enabled" # LOC:TODO
-"Enter Printer Name" = "プリンター名を入力"
-"Enter URL or IP Address" = "URL または IP アドレスを入力"
+"Enter Machine Name" = "Enter Machine Name" # LOC:TODO
 "Enter hex color (e.g., #FFFF0000 or #FF0000)" = "16 進カラーを入力（例: #FFFF0000 または #FF0000）"
 "Error" = "エラー"
 "Error Saving File" = "ファイル保存エラー"
@@ -68,7 +67,6 @@
 "Failed to load project" = "プロジェクトの読み込みに失敗しました"
 "Failed to save project" = "プロジェクトの保存に失敗しました"
 "File Saved" = "ファイルを保存しました"
-"File name: " = "ファイル名: "
 "Fill" = "塗りつぶし"
 "Fill / Outline Overlap" = "Fill / Outline Overlap" # LOC:TODO
 "Fill Colour" = "Fill Colour" # LOC:TODO
@@ -101,12 +99,15 @@
 "Lightest shading spacing" = "最明部のシェーディング間隔"
 "Load Project" = "プロジェクトを読み込む"
 "Loading a project will clear the current workspace. Continue?" = "プロジェクトを読み込むと、現在のワークスペースが消去されます。続行しますか？"
+"Machine Configuration" = "Machine Configuration" # LOC:TODO
+"Machine Name:" = "Machine Name:" # LOC:TODO
 "Maximum Colours (0 = Unlimited)" = "最大色数（0 = 無制限）"
 "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." = "Maximum deviation when merging small features between nearly aligned segments. Set to zero to disable this cleanup." # LOC:TODO
 "Merge Angle" = "Merge Angle" # LOC:TODO
 "Merge Threshold" = "Merge Threshold" # LOC:TODO
 "Minimum Inter-Object Margin" = "オブジェクト間の最小間隔"
 "Minimum colour difference required between adjacent gradient layers, 0-255. Higher values merge similar shades into fewer, flatter colour bands; smaller values preserve smoother gradients with more distinct layers." = "隣接するグラデーションレイヤー間に必要な最小色差（0～255）。値を高くすると似た色調が統合され、より少数で均一な色帯になります。値を低くすると、より多くの異なるレイヤーを使って滑らかなグラデーションを保持します。"
+"Network" = "Network" # LOC:TODO
 "New Project" = "新しいプロジェクト"
 "No" = "いいえ"
 "No groups selected to ungroup" = "No groups selected to ungroup" # LOC:TODO
@@ -123,9 +124,8 @@
 "Path Simplification" = "パス簡略化"
 "Pen Width" = "Pen Width" # LOC:TODO
 "Percentage below the local mean brightness a pixel must fall to be treated as foreground (default 15%). Higher sensitivity picks up subtler contrast changes; lower sensitivity requires stronger local contrast before a boundary is detected." = "ピクセルを前景と判定するために必要な、局所平均輝度からの低下率（既定 15%）。感度を高くすると微妙なコントラスト変化を検出しやすくなり、低くすると境界検出により強い局所コントラストが必要になります。"
+"Port" = "Port" # LOC:TODO
 "Preview Page Settings" = "プレビューページ設定"
-"Printer Configuration" = "プリンター設定"
-"Printer Name:" = "プリンター名:"
 "Printer name is empty" = "プリンター名が空です"
 "Printer not saved. Name already exists." = "プリンターは保存されませんでした。同じ名前が既に存在します。"
 "Processing Settings" = "処理設定"
@@ -143,15 +143,16 @@
 "SVG Exported" = "SVG をエクスポートしました"
 "S_ave As..." = "名前を付けて保_存..."
 "Save" = "Save" # LOC:TODO
-"Save GCode" = "GCode を保存"
+"Save GCode file or send it directly to your machine" = "Save GCode file or send it directly to your machine" # LOC:TODO
+"Save to file" = "Save to file" # LOC:TODO
 "Saved Preset" = "プリセットを保存しました"
 "Saved to: {0}" = "保存先: {0}"
 "Scaling may not be correct" = "スケーリングが正しくない可能性があります"
 "Select at least 2 shapes to combine" = "結合するには少なくとも 2 つの形状を選択してください"
 "Select at least 2 shapes to group" = "Select at least 2 shapes to group" # LOC:TODO
-"Send Preview" = "プレビューを送信"
-"Send to 3D Printer" = "3D プリンターへ送信"
-"Sends just the bounding box to the printer for preview, which runs in the travel height." = "プレビュー用に外接矩形のみをプリンターへ送信し、移動高さで実行します。"
+"Select the type of device used in export configuration" = "Select the type of device used in export configuration" # LOC:TODO
+"Send Alignment Trace" = "Send Alignment Trace" # LOC:TODO
+"Send GCode" = "Send GCode" # LOC:TODO
 "Sent to Printer" = "プリンターへ送信しました"
 "Shading Threshold" = "シェーディングしきい値"
 "Shading angle" = "シェーディング角度"
@@ -182,6 +183,9 @@
 "Travel Line Colour" = "移動線の色"
 "Travel Speed" = "移動速度"
 "UI Language" = "UI 言語"
+"URL / IP Address" = "URL / IP Address" # LOC:TODO
+"URL to connect to for sending Gcode" = "URL to connect to for sending Gcode" # LOC:TODO
+"URL to connect to for the device UI. Leave blank to use the Host Address" = "URL to connect to for the device UI. Leave blank to use the Host Address" # LOC:TODO
 "Ungroup" = "Ungroup" # LOC:TODO
 "Union operation resulted in an empty geometry. This should not happen." = "和集合演算の結果が空のジオメトリになりました。これは通常発生しません。"
 "Unknown SVG Unit Type: " = "不明な SVG 単位タイプ: "
@@ -214,10 +218,11 @@
 "version" = "バージョン"
 
 [context."3D Printer Host Type and address"]
+"Device UI Address" = "Device UI Address" # LOC:TODO
 "Host Address" = "ホストアドレス"
-"Host Type" = "ホストタイプ"
 
 [context."3D Printer/Machine"]
+"Machine" = "Machine" # LOC:TODO
 "Printer" = "プリンター"
 
 [context."Allow Travel in Outlines Tooltip"]
@@ -415,11 +420,25 @@
 "The distance in Z that the tool should move after each pass when multiple passes are enabled." = "複数パスが有効な場合に、各パスの後でツールを Z 方向に移動する距離。"
 
 [obsolete]
+"Add Printer" = "プリンターを追加"
+"Automatically Begin Printing" = "印刷を自動開始"
 "Cannot perform boolean operations on open paths (Lines). All shapes must be closed." = "開いたパス（線）にはブール演算を実行できません。すべての形状を閉じる必要があります。"
 "Copy" = "コピー"
 "Cut" = "切断"
+"Enter Printer Name" = "プリンター名を入力"
+"Enter URL or IP Address" = "URL または IP アドレスを入力"
+"File name: " = "ファイル名: "
+"Printer Configuration" = "プリンター設定"
+"Printer Name:" = "プリンター名:"
 "Printer: " = "プリンター: "
+"Save GCode" = "GCode を保存"
+"Send Preview" = "プレビューを送信"
+"Send to 3D Printer" = "3D プリンターへ送信"
+"Sends just the bounding box to the printer for preview, which runs in the travel height." = "プレビュー用に外接矩形のみをプリンターへ送信し、移動高さで実行します。"
 "Shading Settings" = "シェーディング設定"
+
+[obsolete.context."3D Printer Host Type and address"]
+"Host Type" = "ホストタイプ"
 
 [obsolete.context."Custom GCode Entries"]
 "Preview End GCode (?)" = "プレビュー終了 GCode (?)"

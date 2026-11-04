@@ -162,6 +162,16 @@ Partial Public Class ExportConfiguration : Inherits ObservableObject
 
     <ObservableProperty> Private _AutoPrint As Boolean = True
 
+    Private Sub OnMachineUIIPChanged(value As String)
+        If String.IsNullOrEmpty(value) Then
+            If Not String.IsNullOrEmpty(DestinationIP) Then
+                _MachineUIIP = DestinationIP
+            Else
+                _MachineUIIP = "http://klipper.local"
+            End If
+        End If
+    End Sub
+
     Public Function Clone() As ExportConfiguration
         Return DirectCast(Me.MemberwiseClone(), ExportConfiguration)
     End Function

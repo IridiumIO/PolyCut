@@ -2,23 +2,51 @@
 
 Imports Microsoft.Web.WebView2.Core
 
-Imports WPF.Ui.Abstractions.Controls
-Imports WPF.Ui.Controls
+Imports PolyCut.Core
 
-Class MonitorPage : Implements INavigableView(Of MainViewModel)
+Imports Wpf.Ui.Abstractions.Controls
+Imports Wpf.Ui.Controls
+
+Public Class MonitorPage : Implements INavigableView(Of MainViewModel)
 
     Public ReadOnly Property ViewModel As MainViewModel Implements INavigableView(Of MainViewModel).ViewModel
 
+    Public ReadOnly Property BoundWebPage As Object
+        Get
+            Dim config = ViewModel.Printer.ExportConfig
+            Dim address = config.MachineUIIP?.Trim()
+
+            If String.IsNullOrWhiteSpace(address) OrElse config.MachineUIPort < 1 OrElse config.MachineUIPort > 65535 Then
+                Return Binding.DoNothing
+            End If
+
+            If Not address.StartsWith("http://", StringComparison.OrdinalIgnoreCase) AndAlso
+               Not address.StartsWith("https://", StringComparison.OrdinalIgnoreCase) Then
+                address = "http://" & address
+            End If
+
+            Dim destination As Uri = Nothing
+            If Not Uri.TryCreate(address, UriKind.Absolute, destination) OrElse
+               (destination.Scheme <> Uri.UriSchemeHttp AndAlso destination.Scheme <> Uri.UriSchemeHttps) Then
+                Return Binding.DoNothing
+            End If
+
+            Dim builder As New UriBuilder(destination) With {.Port = config.MachineUIPort}
+            Return builder.Uri
+        End Get
+    End Property
 
     Sub New(viewmodel As MainViewModel)
-
-        Me.ViewModel = viewmodel
-        DataContext = viewmodel
-        ' This call is required by the designer.
         InitializeComponent()
 
+        Me.ViewModel = viewmodel
+        DataContext = Me
 
-        ' Add any initialization after the InitializeComponent() call.
+        AddHandler viewmodel.Printer.ExportConfig.PropertyChanged, Sub(sender, e)
+                                                                       If e.PropertyName = NameOf(ExportConfiguration.MachineUIIP) OrElse e.PropertyName = NameOf(ExportConfiguration.MachineUIPort) Then
+                                                                           webView.GetBindingExpression(Microsoft.Web.WebView2.Wpf.WebView2.SourceProperty)?.UpdateTarget()
+                                                                       End If
+                                                                   End Sub
 
     End Sub
 
@@ -48,14 +76,14 @@ Class MonitorPage : Implements INavigableView(Of MainViewModel)
     Private Async Sub Page_Initialized(sender As Object, e As EventArgs)
         If webView.CoreWebView2 Is Nothing Then
             Dim cw2Environment As CoreWebView2Environment = Await CoreWebView2Environment.CreateAsync(Nothing, System.IO.Path.GetTempPath(), New CoreWebView2EnvironmentOptions)
-            Await webView.EnsureCoreWebView2Async(cw2Environment)
+            ' Await webView.EnsureCoreWebView2Async(cw2Environment)
         End If
 
-        ' Set binding
-        Dim binding As New Binding("Printer.ExportConfig.MachineUIIP")
-        binding.Source = Me.DataContext
-        binding.Mode = BindingMode.OneWay
+        '' Set binding
+        'Dim binding As New Binding("Printer.ExportConfig.MachineUIIP")
+        'binding.Source = Me.DataContext
+        'binding.Mode = BindingMode.OneWay
 
-        BindingOperations.SetBinding(webView, Microsoft.Web.WebView2.Wpf.WebView2.SourceProperty, binding)
+        'BindingOperations.SetBinding(webView, Microsoft.Web.WebView2.Wpf.WebView2.SourceProperty, binding)
     End Sub
 End Class

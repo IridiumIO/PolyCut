@@ -136,7 +136,7 @@
 
                 <ui:Button Margin="0 20 0 0" HorizontalAlignment="Stretch"
                            Background="Transparent"
-                           Command="{Binding NetworkUploadPreviewCommand}">
+                           Command="{Binding NetworkUploadCommand}">
                     <StackPanel Orientation="Horizontal">
 
                         <ui:SymbolIcon Margin="0 2 0 0" FontSize="16" Symbol="Send16" />

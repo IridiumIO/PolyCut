@@ -445,7 +445,7 @@
                         <Grid Margin="0 0 0 15" ColumnDefinitions="* 250" RowDefinitions="auto auto">
                             <Label loc:L.Context="3D Printer Host Type and address" loc:L.Value="Device UI Address" FontWeight="SemiBold" />
                             <TextBlock Grid.Row="1"
-                                       loc:L.Value="URL to connect to for the device UI. Leave blank to use the Host Address" FontSize="12"
+                                       loc:L.Value="URL to connect to for the device UI" FontSize="12"
                                        Foreground="{StaticResource TextControlForegroundDisabled}" />
                             <StackPanel Grid.RowSpan="2" Grid.Column="1" Orientation="Horizontal">
                                 <ui:TextBox x:Name="MonitoringAddress"

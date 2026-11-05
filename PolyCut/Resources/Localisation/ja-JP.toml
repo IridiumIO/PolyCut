@@ -185,7 +185,7 @@
 "UI Language" = "UI 言語"
 "URL / IP Address" = "URL / IP Address" # LOC:TODO
 "URL to connect to for sending Gcode" = "URL to connect to for sending Gcode" # LOC:TODO
-"URL to connect to for the device UI. Leave blank to use the Host Address" = "URL to connect to for the device UI. Leave blank to use the Host Address" # LOC:TODO
+"URL to connect to for the device UI" = "URL to connect to for the device UI" # LOC:TODO
 "Ungroup" = "Ungroup" # LOC:TODO
 "Union operation resulted in an empty geometry. This should not happen." = "和集合演算の結果が空のジオメトリになりました。これは通常発生しません。"
 "Unknown SVG Unit Type: " = "不明な SVG 単位タイプ: "

@@ -1,6 +1,7 @@
-﻿Imports System.Windows.Media.Animation
+﻿Imports System.ComponentModel
+Imports System.Windows.Media.Animation
 
-Imports Microsoft.Web.WebView2.Core
+Imports Microsoft.Web.WebView2.Wpf
 
 Imports PolyCut.Core
 
@@ -39,51 +40,26 @@ Public Class MonitorPage : Implements INavigableView(Of MainViewModel)
     Sub New(viewmodel As MainViewModel)
         InitializeComponent()
 
+        ' Configure the environment before DataContext activates the Source binding.
+        webView.CreationProperties = New CoreWebView2CreationProperties With {
+            .UserDataFolder = IO.Path.Combine(SettingsHandler.DataFolder.FullName, "WebView")
+        }
+
         Me.ViewModel = viewmodel
         DataContext = Me
 
-        AddHandler viewmodel.Printer.ExportConfig.PropertyChanged, Sub(sender, e)
-                                                                       If e.PropertyName = NameOf(ExportConfiguration.MachineUIIP) OrElse e.PropertyName = NameOf(ExportConfiguration.MachineUIPort) Then
-                                                                           webView.GetBindingExpression(Microsoft.Web.WebView2.Wpf.WebView2.SourceProperty)?.UpdateTarget()
-                                                                       End If
-                                                                   End Sub
+        AddHandler viewmodel.Printer.ExportConfig.PropertyChanged, AddressOf ConfigurationPropertyChanged
 
     End Sub
 
+    Private Sub ConfigurationPropertyChanged(sender As Object, e As PropertyChangedEventArgs)
 
-    Private Sub WebView_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs) Handles webView.IsVisibleChanged
+        If e.PropertyName = NameOf(ExportConfiguration.MachineUIIP) OrElse
+           e.PropertyName = NameOf(ExportConfiguration.MachineUIPort) Then
 
-        Dim animation As New DoubleAnimation(-20, TimeSpan.FromSeconds(1))
-        Dim storyboard As New Storyboard()
+            webView.GetBindingExpression(WebView2.SourceProperty)?.UpdateTarget()
 
-        ' Set the target property to the Y property of the TranslateTransform
-        Storyboard.SetTarget(animation, webViewTranslateTransform)
-        Storyboard.SetTargetProperty(animation, New PropertyPath(TranslateTransform.YProperty))
-
-        ' Create a Storyboard and add the animation
-        storyboard.Children.Add(animation)
-
-        ' Begin the animation
-        AddHandler CompositionTarget.Rendering, Sub()
-                                                    webView.UpdateWindowPos()
-                                                End Sub
-
-        storyboard.Begin()
-
-    End Sub
-
-
-    Private Async Sub Page_Initialized(sender As Object, e As EventArgs)
-        If webView.CoreWebView2 Is Nothing Then
-            Dim cw2Environment As CoreWebView2Environment = Await CoreWebView2Environment.CreateAsync(Nothing, System.IO.Path.GetTempPath(), New CoreWebView2EnvironmentOptions)
-            ' Await webView.EnsureCoreWebView2Async(cw2Environment)
         End If
 
-        '' Set binding
-        'Dim binding As New Binding("Printer.ExportConfig.MachineUIIP")
-        'binding.Source = Me.DataContext
-        'binding.Mode = BindingMode.OneWay
-
-        'BindingOperations.SetBinding(webView, Microsoft.Web.WebView2.Wpf.WebView2.SourceProperty, binding)
     End Sub
 End Class

@@ -185,7 +185,7 @@
 "UI Language" = "UI Language"
 "URL / IP Address" = "URL / IP Address"
 "URL to connect to for sending Gcode" = "URL to connect to for sending Gcode"
-"URL to connect to for the device UI. Leave blank to use the Host Address" = "URL to connect to for the device UI. Leave blank to use the Host Address"
+"URL to connect to for the device UI" = "URL to connect to for the device UI"
 "Ungroup" = "Ungroup"
 "Union operation resulted in an empty geometry. This should not happen." = "Union operation resulted in an empty geometry. This should not happen."
 "Unknown SVG Unit Type: " = "Unknown SVG Unit Type: "

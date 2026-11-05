@@ -104,10 +104,9 @@
                                 <Separator />
                                 <MenuItem loc:L.Value="_Import SVG/Image..." local:MenuItemHelper.Footer="Ctrl + I" Command="{Binding BrowseSVGCommand}" />
                                 <MenuItem loc:L.Value="_Load Project" local:MenuItemHelper.Footer="Ctrl + O" Command="{Binding LoadProjectCommand}" />
-                                <MenuItem loc:L.Value="Recent Items" ItemsSource="{Binding UIConfiguration.RecentItems}"
-                                          IsEnabled="{Binding HasItems, RelativeSource={RelativeSource Self}}">
+                                <MenuItem loc:L.Value="Recent Items" IsEnabled="{Binding HasItems, RelativeSource={RelativeSource Self}}" ItemsSource="{Binding UIConfiguration.RecentItems}">
                                     <MenuItem.ItemContainerStyle>
-                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                        <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="MenuItem">
                                             <Setter Property="Command" Value="{Binding DataContext.OpenRecentItemCommand, ElementName=MainWindowView}" />
                                             <Setter Property="CommandParameter" Value="{Binding}" />
                                             <Setter Property="HeaderTemplate">
